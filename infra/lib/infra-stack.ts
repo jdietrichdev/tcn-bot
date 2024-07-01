@@ -8,11 +8,11 @@ export class InfraStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    const accessLogs = new LogGroup(scope, 'access-logs', {
+    const accessLogs = new LogGroup(this, 'access-logs', {
       logGroupName: 'BotAccessLogs',
     })
 
-    this.api = new RestApi(scope, 'discord-bot-api', {
+    this.api = new RestApi(this, 'discord-bot-api', {
       restApiName: 'DiscordBotApi',
       deployOptions: {
         stageName: 'prod',
