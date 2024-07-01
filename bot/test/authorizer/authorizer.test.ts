@@ -36,6 +36,6 @@ test("should return false when verification is unsuccessful", () => {
 });
 
 test("should return false when necessary data is not present", () => {
-  delete mockEvent.headers["X-Signature-Ed25519"];
+  delete mockEvent.headers["x-signature-ed25519"];
   expect(authorizeRequest(mockEvent)).toBeFalsy();
 });

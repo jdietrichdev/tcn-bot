@@ -7,7 +7,7 @@ export const authorizeRequest = (event: APIGatewayProxyEvent): boolean => {
   const timestamp = headers["x-signature-timestamp"];
   const signature = headers["x-signature-ed25519"];
 
-  if (!signature || !process.env.DISCORD_PUBLIC_KEY) {
+  if (!signature || !timestamp || !process.env.DISCORD_PUBLIC_KEY) {
     console.error("Missing necessary information");
     return false;
   }
