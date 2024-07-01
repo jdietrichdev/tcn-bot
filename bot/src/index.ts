@@ -25,7 +25,7 @@ export const proxy = async (
       ],
     })
   );
-  if (JSON.parse(body).type == 1) {
+  if (JSON.parse(JSON.stringify(body)).type == 1) {
     response = { type: 1 };
   } else {
     response = { type: 4, content: "Loading..." };
