@@ -8,6 +8,7 @@ export const proxy = async (
 ): Promise<APIGatewayProxyResult> => {
   let response: Record<string, number | string>;
   if (!authorizeRequest(event)) {
+    console.log("Unauthorized");
     return { statusCode: 401, body: "Unauthorized" };
   }
   const body = JSON.parse(JSON.stringify(event.body));
@@ -26,7 +27,7 @@ export const proxy = async (
       ],
     })
   );
-  if (body.type === 1) {
+  if (body.type == 1) {
     response = { type: 1 };
   } else {
     response = { type: 4, content: "Loading..." };
