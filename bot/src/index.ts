@@ -13,7 +13,8 @@ export const proxy = async (
   }
   const body = JSON.parse(JSON.stringify(event.body));
   console.log(body);
-  console.log(event.resource);
+  console.log(body.type);
+  console.log(typeof body.type);
   await eventClient.send(
     new PutEventsCommand({
       Entries: [
