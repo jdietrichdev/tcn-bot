@@ -13,6 +13,9 @@ permissions:
   id-token: write
   contents: read
 
+env:
+    DISCORD_PUBLIC_KEY: ${{ secrets.DISCORD_PUBLIC_KEY}}
+
 jobs:
   deploy-stack:
     runs-on: ubuntu-latest
