@@ -12,9 +12,6 @@ export const proxy = async (
     return { statusCode: 401, body: "Unauthorized" };
   }
   const body = JSON.parse(JSON.stringify(event.body));
-  console.log(body);
-  console.log(body.type);
-  console.log(typeof body.type);
   await eventClient.send(
     new PutEventsCommand({
       Entries: [
@@ -27,9 +24,8 @@ export const proxy = async (
       ],
     })
   );
-  console.log(body.type);
-  console.log(typeof body.type);
-  if (body.type == 1) {
+  console.log(body["type"]);
+  if (body["type"] == 1) {
     response = { type: 1 };
   } else {
     response = { type: 4, content: "Loading..." };
