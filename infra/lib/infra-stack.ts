@@ -1,6 +1,6 @@
 import { Construct } from 'constructs';
 import { Stack, StackProps } from 'aws-cdk-lib';
-import { AccessLogFormat, LogGroupLogDestination, RestApi } from 'aws-cdk-lib/aws-apigateway';
+import { AccessLogFormat, LogGroupLogDestination, MockIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway';
 import { LogGroup } from 'aws-cdk-lib/aws-logs';
 
 export class InfraStack extends Stack {
@@ -21,6 +21,14 @@ export class InfraStack extends Stack {
       }
     });
 
-    this.api.root.resourceForPath('v1/bot').addMethod('POST', new MockIntegration());
+    this.api.root.resourceForPath('v1/bot').addMethod('POST', new MockIntegration({
+      integrationResponses: [
+        { statusCode: '200' }
+      ]
+    }), {
+      methodResponses: [
+        { statusCode: '200' },
+      ]
+    });
   }
 }
