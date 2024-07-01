@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { authorizeRequest } from "./authorizer/authorizer";
 import { eventClient } from "./clients/eventbridge-client";
 import { PutEventsCommand } from "@aws-sdk/client-eventbridge";
+import { APIInteraction } from "discord-api-types/payloads/v10";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -11,16 +12,14 @@ export const proxy = async (
     console.log("Unauthorized");
     return { statusCode: 401, body: "Unauthorized" };
   }
-  console.log(event.body);
-  const body = JSON.parse(JSON.stringify(event.body));
-  console.log(body.id);
-  console.log(body.entitlements);
-  console.log(body.user);
+  const body = JSON.parse(event.body!) as APIInteraction;
+  console.log(body);
+  console.log(body.type);
   await eventClient.send(
     new PutEventsCommand({
       Entries: [
         {
-          Detail: body,
+          Detail: event.body!,
           DetailType: "Bot Event Received",
           Source: "tcn-bot-event",
           EventBusName: "tcn-bot-events",

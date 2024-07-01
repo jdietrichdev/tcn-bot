@@ -10,12 +10,14 @@ const mockEvent = {
     "x-signature-timestamp": "timestamp",
     "x-signature-ed25519": "signature",
   },
-  body: { test: "test" },
+  body: JSON.stringify({ test: "test" }),
 } as unknown as APIGatewayProxyEvent;
 
 beforeEach(() => {
   jest.mocked(nacl.sign.detached.verify).mockReturnValue(true);
 });
+
+afterEach(jest.resetAllMocks);
 
 test("should call verify with correct parameters", () => {
   authorizeRequest(mockEvent);

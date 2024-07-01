@@ -13,6 +13,8 @@ beforeEach(() => {
   jest.mocked(authorizeRequest).mockReturnValue(true);
 });
 
+afterEach(jest.resetAllMocks);
+
 test("proxy to call authorizeRequest", async () => {
   await proxy(mockEvent);
   expect(authorizeRequest).toHaveBeenCalledWith(mockEvent);
@@ -61,11 +63,11 @@ test("proxy should return 200 Loading response when request is valid", async () 
 
 const createMockEvent = (type: number, name: string | undefined) => {
   return {
-    body: {
+    body: JSON.stringify({
       type,
       data: {
         name,
       },
-    },
+    }),
   } as unknown as APIGatewayProxyEvent;
 };
