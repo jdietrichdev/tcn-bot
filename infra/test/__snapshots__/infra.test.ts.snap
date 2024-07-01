@@ -1,0 +1,742 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Infrastructure created 1`] = `
+"{
+  "Resources": {
+    "botevents976D647F": {
+      "Type": "AWS::Events::EventBus",
+      "Properties": {
+        "Name": "tcn-bot-events"
+      }
+    },
+    "eventauditlogCB26566C": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "EventAuditLogs",
+        "RetentionInDays": 731
+      },
+      "UpdateReplacePolicy": "Retain",
+      "DeletionPolicy": "Retain"
+    },
+    "auditlogrule80BFFC4D": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "Audit log for events",
+        "EventBusName": {
+          "Ref": "botevents976D647F"
+        },
+        "EventPattern": {
+          "source": [
+            "tcn-bot-event"
+          ]
+        },
+        "Name": "AuditLogRule",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition"
+                  },
+                  ":logs:us-east-1:12345:log-group:",
+                  {
+                    "Ref": "eventauditlogCB26566C"
+                  }
+                ]
+              ]
+            },
+            "Id": "Target0"
+          }
+        ]
+      }
+    },
+    "EventsLogGroupPolicystackauditlogruleE31F6128D944A874": {
+      "Type": "Custom::CloudwatchLogResourcePolicy",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd22872D164C4C",
+            "Arn"
+          ]
+        },
+        "Create": {
+          "Fn::Join": [
+            "",
+            [
+              "{\\"service\\":\\"CloudWatchLogs\\",\\"action\\":\\"putResourcePolicy\\",\\"parameters\\":{\\"policyName\\":\\"stackEventsLogGroupPolicystackauditlogruleE31F61282AA70EF9\\",\\"policyDocument\\":\\"{\\\\\\"Statement\\\\\\":[{\\\\\\"Action\\\\\\":[\\\\\\"logs:PutLogEvents\\\\\\",\\\\\\"logs:CreateLogStream\\\\\\"],\\\\\\"Effect\\\\\\":\\\\\\"Allow\\\\\\",\\\\\\"Principal\\\\\\":{\\\\\\"Service\\\\\\":\\\\\\"events.amazonaws.com\\\\\\"},\\\\\\"Resource\\\\\\":\\\\\\"",
+              {
+                "Fn::GetAtt": [
+                  "eventauditlogCB26566C",
+                  "Arn"
+                ]
+              },
+              "\\\\\\"}],\\\\\\"Version\\\\\\":\\\\\\"2012-10-17\\\\\\"}\\"},\\"physicalResourceId\\":{\\"id\\":\\"EventsLogGroupPolicystackauditlogruleE31F6128\\"}}"
+            ]
+          ]
+        },
+        "Update": {
+          "Fn::Join": [
+            "",
+            [
+              "{\\"service\\":\\"CloudWatchLogs\\",\\"action\\":\\"putResourcePolicy\\",\\"parameters\\":{\\"policyName\\":\\"stackEventsLogGroupPolicystackauditlogruleE31F61282AA70EF9\\",\\"policyDocument\\":\\"{\\\\\\"Statement\\\\\\":[{\\\\\\"Action\\\\\\":[\\\\\\"logs:PutLogEvents\\\\\\",\\\\\\"logs:CreateLogStream\\\\\\"],\\\\\\"Effect\\\\\\":\\\\\\"Allow\\\\\\",\\\\\\"Principal\\\\\\":{\\\\\\"Service\\\\\\":\\\\\\"events.amazonaws.com\\\\\\"},\\\\\\"Resource\\\\\\":\\\\\\"",
+              {
+                "Fn::GetAtt": [
+                  "eventauditlogCB26566C",
+                  "Arn"
+                ]
+              },
+              "\\\\\\"}],\\\\\\"Version\\\\\\":\\\\\\"2012-10-17\\\\\\"}\\"},\\"physicalResourceId\\":{\\"id\\":\\"EventsLogGroupPolicystackauditlogruleE31F6128\\"}}"
+            ]
+          ]
+        },
+        "Delete": "{\\"service\\":\\"CloudWatchLogs\\",\\"action\\":\\"deleteResourcePolicy\\",\\"parameters\\":{\\"policyName\\":\\"stackEventsLogGroupPolicystackauditlogruleE31F61282AA70EF9\\"},\\"ignoreErrorCodesMatching\\":\\"ResourceNotFoundException\\"}",
+        "InstallLatestAwsSdk": true
+      },
+      "DependsOn": [
+        "EventsLogGroupPolicystackauditlogruleE31F6128CustomResourcePolicy54F5C0D7"
+      ],
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "EventsLogGroupPolicystackauditlogruleE31F6128CustomResourcePolicy54F5C0D7": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "logs:PutResourcePolicy",
+              "Effect": "Allow",
+              "Resource": "*"
+            },
+            {
+              "Action": "logs:DeleteResourcePolicy",
+              "Effect": "Allow",
+              "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "EventsLogGroupPolicystackauditlogruleE31F6128CustomResourcePolicy54F5C0D7",
+        "Roles": [
+          {
+            "Ref": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2"
+          }
+        ]
+      }
+    },
+    "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "AWS679f53fac002430cb0da5b7982bd22872D164C4C": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-12345-us-east-1",
+          "S3Key": "97f30e67419a1676a2215492723e5add1aa491caf0cbe2dd878fc4fab0468cd4.zip"
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs20.x",
+        "Timeout": 120
+      },
+      "DependsOn": [
+        "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2"
+      ]
+    },
+    "botproxyServiceRole56AA3B02": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "botproxyServiceRoleDefaultPolicy5F03A8FF": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "events:PutEvents",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "botevents976D647F",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "botproxyServiceRoleDefaultPolicy5F03A8FF",
+        "Roles": [
+          {
+            "Ref": "botproxyServiceRole56AA3B02"
+          }
+        ]
+      }
+    },
+    "botproxyBC0C1AEB": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-12345-us-east-1",
+          "S3Key": "86ab0ba149cef22fe52f77d5443f817afb48d7d274bb789e628ac75bc9686e16.zip"
+        },
+        "Environment": {
+          "Variables": {
+            "REGION": "us-east-1"
+          }
+        },
+        "Handler": "index.proxy",
+        "Role": {
+          "Fn::GetAtt": [
+            "botproxyServiceRole56AA3B02",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs20.x"
+      },
+      "DependsOn": [
+        "botproxyServiceRoleDefaultPolicy5F03A8FF",
+        "botproxyServiceRole56AA3B02"
+      ]
+    },
+    "botproxyLogRetentionA07F49C5": {
+      "Type": "Custom::LogRetention",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+            "Arn"
+          ]
+        },
+        "LogGroupName": {
+          "Fn::Join": [
+            "",
+            [
+              "/aws/lambda/",
+              {
+                "Ref": "botproxyBC0C1AEB"
+              }
+            ]
+          ]
+        },
+        "RetentionInDays": 30
+      }
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:PutRetentionPolicy",
+                "logs:DeleteRetentionPolicy"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+        "Roles": [
+          {
+            "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+          }
+        ]
+      }
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Handler": "index.handler",
+        "Runtime": "nodejs20.x",
+        "Timeout": 900,
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-12345-us-east-1",
+          "S3Key": "4e26bf2d0a26f2097fb2b261f22bb51e3f6b4b52635777b1e54edbd8e2d58c35.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+            "Arn"
+          ]
+        }
+      },
+      "DependsOn": [
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+      ]
+    },
+    "accesslogsDE09D170": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "BotAccessLogs",
+        "RetentionInDays": 731
+      },
+      "UpdateReplacePolicy": "Retain",
+      "DeletionPolicy": "Retain"
+    },
+    "discordbotapi5484B478": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": {
+        "Name": "DiscordBotApi"
+      }
+    },
+    "discordbotapiCloudWatchRoleB1A1160D": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "apigateway.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+              ]
+            ]
+          }
+        ]
+      },
+      "UpdateReplacePolicy": "Retain",
+      "DeletionPolicy": "Retain"
+    },
+    "discordbotapiAccount3F1EE700": {
+      "Type": "AWS::ApiGateway::Account",
+      "Properties": {
+        "CloudWatchRoleArn": {
+          "Fn::GetAtt": [
+            "discordbotapiCloudWatchRoleB1A1160D",
+            "Arn"
+          ]
+        }
+      },
+      "DependsOn": [
+        "discordbotapi5484B478"
+      ],
+      "UpdateReplacePolicy": "Retain",
+      "DeletionPolicy": "Retain"
+    },
+    "discordbotapiDeploymentFB90C3EC30cfe8b73deb19370aa5042b5397b3fb": {
+      "Type": "AWS::ApiGateway::Deployment",
+      "Properties": {
+        "Description": "Automatically created by the RestApi construct",
+        "RestApiId": {
+          "Ref": "discordbotapi5484B478"
+        }
+      },
+      "DependsOn": [
+        "discordbotapiproxyANY85622115",
+        "discordbotapiproxy69482EF4",
+        "discordbotapiANY151EB533"
+      ]
+    },
+    "discordbotapiDeploymentStageprodE3B8CBF8": {
+      "Type": "AWS::ApiGateway::Stage",
+      "Properties": {
+        "AccessLogSetting": {
+          "DestinationArn": {
+            "Fn::GetAtt": [
+              "accesslogsDE09D170",
+              "Arn"
+            ]
+          },
+          "Format": "{\\"requestId\\":\\"$context.requestId\\",\\"ip\\":\\"$context.identity.sourceIp\\",\\"user\\":\\"$context.identity.user\\",\\"caller\\":\\"$context.identity.caller\\",\\"requestTime\\":\\"$context.requestTime\\",\\"httpMethod\\":\\"$context.httpMethod\\",\\"resourcePath\\":\\"$context.resourcePath\\",\\"status\\":\\"$context.status\\",\\"protocol\\":\\"$context.protocol\\",\\"responseLength\\":\\"$context.responseLength\\"}"
+        },
+        "DeploymentId": {
+          "Ref": "discordbotapiDeploymentFB90C3EC30cfe8b73deb19370aa5042b5397b3fb"
+        },
+        "RestApiId": {
+          "Ref": "discordbotapi5484B478"
+        },
+        "StageName": "prod"
+      },
+      "DependsOn": [
+        "discordbotapiAccount3F1EE700"
+      ]
+    },
+    "discordbotapiproxy69482EF4": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "discordbotapi5484B478",
+            "RootResourceId"
+          ]
+        },
+        "PathPart": "{proxy+}",
+        "RestApiId": {
+          "Ref": "discordbotapi5484B478"
+        }
+      }
+    },
+    "discordbotapiproxyANYApiPermissionstackdiscordbotapiF5B65FDCANYproxy06BCE626": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "botproxyBC0C1AEB",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:us-east-1:12345:",
+              {
+                "Ref": "discordbotapi5484B478"
+              },
+              "/",
+              {
+                "Ref": "discordbotapiDeploymentStageprodE3B8CBF8"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      }
+    },
+    "discordbotapiproxyANYApiPermissionTeststackdiscordbotapiF5B65FDCANYproxyF8EBB0C3": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "botproxyBC0C1AEB",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:us-east-1:12345:",
+              {
+                "Ref": "discordbotapi5484B478"
+              },
+              "/test-invoke-stage/*/*"
+            ]
+          ]
+        }
+      }
+    },
+    "discordbotapiproxyANY85622115": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "AuthorizationType": "NONE",
+        "HttpMethod": "ANY",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "botproxyBC0C1AEB",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "ResourceId": {
+          "Ref": "discordbotapiproxy69482EF4"
+        },
+        "RestApiId": {
+          "Ref": "discordbotapi5484B478"
+        }
+      }
+    },
+    "discordbotapiANYApiPermissionstackdiscordbotapiF5B65FDCANY93049493": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "botproxyBC0C1AEB",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:us-east-1:12345:",
+              {
+                "Ref": "discordbotapi5484B478"
+              },
+              "/",
+              {
+                "Ref": "discordbotapiDeploymentStageprodE3B8CBF8"
+              },
+              "/*/"
+            ]
+          ]
+        }
+      }
+    },
+    "discordbotapiANYApiPermissionTeststackdiscordbotapiF5B65FDCANY762AF70F": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "botproxyBC0C1AEB",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:us-east-1:12345:",
+              {
+                "Ref": "discordbotapi5484B478"
+              },
+              "/test-invoke-stage/*/"
+            ]
+          ]
+        }
+      }
+    },
+    "discordbotapiANY151EB533": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "AuthorizationType": "NONE",
+        "HttpMethod": "ANY",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "botproxyBC0C1AEB",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "ResourceId": {
+          "Fn::GetAtt": [
+            "discordbotapi5484B478",
+            "RootResourceId"
+          ]
+        },
+        "RestApiId": {
+          "Ref": "discordbotapi5484B478"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "discordbotapiEndpoint66B0A069": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "discordbotapi5484B478"
+            },
+            ".execute-api.us-east-1.",
+            {
+              "Ref": "AWS::URLSuffix"
+            },
+            "/",
+            {
+              "Ref": "discordbotapiDeploymentStageprodE3B8CBF8"
+            },
+            "/"
+          ]
+        ]
+      }
+    }
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Type": "AWS::SSM::Parameter::Value<String>",
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+    }
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5"
+                  ],
+                  {
+                    "Ref": "BootstrapVersion"
+                  }
+                ]
+              }
+            ]
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+        }
+      ]
+    }
+  }
+}"
+`;

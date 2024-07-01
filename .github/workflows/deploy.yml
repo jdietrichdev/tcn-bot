@@ -35,5 +35,9 @@ jobs:
 
       - run: npm install
 
+      - run: npm run build --workspace bot
+
+      - run: npm test
+
       - run: npm run bootstrap --workspace infra
       - run: npm run deploy --workspace infra

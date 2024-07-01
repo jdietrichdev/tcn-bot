@@ -1,17 +1,17 @@
-// import * as cdk from 'aws-cdk-lib';
-// import { Template } from 'aws-cdk-lib/assertions';
-// import * as Infra from '../lib/infra-stack';
+import { App } from "aws-cdk-lib";
+import { Template } from "aws-cdk-lib/assertions";
+import { InfraStack } from "../lib/infra-stack";
 
-// example test. To run these tests, uncomment this file along with the
-// example resource in lib/infra-stack.ts
-test('SQS Queue Created', () => {
-//   const app = new cdk.App();
-//     // WHEN
-//   const stack = new Infra.InfraStack(app, 'MyTestStack');
-//     // THEN
-//   const template = Template.fromStack(stack);
+let app: App;
+let stack: InfraStack;
+let template: string;
 
-//   template.hasResourceProperties('AWS::SQS::Queue', {
-//     VisibilityTimeout: 300
-//   });
+test("Infrastructure created", () => {
+  app = new App();
+  stack = new InfraStack(app, "stack", {
+    env: { account: "12345", region: "us-east-1" },
+  });
+  template = JSON.stringify(Template.fromStack(stack).toJSON(), null, 2);
+
+  expect(template).toMatchSnapshot();
 });

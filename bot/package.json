@@ -1,0 +1,24 @@
+{
+  "name": "bot",
+  "version": "1.0.0",
+  "description": "Bot code for tcn-bot",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "build": "webpack",
+    "test": "jest"
+  },
+  "author": "Josh Dietrich",
+  "license": "ISC",
+  "dependencies": {
+    "@types/aws-lambda": "8.10.140",
+    "@aws-sdk/client-eventbridge": "3.606.0",
+    "tweetnacl": "^1.0.3"
+  },
+  "devDependencies": {
+    "source-map-loader": "5.0.0",
+    "ts-loader": "9.5.1",
+    "webpack": "5.92.1",
+    "webpack-cli": "5.1.4"
+  }
+}
