@@ -14,24 +14,22 @@ export const proxy = async (
   console.log(body);
   console.log(event.path);
   console.log(event.httpMethod);
+  await eventClient.send(
+    new PutEventsCommand({
+      Entries: [
+        {
+          Detail: body,
+          DetailType: "Bot Event Received",
+          Source: "tcn-bot-event",
+          EventBusName: "tcn-bot-events",
+        },
+      ],
+    })
+  );
   if (body.type === 1) {
     response = { type: 1 };
-  } else if (body.data.name) {
-    await eventClient.send(
-      new PutEventsCommand({
-        Entries: [
-          {
-            Detail: body,
-            DetailType: "Bot Event Received",
-            Source: "tcn-bot-event",
-            EventBusName: "tcn-bot-events",
-          },
-        ],
-      })
-    );
-    response = { type: 4, content: "Loading..." };
   } else {
-    return { statusCode: 404, body: "Invalid request" };
+    response = { type: 4, content: "Loading..." };
   }
   return {
     statusCode: 200,

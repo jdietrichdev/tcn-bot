@@ -26,15 +26,7 @@ test("proxy should return 401 when request is invalid", async () => {
   });
 });
 
-test("proxy should return pong request when request type is 1", async () => {
-  mockEvent = createMockEvent(1, "test");
-  expect(await proxy(mockEvent)).toEqual({
-    statusCode: 200,
-    body: JSON.stringify({ type: 1 }),
-  });
-});
-
-test("proxy should create event when request type is not 1 and has a name", async () => {
+test("proxy should create event when request is valid", async () => {
   await proxy(mockEvent);
   expect(jest.mocked(eventClient.send)).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -52,18 +44,18 @@ test("proxy should create event when request type is not 1 and has a name", asyn
   );
 });
 
-test("proxy should return 200 Loading response when request type is not 1 and has a name", async () => {
+test("proxy should return pong response when request type is 1", async () => {
+  mockEvent = createMockEvent(1, "test");
   expect(await proxy(mockEvent)).toEqual({
     statusCode: 200,
-    body: JSON.stringify({ type: 4, content: "Loading..." }),
+    body: JSON.stringify({ type: 1 }),
   });
 });
 
-test("proxy should return 404 when request type is not one and does not have name", async () => {
-  mockEvent = createMockEvent(4, undefined);
+test("proxy should return 200 Loading response when request is valid", async () => {
   expect(await proxy(mockEvent)).toEqual({
-    statusCode: 404,
-    body: "Invalid request",
+    statusCode: 200,
+    body: JSON.stringify({ type: 4, content: "Loading..." }),
   });
 });
 
