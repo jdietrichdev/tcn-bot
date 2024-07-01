@@ -20,7 +20,7 @@ beforeEach(() => {
 test("should call verify with correct parameters", () => {
   authorizeRequest(mockEvent);
   expect(jest.mocked(nacl.sign.detached.verify)).toHaveBeenCalledWith(
-    Buffer.from("timestamp" + JSON.stringify(mockEvent.body)),
+    Buffer.from("timestamp" + mockEvent.body),
     Buffer.from("signature", "hex"),
     Buffer.from("PUBLIC_KEY", "hex")
   );

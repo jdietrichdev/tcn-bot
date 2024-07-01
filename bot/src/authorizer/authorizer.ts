@@ -13,7 +13,7 @@ export const authorizeRequest = (event: APIGatewayProxyEvent): boolean => {
   }
 
   return nacl.sign.detached.verify(
-    Buffer.from(timestamp + JSON.stringify(body)),
+    Buffer.from(timestamp + body),
     Buffer.from(signature, "hex"),
     Buffer.from(process.env.DISCORD_PUBLIC_KEY, "hex")
   );
