@@ -164,7 +164,7 @@ exports[`Infrastructure created 1`] = `
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-12345-us-east-1",
-          "S3Key": "97f30e67419a1676a2215492723e5add1aa491caf0cbe2dd878fc4fab0468cd4.zip"
+          "S3Key": "files.zip"
         },
         "Handler": "index.handler",
         "Role": {
@@ -242,7 +242,7 @@ exports[`Infrastructure created 1`] = `
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-12345-us-east-1",
-          "S3Key": "86ab0ba149cef22fe52f77d5443f817afb48d7d274bb789e628ac75bc9686e16.zip"
+          "S3Key": "files.zip"
         },
         "Environment": {
           "Variables": {
@@ -349,7 +349,7 @@ exports[`Infrastructure created 1`] = `
         "Timeout": 900,
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-12345-us-east-1",
-          "S3Key": "4e26bf2d0a26f2097fb2b261f22bb51e3f6b4b52635777b1e54edbd8e2d58c35.zip"
+          "S3Key": "files.zip"
         },
         "Role": {
           "Fn::GetAtt": [
