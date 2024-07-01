@@ -20,5 +20,7 @@ export class InfraStack extends Stack {
         accessLogFormat: AccessLogFormat.jsonWithStandardFields()
       }
     });
+
+    this.api.root.resourceForPath('v1/bot').addMethod('POST', new MockIntegration());
   }
 }
