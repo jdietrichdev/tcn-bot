@@ -1,0 +1,11 @@
+{
+  "name": "tcn-bot",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "npm test --workspaces"
+  },
+  "author": "Josh Dietrich",
+  "license": "ISC",
+  "description": "Discord Bot for TCN (Clash of Clans)",
+  "workspaces": ["infra", "bot"]
+}
