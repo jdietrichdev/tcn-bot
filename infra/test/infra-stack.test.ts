@@ -6,6 +6,8 @@ let app: App;
 let stack: InfraStack;
 let template: string;
 
+process.env.DISCORD_PUBLIC_KEY = "TEST_KEY";
+
 test("Infrastructure created", () => {
   app = new App();
   stack = new InfraStack(app, "stack", {

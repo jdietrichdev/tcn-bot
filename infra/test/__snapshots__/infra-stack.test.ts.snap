@@ -246,7 +246,8 @@ exports[`Infrastructure created 1`] = `
         },
         "Environment": {
           "Variables": {
-            "REGION": "us-east-1"
+            "REGION": "us-east-1",
+            "DISCORD_PUBLIC_KEY": "TEST_KEY"
           }
         },
         "Handler": "index.proxy",
