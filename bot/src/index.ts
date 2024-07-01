@@ -10,7 +10,7 @@ export const proxy = async (
   if (!authorizeRequest(event)) {
     return { statusCode: 401, body: "Unauthorized" };
   }
-  const body = JSON.parse(JSON.stringify(event.body!));
+  const body = JSON.parse(JSON.stringify(event.body));
   console.log(body);
   console.log(event.path);
   console.log(event.httpMethod);
@@ -31,6 +31,7 @@ export const proxy = async (
   } else {
     response = { type: 4, content: "Loading..." };
   }
+  console.log(response);
   return {
     statusCode: 200,
     body: JSON.stringify(response),
