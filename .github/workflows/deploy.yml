@@ -40,4 +40,4 @@ jobs:
       - run: npm test
 
       - run: npm run bootstrap --workspace infra
-      - run: npm run deploy --workspace infra
+      - run: npm run deploy --workspace infra -- --require-approval never
