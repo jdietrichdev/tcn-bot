@@ -13,8 +13,6 @@ export const proxy = async (
     return { statusCode: 401, body: "Unauthorized" };
   }
   const body = JSON.parse(event.body!) as APIInteraction;
-  console.log(body);
-  console.log(body.type);
   await eventClient.send(
     new PutEventsCommand({
       Entries: [
@@ -32,7 +30,6 @@ export const proxy = async (
   } else {
     response = { type: 4, content: "Loading..." };
   }
-  console.log(response);
   return {
     statusCode: 200,
     body: JSON.stringify(response),
