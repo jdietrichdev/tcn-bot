@@ -13,8 +13,7 @@ export const proxy = async (
   }
   const body = JSON.parse(JSON.stringify(event.body));
   console.log(body);
-  console.log(event.path);
-  console.log(event.httpMethod);
+  console.log(event.resource);
   await eventClient.send(
     new PutEventsCommand({
       Entries: [
@@ -27,6 +26,8 @@ export const proxy = async (
       ],
     })
   );
+  console.log(body.type);
+  console.log(typeof body.type);
   if (body.type == 1) {
     response = { type: 1 };
   } else {
