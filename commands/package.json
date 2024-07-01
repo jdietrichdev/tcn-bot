@@ -1,0 +1,8 @@
+{
+  "name": "commands",
+  "version": "1.0.0",
+  "scripts": {
+    "generate-commands": "npx ts-node generate-commands.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}

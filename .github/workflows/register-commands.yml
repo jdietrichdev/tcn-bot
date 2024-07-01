@@ -1,0 +1,28 @@
+name: Register Commands
+
+on:
+  push:
+    paths:
+      - commands/**
+      - .github/workflows/register-commands.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  APPLICATION_ID: ${{ secrets.APPLICATION_ID }}
+
+jobs:
+  register-commands:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+
+      - uses: actions/checkout@v4
+
+      - name: Register Commands
+        run: npm run generate-commands --workspace commands
