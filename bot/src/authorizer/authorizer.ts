@@ -4,10 +4,8 @@ import nacl from "tweetnacl";
 export const authorizeRequest = (event: APIGatewayProxyEvent): boolean => {
   const { body, headers } = event;
 
-  console.log(JSON.stringify(headers));
-
-  const timestamp = headers["X-Signature-Timestamp"];
-  const signature = headers["X-Signature-Ed25519"];
+  const timestamp = headers["x-signature-timestamp"];
+  const signature = headers["x-signature-ed25519"];
 
   if (!signature || !process.env.DISCORD_PUBLIC_KEY) {
     console.error("Missing necessary information");

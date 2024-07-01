@@ -7,8 +7,8 @@ jest.mock("tweetnacl");
 process.env.DISCORD_PUBLIC_KEY = "PUBLIC_KEY";
 const mockEvent = {
   headers: {
-    "X-Signature-Timestamp": "timestamp",
-    "X-Signature-Ed25519": "signature",
+    "x-signature-timestamp": "timestamp",
+    "x-signature-ed25519": "signature",
   },
   body: { test: "test" },
 } as unknown as APIGatewayProxyEvent;
