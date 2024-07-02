@@ -28,7 +28,7 @@ export const proxy = async (
   if (body.type == 1) {
     response = { type: 1 };
   } else {
-    response = { type: 4, content: "Loading..." };
+    response = { type: 4, data: { content: "Loading..." } };
   }
   return {
     statusCode: 200,
