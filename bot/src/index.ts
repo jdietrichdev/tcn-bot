@@ -1,8 +1,16 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import {
+  APIGatewayProxyEvent,
+  APIGatewayProxyResult,
+  EventBridgeEvent,
+} from "aws-lambda";
 import { authorizeRequest } from "./authorizer/authorizer";
 import { eventClient } from "./clients/eventbridge-client";
 import { PutEventsCommand } from "@aws-sdk/client-eventbridge";
-import { APIInteraction } from "discord-api-types/payloads/v10";
+import {
+  APIChatInputApplicationCommandInteraction,
+  APIInteraction,
+} from "discord-api-types/payloads/v10";
+import { handleHello } from "./command-handlers/handlers";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -13,24 +21,24 @@ export const proxy = async (
     return { statusCode: 401, body: "Unauthorized" };
   }
   const body = JSON.parse(event.body!) as APIInteraction;
-  await eventClient.send(
-    new PutEventsCommand({
-      Entries: [
-        {
-          Detail: event.body!,
-          DetailType: "Bot Event Received",
-          Source: "tcn-bot-event",
-          EventBusName: "tcn-bot-events",
-        },
-      ],
-    })
-  );
   if (body.type == 1) {
     response = { type: 1 };
   } else {
-    response = { 
-      type: 4, 
-      data: { content: "Loading..." } 
+    await eventClient.send(
+      new PutEventsCommand({
+        Entries: [
+          {
+            Detail: event.body!,
+            DetailType: "Bot Event Received",
+            Source: "tcn-bot-event",
+            EventBusName: "tcn-bot-events",
+          },
+        ],
+      })
+    );
+    response = {
+      type: 4,
+      data: { content: "Loading..." },
     };
   }
   return {
@@ -39,6 +47,12 @@ export const proxy = async (
   } as APIGatewayProxyResult;
 };
 
-export const handler = async () => {
-  return "handled";
+export const handler = async (
+  event: EventBridgeEvent<string, APIChatInputApplicationCommandInteraction>
+) => {
+  console.log(JSON.stringify(event));
+  switch (event.detail.data!.name) {
+    case "hello":
+      return handleHello(event.detail);
+  }
 };
