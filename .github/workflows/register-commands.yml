@@ -25,5 +25,7 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      - run: npm install
+
       - name: Register Commands
         run: npm run register-commands --workspace commands
