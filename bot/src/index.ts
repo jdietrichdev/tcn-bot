@@ -7,7 +7,7 @@ import { APIInteraction } from "discord-api-types/payloads/v10";
 export const proxy = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  let response: Record<string, number | string>;
+  let response: Record<string, any>;
   if (!authorizeRequest(event)) {
     console.log("Unauthorized");
     return { statusCode: 401, body: "Unauthorized" };
