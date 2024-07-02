@@ -57,7 +57,7 @@ test("proxy should return pong response when request type is 1", async () => {
 test("proxy should return 200 Loading response when request is valid", async () => {
   expect(await proxy(mockEvent)).toEqual({
     statusCode: 200,
-    body: JSON.stringify({ type: 4, content: "Loading..." }),
+    body: JSON.stringify({ type: 4, data: { content: "Loading..." } }),
   });
 });
 
