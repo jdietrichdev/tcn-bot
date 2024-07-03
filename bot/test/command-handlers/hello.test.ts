@@ -42,8 +42,7 @@ test("should get user data", async () => {
 test("should update message", async () => {
   await handleHello(mockInteraction);
   expect(updateMessage).toHaveBeenCalledWith("appId", "token", {
-    type: 4,
-    data: { contents: "Hello <@123>!" },
+    content: "Hello <@123>!",
   });
 });
 

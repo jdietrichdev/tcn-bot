@@ -14,10 +14,7 @@ export const handleHello = async (
       interaction,
       "user"
     ) as APIApplicationCommandInteractionDataUserOption;
-    const response = {
-      type: 4,
-      data: { contents: `Hello <@${userData.value}>!` },
-    };
+    const response = { content: `Hello <@${userData.value}>!` };
     await updateMessage(
       interaction.application_id,
       interaction.token,
