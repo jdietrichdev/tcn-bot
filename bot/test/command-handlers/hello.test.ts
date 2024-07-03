@@ -1,0 +1,47 @@
+import { APIChatInputApplicationCommandInteraction } from 'discord-api-types/v10';
+import { handleHello } from '../../src/command-handlers/hello';
+import { getCommandOptionData } from '../../src/command-handlers/utils';
+import { updateMessage } from '../../src/adapters/discord-adapter';
+
+jest.mock('../../src/command-handlers/utils');
+jest.mock('../../src/adapters/discord-adapter');
+
+let mockInteraction: APIChatInputApplicationCommandInteraction;
+
+beforeEach(() => {
+  mockInteraction = {
+    application_id: 'appId',
+    token: 'token',
+    data: {
+      options: [
+        {
+          name: 'user',
+          value: '123',
+          type: 6
+        }
+      ]
+    }
+  } as unknown as APIChatInputApplicationCommandInteraction;
+
+  jest.mocked(getCommandOptionData).mockReturnValue({
+    name: 'user',
+    value: '123',
+    type: 6
+  })
+});
+
+afterEach(jest.resetAllMocks);
+
+test('should get user data', async () => {
+  await handleHello(mockInteraction);
+  expect(getCommandOptionData).toHaveBeenCalledWith(mockInteraction, 'user');
+});
+
+test('should update message', async () => {
+  await handleHello(mockInteraction);
+  expect(updateMessage).toHaveBeenCalledWith(
+    'appId',
+    'token', 
+    { type: 4, data: { contents: 'Hello <@123>!'}}
+  );
+})
