@@ -9,6 +9,7 @@ export const updateMessage = async (
   response: APIInteractionResponse
 ) => {
   const url = `${BASE_URL}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
+  console.log(url);
   try {
     await axios.patch(url, JSON.stringify(response));
   } catch (err) {
