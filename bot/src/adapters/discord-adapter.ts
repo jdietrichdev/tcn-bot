@@ -11,7 +11,11 @@ export const updateMessage = async (
   const url = `${BASE_URL}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
   console.log(url);
   try {
-    await axios.patch(url, JSON.stringify(response));
+    await axios.patch(url, JSON.stringify(response), {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
   } catch (err) {
     throw new Error(`Request to Discord failed ${err}`);
   }

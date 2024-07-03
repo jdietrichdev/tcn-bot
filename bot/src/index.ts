@@ -51,8 +51,13 @@ export const handler = async (
   event: EventBridgeEvent<string, APIChatInputApplicationCommandInteraction>
 ) => {
   console.log(JSON.stringify(event));
-  switch (event.detail.data!.name) {
-    case "hello":
-      return handleHello(event.detail);
+  try {
+    switch (event.detail.data!.name) {
+      case "hello":
+        return handleHello(event.detail);
+    }
+  } catch (err) {
+    console.error(err);
+    throw err;
   }
 };
