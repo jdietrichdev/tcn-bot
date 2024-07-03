@@ -2,7 +2,7 @@ import { Construct } from "constructs";
 import { Stack, StackProps } from "aws-cdk-lib";
 import {
   Code,
-  Function as LambdaFunction,
+  Function,
   Runtime,
 } from "aws-cdk-lib/aws-lambda";
 import {
@@ -12,15 +12,23 @@ import {
 } from "aws-cdk-lib/aws-apigateway";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { EventBus, Rule } from "aws-cdk-lib/aws-events";
-import { CloudWatchLogGroup } from "aws-cdk-lib/aws-events-targets";
+import { CloudWatchLogGroup, LambdaFunction } from "aws-cdk-lib/aws-events-targets";
 
 export class InfraStack extends Stack {
   private eventBus: EventBus;
-  private proxy: LambdaFunction;
+  private proxy: Function;
+  private handler: Function;
   private api: LambdaRestApi;
 
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
+
+    this.handler = new Function(this, 'bot-handler', {
+      runtime: Runtime.NODEJS_20_X,
+      handler: "index.handler",
+      code: Code.fromAsset("../bot/dist"),
+      logRetention: RetentionDays.ONE_MONTH,
+    })
 
     this.eventBus = new EventBus(this, "bot-events", {
       eventBusName: "tcn-bot-events",
@@ -40,7 +48,18 @@ export class InfraStack extends Stack {
       targets: [new CloudWatchLogGroup(eventLog)],
     });
 
-    this.proxy = new LambdaFunction(this, "bot-proxy", {
+    new Rule(this, 'bot-event-handler', {
+      ruleName: 'BotEventHandler',
+      description: 'Handler for incoming bot events',
+      eventBus: this.eventBus,
+      eventPattern: {
+        source: ['tcn-bot-event'],
+        detailType: ['Bot Event Received'],
+      },
+      targets: [new LambdaFunction(this.handler)]
+    });
+
+    this.proxy = new Function(this, "bot-proxy", {
       runtime: Runtime.NODEJS_20_X,
       handler: "index.proxy",
       code: Code.fromAsset("../bot/dist"),

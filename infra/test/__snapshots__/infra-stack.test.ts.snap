@@ -3,6 +3,157 @@
 exports[`Infrastructure created 1`] = `
 "{
   "Resources": {
+    "bothandlerServiceRole712D848A": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "bothandler4BEF77A4": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-12345-us-east-1",
+          "S3Key": "files.zip"
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "bothandlerServiceRole712D848A",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs20.x"
+      },
+      "DependsOn": [
+        "bothandlerServiceRole712D848A"
+      ]
+    },
+    "bothandlerLogRetention19A358E3": {
+      "Type": "Custom::LogRetention",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+            "Arn"
+          ]
+        },
+        "LogGroupName": {
+          "Fn::Join": [
+            "",
+            [
+              "/aws/lambda/",
+              {
+                "Ref": "bothandler4BEF77A4"
+              }
+            ]
+          ]
+        },
+        "RetentionInDays": 30
+      }
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:PutRetentionPolicy",
+                "logs:DeleteRetentionPolicy"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+        "Roles": [
+          {
+            "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+          }
+        ]
+      }
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Handler": "index.handler",
+        "Runtime": "nodejs20.x",
+        "Timeout": 900,
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-12345-us-east-1",
+          "S3Key": "files.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+            "Arn"
+          ]
+        }
+      },
+      "DependsOn": [
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+      ]
+    },
     "botevents976D647F": {
       "Type": "AWS::Events::EventBus",
       "Properties": {
@@ -180,6 +331,55 @@ exports[`Infrastructure created 1`] = `
         "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2"
       ]
     },
+    "boteventhandler45F508F9": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "Handler for incoming bot events",
+        "EventBusName": {
+          "Ref": "botevents976D647F"
+        },
+        "EventPattern": {
+          "source": [
+            "tcn-bot-event"
+          ],
+          "detail-type": [
+            "Bot Event Received"
+          ]
+        },
+        "Name": "BotEventHandler",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "bothandler4BEF77A4",
+                "Arn"
+              ]
+            },
+            "Id": "Target0"
+          }
+        ]
+      }
+    },
+    "boteventhandlerAllowEventRulestackbothandlerBCA3B7E1B904B0BE": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "bothandler4BEF77A4",
+            "Arn"
+          ]
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "boteventhandler45F508F9",
+            "Arn"
+          ]
+        }
+      }
+    },
     "botproxyServiceRole56AA3B02": {
       "Type": "AWS::IAM::Role",
       "Properties": {
@@ -286,83 +486,6 @@ exports[`Infrastructure created 1`] = `
         },
         "RetentionInDays": 30
       }
-    },
-    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "lambda.amazonaws.com"
-              }
-            }
-          ],
-          "Version": "2012-10-17"
-        },
-        "ManagedPolicyArns": [
-          {
-            "Fn::Join": [
-              "",
-              [
-                "arn:",
-                {
-                  "Ref": "AWS::Partition"
-                },
-                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-              ]
-            ]
-          }
-        ]
-      }
-    },
-    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": {
-      "Type": "AWS::IAM::Policy",
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": [
-                "logs:PutRetentionPolicy",
-                "logs:DeleteRetentionPolicy"
-              ],
-              "Effect": "Allow",
-              "Resource": "*"
-            }
-          ],
-          "Version": "2012-10-17"
-        },
-        "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
-        "Roles": [
-          {
-            "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
-          }
-        ]
-      }
-    },
-    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": {
-      "Type": "AWS::Lambda::Function",
-      "Properties": {
-        "Handler": "index.handler",
-        "Runtime": "nodejs20.x",
-        "Timeout": 900,
-        "Code": {
-          "S3Bucket": "cdk-hnb659fds-assets-12345-us-east-1",
-          "S3Key": "files.zip"
-        },
-        "Role": {
-          "Fn::GetAtt": [
-            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
-            "Arn"
-          ]
-        }
-      },
-      "DependsOn": [
-        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
-        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
-      ]
     },
     "accesslogsDE09D170": {
       "Type": "AWS::Logs::LogGroup",
