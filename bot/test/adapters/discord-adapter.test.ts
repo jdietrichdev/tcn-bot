@@ -10,7 +10,8 @@ test("updateMessage should call patch with correct parameters", async () => {
   await updateMessage("appId", "token", { type: 1 });
   expect(mockedAxios.patch).toHaveBeenCalledWith(
     `${BASE_URL}/webhooks/appId/token/messages/@original`,
-    JSON.stringify({ type: 1 })
+    JSON.stringify({ type: 1 }),
+    { headers: { "Content-Type": "application/json" } }
   );
 });
 
