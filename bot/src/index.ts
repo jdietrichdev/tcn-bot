@@ -11,6 +11,8 @@ import {
   APIInteraction,
 } from "discord-api-types/payloads/v10";
 import { handleHello } from "./command-handlers/handlers";
+import { handleCommandNotFound } from "./command-handlers/not-found";
+import { handleFailure } from "./command-handlers/failure";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -54,10 +56,13 @@ export const handler = async (
   try {
     switch (event.detail.data!.name) {
       case "hello":
-        return handleHello(event.detail);
+        return await handleHello(event.detail);
+      default:
+        return await handleCommandNotFound(event.detail);
     }
   } catch (err) {
     console.error(err);
+    await handleFailure(event.detail);
     throw err;
   }
 };
