@@ -1,10 +1,6 @@
 import { Construct } from "constructs";
 import { Stack, StackProps } from "aws-cdk-lib";
-import {
-  Code,
-  Function,
-  Runtime,
-} from "aws-cdk-lib/aws-lambda";
+import { Code, Function as Lambda, Runtime } from "aws-cdk-lib/aws-lambda";
 import {
   AccessLogFormat,
   LambdaRestApi,
@@ -12,23 +8,31 @@ import {
 } from "aws-cdk-lib/aws-apigateway";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { EventBus, Rule } from "aws-cdk-lib/aws-events";
-import { CloudWatchLogGroup, LambdaFunction } from "aws-cdk-lib/aws-events-targets";
+import {
+  CloudWatchLogGroup,
+  LambdaFunction,
+} from "aws-cdk-lib/aws-events-targets";
+import { Table } from "aws-cdk-lib/aws-dynamodb";
 
-export class InfraStack extends Stack {
+interface ServiceStackProps extends StackProps {
+  table: Table;
+}
+
+export class ServiceStack extends Stack {
   private eventBus: EventBus;
-  private proxy: Function;
-  private handler: Function;
-  private api: LambdaRestApi;
+  private proxy: Lambda;
+  private handler: Lambda;
 
-  constructor(scope: Construct, id: string, props: StackProps) {
+  constructor(scope: Construct, id: string, props: ServiceStackProps) {
     super(scope, id, props);
 
-    this.handler = new Function(this, 'bot-handler', {
+    this.handler = new Lambda(this, "bot-handler", {
       runtime: Runtime.NODEJS_20_X,
       handler: "index.handler",
       code: Code.fromAsset("../bot/dist"),
       logRetention: RetentionDays.ONE_MONTH,
-    })
+    });
+    props.table.grantReadWriteData(this.handler);
 
     this.eventBus = new EventBus(this, "bot-events", {
       eventBusName: "tcn-bot-events",
@@ -48,18 +52,18 @@ export class InfraStack extends Stack {
       targets: [new CloudWatchLogGroup(eventLog)],
     });
 
-    new Rule(this, 'bot-event-handler', {
-      ruleName: 'BotEventHandler',
-      description: 'Handler for incoming bot events',
+    new Rule(this, "bot-event-handler", {
+      ruleName: "BotEventHandler",
+      description: "Handler for incoming bot events",
       eventBus: this.eventBus,
       eventPattern: {
-        source: ['tcn-bot-event'],
-        detailType: ['Bot Event Received'],
+        source: ["tcn-bot-event"],
+        detailType: ["Bot Event Received"],
       },
-      targets: [new LambdaFunction(this.handler)]
+      targets: [new LambdaFunction(this.handler)],
     });
 
-    this.proxy = new Function(this, "bot-proxy", {
+    this.proxy = new Lambda(this, "bot-proxy", {
       runtime: Runtime.NODEJS_20_X,
       handler: "index.proxy",
       code: Code.fromAsset("../bot/dist"),
@@ -75,7 +79,7 @@ export class InfraStack extends Stack {
       logGroupName: "BotAccessLogs",
     });
 
-    this.api = new LambdaRestApi(this, "discord-bot-api", {
+    new LambdaRestApi(this, "discord-bot-api", {
       restApiName: "DiscordBotApi",
       handler: this.proxy,
       deployOptions: {

@@ -1,9 +1,20 @@
 #!/usr/bin/env node
-import 'source-map-support/register';
-import * as cdk from 'aws-cdk-lib';
-import { InfraStack } from '../lib/infra-stack';
+import "source-map-support/register";
+import * as cdk from "aws-cdk-lib";
+import { ServiceStack } from "../lib/service-stack";
+import { PersistenceStack } from "../lib/persistence-stack";
+
+const DEFAULT_STACK_PROPS = {
+  env: { account: process.env.AWS_ACCOUNT, region: "us-east-1" },
+};
 
 const app = new cdk.App();
-new InfraStack(app, 'DiscordBotStack', {
-  env: { account: process.env.AWS_ACCOUNT, region: 'us-east-1' },
+const persistence = new PersistenceStack(
+  app,
+  "DiscordBotPersistence",
+  DEFAULT_STACK_PROPS
+);
+new ServiceStack(app, "DiscordBotStack", {
+  ...DEFAULT_STACK_PROPS,
+  table: persistence.table,
 });
