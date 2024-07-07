@@ -13,6 +13,7 @@ import {
 import { handleHello } from "./command-handlers/handlers";
 import { handleCommandNotFound } from "./command-handlers/not-found";
 import { handleFailure } from "./command-handlers/failure";
+import { handlePlayer } from "./command-handlers/player";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -57,7 +58,10 @@ export const handler = async (
     switch (event.detail.data!.name) {
       case "hello":
         return await handleHello(event.detail);
+      case "player":
+        return await handlePlayer(event.detail);
       default:
+        console.log("Command not found, responding to command");
         return await handleCommandNotFound(event.detail);
     }
   } catch (err) {

@@ -1,6 +1,5 @@
 import {
   APIApplicationCommandInteractionDataUserOption,
-  // APIApplicationCommandInteractionDataUserOption,
   APIChatInputApplicationCommandInteraction,
 } from "discord-api-types/v10";
 import { getCommandOptionData } from "./utils";
