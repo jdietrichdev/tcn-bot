@@ -9,10 +9,11 @@ export const handleHello = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
   try {
-    const userData = getCommandOptionData(
-      interaction,
-      "user"
-    ) as APIApplicationCommandInteractionDataUserOption;
+    const userData =
+      getCommandOptionData<APIApplicationCommandInteractionDataUserOption>(
+        interaction,
+        "user"
+      );
     const response = { content: `Hello <@${userData.value}>!` };
     await updateMessage(
       interaction.application_id,
