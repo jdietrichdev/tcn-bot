@@ -3,7 +3,7 @@
 exports[`Infrastructure created 1`] = `
 "{
   "Resources": {
-    "botschedulingtableF303387A": {
+    "schedulingtable85BE2571": {
       "Type": "AWS::DynamoDB::Table",
       "Properties": {
         "AttributeDefinitions": [
@@ -30,7 +30,7 @@ exports[`Infrastructure created 1`] = `
           "ReadCapacityUnits": 5,
           "WriteCapacityUnits": 5
         },
-        "TableName": "ScedulingTable",
+        "TableName": "SchedulingTable",
         "TimeToLiveSpecification": {
           "AttributeName": "expiration",
           "Enabled": true
