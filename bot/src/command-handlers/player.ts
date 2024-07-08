@@ -4,7 +4,7 @@ import {
   APIChatInputApplicationCommandInteraction,
 } from "discord-api-types/v10";
 import { dbClient } from "../clients/dynamodb-client";
-import { getCommandOptionData, getGuildId, getMessageSender } from "./utils";
+import { getGuildId, getMessageSender, getSubCommandOptionData } from "./utils";
 import { UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 
 export const handlePlayer = async (
@@ -30,16 +30,18 @@ const addPlayer = async (
     const guildId = getGuildId(interaction);
     console.log(guildId);
     const rosterObject =
-      getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
+      getSubCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
+        "add",
         "roster"
       );
     console.log(rosterObject);
     const roster = rosterObject.value;
     console.log(roster);
     const user =
-      getCommandOptionData<APIApplicationCommandInteractionDataUserOption>(
+      getSubCommandOptionData<APIApplicationCommandInteractionDataUserOption>(
         interaction,
+        "add",
         "user"
       );
     console.log(user);
