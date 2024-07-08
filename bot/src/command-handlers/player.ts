@@ -28,11 +28,14 @@ const addPlayer = async (
 ) => {
   try {
     const guildId = getGuildId(interaction);
-    const roster =
+    console.log(guildId);
+    const rosterObject =
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
         "roster"
-      ).value;
+      );
+    console.log(rosterObject);
+    const roster = rosterObject.value;
     console.log(roster);
     const user =
       getCommandOptionData<APIApplicationCommandInteractionDataUserOption>(
