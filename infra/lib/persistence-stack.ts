@@ -9,7 +9,7 @@ export class PersistenceStack extends Stack {
     super(scope, id, props);
 
     this.table = new Table(this, "bot-scheduling-table", {
-      tableName: "ScedulingTable",
+      tableName: "SchedulingTable",
       partitionKey: {
         name: "pk",
         type: AttributeType.STRING,
