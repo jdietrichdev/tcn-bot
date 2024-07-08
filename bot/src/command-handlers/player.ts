@@ -33,16 +33,19 @@ const addPlayer = async (
         interaction,
         "roster"
       ).value;
+    console.log(roster);
     const user =
       getCommandOptionData<APIApplicationCommandInteractionDataUserOption>(
         interaction,
         "user"
       );
+    console.log(user);
     const id = user ? user.value : getMessageSender(interaction).id;
+    console.log(id);
     const name = user
       ? interaction.data.resolved!.users![id].global_name!
       : interaction.member!.user.global_name!;
-    console.log(guildId, roster, id, name);
+    console.log(name);
     dbClient.send(
       new UpdateItemCommand({
         TableName: "SchedulingTable",
