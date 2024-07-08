@@ -38,7 +38,7 @@ const addPlayer = async (
         interaction,
         "user"
       );
-    const id = user.value ?? getMessageSender(interaction).id;
+    const id = user ? user.value : getMessageSender(interaction).id;
     const name = user
       ? interaction.data.resolved!.users![id].global_name!
       : interaction.member!.user.global_name!;
