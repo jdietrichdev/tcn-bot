@@ -66,7 +66,7 @@ const addPlayer = async (
     );
     console.log(response);
     await updateMessage(interaction.application_id, interaction.token, {
-      content: `${name} added to ${roster} rosters`
+      content: `${username} added to ${roster} rosters`
     });
   } catch (err) {
     console.log("Failure adding player", err);
