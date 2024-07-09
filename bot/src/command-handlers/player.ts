@@ -61,12 +61,12 @@ const addPlayer = async (
           ":id": { S: id },
           ":username": { S: username },
         },
-        ReturnValues: 'ALL_NEW'
+        ReturnValues: 'NONE'
       })
     );
-    console.log(response);
+    if (response['$metadata'].httpStatusCode !== 200) throw new Error(`Failed adding player ${username}`);
     await updateMessage(interaction.application_id, interaction.token, {
-      content: `${username} added to ${roster} rosters`
+      content: `${username} added to ${roster} roster`
     });
   } catch (err) {
     console.log("Failure adding player", err);
