@@ -29,29 +29,23 @@ const addPlayer = async (
 ) => {
   try {
     const guildId = getGuildId(interaction);
-    console.log(guildId);
     const rosterObject =
       getSubCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
         "add",
         "roster"
       );
-    console.log(rosterObject);
     const roster = rosterObject.value;
-    console.log(roster);
     const user =
       getSubCommandOptionData<APIApplicationCommandInteractionDataUserOption>(
         interaction,
         "add",
         "user"
       );
-    console.log(user);
     const id = user ? user.value : getMessageSender(interaction).id;
-    console.log(id);
-    const name = user
+    const username = user
       ? interaction.data.resolved!.users![id].global_name!
       : interaction.member!.user.global_name!;
-    console.log(name);
     const response = await dbClient.send(
       new UpdateItemCommand({
         TableName: "SchedulingTable",
@@ -61,11 +55,11 @@ const addPlayer = async (
             S: `member#${roster}#${id}`,
           },
         },
-        UpdateExpression: "SET roster=:roster, id=:id, name=:name",
+        UpdateExpression: "SET roster=:roster, id=:id, username=:username",
         ExpressionAttributeValues: {
           ":roster": { S: roster },
           ":id": { S: id },
-          ":name": { S: name },
+          ":username": { S: username },
         },
         ReturnValues: 'ALL_NEW'
       })
