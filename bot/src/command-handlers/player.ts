@@ -6,6 +6,7 @@ import {
 import { dbClient } from "../clients/dynamodb-client";
 import { getGuildId, getMessageSender, getSubCommandOptionData } from "./utils";
 import { UpdateItemCommand } from "@aws-sdk/client-dynamodb";
+import { updateMessage } from "../adapters/discord-adapter";
 
 export const handlePlayer = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -51,7 +52,7 @@ const addPlayer = async (
       ? interaction.data.resolved!.users![id].global_name!
       : interaction.member!.user.global_name!;
     console.log(name);
-    dbClient.send(
+    const response = await dbClient.send(
       new UpdateItemCommand({
         TableName: "SchedulingTable",
         Key: {
@@ -66,8 +67,13 @@ const addPlayer = async (
           ":id": { S: id },
           ":name": { S: name },
         },
+        ReturnValues: 'ALL_NEW'
       })
     );
+    console.log(response);
+    await updateMessage(interaction.application_id, interaction.token, {
+      content: `${name} added to ${roster} rosters`
+    });
   } catch (err) {
     console.log("Failure adding player", err);
     throw err;
