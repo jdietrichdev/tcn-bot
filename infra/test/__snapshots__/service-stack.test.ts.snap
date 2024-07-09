@@ -166,8 +166,8 @@ exports[`Infrastructure created 1`] = `
         "LogGroupName": "EventAuditLogs",
         "RetentionInDays": 731
       },
-      "UpdateReplacePolicy": "Retain",
-      "DeletionPolicy": "Retain"
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
     },
     "auditlogrule80BFFC4D": {
       "Type": "AWS::Events::Rule",
@@ -493,8 +493,8 @@ exports[`Infrastructure created 1`] = `
         "LogGroupName": "BotAccessLogs",
         "RetentionInDays": 731
       },
-      "UpdateReplacePolicy": "Retain",
-      "DeletionPolicy": "Retain"
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
     },
     "discordbotapi5484B478": {
       "Type": "AWS::ApiGateway::RestApi",

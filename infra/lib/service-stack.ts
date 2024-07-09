@@ -1,5 +1,5 @@
 import { Construct } from "constructs";
-import { Stack, StackProps } from "aws-cdk-lib";
+import { RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
 import { Code, Function as Lambda, Runtime } from "aws-cdk-lib/aws-lambda";
 import {
   AccessLogFormat,
@@ -40,6 +40,7 @@ export class ServiceStack extends Stack {
 
     const eventLog = new LogGroup(this, "event-audit-log", {
       logGroupName: "EventAuditLogs",
+      removalPolicy: RemovalPolicy.DESTROY
     });
 
     new Rule(this, "audit-log-rule", {
@@ -77,6 +78,7 @@ export class ServiceStack extends Stack {
 
     const accessLogs = new LogGroup(this, "access-logs", {
       logGroupName: "BotAccessLogs",
+      removalPolicy: RemovalPolicy.DESTROY,
     });
 
     new LambdaRestApi(this, "discord-bot-api", {
