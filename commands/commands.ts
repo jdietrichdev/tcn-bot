@@ -35,6 +35,29 @@ const playerCommands = new SlashCommandBuilder()
           .setDescription("Which player needs to be added")
           .setRequired(false);
       });
+  })
+  .addSubcommand((subcommand) => {
+    return subcommand
+      .setName("away")
+      .setDescription("Set player away time")
+      .addStringOption((option) => {
+        return option
+          .setName("startDate")
+          .setDescription("First day you will be unavailable (04/03/2024)")
+          .setRequired(true);
+      })
+      .addStringOption((option) => {
+        return option
+          .setName("endDate")
+          .setDescription("Last day you will be unavailable (04/03/2024")
+          .setRequired(false);
+      })
+      .addUserOption((option) => {
+        return option
+          .setName("user")
+          .setDescription("Player who will be away")
+          .setRequired(false);
+      });
   });
 
 export const commands = [helloCommand, playerCommands];
