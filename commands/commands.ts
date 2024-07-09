@@ -42,13 +42,13 @@ const playerCommands = new SlashCommandBuilder()
       .setDescription("Set player away time")
       .addStringOption((option) => {
         return option
-          .setName("startDate")
+          .setName("startdate")
           .setDescription("First day you will be unavailable (04/03/2024)")
           .setRequired(true);
       })
       .addStringOption((option) => {
         return option
-          .setName("endDate")
+          .setName("enddate")
           .setDescription("Last day you will be unavailable (04/03/2024")
           .setRequired(false);
       })
