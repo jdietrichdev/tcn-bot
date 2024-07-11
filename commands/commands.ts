@@ -60,4 +60,57 @@ const playerCommands = new SlashCommandBuilder()
       });
   });
 
-export const commands = [helloCommand, playerCommands];
+const eventCommands = new SlashCommandBuilder()
+  .setName("event")
+  .setDescription("Interact with events")
+  .addSubcommand((subcommand) => {
+    return subcommand
+      .setName("notify")
+      .setDescription("Post message about upcoming event")
+      .addStringOption((option) => {
+        return option
+          .setName("name")
+          .setDescription("Name of event")
+          .setRequired(true);
+      })
+      .addStringOption((option) => {
+        return option
+          .setName("message")
+          .setDescription("Message to include with event")
+          .setRequired(true);
+      })
+      .addStringOption((option) => {
+        return option
+          .setName("datetime")
+          .setDescription("Date and time of event")
+          .setRequired(true);
+      })
+      .addStringOption((option) => {
+        return option
+          .setName("timezone")
+          .setDescription("Timezone for date/time (defaults to UTC)")
+          .setRequired(false)
+          .setChoices([
+            { name: "EST", value: "America/New_York" },
+            { name: "CST", value: "America/Chicago" },
+            { name: "MST", value: "America/Denver" },
+            { name: "PST", value: "America/Los_Angeles" },
+          ]);
+      })
+      .addChannelOption((option) => {
+        return option
+          .setName("channel")
+          .setDescription(
+            "Channel to post message in (defaults to current channel)"
+          )
+          .setRequired(false);
+      })
+      .addAttachmentOption((option) => {
+        return option
+          .setName("thumbnail")
+          .setDescription("Thumbnail for event")
+          .setRequired(false);
+      });
+  });
+
+export const commands = [helloCommand, playerCommands, eventCommands];
