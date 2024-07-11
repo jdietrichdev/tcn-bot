@@ -65,7 +65,10 @@ describe("proxy", () => {
   test("should return 200 Loading response when request is valid and type is not 1", async () => {
     expect(await proxy(mockApiEvent)).toEqual({
       statusCode: 200,
-      body: JSON.stringify({ type: 4, data: { content: "Loading..." } }),
+      body: JSON.stringify({
+        type: 4,
+        data: { content: "Loading...", ephemeral: true },
+      }),
     });
   });
 });
