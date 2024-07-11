@@ -10,10 +10,13 @@ import {
   APIChatInputApplicationCommandInteraction,
   APIInteraction,
 } from "discord-api-types/payloads/v10";
-import { handleHello } from "./command-handlers/handlers";
-import { handleCommandNotFound } from "./command-handlers/not-found";
-import { handleFailure } from "./command-handlers/failure";
-import { handlePlayer } from "./command-handlers/player";
+import {
+  handleHello,
+  handlePlayer,
+  handleCommandNotFound,
+  handleFailure,
+  handleEvent,
+} from "./command-handlers/handlers";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -41,7 +44,7 @@ export const proxy = async (
     );
     response = {
       type: 4,
-      data: { content: "Loading..." },
+      data: { content: "Loading...", ephemeral: true },
     };
   }
   return {
@@ -60,6 +63,8 @@ export const handler = async (
         return await handleHello(event.detail);
       case "player":
         return await handlePlayer(event.detail);
+      case "event":
+        return await handleEvent(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await handleCommandNotFound(event.detail);
