@@ -3,7 +3,10 @@ import { handler, proxy } from "../src";
 import { authorizeRequest } from "../src/authorizer/authorizer";
 import { eventClient } from "../src/clients/eventbridge-client";
 import { handleHello } from "../src/command-handlers/handlers";
-import { APIChatInputApplicationCommandInteraction } from "discord-api-types/v10";
+import {
+  APIChatInputApplicationCommandInteraction,
+  MessageFlags,
+} from "discord-api-types/v10";
 
 jest.mock("../src/authorizer/authorizer");
 jest.mock("../src/clients/eventbridge-client");
@@ -67,7 +70,7 @@ describe("proxy", () => {
       statusCode: 200,
       body: JSON.stringify({
         type: 4,
-        data: { content: "Loading...", ephemeral: true },
+        data: { content: "Loading...", flags: MessageFlags.Loading },
       }),
     });
   });

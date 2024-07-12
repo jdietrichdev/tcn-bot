@@ -9,6 +9,8 @@ import { PutEventsCommand } from "@aws-sdk/client-eventbridge";
 import {
   APIChatInputApplicationCommandInteraction,
   APIInteraction,
+  APIInteractionResponse,
+  MessageFlags,
 } from "discord-api-types/payloads/v10";
 import {
   handleHello,
@@ -44,8 +46,8 @@ export const proxy = async (
     );
     response = {
       type: 4,
-      data: { content: "Loading...", ephemeral: true },
-    };
+      data: { content: "Loading...", flags: MessageFlags.Loading },
+    } as APIInteractionResponse;
   }
   return {
     statusCode: 200,
