@@ -46,7 +46,7 @@ export const proxy = async (
     );
     response = {
       type: 4,
-      data: { content: "Loading...", flags: MessageFlags.Loading },
+      data: { content: "Loading...", flags: MessageFlags.Ephemeral },
     } as APIInteractionResponse;
   }
   return {

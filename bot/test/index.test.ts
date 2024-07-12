@@ -70,7 +70,7 @@ describe("proxy", () => {
       statusCode: 200,
       body: JSON.stringify({
         type: 4,
-        data: { content: "Loading...", flags: MessageFlags.Loading },
+        data: { content: "Loading...", flags: MessageFlags.Ephemeral },
       }),
     });
   });
