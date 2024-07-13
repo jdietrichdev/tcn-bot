@@ -97,14 +97,6 @@ const eventCommands = new SlashCommandBuilder()
             { name: "PST", value: "America/Los_Angeles" },
           ]);
       })
-      .addChannelOption((option) => {
-        return option
-          .setName("channel")
-          .setDescription(
-            "Channel to post message in (defaults to current channel)"
-          )
-          .setRequired(false);
-      })
       .addAttachmentOption((option) => {
         return option
           .setName("thumbnail")
