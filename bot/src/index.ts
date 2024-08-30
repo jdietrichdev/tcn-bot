@@ -46,7 +46,7 @@ export const proxy = async (
       })
     );
     response = {
-      type: 4,
+      type: 6,
       data: { flags: MessageFlags.Ephemeral },
     } as APIInteractionResponse;
   }
@@ -77,6 +77,5 @@ export const handler = async (
   } catch (err) {
     console.error(err);
     await handleFailure(event.detail);
-    throw err;
   }
 };
