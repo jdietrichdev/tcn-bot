@@ -10,7 +10,6 @@ import {
   APIChatInputApplicationCommandInteraction,
   APIInteraction,
   APIInteractionResponse,
-  MessageFlags,
 } from "discord-api-types/payloads/v10";
 import {
   handleHello,
@@ -47,7 +46,6 @@ export const proxy = async (
     );
     response = {
       type: 5,
-      data: { flags: MessageFlags.Loading },
     } as APIInteractionResponse;
   }
   return {
