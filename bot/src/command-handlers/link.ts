@@ -18,7 +18,7 @@ export const handleLink = async (
         throw new Error("No processing defined for that command");
     }
   } catch (err) {
-    console.log("Failure handling player command", err);
+    console.log("Failure handling link command", err);
     throw err;
   }
 };
