@@ -8,6 +8,7 @@ let stack: ServiceStack;
 let template: string;
 
 process.env.DISCORD_PUBLIC_KEY = "TEST_KEY";
+process.env.CLASH_API_TOKEN = "TEST_API_TOKEN";
 
 test("Infrastructure created", () => {
   app = new App();

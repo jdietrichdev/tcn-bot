@@ -42,7 +42,9 @@ exports[`Infrastructure created 1`] = `
           "S3Key": "files.zip"
         },
         "Environment": {
-          "Variables": {}
+          "Variables": {
+            "CLASH_API_TOKEN": "TEST_API_TOKEN"
+          }
         },
         "Handler": "index.handler",
         "Role": {
