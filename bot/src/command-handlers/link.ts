@@ -4,6 +4,7 @@ import {
 } from "discord-api-types/payloads/v10";
 import { getSubCommandOptionData } from "./utils";
 import { verify } from "../adapters/coc-api-adapter";
+import { updateMessage } from "../adapters/discord-adapter";
 
 export const handleLink = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -12,8 +13,8 @@ export const handleLink = async (
     switch (interaction.data.options![0].name) {
       case "create":
         return await linkPlayer(interaction);
-      // case "remove":
-      //   return await unlinkPlayer(interaction);
+      case "remove":
+        return await unlinkPlayer(interaction);
       default:
         throw new Error("No processing defined for that command");
     }
@@ -40,10 +41,32 @@ const linkPlayer = async (
     ).value;
 
   try {
-    const verifyResponse = verify(playerTag, apiToken);
-    return verifyResponse;
+    verify(playerTag, apiToken);
+    updateMessage(interaction.application_id, interaction.token, {
+      content: "User successfully linked",
+    });
   } catch (err) {
-    console.log("Failure verifying account", err);
+    console.log("Failure linking account", err);
+    throw err;
+  }
+};
+
+const unlinkPlayer = async (
+  interaction: APIChatInputApplicationCommandInteraction
+) => {
+  try {
+    const playerTag =
+      getSubCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
+        interaction,
+        "remove",
+        "tag"
+      );
+    console.log(playerTag);
+    updateMessage(interaction.application_id, interaction.token, {
+      content: "User successfully unlinked",
+    });
+  } catch (err) {
+    console.log("Failure unlinking account", err);
     throw err;
   }
 };
