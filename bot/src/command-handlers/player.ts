@@ -5,7 +5,7 @@ import {
 } from "discord-api-types/v10";
 import { dbClient } from "../clients/dynamodb-client";
 import { getGuildId, getMessageSender, getSubCommandOptionData } from "./utils";
-import { UpdateItemCommand } from "@aws-sdk/client-dynamodb";
+import { ReturnValue, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import { updateMessage } from "../adapters/discord-adapter";
 
 export const handlePlayer = async (
@@ -61,12 +61,13 @@ const addPlayer = async (
           ":id": { S: id },
           ":username": { S: username },
         },
-        ReturnValues: 'NONE'
+        ReturnValues: ReturnValue.NONE,
       })
     );
-    if (response['$metadata'].httpStatusCode !== 200) throw new Error(`Failed adding player ${username}`);
+    if (response["$metadata"].httpStatusCode !== 200)
+      throw new Error(`Failed adding player ${username}`);
     await updateMessage(interaction.application_id, interaction.token, {
-      content: `${username} added to ${roster} roster`
+      content: `${username} added to ${roster} roster`,
     });
   } catch (err) {
     console.log("Failure adding player", err);

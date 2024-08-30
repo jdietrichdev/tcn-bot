@@ -62,7 +62,7 @@ const linkPlayer = async (
           ":id": { S: user },
           ":tag": { S: playerTag },
         },
-        ReturnValues: ReturnValue.UPDATED_NEW,
+        ReturnValues: ReturnValue.NONE,
       })
     );
     console.log(response);
