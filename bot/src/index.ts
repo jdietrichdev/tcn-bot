@@ -46,7 +46,7 @@ export const proxy = async (
       })
     );
     response = {
-      type: 6,
+      type: 5,
       data: { flags: MessageFlags.Ephemeral },
     } as APIInteractionResponse;
   }

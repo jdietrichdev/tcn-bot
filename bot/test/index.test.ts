@@ -69,7 +69,7 @@ describe("proxy", () => {
     expect(await proxy(mockApiEvent)).toEqual({
       statusCode: 200,
       body: JSON.stringify({
-        type: 6,
+        type: 5,
         data: { flags: MessageFlags.Ephemeral },
       }),
     });
