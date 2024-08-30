@@ -43,6 +43,7 @@ exports[`Infrastructure created 1`] = `
         },
         "Environment": {
           "Variables": {
+            "REGION": "us-east-1",
             "CLASH_API_TOKEN": "TEST_API_TOKEN"
           }
         },
