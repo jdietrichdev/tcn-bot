@@ -41,8 +41,8 @@ const linkPlayer = async (
     ).value;
 
   try {
-    verify(playerTag, apiToken);
-    updateMessage(interaction.application_id, interaction.token, {
+    await verify(playerTag, apiToken);
+    await updateMessage(interaction.application_id, interaction.token, {
       content: "User successfully linked",
     });
   } catch (err) {
@@ -62,7 +62,7 @@ const unlinkPlayer = async (
         "tag"
       );
     console.log(playerTag);
-    updateMessage(interaction.application_id, interaction.token, {
+    await updateMessage(interaction.application_id, interaction.token, {
       content: "User successfully unlinked",
     });
   } catch (err) {
