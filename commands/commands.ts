@@ -10,6 +10,38 @@ const helloCommand = new SlashCommandBuilder()
       .setRequired(true);
   });
 
+const linkCommands = new SlashCommandBuilder()
+  .setName("link")
+  .setDescription("Link/Unlink discord to Clash of Clans account")
+  .addSubcommand((subcommand) => {
+    return subcommand
+      .setName("create")
+      .setDescription("Create link to Clash of Clans account")
+      .addStringOption((option) => {
+        return option
+          .setName("tag")
+          .setDescription("Player tag")
+          .setRequired(true);
+      })
+      .addStringOption((option) => {
+        return option
+          .setName("token")
+          .setDescription("API token from settings")
+          .setRequired(true);
+      });
+  })
+  .addSubcommand((subcommand) => {
+    return subcommand
+      .setName("remove")
+      .setDescription("Remove link to Clash of Clans account")
+      .addStringOption((option) => {
+        return option
+          .setName("tag")
+          .setDescription("Player tag")
+          .setRequired(true);
+      });
+  });
+
 const playerCommands = new SlashCommandBuilder()
   .setName("player")
   .setDescription("Interact with players")
@@ -91,10 +123,10 @@ const eventCommands = new SlashCommandBuilder()
           .setDescription("Timezone for date/time (defaults to UTC)")
           .setRequired(false)
           .setChoices([
-            { name: "EST", value: "America/New_York" },
-            { name: "CST", value: "America/Chicago" },
-            { name: "MST", value: "America/Denver" },
-            { name: "PST", value: "America/Los_Angeles" },
+            { name: "Eastern Time (US)", value: "America/New_York" },
+            { name: "Central Time (US)", value: "America/Chicago" },
+            { name: "Mountain Time (US)", value: "America/Denver" },
+            { name: "Pacific Time (US)", value: "America/Los_Angeles" },
           ]);
       })
       .addAttachmentOption((option) => {
@@ -105,4 +137,9 @@ const eventCommands = new SlashCommandBuilder()
       });
   });
 
-export const commands = [helloCommand, playerCommands, eventCommands];
+export const commands = [
+  helloCommand,
+  linkCommands,
+  playerCommands,
+  eventCommands,
+];
