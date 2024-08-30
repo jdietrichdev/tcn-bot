@@ -87,7 +87,7 @@ const unlinkPlayer = async (
       ).value;
     const guildId = getGuildId(interaction);
     const user = getMessageSender(interaction);
-    dbClient.send(
+    const response = await dbClient.send(
       new DeleteItemCommand({
         TableName: "SchedulingTable",
         Key: {
@@ -96,6 +96,7 @@ const unlinkPlayer = async (
         },
       })
     );
+    console.log(response);
     await updateMessage(interaction.application_id, interaction.token, {
       content: "User successfully unlinked",
     });
