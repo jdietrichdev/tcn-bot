@@ -86,7 +86,7 @@ const unlinkPlayer = async (
         "tag"
       ).value;
     const guildId = getGuildId(interaction);
-    const user = getMessageSender(interaction);
+    const user = getMessageSender(interaction).id;
     const response = await dbClient.send(
       new DeleteItemCommand({
         TableName: "SchedulingTable",
