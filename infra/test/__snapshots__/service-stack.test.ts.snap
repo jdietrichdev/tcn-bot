@@ -41,6 +41,9 @@ exports[`Infrastructure created 1`] = `
           "S3Bucket": "cdk-hnb659fds-assets-12345-us-east-1",
           "S3Key": "files.zip"
         },
+        "Environment": {
+          "Variables": {}
+        },
         "Handler": "index.handler",
         "Role": {
           "Fn::GetAtt": [
