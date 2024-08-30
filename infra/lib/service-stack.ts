@@ -31,6 +31,9 @@ export class ServiceStack extends Stack {
       handler: "index.handler",
       code: Code.fromAsset("../bot/dist"),
       logRetention: RetentionDays.ONE_MONTH,
+      environment: {
+        CLASH_API_TOKEN: process.env.CLASH_API_TOKEN!,
+      },
     });
     props.table.grantReadWriteData(this.handler);
 
@@ -40,7 +43,7 @@ export class ServiceStack extends Stack {
 
     const eventLog = new LogGroup(this, "event-audit-log", {
       logGroupName: "EventAuditLogs",
-      removalPolicy: RemovalPolicy.DESTROY
+      removalPolicy: RemovalPolicy.DESTROY,
     });
 
     new Rule(this, "audit-log-rule", {

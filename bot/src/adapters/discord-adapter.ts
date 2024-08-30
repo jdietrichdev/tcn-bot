@@ -9,7 +9,6 @@ export const updateMessage = async (
   response: RESTPostAPIWebhookWithTokenJSONBody
 ) => {
   const url = `${BASE_URL}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
-  console.log(url);
   try {
     await axios.patch(url, response);
   } catch (err) {

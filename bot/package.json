@@ -11,17 +11,18 @@
   "author": "Josh Dietrich",
   "license": "ISC",
   "dependencies": {
-    "@types/aws-lambda": "8.10.140",
-    "@aws-sdk/client-dynamodb": "3.609.0",
-    "@aws-sdk/client-eventbridge": "3.606.0",
-    "axios": "1.7.2",
+    "@types/aws-lambda": "^8.10.145",
+    "@aws-sdk/client-dynamodb": "^3.637.0",
+    "@aws-sdk/client-eventbridge": "^3.637.0",
+    "axios": "^1.7.5",
+    "discord.js": "^14.15.3",
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
-    "discord-api-types": "0.37.91",
-    "source-map-loader": "5.0.0",
-    "ts-loader": "9.5.1",
-    "webpack": "5.92.1",
-    "webpack-cli": "5.1.4"
+    "discord-api-types": "^0.37.91",
+    "source-map-loader": "^5.0.0",
+    "ts-loader": "^9.5.1",
+    "webpack": "^5.94.0",
+    "webpack-cli": "^5.1.4"
   }
 }

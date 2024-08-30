@@ -18,6 +18,7 @@ import {
   handleCommandNotFound,
   handleFailure,
   handleEvent,
+  handleLink,
 } from "./command-handlers/handlers";
 
 export const proxy = async (
@@ -46,7 +47,7 @@ export const proxy = async (
     );
     response = {
       type: 4,
-      data: { content: "Loading...", flags: MessageFlags.Ephemeral },
+      data: { flags: MessageFlags.Ephemeral },
     } as APIInteractionResponse;
   }
   return {
@@ -67,6 +68,8 @@ export const handler = async (
         return await handlePlayer(event.detail);
       case "event":
         return await handleEvent(event.detail);
+      case "link":
+        return await handleLink(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await handleCommandNotFound(event.detail);
