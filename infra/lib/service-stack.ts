@@ -32,6 +32,7 @@ export class ServiceStack extends Stack {
       code: Code.fromAsset("../bot/dist"),
       logRetention: RetentionDays.ONE_MONTH,
       environment: {
+        REGION: props.env!.region!,
         CLASH_API_TOKEN: process.env.CLASH_API_TOKEN!,
       },
     });

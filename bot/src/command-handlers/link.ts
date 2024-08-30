@@ -6,7 +6,11 @@ import { getGuildId, getMessageSender, getSubCommandOptionData } from "./utils";
 import { verify } from "../adapters/coc-api-adapter";
 import { updateMessage } from "../adapters/discord-adapter";
 import { dbClient } from "../clients/dynamodb-client";
-import { ReturnValue, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
+import {
+  DeleteItemCommand,
+  ReturnValue,
+  UpdateItemCommand,
+} from "@aws-sdk/client-dynamodb";
 
 export const handleLink = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -80,8 +84,18 @@ const unlinkPlayer = async (
         interaction,
         "remove",
         "tag"
-      );
-    console.log(playerTag);
+      ).value;
+    const guildId = getGuildId(interaction);
+    const user = getMessageSender(interaction);
+    dbClient.send(
+      new DeleteItemCommand({
+        TableName: "SchedulingTable",
+        Key: {
+          pk: { S: guildId },
+          sk: { S: `player#${user}#${playerTag.substring(1)}` },
+        },
+      })
+    );
     await updateMessage(interaction.application_id, interaction.token, {
       content: "User successfully unlinked",
     });
