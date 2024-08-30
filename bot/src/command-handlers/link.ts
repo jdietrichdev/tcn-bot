@@ -2,9 +2,11 @@ import {
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
 } from "discord-api-types/payloads/v10";
-import { getSubCommandOptionData } from "./utils";
+import { getGuildId, getMessageSender, getSubCommandOptionData } from "./utils";
 import { verify } from "../adapters/coc-api-adapter";
 import { updateMessage } from "../adapters/discord-adapter";
+import { dbClient } from "../clients/dynamodb-client";
+import { ReturnValue, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 
 export const handleLink = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -39,9 +41,27 @@ const linkPlayer = async (
       "create",
       "token"
     ).value;
+  const guildId = getGuildId(interaction);
+  const user = getMessageSender(interaction).id;
 
   try {
     await verify(playerTag, apiToken);
+    const response = await dbClient.send(
+      new UpdateItemCommand({
+        TableName: "SchedulingTable",
+        Key: {
+          pk: { S: guildId },
+          sk: { S: `player#${user}#${playerTag.substring(1)}` },
+        },
+        UpdateExpression: "SET id=:id, tag=:tag",
+        ExpressionAttributeValues: {
+          ":id": { S: user },
+          ":tag": { S: playerTag },
+        },
+        ReturnValues: ReturnValue.UPDATED_NEW,
+      })
+    );
+    console.log(response);
     await updateMessage(interaction.application_id, interaction.token, {
       content: "User successfully linked",
     });
