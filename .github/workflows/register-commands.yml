@@ -13,6 +13,7 @@ permissions:
 env:
   APPLICATION_ID: ${{ secrets.APPLICATION_ID }}
   BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+  TEST_GUILD_ID: ${{ secrets.TEST_GUILD_ID }}
 
 jobs:
   register-commands:
