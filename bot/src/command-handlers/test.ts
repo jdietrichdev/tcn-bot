@@ -19,6 +19,6 @@ export const handleTest = async (
 
 const emoji = async (interaction: APIChatInputApplicationCommandInteraction) => {
     await updateMessage(interaction.application_id, interaction.token, {
-        content: '<:yeti:1301957376034865154>'
+        content: 'Test emoji: <:yeti:1301957376034865154>'
     });
 }
