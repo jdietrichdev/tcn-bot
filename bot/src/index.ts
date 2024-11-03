@@ -19,6 +19,7 @@ import {
   handleEvent,
   handleLink,
 } from "./command-handlers/handlers";
+import { handleTest } from "./command-handlers/test";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -68,6 +69,8 @@ export const handler = async (
         return await handleEvent(event.detail);
       case "link":
         return await handleLink(event.detail);
+      case "test":
+        return await handleTest(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await handleCommandNotFound(event.detail);
