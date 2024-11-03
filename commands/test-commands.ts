@@ -17,5 +17,10 @@ export const testCommands = [
             .setDescription("What should I say?")
             .setRequired(true);
         });
-    }),
+    })
+    .addSubcommand((subcommand) => {
+      return subcommand
+        .setName("emoji")
+        .setDescription("Return an emoji");
+    })
 ];
