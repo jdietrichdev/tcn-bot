@@ -6,6 +6,7 @@ import {
 import { getCommandOptionData, numberFormat, timeConvert } from "./utils";
 import { TROOPS } from "../constants/upgrades/troops";
 import { updateMessage } from "../adapters/discord-adapter";
+import { MISC } from "../constants/emojis/misc";
 
 export const handleUpgrade = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -18,28 +19,28 @@ export const handleUpgrade = async (
   const upgradeInfo = TROOPS[troop];
 
   const embed: APIEmbed = {
-    title: `${upgradeInfo.type} ${upgradeInfo.name} ${upgradeInfo.emoji}`,
+    title: `${upgradeInfo.emoji} ${upgradeInfo.name}`,
     url: upgradeInfo.wikiUrl,
     description: "Test description",
     fields: upgradeInfo.upgrades.map((upgrade: Record<string, any>) => {
       return {
         name: `**Level: ${upgrade.level}**`,
         value: [
-          `**Cost:** ${numberFormat(upgrade.cost)}`,
-          `**Time:** ${timeConvert(upgrade.time)}`,
+          `**Cost:** ${upgradeInfo.type}${numberFormat(upgrade.cost)}`,
+          `**Time ${MISC.CLOCK}:** ${timeConvert(upgrade.time)}`,
         ].join("\n"),
       };
     }),
     footer: {
       text: [
-        `Total Cost: ${numberFormat(
+        `Total Cost: ${upgradeInfo.type}${numberFormat(
           upgradeInfo.upgrades.reduce(
             (total: number, upgrade: Record<string, any>) =>
               (total += upgrade.cost),
             0
           )
         )}`,
-        `Total Time: ${timeConvert(
+        `Total Time ${MISC.CLOCK}: ${timeConvert(
           upgradeInfo.upgrades.reduce(
             (total: number, upgrade: Record<string, any>) =>
               (total += upgrade.time),

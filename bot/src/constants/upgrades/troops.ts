@@ -25,6 +25,33 @@ const MINION = {
       dph: 41,
       hp: 63,
     },
+    {
+      level: 3,
+      cost: 5000,
+      time: 57600,
+      labLevelRequired: 6,
+      dps: 44,
+      dph: 44,
+      hp: 68,
+    },
+    {
+      level: 4,
+      cost: 10000,
+      time: 86400,
+      labLevelRequired: 6,
+      dps: 47,
+      dph: 47,
+      hp: 73,
+    },
+    {
+      level: 5,
+      cost: 20000,
+      time: 172800,
+      labLevelRequired: 7,
+      dps: 50,
+      dph: 50,
+      hp: 78,
+    },
   ],
 };
 
