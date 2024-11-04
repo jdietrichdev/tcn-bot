@@ -19,7 +19,7 @@ afterEach(jest.resetAllMocks);
 
 describe("proxy", () => {
   beforeEach(() => {
-    mockApiEvent = createMockApiEvent(4, "test");
+    mockApiEvent = createMockApiEvent(2, "test");
     jest.mocked(authorizeRequest).mockReturnValue(true);
   });
 
