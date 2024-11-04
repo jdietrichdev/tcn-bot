@@ -2,6 +2,7 @@ import {
   APIApplicationCommandAutocompleteInteraction,
   APIApplicationCommandInteractionDataStringOption,
   APICommandAutocompleteInteractionResponseCallbackData,
+  InteractionResponseType,
 } from "discord-api-types/v10";
 import { TROOPS } from "../constants/upgrades/troops";
 
@@ -28,6 +29,7 @@ export const handleUpgrade = async (
   }
 
   return {
+    type: InteractionResponseType.ApplicationCommandAutocompleteResult,
     data: options,
   };
 };
