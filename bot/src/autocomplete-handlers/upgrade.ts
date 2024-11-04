@@ -21,7 +21,9 @@ export const handleUpgrade = async (
 
   if (focused && focused.name === "troop") {
     options.choices = Object.keys(TROOPS)
-      .filter((troop) => troop.includes(focused.value))
+      .filter((troop) =>
+        troop.toLowerCase().includes(focused.value.toLowerCase())
+      )
       .map((troop) => ({
         name: troop,
         value: troop,
