@@ -7,10 +7,11 @@ import {
   ButtonStyle,
   ComponentType,
 } from "discord-api-types/v10";
-import { getCommandOptionData, numberFormat, timeConvert } from "./utils";
 import { TROOPS } from "../constants/upgrades/troops";
 import { updateMessage } from "../adapters/discord-adapter";
 import { MISC } from "../constants/emojis/misc";
+import { getCommandOptionData } from "../util/interaction-util";
+import { numberFormat, timeConvert } from "../util/format-util";
 
 export const handleUpgrade = async (
   interaction: APIChatInputApplicationCommandInteraction

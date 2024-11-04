@@ -11,10 +11,13 @@ import {
   APIChatInputApplicationCommandInteraction,
   APIInteraction,
   APIInteractionResponse,
+  APIMessageComponentInteraction,
+  InteractionResponseType,
   InteractionType,
 } from "discord-api-types/payloads/v10";
 import { handleCommand } from "./command-handlers";
 import { handleAutocomplete } from "./autocomplete-handlers";
+import { handleComponent } from "./component-handlers";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -49,6 +52,11 @@ export const proxy = async (
       type: 5,
     } as APIInteractionResponse;
   }
+  if (body.type === InteractionType.MessageComponent) {
+    response = {
+      type: InteractionResponseType.DeferredMessageUpdate,
+    };
+  }
   return {
     statusCode: 200,
     body: JSON.stringify(response),
@@ -59,6 +67,11 @@ export const handler = async (
   event: EventBridgeEvent<string, APIInteraction>
 ) => {
   console.log(JSON.stringify(event));
+  if (event.detail.type === InteractionType.MessageComponent) {
+    await handleComponent(
+      event as EventBridgeEvent<string, APIMessageComponentInteraction>
+    );
+  }
   await handleCommand(
     event as EventBridgeEvent<string, APIChatInputApplicationCommandInteraction>
   );

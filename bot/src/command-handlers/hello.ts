@@ -2,8 +2,8 @@ import {
   APIApplicationCommandInteractionDataUserOption,
   APIChatInputApplicationCommandInteraction,
 } from "discord-api-types/v10";
-import { getCommandOptionData } from "./utils";
 import { updateMessage } from "../adapters/discord-adapter";
+import { getCommandOptionData } from "../util/interaction-util";
 
 export const handleHello = async (
   interaction: APIChatInputApplicationCommandInteraction

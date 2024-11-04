@@ -4,9 +4,13 @@ import {
   APIChatInputApplicationCommandInteraction,
 } from "discord-api-types/v10";
 import { dbClient } from "../clients/dynamodb-client";
-import { getGuildId, getMessageSender, getSubCommandOptionData } from "./utils";
 import { ReturnValue, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import { updateMessage } from "../adapters/discord-adapter";
+import {
+  getGuildId,
+  getMessageSender,
+  getSubCommandOptionData,
+} from "../util/interaction-util";
 
 export const handlePlayer = async (
   interaction: APIChatInputApplicationCommandInteraction
