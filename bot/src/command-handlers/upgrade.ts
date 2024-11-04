@@ -1,7 +1,11 @@
 import {
+  APIActionRowComponent,
   APIApplicationCommandInteractionDataStringOption,
+  APIButtonComponentWithCustomId,
   APIChatInputApplicationCommandInteraction,
   APIEmbed,
+  ButtonStyle,
+  ComponentType,
 } from "discord-api-types/v10";
 import { getCommandOptionData, numberFormat, timeConvert } from "./utils";
 import { TROOPS } from "../constants/upgrades/troops";
@@ -22,36 +26,68 @@ export const handleUpgrade = async (
     title: `${upgradeInfo.emoji} ${upgradeInfo.name}`,
     url: upgradeInfo.wikiUrl,
     description: "Test description",
-    fields: upgradeInfo.upgrades.map((upgrade: Record<string, any>) => {
-      return {
-        name: `**Level: ${upgrade.level}**`,
+    fields: [
+      ...upgradeInfo.upgrades.map((upgrade: Record<string, any>) => {
+        return {
+          name: `**Level: ${upgrade.level}**`,
+          value: [
+            `**Cost:** ${upgradeInfo.type}${numberFormat(upgrade.cost)}`,
+            `**Time:** ${MISC.CLOCK}${timeConvert(upgrade.time)}`,
+          ].join("\n"),
+        };
+      }),
+      {
+        name: "Total",
         value: [
-          `**Cost:** ${upgradeInfo.type}${numberFormat(upgrade.cost)}`,
-          `**Time ${MISC.CLOCK}:** ${timeConvert(upgrade.time)}`,
+          `**Cost:** ${upgradeInfo.type}${numberFormat(
+            upgradeInfo.upgrades.reduce(
+              (total: number, upgrade: Record<string, any>) =>
+                (total += upgrade.cost),
+              0
+            )
+          )}`,
+          `**Time:** ${MISC.CLOCK}${timeConvert(
+            upgradeInfo.upgrades.reduce(
+              (total: number, upgrade: Record<string, any>) =>
+                (total += upgrade.time),
+              0
+            )
+          )}`,
         ].join("\n"),
-      };
-    }),
+      },
+    ],
     footer: {
-      text: [
-        `Total Cost: ${upgradeInfo.type}${numberFormat(
-          upgradeInfo.upgrades.reduce(
-            (total: number, upgrade: Record<string, any>) =>
-              (total += upgrade.cost),
-            0
-          )
-        )}`,
-        `Total Time ${MISC.CLOCK}: ${timeConvert(
-          upgradeInfo.upgrades.reduce(
-            (total: number, upgrade: Record<string, any>) =>
-              (total += upgrade.time),
-            0
-          )
-        )}`,
-      ].join("\n"),
+      text: "Do you have a discount?",
     },
   };
 
+  const discountButtons: APIActionRowComponent<APIButtonComponentWithCustomId> =
+    {
+      type: ComponentType.ActionRow,
+      components: [
+        {
+          type: ComponentType.Button,
+          style: ButtonStyle.Secondary,
+          label: "10%",
+          custom_id: "10percent",
+        },
+        {
+          type: ComponentType.Button,
+          style: ButtonStyle.Secondary,
+          label: "15%",
+          custom_id: "15percent",
+        },
+        {
+          type: ComponentType.Button,
+          style: ButtonStyle.Secondary,
+          label: "20%",
+          custom_id: "20percent",
+        },
+      ],
+    };
+
   await updateMessage(interaction.application_id, interaction.token, {
     embeds: [embed],
+    components: [discountButtons],
   });
 };

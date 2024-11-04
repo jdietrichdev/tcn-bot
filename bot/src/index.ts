@@ -24,11 +24,11 @@ export const proxy = async (
     console.log("Unauthorized");
     return { statusCode: 401, body: "Unauthorized" };
   }
+  console.log(event.body);
   const body = JSON.parse(event.body!) as APIInteraction;
   if (body.type === InteractionType.Ping) {
     response = { type: 1 };
   } else if (body.type === InteractionType.ApplicationCommandAutocomplete) {
-    console.log(event.body);
     response = await handleAutocomplete(
       body as APIApplicationCommandAutocompleteInteraction
     );
