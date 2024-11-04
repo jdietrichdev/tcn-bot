@@ -23,7 +23,7 @@ export const handleUpgrade = async (
     description: "Test description",
     fields: upgradeInfo.upgrades.map((upgrade: Record<string, any>) => {
       return {
-        name: upgrade.level,
+        name: `**Level: ${upgrade.level}**`,
         value: [
           `**Cost:** ${numberFormat(upgrade.cost)}`,
           `**Time:** ${timeConvert(upgrade.time)}`,
@@ -32,14 +32,14 @@ export const handleUpgrade = async (
     }),
     footer: {
       text: [
-        `**Total Cost:** ${numberFormat(
+        `Total Cost: ${numberFormat(
           upgradeInfo.upgrades.reduce(
             (total: number, upgrade: Record<string, any>) =>
               (total += upgrade.cost),
             0
           )
         )}`,
-        `**Total Time:** ${timeConvert(
+        `Total Time: ${timeConvert(
           upgradeInfo.upgrades.reduce(
             (total: number, upgrade: Record<string, any>) =>
               (total += upgrade.time),

@@ -42,7 +42,7 @@ export const timeConvert = (seconds: number) => {
   const dDisplay = d > 0 ? d + "d" : "";
   const hDisplay = h > 0 ? h + "h" : "";
   const mDisplay = m > 0 ? m + "m" : "";
-  return dDisplay + hDisplay + mDisplay;
+  return dDisplay + hDisplay + mDisplay || "0";
 };
 
 export const numberFormat = (value: number) => {
