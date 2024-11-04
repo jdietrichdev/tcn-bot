@@ -20,17 +20,15 @@ export const testCommands = [
     })
     .addSubcommand((subcommand) => {
       return subcommand.setName("emoji").setDescription("Return an emoji");
-    })
-    .addSubcommand((subcommand) => {
-      return subcommand
-        .setName("upgrade")
-        .setDescription("Show upgrade info for selected troop")
-        .addStringOption((option) => {
-          return option
-            .setName("troop")
-            .setDescription("Troop to get upgrade information for")
-            .setRequired(true)
-            .setAutocomplete(true);
-        });
+    }),
+  new SlashCommandBuilder()
+    .setName("upgrade")
+    .setDescription("Show upgrade info for selected troop")
+    .addStringOption((option) => {
+      return option
+        .setName("troop")
+        .setDescription("Troop to get upgrade information for")
+        .setRequired(true)
+        .setAutocomplete(true);
     }),
 ];
