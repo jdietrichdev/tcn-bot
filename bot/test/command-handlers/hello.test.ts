@@ -1,9 +1,9 @@
 import { APIChatInputApplicationCommandInteraction } from "discord-api-types/v10";
 import { handleHello } from "../../src/command-handlers/hello";
-import { getCommandOptionData } from "../../src/command-handlers/utils";
 import { updateMessage } from "../../src/adapters/discord-adapter";
+import { getCommandOptionData } from "../../src/util/interaction-util";
 
-jest.mock("../../src/command-handlers/utils");
+jest.mock("../../src/util/interaction-util");
 jest.mock("../../src/adapters/discord-adapter");
 
 let mockInteraction: APIChatInputApplicationCommandInteraction;
