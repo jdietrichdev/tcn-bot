@@ -6,6 +6,6 @@ export const handleComponent = async (
   event: EventBridgeEvent<string, APIMessageComponentInteraction>
 ) => {
   await updateMessage(event.detail.application_id, event.detail.token, {
-    content: "Test",
+    content: "Test update for component message",
   });
 };

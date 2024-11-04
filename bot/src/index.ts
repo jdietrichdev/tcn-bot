@@ -71,8 +71,12 @@ export const handler = async (
     await handleComponent(
       event as EventBridgeEvent<string, APIMessageComponentInteraction>
     );
+  } else {
+    await handleCommand(
+      event as EventBridgeEvent<
+        string,
+        APIChatInputApplicationCommandInteraction
+      >
+    );
   }
-  await handleCommand(
-    event as EventBridgeEvent<string, APIChatInputApplicationCommandInteraction>
-  );
 };
