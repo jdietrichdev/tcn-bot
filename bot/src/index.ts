@@ -7,19 +7,14 @@ import { authorizeRequest } from "./authorizer/authorizer";
 import { eventClient } from "./clients/eventbridge-client";
 import { PutEventsCommand } from "@aws-sdk/client-eventbridge";
 import {
+  APIApplicationCommandAutocompleteInteraction,
   APIChatInputApplicationCommandInteraction,
   APIInteraction,
   APIInteractionResponse,
+  InteractionType,
 } from "discord-api-types/payloads/v10";
-import {
-  handleHello,
-  handlePlayer,
-  handleCommandNotFound,
-  handleFailure,
-  handleEvent,
-  handleLink,
-} from "./command-handlers/handlers";
-import { handleTest } from "./command-handlers/test";
+import { handleCommand } from "./command-handlers";
+import { handleAutocomplete } from "./autocomplete-handlers";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -30,8 +25,13 @@ export const proxy = async (
     return { statusCode: 401, body: "Unauthorized" };
   }
   const body = JSON.parse(event.body!) as APIInteraction;
-  if (body.type == 1) {
+  if (body.type === InteractionType.Ping) {
     response = { type: 1 };
+  } else if (body.type === InteractionType.ApplicationCommandAutocomplete) {
+    console.log(event.body);
+    response = await handleAutocomplete(
+      body as APIApplicationCommandAutocompleteInteraction
+    );
   } else {
     await eventClient.send(
       new PutEventsCommand({
@@ -56,27 +56,10 @@ export const proxy = async (
 };
 
 export const handler = async (
-  event: EventBridgeEvent<string, APIChatInputApplicationCommandInteraction>
+  event: EventBridgeEvent<string, APIInteraction>
 ) => {
   console.log(JSON.stringify(event));
-  try {
-    switch (event.detail.data!.name) {
-      case "hello":
-        return await handleHello(event.detail);
-      case "player":
-        return await handlePlayer(event.detail);
-      case "event":
-        return await handleEvent(event.detail);
-      case "link":
-        return await handleLink(event.detail);
-      case "test":
-        return await handleTest(event.detail);
-      default:
-        console.log("Command not found, responding to command");
-        return await handleCommandNotFound(event.detail);
-    }
-  } catch (err) {
-    console.error(err);
-    await handleFailure(event.detail);
-  }
+  await handleCommand(
+    event as EventBridgeEvent<string, APIChatInputApplicationCommandInteraction>
+  );
 };

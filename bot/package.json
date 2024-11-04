@@ -11,9 +11,9 @@
   "author": "Josh Dietrich",
   "license": "ISC",
   "dependencies": {
-    "@types/aws-lambda": "^8.10.145",
     "@aws-sdk/client-dynamodb": "^3.637.0",
     "@aws-sdk/client-eventbridge": "^3.637.0",
+    "@types/aws-lambda": "^8.10.145",
     "axios": "^1.7.5",
     "tweetnacl": "^1.0.3"
   },
