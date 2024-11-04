@@ -1,0 +1,5 @@
+export const enum RESOURCES {
+  GOLD = "<:gold:1303031823684730941>",
+  ELIXIR = "<:elixir:1303031803589824565>",
+  DARK_ELIXIR = "<:darkelixir:1303031814838947880>",
+}

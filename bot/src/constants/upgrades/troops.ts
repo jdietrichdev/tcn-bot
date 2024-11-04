@@ -1,8 +1,11 @@
+import { RESOURCES } from "../emojis/resources";
 import { DARK_ELIXIR_TROOPS } from "../emojis/troops";
 
 const MINION = {
-  type: "DARK_ELIXIR",
+  name: "Minion",
+  type: RESOURCES.DARK_ELIXIR,
   emoji: DARK_ELIXIR_TROOPS.MINION,
+  wikiUrl: "https://clashofclans.fandom.com/wiki/Minion",
   upgrades: [
     {
       level: 1,
@@ -25,6 +28,6 @@ const MINION = {
   ],
 };
 
-export const TROOPS = {
+export const TROOPS: Record<string, any> = {
   MINION,
 };

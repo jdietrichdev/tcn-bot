@@ -20,10 +20,12 @@ export const handleUpgrade = async (
   });
 
   if (focused && focused.name === "troop") {
-    options.choices = Object.keys(TROOPS).map((troop) => ({
-      name: troop,
-      value: troop,
-    }));
+    options.choices = Object.keys(TROOPS)
+      .filter((troop) => troop.includes(focused.value))
+      .map((troop) => ({
+        name: troop,
+        value: troop,
+      }));
   } else {
     throw new Error("No handler defined for autocomplete interaction");
   }
