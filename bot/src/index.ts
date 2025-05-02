@@ -12,7 +12,7 @@ import {
   APIInteraction,
   APIInteractionResponse,
   APIMessageComponentInteraction,
-  APIModalSubmission,
+  APIModalSubmitInteraction,
   InteractionResponseType,
   InteractionType,
 } from "discord-api-types/payloads/v10";
@@ -76,7 +76,7 @@ export const handler = async (
       event as EventBridgeEvent<string, APIMessageComponentInteraction>
     );
   } else if (event.detail.type === InteractionType.ModalSubmit) {
-    handleApplySubmit(event.detail as APIModalSubmission);
+    handleApplySubmit(event.detail as APIModalSubmitInteraction);
   } else {
     await handleCommand(
       event as EventBridgeEvent<

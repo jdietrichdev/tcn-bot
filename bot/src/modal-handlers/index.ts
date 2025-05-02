@@ -1,4 +1,4 @@
-import {  APIInteractionResponse, APIModalSubmission, InteractionResponseType } from "discord-api-types/payloads/v10";
+import {  APIInteractionResponse, APIModalSubmitInteraction, InteractionResponseType } from "discord-api-types/payloads/v10";
 
 export const createApplyModal = async () => {
     return {
@@ -72,8 +72,8 @@ export const createApplyModal = async () => {
     } as APIInteractionResponse
 }
 
-export const handleApplySubmit = async (submission: APIModalSubmission) => {
-    submission.components.forEach(item => {
+export const handleApplySubmit = async (interaction: APIModalSubmitInteraction) => {
+    interaction.data.components.forEach(item => {
         console.log(`${item.components[0].custom_id}: ${item.components[0].value}`);
     });
 }
