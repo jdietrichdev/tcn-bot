@@ -9,6 +9,7 @@ let template: string;
 
 process.env.DISCORD_PUBLIC_KEY = "TEST_KEY";
 process.env.CLASH_API_TOKEN = "TEST_API_TOKEN";
+process.env.BOT_TOKEN = "BOT_TOKEN";
 
 test("Infrastructure created", () => {
   app = new App();
