@@ -15,6 +15,7 @@ import {
   APIModalSubmitInteraction,
   InteractionResponseType,
   InteractionType,
+  MessageFlags,
 } from "discord-api-types/payloads/v10";
 import { handleCommand } from "./command-handlers";
 import { handleAutocomplete } from "./autocomplete-handlers";
@@ -37,10 +38,11 @@ export const proxy = async (
     response = await handleAutocomplete(
       body as APIApplicationCommandAutocompleteInteraction
     );
-  } else if (body.type === InteractionType.ApplicationCommand && body.data.name === 'apply') {
-    console.log('Creating modal');
+  } else if (
+    body.type === InteractionType.ApplicationCommand &&
+    body.data.name === "apply"
+  ) {
     response = await createApplyModal();
-    console.log('Modal created');
   } else {
     await eventClient.send(
       new PutEventsCommand({
@@ -56,6 +58,9 @@ export const proxy = async (
     );
     response = {
       type: InteractionResponseType.DeferredChannelMessageWithSource,
+      data: {
+        flags: MessageFlags.Ephemeral,
+      },
     } as APIInteractionResponse;
   }
   if (body.type === InteractionType.MessageComponent) {
@@ -63,7 +68,6 @@ export const proxy = async (
       type: InteractionResponseType.DeferredMessageUpdate,
     };
   }
-  console.log(response);
   return {
     statusCode: 200,
     body: JSON.stringify(response),
@@ -79,7 +83,7 @@ export const handler = async (
       event as EventBridgeEvent<string, APIMessageComponentInteraction>
     );
   } else if (event.detail.type === InteractionType.ModalSubmit) {
-    handleApplySubmit(event.detail as APIModalSubmitInteraction);
+    await handleApplySubmit(event.detail as APIModalSubmitInteraction);
   } else {
     await handleCommand(
       event as EventBridgeEvent<
