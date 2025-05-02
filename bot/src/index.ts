@@ -18,6 +18,7 @@ import {
 import { handleCommand } from "./command-handlers";
 import { handleAutocomplete } from "./autocomplete-handlers";
 import { handleComponent } from "./component-handlers";
+import { handleApply } from "./modal-handlers";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -35,6 +36,8 @@ export const proxy = async (
     response = await handleAutocomplete(
       body as APIApplicationCommandAutocompleteInteraction
     );
+  } else if (body.type === InteractionType.ApplicationCommand && body.data.name === 'apply') {
+    response = await handleApply(body as APIChatInputApplicationCommandInteraction);
   } else {
     await eventClient.send(
       new PutEventsCommand({
@@ -49,7 +52,7 @@ export const proxy = async (
       })
     );
     response = {
-      type: 5,
+      type: InteractionResponseType.DeferredChannelMessageWithSource,
     } as APIInteractionResponse;
   }
   if (body.type === InteractionType.MessageComponent) {

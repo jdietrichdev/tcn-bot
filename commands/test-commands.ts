@@ -31,4 +31,8 @@ export const testCommands = [
         .setRequired(true)
         .setAutocomplete(true);
     }),
+
+  new SlashCommandBuilder()
+    .setName('apply')
+    .setDescription('Apply for something')
 ];
