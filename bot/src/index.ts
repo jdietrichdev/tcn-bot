@@ -12,13 +12,14 @@ import {
   APIInteraction,
   APIInteractionResponse,
   APIMessageComponentInteraction,
+  APIModalSubmission,
   InteractionResponseType,
   InteractionType,
 } from "discord-api-types/payloads/v10";
 import { handleCommand } from "./command-handlers";
 import { handleAutocomplete } from "./autocomplete-handlers";
 import { handleComponent } from "./component-handlers";
-import { handleApply } from "./modal-handlers";
+import { createApplyModal, handleApplySubmit } from "./modal-handlers";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -37,7 +38,7 @@ export const proxy = async (
       body as APIApplicationCommandAutocompleteInteraction
     );
   } else if (body.type === InteractionType.ApplicationCommand && body.data.name === 'apply') {
-    response = await handleApply(body as APIChatInputApplicationCommandInteraction);
+    response = createApplyModal();
   } else {
     await eventClient.send(
       new PutEventsCommand({
@@ -74,6 +75,8 @@ export const handler = async (
     await handleComponent(
       event as EventBridgeEvent<string, APIMessageComponentInteraction>
     );
+  } else if (event.detail.type === InteractionType.ModalSubmit) {
+    handleApplySubmit(event.detail as APIModalSubmission);
   } else {
     await handleCommand(
       event as EventBridgeEvent<

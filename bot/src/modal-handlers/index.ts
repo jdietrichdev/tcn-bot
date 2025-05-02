@@ -1,6 +1,6 @@
-import { APIChatInputApplicationCommandInteraction, APIInteractionResponse, InteractionResponseType } from "discord-api-types/payloads/v10";
+import {  APIInteractionResponse, APIModalSubmission, InteractionResponseType } from "discord-api-types/payloads/v10";
 
-export const handleApply = async (interaction: APIChatInputApplicationCommandInteraction) => {
+export const createApplyModal = async () => {
     return {
         type: InteractionResponseType.Modal,
         data: {
@@ -70,4 +70,10 @@ export const handleApply = async (interaction: APIChatInputApplicationCommandInt
             ]
         }
     } as APIInteractionResponse
+}
+
+export const handleApplySubmit = async (submission: APIModalSubmission) => {
+    submission.components.forEach(item => {
+        console.log(`${item.components[0].custom_id}: ${item.components[0].value}`);
+    });
 }
