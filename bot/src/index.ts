@@ -39,7 +39,7 @@ export const proxy = async (
     );
   } else if (body.type === InteractionType.ApplicationCommand && body.data.name === 'apply') {
     console.log('Creating modal');
-    response = createApplyModal();
+    response = await createApplyModal();
     console.log('Modal created');
   } else {
     await eventClient.send(
@@ -63,6 +63,7 @@ export const proxy = async (
       type: InteractionResponseType.DeferredMessageUpdate,
     };
   }
+  console.log(response);
   return {
     statusCode: 200,
     body: JSON.stringify(response),
