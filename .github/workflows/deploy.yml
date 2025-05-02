@@ -16,6 +16,7 @@ permissions:
 env:
     DISCORD_PUBLIC_KEY: ${{ secrets.DISCORD_PUBLIC_KEY }}
     CLASH_API_TOKEN: ${{ secrets.CLASH_API_TOKEN }}
+    BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
 
 jobs:
   deploy-stack:

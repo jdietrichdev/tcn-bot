@@ -1,9 +1,17 @@
 import {
+  APIActionRowComponent,
+  APIButtonComponentWithCustomId,
+  APIEmbed,
   APIInteractionResponse,
   APIModalSubmitInteraction,
+  ButtonStyle,
+  ComponentType,
   InteractionResponseType,
+  ModalSubmitActionRowComponent,
+  TextInputStyle,
 } from "discord-api-types/payloads/v10";
-import { updateMessage } from "../adapters/discord-adapter";
+import { sendMessage, updateMessage } from "../adapters/discord-adapter";
+import { RESTPostAPIWebhookWithTokenJSONBody } from "discord-api-types/v10";
 
 export const createApplyModal = async () => {
   return {
@@ -13,61 +21,61 @@ export const createApplyModal = async () => {
       title: "Apply for This Clan Now",
       components: [
         {
-          type: 1,
+          type: ComponentType.ActionRow,
           components: [
             {
-              type: 4,
+              type: ComponentType.TextInput,
               custom_id: "tags",
               label: "Player tag(s)",
-              style: 1,
+              style: TextInputStyle.Short,
               required: true,
             },
           ],
         },
         {
-          type: 1,
+          type: ComponentType.ActionRow,
           components: [
             {
-              type: 4,
+              type: ComponentType.TextInput,
               custom_id: "source",
               label: "How did you find us?",
-              style: 2,
+              style: TextInputStyle.Paragraph,
               required: true,
             },
           ],
         },
         {
-          type: 1,
+          type: ComponentType.ActionRow,
           components: [
             {
-              type: 4,
+              type: ComponentType.TextInput,
               custom_id: "leaveClan",
               label: "Why did you leave your last clan?",
-              style: 2,
+              style: TextInputStyle.Paragraph,
               required: true,
             },
           ],
         },
         {
-          type: 1,
+          type: ComponentType.ActionRow,
           components: [
             {
-              type: 4,
+              type: ComponentType.TextInput,
               custom_id: "clanWants",
               label: "What do you want in a clan?",
-              style: 2,
+              style: TextInputStyle.Paragraph,
               required: true,
             },
           ],
         },
         {
-          type: 1,
+          type: ComponentType.ActionRow,
           components: [
             {
-              type: 4,
+              type: ComponentType.TextInput,
               custom_id: "strategies",
               label: "Favorite strategies?",
-              style: 2,
+              style: TextInputStyle.Paragraph,
               required: true,
             },
           ],
@@ -84,7 +92,55 @@ export const handleApplySubmit = async (
   interaction.data.components.forEach((item) => {
     console.log(`${item.components[0].custom_id}: ${item.components[0].value}`);
   });
-  updateMessage(interaction.application_id, interaction.token, {
+  const confirmation = buildApplicationConfirmation(interaction);
+  await sendMessage(confirmation, "1367868025440833576");
+  await updateMessage(interaction.application_id, interaction.token, {
     content: `Thanks for applying <@${interaction.member?.user.id}>`,
   });
+};
+
+const buildApplicationConfirmation = (
+  interaction: APIModalSubmitInteraction
+): RESTPostAPIWebhookWithTokenJSONBody => {
+  const embed: APIEmbed = {
+    title: `Application for ${interaction.member?.user.username}`,
+    description: "Application responses",
+    fields: [
+      ...interaction.data.components.map(
+        (item: ModalSubmitActionRowComponent) => {
+          const response = item.components[0];
+          return {
+            name: response.custom_id,
+            value: response.value,
+          };
+        }
+      ),
+    ],
+    footer: {
+      text: "Would you like to chat with them more?",
+    },
+  };
+
+  const responseButtons: APIActionRowComponent<APIButtonComponentWithCustomId> =
+    {
+      type: ComponentType.ActionRow,
+      components: [
+        {
+          type: ComponentType.Button,
+          style: ButtonStyle.Success,
+          label: "Yes",
+          custom_id: "yes",
+        },
+        {
+          type: ComponentType.Button,
+          style: ButtonStyle.Danger,
+          label: "No",
+          custom_id: "no",
+        },
+      ],
+    };
+  return {
+    embeds: [embed],
+    components: [responseButtons],
+  };
 };

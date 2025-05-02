@@ -34,6 +34,7 @@ export class ServiceStack extends Stack {
       environment: {
         REGION: props.env!.region!,
         CLASH_API_TOKEN: process.env.CLASH_API_TOKEN!,
+        BOT_TOKEN: process.env.BOT_TOKEN!,
       },
     });
     props.table.grantReadWriteData(this.handler);
