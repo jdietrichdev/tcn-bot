@@ -38,7 +38,9 @@ export const proxy = async (
       body as APIApplicationCommandAutocompleteInteraction
     );
   } else if (body.type === InteractionType.ApplicationCommand && body.data.name === 'apply') {
+    console.log('Creating modal');
     response = createApplyModal();
+    console.log('Modal created');
   } else {
     await eventClient.send(
       new PutEventsCommand({
