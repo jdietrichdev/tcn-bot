@@ -1,5 +1,8 @@
 import axios from "axios";
-import { RESTPostAPIWebhookWithTokenJSONBody } from "discord-api-types/v10";
+import {
+  RESTAPIGuildCreatePartialChannel,
+  RESTPostAPIWebhookWithTokenJSONBody,
+} from "discord-api-types/v10";
 
 const BASE_URL = "https://discord.com/api/v10";
 
@@ -13,6 +16,18 @@ export const updateMessage = async (
     await axios.patch(url, response);
   } catch (err) {
     throw new Error(`Failed to update message: ${err}`);
+  }
+};
+
+export const deleteMessage = async (
+  applicationId: string,
+  interactionToken: string
+) => {
+  const url = `${BASE_URL}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
+  try {
+    await axios.delete(url);
+  } catch (err) {
+    throw new Error(`Failed to delete message: ${err}`);
   }
 };
 
@@ -30,5 +45,22 @@ export const sendMessage = async (
     });
   } catch (err) {
     throw new Error(`Failed to send message to ${channelId}: ${err}`);
+  }
+};
+
+export const createChannel = async (
+  channel: RESTAPIGuildCreatePartialChannel,
+  guildId: string
+) => {
+  const url = `${BASE_URL}/guilds/${guildId}/channels`;
+  try {
+    return await axios.post(url, channel, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (err) {
+    throw new Error(`Failed to create channel in ${guildId}: ${err}`);
   }
 };

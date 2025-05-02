@@ -79,9 +79,7 @@ export const handler = async (
 ) => {
   console.log(JSON.stringify(event));
   if (event.detail.type === InteractionType.MessageComponent) {
-    await handleComponent(
-      event as EventBridgeEvent<string, APIMessageComponentInteraction>
-    );
+    await handleComponent(event.detail as APIMessageComponentInteraction);
   } else if (event.detail.type === InteractionType.ModalSubmit) {
     await handleApplySubmit(event.detail as APIModalSubmitInteraction);
   } else {

@@ -112,6 +112,10 @@ const buildApplicationConfirmation = (
           };
         }
       ),
+      {
+        name: "userId",
+        value: interaction.member!.user.id,
+      },
     ],
     footer: {
       text: "Would you like to chat with them more?",
@@ -137,6 +141,7 @@ const buildApplicationConfirmation = (
       ],
     };
   return {
+    content: "New Application!",
     embeds: [embed],
     components: [responseButtons],
   };
