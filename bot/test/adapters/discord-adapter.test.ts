@@ -20,5 +20,5 @@ test("updateMessage should throw error when request fails", async () => {
   });
   await expect(() =>
     updateMessage("appId", "token", { content: "test" })
-  ).rejects.toThrow(new Error("Request to Discord failed Error: Failed"));
+  ).rejects.toThrow(new Error("Failed to update message: Error: Failed"));
 });

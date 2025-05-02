@@ -89,9 +89,6 @@ export const handleApplySubmit = async (
   interaction: APIModalSubmitInteraction
 ) => {
   console.log(JSON.stringify(interaction));
-  interaction.data.components.forEach((item) => {
-    console.log(`${item.components[0].custom_id}: ${item.components[0].value}`);
-  });
   const confirmation = buildApplicationConfirmation(interaction);
   await sendMessage(confirmation, "1367868025440833576");
   await updateMessage(interaction.application_id, interaction.token, {
