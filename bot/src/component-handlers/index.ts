@@ -6,7 +6,9 @@ import {
 } from "discord-api-types/v10";
 import {
   createChannel,
+  createDM,
   deleteMessage,
+  sendMessage,
   updateMessage,
 } from "../adapters/discord-adapter";
 
@@ -19,7 +21,7 @@ export const handleComponent = async (
         await createApplicationChannel(interaction);
         await deleteMessage(interaction.application_id, interaction.token);
       } else {
-        // await sendDenialDM();
+        await sendDenialDM(interaction);
       }
   }
   await updateMessage(interaction.application_id, interaction.token, {
@@ -59,4 +61,17 @@ const createApplicationChannel = async (
     interaction.guild_id!
   );
   console.log(response);
+};
+
+const sendDenialDM = async (interaction: APIMessageComponentInteraction) => {
+  const dmChannel = await createDM({
+    recipient_id: interaction.message.embeds![0].fields![5].value,
+  });
+  await sendMessage(
+    {
+      content:
+        "Thank you for applying! You do not currently meet our family requirements, feel free to apply again at a later time",
+    },
+    dmChannel.id
+  );
 };

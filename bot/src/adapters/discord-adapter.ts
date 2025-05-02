@@ -1,6 +1,7 @@
 import axios from "axios";
 import {
   RESTAPIGuildCreatePartialChannel,
+  RESTPostAPICurrentUserCreateDMChannelJSONBody,
   RESTPostAPIWebhookWithTokenJSONBody,
 } from "discord-api-types/v10";
 
@@ -63,4 +64,17 @@ export const createChannel = async (
   } catch (err) {
     throw new Error(`Failed to create channel in ${guildId}: ${err}`);
   }
+};
+
+export const createDM = async (
+  recipient: RESTPostAPICurrentUserCreateDMChannelJSONBody
+) => {
+  const url = `${BASE_URL}/users/@me/channels`;
+  const response = await axios.post(url, recipient, {
+    headers: {
+      Authorization: `Bot ${process.env.BOT_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+  });
+  return response.data;
 };
