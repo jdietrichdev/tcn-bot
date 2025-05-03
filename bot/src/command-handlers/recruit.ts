@@ -15,6 +15,8 @@ export const handleRecruit = async (
         interaction,
         "user"
       );
+    console.log(userId);
+    console.log(userId.value);
     await sendMessage(
       {
         content: `<@${userId.value}>`,
