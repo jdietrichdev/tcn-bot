@@ -18,20 +18,28 @@ export const handleComponent = async (
     case "New Application!":
       if (interaction.data.custom_id === "yes") {
         const applicationChannel = await createApplicationChannel(interaction);
-        await sendMessage({
-          content: `Hey <@${interaction.message.embeds![0].fields![5]}> thanks for applying! We've attached your original responses below for reference, but feel free to tell us more about yourself!`,
-          embeds: interaction.message.embeds
-        }, applicationChannel.id)
+        const responses = interaction.message.embeds[0];
+        responses.fields?.splice(5, 1);
+        delete responses.footer;
+        await sendMessage(
+          {
+            content: `Hey <@${
+              interaction.message.embeds![0].fields![5].value
+            }> thanks for applying! We've attached your original responses below for reference, but feel free to tell us more about yourself!`,
+            embeds: [responses],
+          },
+          applicationChannel.id
+        );
         await updateMessage(interaction.application_id, interaction.token, {
           content: `Accepted by ${interaction.member?.user.username}`,
-          components: []
-        });      
+          components: [],
+        });
       } else {
         await sendDenialDM(interaction);
         await updateMessage(interaction.application_id, interaction.token, {
           content: `Denied by ${interaction.member?.user.username}`,
-          components: []
-        });  
+          components: [],
+        });
       }
   }
 };
