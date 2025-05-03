@@ -21,13 +21,13 @@ export const handleRecruit = async (
       {
         content: `<@${userId.value}>`,
         allowed_mentions: {
-          parse: [AllowedMentionsTypes.User],
+          parse: [],
           users: [userId.value],
         },
       },
       "1367868025440833576"
     );
   } catch (err) {
-    throw new Error("Failed to handle recruit command");
+    throw new Error(`Failed to handle recruit command: ${err}`);
   }
 };
