@@ -39,10 +39,10 @@ export const testCommands = [
   new SlashCommandBuilder()
     .setName("recruit")
     .setDescription("Create recruitment opportunity")
-    .addUserOption((option) => {
+    .addStringOption((option) => {
       return option
-        .setName("user")
-        .setDescription("User to reach out to")
+        .setName("userId")
+        .setDescription("User ID to reach out to")
         .setRequired(true);
     })
     .addStringOption((option) => {
