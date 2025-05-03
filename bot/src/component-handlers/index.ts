@@ -19,13 +19,11 @@ export const handleComponent = async (
       if (interaction.data.custom_id === "yes") {
         const applicationChannel = await createApplicationChannel(interaction);
         const responses = interaction.message.embeds[0];
-        responses.fields?.splice(5, 1);
+        const userId = responses.fields?.splice(5, 1)[0].value;
         delete responses.footer;
         await sendMessage(
           {
-            content: `Hey <@${
-              interaction.message.embeds![0].fields![5].value
-            }> thanks for applying! We've attached your original responses below for reference, but feel free to tell us more about yourself!`,
+            content: `Hey <@${userId}> thanks for applying! We've attached your original responses below for reference, but feel free to tell us more about yourself!`,
             embeds: [responses],
           },
           applicationChannel.id
