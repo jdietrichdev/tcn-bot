@@ -7,7 +7,6 @@ import {
 import {
   createChannel,
   createDM,
-  deleteMessage,
   sendMessage,
   updateMessage,
 } from "../adapters/discord-adapter";
@@ -19,14 +18,18 @@ export const handleComponent = async (
     case "New Application!":
       if (interaction.data.custom_id === "yes") {
         await createApplicationChannel(interaction);
-        await deleteMessage(interaction.application_id, interaction.token);
+        await updateMessage(interaction.application_id, interaction.token, {
+          content: `Accepted by ${interaction.member?.user.username}`,
+          components: []
+        });      
       } else {
         await sendDenialDM(interaction);
+        await updateMessage(interaction.application_id, interaction.token, {
+          content: `Denied by ${interaction.member?.user.username}`,
+          components: []
+        });  
       }
   }
-  await updateMessage(interaction.application_id, interaction.token, {
-    content: "Test update for component message",
-  });
 };
 
 const createApplicationChannel = async (
