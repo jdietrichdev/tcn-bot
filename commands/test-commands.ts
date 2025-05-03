@@ -33,6 +33,22 @@ export const testCommands = [
     }),
 
   new SlashCommandBuilder()
-    .setName('apply')
-    .setDescription('Apply for something')
+    .setName("apply")
+    .setDescription("Apply to join This Clan Now"),
+
+  new SlashCommandBuilder()
+    .setName("recruit")
+    .setDescription("Create recruitment opportunity")
+    .addUserOption((option) => {
+      return option
+        .setName("user")
+        .setDescription("User to reach out to")
+        .setRequired(true);
+    })
+    .addStringOption((option) => {
+      return option
+        .setName("tag")
+        .setDescription("Player tag for primary account")
+        .setRequired(true);
+    }),
 ];
