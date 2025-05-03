@@ -70,11 +70,30 @@ export const createDM = async (
   recipient: RESTPostAPICurrentUserCreateDMChannelJSONBody
 ) => {
   const url = `${BASE_URL}/users/@me/channels`;
-  const response = await axios.post(url, recipient, {
-    headers: {
-      Authorization: `Bot ${process.env.BOT_TOKEN}`,
-      "Content-Type": "application/json",
-    },
-  });
-  return response.data;
+  try {
+    const response = await axios.post(url, recipient, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (err) {
+    throw new Error("Unable to create DM with user");
+  }
+};
+
+export const getUser = async (userId: string) => {
+  const url = `${BASE_URL}/users/${userId}`;
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (err) {
+    throw new Error("Unable to fetch user data");
+  }
 };

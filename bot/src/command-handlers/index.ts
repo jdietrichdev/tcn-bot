@@ -20,6 +20,8 @@ export const handleCommand = async (
         return await handleTest(event.detail);
       case "upgrade":
         return await commands.handleUpgrade(event.detail);
+      case "recruit":
+        return await commands.handleRecruit(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);
