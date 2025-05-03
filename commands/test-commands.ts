@@ -41,7 +41,7 @@ export const testCommands = [
     .setDescription("Create recruitment opportunity")
     .addStringOption((option) => {
       return option
-        .setName("userId")
+        .setName("user")
         .setDescription("User ID to reach out to")
         .setRequired(true);
     })
