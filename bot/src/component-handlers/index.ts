@@ -17,7 +17,11 @@ export const handleComponent = async (
   switch (interaction.message.content) {
     case "New Application!":
       if (interaction.data.custom_id === "yes") {
-        await createApplicationChannel(interaction);
+        const applicationChannel = await createApplicationChannel(interaction);
+        await sendMessage({
+          content: `Hey <@${interaction.message.embeds![0].fields![5]}> thanks for applying! We've attached your original responses below for reference, but feel free to tell us more about yourself!`,
+          embeds: interaction.message.embeds
+        }, applicationChannel.id)
         await updateMessage(interaction.application_id, interaction.token, {
           content: `Accepted by ${interaction.member?.user.username}`,
           components: []
@@ -59,11 +63,22 @@ const createApplicationChannel = async (
           ).toString(),
           deny: "0",
         },
+        {
+          id: interaction.message.embeds![0].fields![5].value,
+          type: OverwriteType.Member,
+          allow: (
+            PermissionFlagsBits.SendMessages ||
+            PermissionFlagsBits.AddReactions ||
+            PermissionFlagsBits.ViewChannel
+          ).toString(),
+          deny: "0",
+        },
       ],
     },
     interaction.guild_id!
   );
   console.log(response);
+  return response.data;
 };
 
 const sendDenialDM = async (interaction: APIMessageComponentInteraction) => {
