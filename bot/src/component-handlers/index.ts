@@ -38,8 +38,12 @@ export const handleComponent = async (
         components: [],
       });
     case "claimRecruit":
+      const content = interaction.message.content + "\n" + `Claimed by ${interaction.member?.user.username}`;
       await updateMessage(interaction.application_id, interaction.token, {
-        content: `Claimed by ${interaction.member?.user.username}`,
+        content
+      });
+    case "closeRecruit":
+      await updateMessage(interaction.application_id, interaction.token, {
         components: []
       });
   }
