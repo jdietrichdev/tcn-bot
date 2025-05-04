@@ -104,13 +104,13 @@ const createApplicationChannel = async (
         {
           id: config.RECRUITER_ROLE,
           type: OverwriteType.Role,
-          allow: "1024"
+          allow: "1024",
           deny: "0",
         },
         {
           id: userId,
           type: OverwriteType.Member,
-          allow: "1024"
+          allow: "1024",
           deny: "0",
         },
       ],
