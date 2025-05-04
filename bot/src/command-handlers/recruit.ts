@@ -35,7 +35,13 @@ export const handleRecruit = async (
                 style: ButtonStyle.Primary,
                 label: "Claim",
                 custom_id: 'claimRecruit'
-              }
+              },
+              {
+                type: ComponentType.Button,
+                style: ButtonStyle.Danger,
+                label: "Close"
+                custom_id: "closeRecruit"
+              },
             ]
           }
         ],
