@@ -36,7 +36,9 @@ export const handleComponent = async (
       await sendDenialDM(interaction);
       await updateMessage(interaction.application_id, interaction.token, {
         content: `Denied by ${interaction.member?.user.username}`,
+        components: []
       });
+      break;
     case "claimRecruit":
       const content = interaction.message.content + "\n" + `Claimed by ${interaction.member?.user.username}`;
       await updateMessage(interaction.application_id, interaction.token, {
@@ -61,10 +63,12 @@ export const handleComponent = async (
           }
         ],
       });
+      break;
     case "closeRecruit":
       await updateMessage(interaction.application_id, interaction.token, {
         components: []
       });
+      break;
   }
 };
 
