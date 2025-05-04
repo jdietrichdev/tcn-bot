@@ -19,6 +19,7 @@ export const handlePlayer = async (
     switch (interaction.data.options![0].name) {
       case "add":
         return await addPlayer(interaction);
+        break;
       default:
         throw new Error("No processing defined for that command");
     }

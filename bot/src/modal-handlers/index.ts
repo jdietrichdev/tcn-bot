@@ -88,7 +88,7 @@ export const createApplyModal = async () => {
 export const handleApplySubmit = async (
   interaction: APIModalSubmitInteraction
 ) => {
-  console.log(JSON.stringify(interaction));
+//   console.log(JSON.stringify(interaction));
   const confirmation = buildApplicationConfirmation(interaction);
   await sendMessage(confirmation, "1367868025440833576");
   await updateMessage(interaction.application_id, interaction.token, {

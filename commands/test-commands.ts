@@ -37,12 +37,18 @@ export const testCommands = [
     .setDescription("Apply to join This Clan Now"),
 
   new SlashCommandBuilder()
-    .setName("recruit")
+    .setName("ro")
     .setDescription("Create recruitment opportunity")
     .addStringOption((option) => {
       return option
         .setName("user")
         .setDescription("User ID to reach out to")
         .setRequired(true);
+    })
+    .addStringOption((option) => {
+      return option
+        .setName("notes")
+        .setDescription("Notes about recruit")
+        .setRequired(false);
     })
 ];

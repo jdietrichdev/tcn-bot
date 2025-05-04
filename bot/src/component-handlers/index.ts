@@ -18,9 +18,9 @@ export const handleComponent = async (
 ) => {
   switch (interaction.data.custom_id) {
     case "approveApp":
-      const applicationChannel = await createApplicationChannel(interaction);
       const responses = interaction.message.embeds[0];
       const userId = responses.fields?.splice(5, 1)[0].value;
+      const applicationChannel = await createApplicationChannel(interaction, userId!);
       delete responses.footer;
       await sendMessage(
         {
@@ -31,7 +31,9 @@ export const handleComponent = async (
       );
       await updateMessage(interaction.application_id, interaction.token, {
         content: `Accepted by ${interaction.member?.user.username}`,
+        components: [],
       });
+      break;
     case "denyApp":
       await sendDenialDM(interaction);
       await updateMessage(interaction.application_id, interaction.token, {
@@ -39,7 +41,7 @@ export const handleComponent = async (
         components: []
       });
       break;
-    case "claimRecruit":
+    case "messageRecruit":
       const content = interaction.message.content + "\n" + `Claimed by ${interaction.member?.user.username}`;
       await updateMessage(interaction.application_id, interaction.token, {
         content,
@@ -50,8 +52,8 @@ export const handleComponent = async (
               {
                 type: ComponentType.Button,
                 style: ButtonStyle.Primary,
-                label: "Claim",
-                custom_id: 'claimRecruit'
+                label: "Messaged",
+                custom_id: 'messageRecruit'
               },
               {
                 type: ComponentType.Button,
@@ -73,7 +75,8 @@ export const handleComponent = async (
 };
 
 const createApplicationChannel = async (
-  interaction: APIMessageComponentInteraction
+  interaction: APIMessageComponentInteraction,
+  userId: string
 ) => {
   const username = interaction.message.embeds[0].title?.split(" ")[2];
   const response = await createChannel(
@@ -100,7 +103,7 @@ const createApplicationChannel = async (
           deny: "0",
         },
         {
-          id: interaction.message.embeds![0].fields![5].value,
+          id: userId,
           type: OverwriteType.Member,
           allow: (
             PermissionFlagsBits.SendMessages ||

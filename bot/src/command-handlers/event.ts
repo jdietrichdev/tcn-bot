@@ -7,6 +7,7 @@ export const handleEvent = async (
     switch (interaction.data.options![0].name) {
       case "notify":
         return await eventNotify(interaction);
+        break;
     }
   } catch (err) {
     console.log("Failure handling event command", err);

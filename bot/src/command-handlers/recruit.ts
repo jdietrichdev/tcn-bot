@@ -17,13 +17,17 @@ export const handleRecruit = async (
         interaction,
         "user"
       );
+    const notes = getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
+      interaction,
+      "notes"
+    )
     await sendMessage(
       {
         content: `<@&1367944733204152484>`,
         embeds: [
           {
             title: 'New potential recruit!',
-            description: `${interaction.member?.user.username} recommends <@${userId.value}>`
+            description: `${interaction.member?.user.username} recommends <@${userId.value}>\nNotes: ${notes.value}`
           }
         ],
         components: [
@@ -34,7 +38,7 @@ export const handleRecruit = async (
                 type: ComponentType.Button,
                 style: ButtonStyle.Primary,
                 label: "Claim",
-                custom_id: 'claimRecruit'
+                custom_id: 'messageRecruit'
               },
               {
                 type: ComponentType.Button,
