@@ -2,6 +2,8 @@ import {
   AllowedMentionsTypes,
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
+  ButtonStyle,
+  ComponentType,
 } from "discord-api-types/v10";
 import { getCommandOptionData } from "../util/interaction-util";
 import { sendMessage, updateMessage } from "../adapters/discord-adapter";
@@ -22,6 +24,19 @@ export const handleRecruit = async (
           {
             title: 'New potential recruit!',
             description: `${interaction.member?.user.username} recommends <@${userId.value}>`
+          }
+        ],
+        components: [
+          {
+            type: ComponentType.ActionRow,
+            components: [
+              {
+                type: ComponentType.Button,
+                style: ButtonStyle.Primary,
+                label: "Claim",
+                custom_id: 'claimRecruit'
+              }
+            ]
           }
         ],
         allowed_mentions: {

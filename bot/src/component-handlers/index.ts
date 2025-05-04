@@ -37,6 +37,11 @@ export const handleComponent = async (
         content: `Denied by ${interaction.member?.user.username}`,
         components: [],
       });
+    case "claimRecruit":
+      await updateMessage(interaction.application_id, interaction.token, {
+        content: `Claimed by ${interaction.member?.user.username}`,
+        components: []
+      });
   }
 };
 
