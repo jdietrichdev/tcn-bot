@@ -50,7 +50,7 @@ export const handleRecruit = async (
           users: [userId.value],
         },
       },
-      "1367868025440833576"
+      "1368573341811740753"
     );
     await updateMessage(interaction.application_id, interaction.token, {
       content: `Thanks for your recommendation <@${interaction.member?.user.id}>`,
