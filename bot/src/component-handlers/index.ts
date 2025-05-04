@@ -40,7 +40,26 @@ export const handleComponent = async (
     case "claimRecruit":
       const content = interaction.message.content + "\n" + `Claimed by ${interaction.member?.user.username}`;
       await updateMessage(interaction.application_id, interaction.token, {
-        content
+        content,
+        components: [
+          {
+            type: ComponentType.ActionRow,
+            components: [
+              {
+                type: ComponentType.Button,
+                style: ButtonStyle.Primary,
+                label: "Claim",
+                custom_id: 'claimRecruit'
+              },
+              {
+                type: ComponentType.Button,
+                style: ButtonStyle.Danger,
+                label: "Close",
+                custom_id: "closeRecruit"
+              },
+            ]
+          }
+        ],
       });
     case "closeRecruit":
       await updateMessage(interaction.application_id, interaction.token, {
