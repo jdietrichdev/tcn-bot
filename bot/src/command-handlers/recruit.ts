@@ -1,5 +1,4 @@
 import {
-  AllowedMentionsTypes,
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
 } from "discord-api-types/v10";
@@ -15,11 +14,15 @@ export const handleRecruit = async (
         interaction,
         "user"
       );
-    console.log(userId);
-    console.log(userId.value);
     await sendMessage(
       {
-        content: `<@${userId.value}>`,
+        content: `<@1367944733204152484>`,
+        embeds: [
+          {
+            title: 'New potential recruit!',
+            description: `${interaction.member?.user.username} recommends <@${userId.value}>`
+          }
+        ],
         allowed_mentions: {
           parse: [],
           users: [userId.value],

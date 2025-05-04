@@ -118,7 +118,7 @@ const buildApplicationConfirmation = (
       },
     ],
     footer: {
-      text: "Would you like to chat with them more?",
+      text: "Would you like to accept this application?",
     },
   };
 
@@ -129,19 +129,18 @@ const buildApplicationConfirmation = (
         {
           type: ComponentType.Button,
           style: ButtonStyle.Success,
-          label: "Yes",
-          custom_id: "yes",
+          label: "Approve",
+          custom_id: "approveApp",
         },
         {
           type: ComponentType.Button,
           style: ButtonStyle.Danger,
-          label: "No",
-          custom_id: "no",
+          label: "Deny",
+          custom_id: "denyApp",
         },
       ],
     };
   return {
-    content: "New Application!",
     embeds: [embed],
     components: [responseButtons],
   };

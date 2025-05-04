@@ -14,31 +14,29 @@ import {
 export const handleComponent = async (
   interaction: APIMessageComponentInteraction
 ) => {
-  switch (interaction.message.content) {
-    case "New Application!":
-      if (interaction.data.custom_id === "yes") {
-        const applicationChannel = await createApplicationChannel(interaction);
-        const responses = interaction.message.embeds[0];
-        const userId = responses.fields?.splice(5, 1)[0].value;
-        delete responses.footer;
-        await sendMessage(
-          {
-            content: `Hey <@${userId}> thanks for applying! We've attached your original responses below for reference, but feel free to tell us more about yourself!`,
-            embeds: [responses],
-          },
-          applicationChannel.id
-        );
-        await updateMessage(interaction.application_id, interaction.token, {
-          content: `Accepted by ${interaction.member?.user.username}`,
-          components: [],
-        });
-      } else {
-        await sendDenialDM(interaction);
-        await updateMessage(interaction.application_id, interaction.token, {
-          content: `Denied by ${interaction.member?.user.username}`,
-          components: [],
-        });
-      }
+  switch (interaction.data.custom_id) {
+    case "approveApp":
+      const applicationChannel = await createApplicationChannel(interaction);
+      const responses = interaction.message.embeds[0];
+      const userId = responses.fields?.splice(5, 1)[0].value;
+      delete responses.footer;
+      await sendMessage(
+        {
+          content: `Hey <@${userId}> thanks for applying! We've attached your original responses below for reference, but feel free to tell us more about yourself!`,
+          embeds: [responses],
+        },
+        applicationChannel.id
+      );
+      await updateMessage(interaction.application_id, interaction.token, {
+        content: `Accepted by ${interaction.member?.user.username}`,
+        components: [],
+      });
+    case "denyApp":
+      await sendDenialDM(interaction);
+      await updateMessage(interaction.application_id, interaction.token, {
+        content: `Denied by ${interaction.member?.user.username}`,
+        components: [],
+      });
   }
 };
 

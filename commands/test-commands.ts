@@ -45,10 +45,4 @@ export const testCommands = [
         .setDescription("User ID to reach out to")
         .setRequired(true);
     })
-    .addStringOption((option) => {
-      return option
-        .setName("tag")
-        .setDescription("Player tag for primary account")
-        .setRequired(true);
-    }),
 ];
