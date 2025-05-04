@@ -31,13 +31,11 @@ export const handleComponent = async (
       );
       await updateMessage(interaction.application_id, interaction.token, {
         content: `Accepted by ${interaction.member?.user.username}`,
-        components: [],
       });
     case "denyApp":
       await sendDenialDM(interaction);
       await updateMessage(interaction.application_id, interaction.token, {
         content: `Denied by ${interaction.member?.user.username}`,
-        components: [],
       });
     case "claimRecruit":
       const content = interaction.message.content + "\n" + `Claimed by ${interaction.member?.user.username}`;
