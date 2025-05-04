@@ -104,21 +104,13 @@ const createApplicationChannel = async (
         {
           id: config.RECRUITER_ROLE,
           type: OverwriteType.Role,
-          allow: (
-            PermissionFlagsBits.SendMessages ||
-            PermissionFlagsBits.AddReactions ||
-            PermissionFlagsBits.ViewChannel
-          ).toString(),
+          allow: "1024"
           deny: "0",
         },
         {
           id: userId,
           type: OverwriteType.Member,
-          allow: (
-            PermissionFlagsBits.SendMessages ||
-            PermissionFlagsBits.AddReactions ||
-            PermissionFlagsBits.ViewChannel
-          ).toString(),
+          allow: "1024"
           deny: "0",
         },
       ],
