@@ -1,6 +1,8 @@
 import {
   APIMessageComponentInteraction,
+  ButtonStyle,
   ChannelType,
+  ComponentType,
   OverwriteType,
   PermissionFlagsBits,
 } from "discord-api-types/v10";
