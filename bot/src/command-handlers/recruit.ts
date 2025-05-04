@@ -17,7 +17,7 @@ export const handleRecruit = async (
       );
     await sendMessage(
       {
-        content: `<@1367944733204152484>`,
+        content: `<@&1367944733204152484>`,
         embeds: [
           {
             title: 'New potential recruit!',
