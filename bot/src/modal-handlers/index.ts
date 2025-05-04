@@ -12,6 +12,7 @@ import {
 } from "discord-api-types/payloads/v10";
 import { sendMessage, updateMessage } from "../adapters/discord-adapter";
 import { RESTPostAPIWebhookWithTokenJSONBody } from "discord-api-types/v10";
+import { getConfig } from "../util/serverConfig";
 
 export const createApplyModal = async () => {
   return {
@@ -89,8 +90,9 @@ export const handleApplySubmit = async (
   interaction: APIModalSubmitInteraction
 ) => {
 //   console.log(JSON.stringify(interaction));
+  const config = getConfig(interaction.guild_id!);
   const confirmation = buildApplicationConfirmation(interaction);
-  await sendMessage(confirmation, "1367868025440833576");
+  await sendMessage(confirmation, config.APP_APPROVAL_CHANNEL);
   await updateMessage(interaction.application_id, interaction.token, {
     content: `Thanks for applying <@${interaction.member?.user.id}>`,
   });

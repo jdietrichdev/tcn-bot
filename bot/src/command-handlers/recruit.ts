@@ -7,11 +7,13 @@ import {
 } from "discord-api-types/v10";
 import { getCommandOptionData } from "../util/interaction-util";
 import { sendMessage, updateMessage } from "../adapters/discord-adapter";
+import { getConfig } from "../util/serverConfig";
 
 export const handleRecruit = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
   try {
+    const config = getConfig(interaction.guild_id!);
     const userId =
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
@@ -23,7 +25,7 @@ export const handleRecruit = async (
     )
     await sendMessage(
       {
-        content: `<@&1367944733204152484>`,
+        content: `<@&${config.RECRUITER_ROLE}>`,
         embeds: [
           {
             title: 'New potential recruit!',
@@ -37,7 +39,7 @@ export const handleRecruit = async (
               {
                 type: ComponentType.Button,
                 style: ButtonStyle.Primary,
-                label: "Claim",
+                label: "Messaged",
                 custom_id: 'messageRecruit'
               },
               {
@@ -54,7 +56,7 @@ export const handleRecruit = async (
           users: [userId.value],
         },
       },
-      "1368573341811740753"
+      config.RECRUITMENT_OPP_CHANNEL
     );
     await updateMessage(interaction.application_id, interaction.token, {
       content: `Thanks for your recommendation <@${interaction.member?.user.id}>`,

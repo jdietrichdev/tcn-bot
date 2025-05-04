@@ -12,15 +12,17 @@ import {
   sendMessage,
   updateMessage,
 } from "../adapters/discord-adapter";
+import { getConfig, ServerConfig } from "../util/serverConfig";
 
 export const handleComponent = async (
   interaction: APIMessageComponentInteraction
 ) => {
+  const config = getConfig(interaction.guild_id!);
   switch (interaction.data.custom_id) {
     case "approveApp":
       const responses = interaction.message.embeds[0];
       const userId = responses.fields?.splice(5, 1)[0].value;
-      const applicationChannel = await createApplicationChannel(interaction, userId!);
+      const applicationChannel = await createApplicationChannel(interaction, userId!, config);
       delete responses.footer;
       await sendMessage(
         {
@@ -36,6 +38,12 @@ export const handleComponent = async (
       break;
     case "denyApp":
       await sendDenialDM(interaction);
+      await sendMessage(
+        {
+          content: `<@${interaction.message.embeds![0].fields![5].value}> thank you for your application, but your account does not currently meet our criteria, feel free to reapply at a later time`
+        }, 
+        config.GUEST_CHAT_CHANNEL
+      );
       await updateMessage(interaction.application_id, interaction.token, {
         content: `Denied by ${interaction.member?.user.username}`,
         components: []
@@ -76,7 +84,8 @@ export const handleComponent = async (
 
 const createApplicationChannel = async (
   interaction: APIMessageComponentInteraction,
-  userId: string
+  userId: string,
+  config: ServerConfig
 ) => {
   const username = interaction.message.embeds[0].title?.split(" ")[2];
   const response = await createChannel(
@@ -84,7 +93,7 @@ const createApplicationChannel = async (
       name: `ticket-${username}`,
       type: ChannelType.GuildText,
       topic: `Application channel for ${username}`,
-      parent_id: "1367867954577932321",
+      parent_id: config.APPLICATION_CATEGORY,
       permission_overwrites: [
         {
           id: interaction.guild_id!,
@@ -93,7 +102,7 @@ const createApplicationChannel = async (
           deny: PermissionFlagsBits.ViewChannel.toString(),
         },
         {
-          id: "1367944733204152484",
+          id: config.RECRUITER_ROLE,
           type: OverwriteType.Role,
           allow: (
             PermissionFlagsBits.SendMessages ||
