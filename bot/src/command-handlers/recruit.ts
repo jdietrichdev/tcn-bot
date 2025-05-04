@@ -39,7 +39,7 @@ export const handleRecruit = async (
               {
                 type: ComponentType.Button,
                 style: ButtonStyle.Danger,
-                label: "Close"
+                label: "Close",
                 custom_id: "closeRecruit"
               },
             ]
