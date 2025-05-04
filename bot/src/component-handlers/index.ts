@@ -20,6 +20,7 @@ export const handleComponent = async (
   const config = getConfig(interaction.guild_id!);
   switch (interaction.data.custom_id) {
     case "approveApp":
+      let content = '';
       const responses = interaction.message.embeds[0];
       const userId = responses.fields?.splice(5, 1)[0].value;
       const applicationChannel = await createApplicationChannel(interaction, userId!, config);
@@ -50,7 +51,7 @@ export const handleComponent = async (
       });
       break;
     case "messageRecruit":
-      const content = interaction.message.content + "\n" + `Claimed by ${interaction.member?.user.username}`;
+      content = interaction.message.content + "\n" + `Messaged by ${interaction.member?.user.username}`;
       await updateMessage(interaction.application_id, interaction.token, {
         content,
         components: [
@@ -75,7 +76,10 @@ export const handleComponent = async (
       });
       break;
     case "closeRecruit":
+      content = interaction.message.content.split('\n').splice(1).join('\n');
+
       await updateMessage(interaction.application_id, interaction.token, {
+        content,
         components: []
       });
       break;
