@@ -25,7 +25,7 @@ export const handleRecruit = async (
           }
         ],
         allowed_mentions: {
-          parse: [AllowedMentionsTypes.Everyone],
+          parse: [AllowedMentionsTypes.Role],
           users: [userId.value],
         },
       },
