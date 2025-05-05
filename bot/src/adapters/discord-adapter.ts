@@ -66,6 +66,23 @@ export const createChannel = async (
   }
 };
 
+export const moveChannel = async (
+  channelId: string,
+  categoryId: string;
+) => {
+  const url = `${BASE_URL}/channels/${channelId}`;
+  try {
+    await axios.patch(url, { parent_id: categoryId }, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      }
+    });
+  } catch (err) {
+    throw new Error(`Failed to movr channel ${channelId}: ${err}`);
+  }
+};
+
 export const createDM = async (
   recipient: RESTPostAPICurrentUserCreateDMChannelJSONBody
 ) => {
