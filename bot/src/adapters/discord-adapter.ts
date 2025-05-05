@@ -1,5 +1,7 @@
 import axios from "axios";
 import {
+  APIGuildMember,
+  APIUser,
   RESTAPIGuildCreatePartialChannel,
   RESTPostAPICurrentUserCreateDMChannelJSONBody,
   RESTPostAPIWebhookWithTokenJSONBody,
@@ -115,7 +117,7 @@ export const createDM = async (
   }
 };
 
-export const getUser = async (userId: string) => {
+export const getUser = async (userId: string): Promise<APIUser> => {
   const url = `${BASE_URL}/users/${userId}`;
   try {
     const response = await axios.get(url, {
@@ -127,5 +129,45 @@ export const getUser = async (userId: string) => {
     return response.data;
   } catch (err) {
     throw new Error("Unable to fetch user data");
+  }
+};
+
+export const getServerUser = async (
+  guildId: string,
+  userId: string
+): Promise<APIGuildMember> => {
+  const url = `${BASE_URL}/guilds/${guildId}/members/${userId}`;
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (err) {
+    throw new Error("Unable to fetch user data");
+  }
+};
+
+export const grantRole = async (
+  guildId: string,
+  userId: string,
+  roleId: string
+) => {
+  const url = `${BASE_URL}/guilds/${guildId}/members/${userId}/roles/${roleId}`;
+  try {
+    await axios.put(
+      url,
+      {},
+      {
+        headers: {
+          Authorization: `Bot ${process.env.BOT_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (err) {
+    throw new Error("Unable to grant role to user");
   }
 };

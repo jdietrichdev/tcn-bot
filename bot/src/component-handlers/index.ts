@@ -1,5 +1,6 @@
 import {
   APIMessageComponentInteraction,
+  APITextChannel,
   ButtonStyle,
   ChannelType,
   ComponentType,
@@ -12,6 +13,8 @@ import {
   updateMessage,
   moveChannel,
   deleteChannel,
+  getServerUser,
+  grantRole,
 } from "../adapters/discord-adapter";
 import { getConfig, ServerConfig } from "../util/serverConfig";
 
@@ -49,6 +52,12 @@ export const handleComponent = async (
                     style: ButtonStyle.Danger,
                     label: "Delete",
                     custom_id: "deleteTicket",
+                  },
+                  {
+                    type: ComponentType.Button,
+                    style: ButtonStyle.Success,
+                    label: "Grant Roles",
+                    custom_id: "grantRoles",
                   },
                 ],
               },
@@ -153,6 +162,12 @@ export const handleComponent = async (
                   label: "Delete",
                   custom_id: "deleteTicket",
                 },
+                {
+                  type: ComponentType.Button,
+                  style: ButtonStyle.Success,
+                  label: "Grant Roles",
+                  custom_id: "grantRoles",
+                },
               ],
             },
           ],
@@ -207,6 +222,26 @@ export const handleComponent = async (
         console.error(`Failed to reopen ticket: ${err}`);
         break;
       }
+    case "grantRoles":
+      try {
+        const approver = await getServerUser(
+          interaction.guild_id!,
+          interaction.user!.id
+        );
+        if (approver.roles.includes(config.RECRUITER_ROLE)) {
+          const userId = (interaction.channel as APITextChannel).topic!.split(
+            ":"
+          )[1];
+          await grantRole(interaction.guild_id!, userId, config.CLAN_ROLE);
+        } else {
+          await updateMessage(interaction.application_id, interaction.token, {
+            content: "You do not have permission to approve this ticket",
+          });
+        }
+      } catch (err) {
+        console.error(`Failed to grant roles: ${err}`);
+        break;
+      }
   }
 };
 
@@ -220,7 +255,7 @@ const createApplicationChannel = async (
     {
       name: `ticket-${username}`,
       type: ChannelType.GuildText,
-      topic: `Application channel for ${username}`,
+      topic: `Application channel for ${username}:${userId}`,
       parent_id: config.APPLICATION_CATEGORY,
       permission_overwrites: [
         {
