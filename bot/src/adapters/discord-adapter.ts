@@ -171,3 +171,21 @@ export const grantRole = async (
     throw new Error("Unable to grant role to user");
   }
 };
+
+export const removeRole = async (
+  guildId: string,
+  userId: string,
+  roleId: string
+) => {
+  const url = `${BASE_URL}/guilds/${guildId}/members/${userId}/roles/${roleId}`;
+  try {
+    await axios.delete(url, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (err) {
+    throw new Error("Unable to remove role from user");
+  }
+};

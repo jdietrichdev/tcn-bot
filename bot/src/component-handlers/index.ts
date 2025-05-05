@@ -15,6 +15,7 @@ import {
   deleteChannel,
   getServerUser,
   grantRole,
+  removeRole,
 } from "../adapters/discord-adapter";
 import { getConfig, ServerConfig } from "../util/serverConfig";
 
@@ -58,6 +59,12 @@ export const handleComponent = async (
                     style: ButtonStyle.Success,
                     label: "Grant Roles",
                     custom_id: "grantRoles",
+                  },
+                  {
+                    type: ComponentType.Button,
+                    style: ButtonStyle.Danger,
+                    label: "Remove Roles",
+                    custom_id: "removeRoles",
                   },
                 ],
               },
@@ -168,6 +175,12 @@ export const handleComponent = async (
                   label: "Grant Roles",
                   custom_id: "grantRoles",
                 },
+                {
+                  type: ComponentType.Button,
+                  style: ButtonStyle.Danger,
+                  label: "Remove Roles",
+                  custom_id: "removeRoles",
+                },
               ],
             },
           ],
@@ -219,6 +232,12 @@ export const handleComponent = async (
                   label: "Grant Roles",
                   custom_id: "grantRoles",
                 },
+                {
+                  type: ComponentType.Button,
+                  style: ButtonStyle.Danger,
+                  label: "Remove Roles",
+                  custom_id: "removeRoles",
+                },
               ],
             },
           ],
@@ -253,8 +272,39 @@ export const handleComponent = async (
             interaction.channel.id
           );
         }
+        break;
       } catch (err) {
         console.error(`Failed to grant roles: ${err}`);
+        break;
+      }
+    case "removeRoles":
+      try {
+        const remover = await getServerUser(
+          interaction.guild_id!,
+          interaction.member!.user.id
+        );
+        if (remover.roles.includes(config.RECRUITER_ROLE)) {
+          const userId = (interaction.channel as APITextChannel).topic!.split(
+            ":"
+          )[1];
+          await removeRole(interaction.guild_id!, userId, config.CLAN_ROLE);
+          await sendMessage(
+            {
+              content: `Roles removed by ${interaction.member?.user.username}`,
+            },
+            interaction.channel.id
+          );
+        } else {
+          await sendMessage(
+            {
+              content: `You do not have permission to remove roles <@${interaction.member?.user.id}>`,
+            },
+            interaction.channel.id
+          );
+        }
+        break;
+      } catch (err) {
+        console.error(`Failed to remove roles: ${err}`);
         break;
       }
   }
