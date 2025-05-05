@@ -11,6 +11,7 @@ import {
   sendMessage,
   updateMessage,
   moveChannel,
+  deleteChannel,
 } from "../adapters/discord-adapter";
 import { getConfig, ServerConfig } from "../util/serverConfig";
 
@@ -23,11 +24,15 @@ export const handleComponent = async (
       try {
         const responses = interaction.message.embeds[0];
         const userId = responses.fields?.splice(5, 1)[0].value;
-        const applicationChannel = await createApplicationChannel(interaction, userId!, config);
+        const applicationChannel = await createApplicationChannel(
+          interaction,
+          userId!,
+          config
+        );
         delete responses.footer;
         await sendMessage(
           {
-            content: `Hey <@${userId}> thanks for applying! We've attached your original responses below for reference, but feel free to tell us more about yourself!`,
+            content: `<@&${config.RECRUITER_ROLE}>\nHey <@${userId}> thanks for applying! We've attached your original responses below for reference, but feel free to tell us more about yourself!`,
             embeds: [responses],
             components: [
               {
@@ -37,17 +42,17 @@ export const handleComponent = async (
                     type: ComponentType.Button,
                     style: ButtonStyle.Primary,
                     label: "Close",
-                    custom_id: "closeTicket"
+                    custom_id: "closeTicket",
                   },
                   {
                     type: ComponentType.Button,
                     style: ButtonStyle.Danger,
                     label: "Delete",
-                    custom_id: "deleteTicket"
-                  }
-                ]
-              }
-            ]
+                    custom_id: "deleteTicket",
+                  },
+                ],
+              },
+            ],
           },
           applicationChannel.id
         );
@@ -63,13 +68,15 @@ export const handleComponent = async (
       try {
         await sendMessage(
           {
-            content: `<@${interaction.message.embeds![0].fields![5].value}> thank you for your application, but your account does not currently meet our criteria, feel free to reapply at a later time`
-          }, 
+            content: `<@${
+              interaction.message.embeds![0].fields![5].value
+            }> thank you for your application, but your account does not currently meet our criteria, feel free to reapply at a later time`,
+          },
           config.GUEST_CHAT_CHANNEL
         );
         await updateMessage(interaction.application_id, interaction.token, {
           content: `Denied by ${interaction.member?.user.username}`,
-          components: []
+          components: [],
         });
         break;
       } catch (err) {
@@ -79,7 +86,10 @@ export const handleComponent = async (
     case "messageRecruit":
       try {
         await updateMessage(interaction.application_id, interaction.token, {
-          content: interaction.message.content + "\n" + `Messaged by ${interaction.member?.user.username}`,
+          content:
+            interaction.message.content +
+            "\n" +
+            `Messaged by ${interaction.member?.user.username}`,
           components: [
             {
               type: ComponentType.ActionRow,
@@ -88,16 +98,16 @@ export const handleComponent = async (
                   type: ComponentType.Button,
                   style: ButtonStyle.Primary,
                   label: "Messaged",
-                  custom_id: 'messageRecruit'
+                  custom_id: "messageRecruit",
                 },
                 {
                   type: ComponentType.Button,
                   style: ButtonStyle.Danger,
                   label: "Close",
-                  custom_id: "closeRecruit"
+                  custom_id: "closeRecruit",
                 },
-              ]
-            }
+              ],
+            },
           ],
         });
         break;
@@ -108,8 +118,8 @@ export const handleComponent = async (
     case "closeRecruit":
       try {
         await updateMessage(interaction.application_id, interaction.token, {
-          content: interaction.message.content.split('\n').splice(1).join('\n'),
-          components: []
+          content: interaction.message.content.split("\n").splice(1).join("\n"),
+          components: [],
         });
         break;
       } catch (err) {
@@ -122,19 +132,36 @@ export const handleComponent = async (
         await moveChannel(channelId, config.ARCHIVE_CATEGORY);
         await sendMessage({ content: "Ticket has been closed" }, channelId);
         await updateMessage(interaction.application_id, interaction.token, {
-          components: [{
-            type: ComponentType.ActionRow,
-            components: [{
-              type: ComponentType.Button,
-              style: ButtonStyle.Primary,
-              label: "Reopen",
-              custom_id: "reopenTicket"
-            }]
-          }]
+          components: [
+            {
+              type: ComponentType.ActionRow,
+              components: [
+                {
+                  type: ComponentType.Button,
+                  style: ButtonStyle.Secondary,
+                  label: "Reopen",
+                  custom_id: "reopenTicket",
+                },
+              ],
+            },
+          ],
         });
         break;
       } catch (err) {
         console.error(`Failed to close ticket: ${err}`);
+        break;
+      }
+    case "deleteTicket":
+      try {
+        const channelId = interaction.message.channel_id;
+        await deleteChannel(channelId);
+        await sendMessage(
+          { content: "Application channel deleted" },
+          channelId
+        );
+        break;
+      } catch (err) {
+        console.error(`Failed to delete ticket: ${err}`);
         break;
       }
     case "reopenTicket":
@@ -150,18 +177,20 @@ export const handleComponent = async (
                   type: ComponentType.Button,
                   style: ButtonStyle.Primary,
                   label: "Close",
-                  custom_id: "closeTicket"
+                  custom_id: "closeTicket",
                 },
                 {
                   type: ComponentType.Button,
                   style: ButtonStyle.Danger,
                   label: "Delete",
-                  custom_id: "deleteTicket"
-                }
-              ]
-            }
-          ]
+                  custom_id: "deleteTicket",
+                },
+              ],
+            },
+          ],
         });
+        await sendMessage({ content: "Ticket has been reopened" }, channelId);
+        break;
       } catch (err) {
         console.error(`Failed to reopen ticket: ${err}`);
         break;
@@ -191,13 +220,21 @@ const createApplicationChannel = async (
         {
           id: config.RECRUITER_ROLE,
           type: OverwriteType.Role,
-          allow: (PermissionFlagsBits.ViewChannel | PermissionFlagsBits.AddReactions | PermissionFlagsBits.SendMessages).toString(),
+          allow: (
+            PermissionFlagsBits.ViewChannel |
+            PermissionFlagsBits.AddReactions |
+            PermissionFlagsBits.SendMessages
+          ).toString(),
           deny: "0",
         },
         {
           id: userId,
           type: OverwriteType.Member,
-          allow: (PermissionFlagsBits.ViewChannel | PermissionFlagsBits.AddReactions | PermissionFlagsBits.SendMessages).toString(),
+          allow: (
+            PermissionFlagsBits.ViewChannel |
+            PermissionFlagsBits.AddReactions |
+            PermissionFlagsBits.SendMessages
+          ).toString(),
           deny: "0",
         },
       ],

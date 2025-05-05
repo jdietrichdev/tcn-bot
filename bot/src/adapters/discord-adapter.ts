@@ -66,20 +66,35 @@ export const createChannel = async (
   }
 };
 
-export const moveChannel = async (
-  channelId: string,
-  categoryId: string
-) => {
+export const moveChannel = async (channelId: string, categoryId: string) => {
   const url = `${BASE_URL}/channels/${channelId}`;
   try {
-    await axios.patch(url, { parent_id: categoryId }, {
+    await axios.patch(
+      url,
+      { parent_id: categoryId },
+      {
+        headers: {
+          Authorization: `Bot ${process.env.BOT_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (err) {
+    throw new Error(`Failed to move channel ${channelId}: ${err}`);
+  }
+};
+
+export const deleteChannel = async (channelId: string) => {
+  const url = `${BASE_URL}/channels/${channelId}`;
+  try {
+    await axios.delete(url, {
       headers: {
         Authorization: `Bot ${process.env.BOT_TOKEN}`,
         "Content-Type": "application/json",
-      }
+      },
     });
   } catch (err) {
-    throw new Error(`Failed to movr channel ${channelId}: ${err}`);
+    throw new Error(`Failed to delete channel ${channelId}: ${err}`);
   }
 };
 
