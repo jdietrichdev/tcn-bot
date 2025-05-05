@@ -68,7 +68,7 @@ export const createChannel = async (
 
 export const moveChannel = async (
   channelId: string,
-  categoryId: string;
+  categoryId: string
 ) => {
   const url = `${BASE_URL}/channels/${channelId}`;
   try {
