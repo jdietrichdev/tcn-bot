@@ -235,12 +235,9 @@ export const handleComponent = async (
           interaction.member!.user.id
         );
         if (approver.roles.includes(config.RECRUITER_ROLE)) {
-          const topic = (interaction.channel as APITextChannel).topic;
-          console.log(topic);
           const userId = (interaction.channel as APITextChannel).topic!.split(
             ":"
           )[1];
-          console.log(userId);
           await grantRole(interaction.guild_id!, userId, config.CLAN_ROLE);
           await sendMessage(
             {
