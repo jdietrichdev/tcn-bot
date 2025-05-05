@@ -130,7 +130,12 @@ export const handleComponent = async (
       try {
         const channelId = interaction.message.channel_id;
         await moveChannel(channelId, config.ARCHIVE_CATEGORY);
-        await sendMessage({ content: "Ticket has been closed" }, channelId);
+        await sendMessage(
+          {
+            content: `${interaction.member?.user.username} has closed the ticket`,
+          },
+          channelId
+        );
         await updateMessage(interaction.application_id, interaction.token, {
           components: [
             {
@@ -141,6 +146,12 @@ export const handleComponent = async (
                   style: ButtonStyle.Secondary,
                   label: "Reopen",
                   custom_id: "reopenTicket",
+                },
+                {
+                  type: ComponentType.Button,
+                  style: ButtonStyle.Secondary,
+                  label: "Delete",
+                  custom_id: "deleteTicket",
                 },
               ],
             },
@@ -155,10 +166,6 @@ export const handleComponent = async (
       try {
         const channelId = interaction.message.channel_id;
         await deleteChannel(channelId);
-        await sendMessage(
-          { content: "Application channel deleted" },
-          channelId
-        );
         break;
       } catch (err) {
         console.error(`Failed to delete ticket: ${err}`);
@@ -168,6 +175,12 @@ export const handleComponent = async (
       try {
         const channelId = interaction.message.channel_id;
         await moveChannel(channelId, config.APPLICATION_CATEGORY);
+        await sendMessage(
+          {
+            content: `${interaction.member?.user.username} has reopened the ticket`,
+          },
+          channelId
+        );
         await updateMessage(interaction.application_id, interaction.token, {
           components: [
             {
@@ -189,7 +202,6 @@ export const handleComponent = async (
             },
           ],
         });
-        await sendMessage({ content: "Ticket has been reopened" }, channelId);
         break;
       } catch (err) {
         console.error(`Failed to reopen ticket: ${err}`);
