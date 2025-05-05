@@ -239,6 +239,12 @@ export const handleComponent = async (
             ":"
           )[1];
           await grantRole(interaction.guild_id!, userId, config.CLAN_ROLE);
+          await sendMessage(
+            {
+              content: `Roles granted by ${interaction.member?.user.username}`,
+            },
+            interaction.channel.id
+          );
         } else {
           await updateMessage(interaction.application_id, interaction.token, {
             content: "You do not have permission to approve this ticket",
