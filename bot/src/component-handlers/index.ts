@@ -149,7 +149,7 @@ export const handleComponent = async (
                 },
                 {
                   type: ComponentType.Button,
-                  style: ButtonStyle.Secondary,
+                  style: ButtonStyle.Danger,
                   label: "Delete",
                   custom_id: "deleteTicket",
                 },
