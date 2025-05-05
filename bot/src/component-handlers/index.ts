@@ -8,7 +8,6 @@ import {
 } from "discord-api-types/v10";
 import {
   createChannel,
-  createDM,
   sendMessage,
   updateMessage,
 } from "../adapters/discord-adapter";
@@ -37,7 +36,6 @@ export const handleComponent = async (
       });
       break;
     case "denyApp":
-      await sendDenialDM(interaction);
       await sendMessage(
         {
           content: `<@${interaction.message.embeds![0].fields![5].value}> thank you for your application, but your account does not currently meet our criteria, feel free to reapply at a later time`
@@ -104,32 +102,18 @@ const createApplicationChannel = async (
         {
           id: config.RECRUITER_ROLE,
           type: OverwriteType.Role,
-          allow: "1024",
+          allow: (PermissionFlagsBits.ViewChannel | PermissionFlagsBits.AddReactions | PermissionFlagsBits.SendMessages).toString(),
           deny: "0",
         },
         {
           id: userId,
           type: OverwriteType.Member,
-          allow: "1024",
+          allow: (PermissionFlagsBits.ViewChannel | PermissionFlagsBits.AddReactions | PermissionFlagsBits.SendMessages).toString(),
           deny: "0",
         },
       ],
     },
     interaction.guild_id!
   );
-  console.log(response);
   return response.data;
-};
-
-const sendDenialDM = async (interaction: APIMessageComponentInteraction) => {
-  const dmChannel = await createDM({
-    recipient_id: interaction.message.embeds![0].fields![5].value,
-  });
-  await sendMessage(
-    {
-      content:
-        "Thank you for applying! You do not currently meet our family requirements, feel free to apply again at a later time",
-    },
-    dmChannel.id
-  );
 };

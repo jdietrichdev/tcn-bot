@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from "discord.js";
 
-const helloCommand = new SlashCommandBuilder()
+export const hello = new SlashCommandBuilder()
   .setName("hello")
   .setDescription("Say hello to someone")
   .addUserOption((option) => {
@@ -10,7 +10,7 @@ const helloCommand = new SlashCommandBuilder()
       .setRequired(true);
   });
 
-const linkCommands = new SlashCommandBuilder()
+export const link = new SlashCommandBuilder()
   .setName("link")
   .setDescription("Link/Unlink discord to Clash of Clans account")
   .addSubcommand((subcommand) => {
@@ -42,104 +42,148 @@ const linkCommands = new SlashCommandBuilder()
       });
   });
 
-// const playerCommands = new SlashCommandBuilder()
-//   .setName("player")
-//   .setDescription("Interact with players")
-//   .addSubcommand((subcommand) => {
-//     return subcommand
-//       .setName("add")
-//       .setDescription("Add player to team roster")
-//       .addStringOption((option) => {
-//         return option
-//           .setName("roster")
-//           .setDescription("Which roster should the player be added to")
-//           .setRequired(true)
-//           .setChoices([
-//             {
-//               name: "TCN Tyrants",
-//               value: "tyrants",
-//             },
-//           ]);
-//       })
-//       .addUserOption((option) => {
-//         return option
-//           .setName("user")
-//           .setDescription("Which player needs to be added")
-//           .setRequired(false);
-//       });
-//   })
-//   .addSubcommand((subcommand) => {
-//     return subcommand
-//       .setName("away")
-//       .setDescription("Set player away time")
-//       .addStringOption((option) => {
-//         return option
-//           .setName("startdate")
-//           .setDescription("First day you will be unavailable (04/03/2024)")
-//           .setRequired(true);
-//       })
-//       .addStringOption((option) => {
-//         return option
-//           .setName("enddate")
-//           .setDescription("Last day you will be unavailable (04/03/2024")
-//           .setRequired(false);
-//       })
-//       .addUserOption((option) => {
-//         return option
-//           .setName("user")
-//           .setDescription("Player who will be away")
-//           .setRequired(false);
-//       });
-//   });
+export const player = new SlashCommandBuilder()
+  .setName("player")
+  .setDescription("Interact with players")
+  .addSubcommand((subcommand) => {
+    return subcommand
+      .setName("add")
+      .setDescription("Add player to team roster")
+      .addStringOption((option) => {
+        return option
+          .setName("roster")
+          .setDescription("Which roster should the player be added to")
+          .setRequired(true)
+          .setChoices([
+            {
+              name: "TCN Tyrants",
+              value: "tyrants",
+            },
+          ]);
+      })
+      .addUserOption((option) => {
+        return option
+          .setName("user")
+          .setDescription("Which player needs to be added")
+          .setRequired(false);
+      });
+  })
+  .addSubcommand((subcommand) => {
+    return subcommand
+      .setName("away")
+      .setDescription("Set player away time")
+      .addStringOption((option) => {
+        return option
+          .setName("startdate")
+          .setDescription("First day you will be unavailable (04/03/2024)")
+          .setRequired(true);
+      })
+      .addStringOption((option) => {
+        return option
+          .setName("enddate")
+          .setDescription("Last day you will be unavailable (04/03/2024")
+          .setRequired(false);
+      })
+      .addUserOption((option) => {
+        return option
+          .setName("user")
+          .setDescription("Player who will be away")
+          .setRequired(false);
+      });
+  });
 
-// const eventCommands = new SlashCommandBuilder()
-//   .setName("event")
-//   .setDescription("Interact with events")
-//   .addSubcommand((subcommand) => {
-//     return subcommand
-//       .setName("notify")
-//       .setDescription("Post message about upcoming event")
-//       .addStringOption((option) => {
-//         return option
-//           .setName("name")
-//           .setDescription("Name of event")
-//           .setRequired(true);
-//       })
-//       .addStringOption((option) => {
-//         return option
-//           .setName("message")
-//           .setDescription("Message to include with event")
-//           .setRequired(true);
-//       })
-//       .addStringOption((option) => {
-//         return option
-//           .setName("datetime")
-//           .setDescription("Date and time of event")
-//           .setRequired(true);
-//       })
-//       .addStringOption((option) => {
-//         return option
-//           .setName("timezone")
-//           .setDescription("Timezone for date/time (defaults to UTC)")
-//           .setRequired(false)
-//           .setChoices([
-//             { name: "Eastern Time (US)", value: "America/New_York" },
-//             { name: "Central Time (US)", value: "America/Chicago" },
-//             { name: "Mountain Time (US)", value: "America/Denver" },
-//             { name: "Pacific Time (US)", value: "America/Los_Angeles" },
-//           ]);
-//       })
-//       .addAttachmentOption((option) => {
-//         return option
-//           .setName("thumbnail")
-//           .setDescription("Thumbnail for event")
-//           .setRequired(false);
-//       });
-//   });
+export const event = new SlashCommandBuilder()
+  .setName("event")
+  .setDescription("Interact with events")
+  .addSubcommand((subcommand) => {
+    return subcommand
+      .setName("notify")
+      .setDescription("Post message about upcoming event")
+      .addStringOption((option) => {
+        return option
+          .setName("name")
+          .setDescription("Name of event")
+          .setRequired(true);
+      })
+      .addStringOption((option) => {
+        return option
+          .setName("message")
+          .setDescription("Message to include with event")
+          .setRequired(true);
+      })
+      .addStringOption((option) => {
+        return option
+          .setName("datetime")
+          .setDescription("Date and time of event")
+          .setRequired(true);
+      })
+      .addStringOption((option) => {
+        return option
+          .setName("timezone")
+          .setDescription("Timezone for date/time (defaults to UTC)")
+          .setRequired(false)
+          .setChoices([
+            { name: "Eastern Time (US)", value: "America/New_York" },
+            { name: "Central Time (US)", value: "America/Chicago" },
+            { name: "Mountain Time (US)", value: "America/Denver" },
+            { name: "Pacific Time (US)", value: "America/Los_Angeles" },
+          ]);
+      })
+      .addAttachmentOption((option) => {
+        return option
+          .setName("thumbnail")
+          .setDescription("Thumbnail for event")
+          .setRequired(false);
+      });
+  });
 
-export const commands = [
-  helloCommand,
-  linkCommands,
-  // playerCommands,
-  // eventCommands,
-];
+export const test = new SlashCommandBuilder()
+    .setName("test")
+    .setDescription("Test commands")
+    .addSubcommand((subcommand) => {
+      return subcommand.setName("demo").setDescription("Demo test command");
+    })
+    .addSubcommand((subcommand) => {
+      return subcommand
+        .setName("string-input")
+        .setDescription("Test string input with subcommand")
+        .addStringOption((option) => {
+          return option
+            .setName("input")
+            .setDescription("What should I say?")
+            .setRequired(true);
+        });
+    })
+    .addSubcommand((subcommand) => {
+      return subcommand.setName("emoji").setDescription("Return an emoji");
+    });
+export const upgrade = new SlashCommandBuilder()
+    .setName("upgrade")
+    .setDescription("Show upgrade info for selected troop")
+    .addStringOption((option) => {
+      return option
+        .setName("troop")
+        .setDescription("Troop to get upgrade information for")
+        .setRequired(true)
+        .setAutocomplete(true);
+    });
+
+export const apply = new SlashCommandBuilder()
+    .setName("apply")
+    .setDescription("Apply to join This Clan Now");
+
+export const ro = new SlashCommandBuilder()
+    .setName("ro")
+    .setDescription("Create recruitment opportunity")
+    .addStringOption((option) => {
+      return option
+        .setName("user")
+        .setDescription("User ID to reach out to")
+        .setRequired(true);
+    })
+    .addStringOption((option) => {
+      return option
+        .setName("notes")
+        .setDescription("Notes about recruit")
+        .setRequired(false);
+    });

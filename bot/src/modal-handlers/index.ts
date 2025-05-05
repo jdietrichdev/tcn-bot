@@ -12,7 +12,7 @@ import {
 } from "discord-api-types/payloads/v10";
 import { sendMessage, updateMessage } from "../adapters/discord-adapter";
 import { RESTPostAPIWebhookWithTokenJSONBody } from "discord-api-types/v10";
-import { getConfig } from "../util/serverConfig";
+import { getConfig, ServerConfig } from "../util/serverConfig";
 
 export const createApplyModal = async () => {
   return {
@@ -91,7 +91,7 @@ export const handleApplySubmit = async (
 ) => {
 //   console.log(JSON.stringify(interaction));
   const config = getConfig(interaction.guild_id!);
-  const confirmation = buildApplicationConfirmation(interaction);
+  const confirmation = buildApplicationConfirmation(interaction, config);
   await sendMessage(confirmation, config.APP_APPROVAL_CHANNEL);
   await updateMessage(interaction.application_id, interaction.token, {
     content: `Thanks for applying <@${interaction.member?.user.id}>`,
@@ -99,7 +99,8 @@ export const handleApplySubmit = async (
 };
 
 const buildApplicationConfirmation = (
-  interaction: APIModalSubmitInteraction
+  interaction: APIModalSubmitInteraction,
+  config: ServerConfig
 ): RESTPostAPIWebhookWithTokenJSONBody => {
   const embed: APIEmbed = {
     title: `Application for ${interaction.member?.user.username}`,
@@ -143,6 +144,7 @@ const buildApplicationConfirmation = (
       ],
     };
   return {
+    content: `<@&${config.RECRUITER_ROLE}>`,
     embeds: [embed],
     components: [responseButtons],
   };
