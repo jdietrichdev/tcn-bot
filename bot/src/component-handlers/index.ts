@@ -213,6 +213,12 @@ export const handleComponent = async (
                   label: "Delete",
                   custom_id: "deleteTicket",
                 },
+                {
+                  type: ComponentType.Button,
+                  style: ButtonStyle.Success,
+                  label: "Grant Roles",
+                  custom_id: "grantRoles",
+                },
               ],
             },
           ],
