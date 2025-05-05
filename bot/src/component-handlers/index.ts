@@ -28,6 +28,25 @@ export const handleComponent = async (
           {
             content: `Hey <@${userId}> thanks for applying! We've attached your original responses below for reference, but feel free to tell us more about yourself!`,
             embeds: [responses],
+            components: [
+              {
+                type: ComponentType.ActionRow,
+                components: [
+                  {
+                    type: ComponentType.Button,
+                    style: ButtonStyle.Primary,
+                    label: "Close",
+                    custom_id: "closeTicket"
+                  },
+                  {
+                    type: ComponentType.Button,
+                    style: ButtonStyle.Danger,
+                    label: "Delete",
+                    custom_id: "deleteTicket"
+                  }
+                ]
+              }
+            ]
           },
           applicationChannel.id
         );
