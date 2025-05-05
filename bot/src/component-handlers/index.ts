@@ -19,64 +19,83 @@ export const handleComponent = async (
   const config = getConfig(interaction.guild_id!);
   switch (interaction.data.custom_id) {
     case "approveApp":
-      const responses = interaction.message.embeds[0];
-      const userId = responses.fields?.splice(5, 1)[0].value;
-      const applicationChannel = await createApplicationChannel(interaction, userId!, config);
-      delete responses.footer;
-      await sendMessage(
-        {
-          content: `Hey <@${userId}> thanks for applying! We've attached your original responses below for reference, but feel free to tell us more about yourself!`,
-          embeds: [responses],
-        },
-        applicationChannel.id
-      );
-      await updateMessage(interaction.application_id, interaction.token, {
-        content: `Accepted by ${interaction.member?.user.username}`,
-        components: [],
-      });
-      break;
-    case "denyApp":
-      await sendMessage(
-        {
-          content: `<@${interaction.message.embeds![0].fields![5].value}> thank you for your application, but your account does not currently meet our criteria, feel free to reapply at a later time`
-        }, 
-        config.GUEST_CHAT_CHANNEL
-      );
-      await updateMessage(interaction.application_id, interaction.token, {
-        content: `Denied by ${interaction.member?.user.username}`,
-        components: []
-      });
-      break;
-    case "messageRecruit":
-      await updateMessage(interaction.application_id, interaction.token, {
-        content: interaction.message.content + "\n" + `Messaged by ${interaction.member?.user.username}`,
-        components: [
+      try {
+        const responses = interaction.message.embeds[0];
+        const userId = responses.fields?.splice(5, 1)[0].value;
+        const applicationChannel = await createApplicationChannel(interaction, userId!, config);
+        delete responses.footer;
+        await sendMessage(
           {
-            type: ComponentType.ActionRow,
-            components: [
-              {
-                type: ComponentType.Button,
-                style: ButtonStyle.Primary,
-                label: "Messaged",
-                custom_id: 'messageRecruit'
-              },
-              {
-                type: ComponentType.Button,
-                style: ButtonStyle.Danger,
-                label: "Close",
-                custom_id: "closeRecruit"
-              },
-            ]
-          }
-        ],
-      });
-      break;
+            content: `Hey <@${userId}> thanks for applying! We've attached your original responses below for reference, but feel free to tell us more about yourself!`,
+            embeds: [responses],
+          },
+          applicationChannel.id
+        );
+        await updateMessage(interaction.application_id, interaction.token, {
+          content: `Accepted by ${interaction.member?.user.username}`,
+          components: [],
+        });
+        break;
+      } catch (err) {
+        console.error(`Failure approving app: ${err}`);
+      }
+    case "denyApp":
+      try {
+        await sendMessage(
+          {
+            content: `<@${interaction.message.embeds![0].fields![5].value}> thank you for your application, but your account does not currently meet our criteria, feel free to reapply at a later time`
+          }, 
+          config.GUEST_CHAT_CHANNEL
+        );
+        await updateMessage(interaction.application_id, interaction.token, {
+          content: `Denied by ${interaction.member?.user.username}`,
+          components: []
+        });
+        break;
+      } catch (err) {
+        console.error(`Failure denying app: ${err}`);
+        break;
+      }
+    case "messageRecruit":
+      try {
+        await updateMessage(interaction.application_id, interaction.token, {
+          content: interaction.message.content + "\n" + `Messaged by ${interaction.member?.user.username}`,
+          components: [
+            {
+              type: ComponentType.ActionRow,
+              components: [
+                {
+                  type: ComponentType.Button,
+                  style: ButtonStyle.Primary,
+                  label: "Messaged",
+                  custom_id: 'messageRecruit'
+                },
+                {
+                  type: ComponentType.Button,
+                  style: ButtonStyle.Danger,
+                  label: "Close",
+                  custom_id: "closeRecruit"
+                },
+              ]
+            }
+          ],
+        });
+        break;
+      } catch (err) {
+        console.error('Failure updating recruit message');
+        break;
+      }
     case "closeRecruit":
-      await updateMessage(interaction.application_id, interaction.token, {
-        content: interaction.message.content.split('\n').splice(1).join('\n'),
-        components: []
-      });
-      break;
+      try {
+        await updateMessage(interaction.application_id, interaction.token, {
+          content: interaction.message.content.split('\n').splice(1).join('\n'),
+          components: []
+        });
+        break;
+      } catch (err) {
+        console.error(`Failure closing recruit message: ${err}`);
+        break;
+      }
   }
 };
 

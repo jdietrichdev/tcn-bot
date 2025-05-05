@@ -62,6 +62,9 @@ export const handleRecruit = async (
       content: `Thanks for your recommendation <@${interaction.member?.user.id}>`,
     });
   } catch (err) {
-    throw new Error(`Failed to handle recruit command: ${err}`);
+    console.error(`Failed to handle recruit command: ${err}`);
+    await updateMessage(interaction.application_id, interaction.token, {
+      content: 'Your request may have failed, if you do not see a message in the expected channel please try again',
+    });
   }
 };

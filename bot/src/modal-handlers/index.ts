@@ -90,12 +90,19 @@ export const handleApplySubmit = async (
   interaction: APIModalSubmitInteraction
 ) => {
 //   console.log(JSON.stringify(interaction));
-  const config = getConfig(interaction.guild_id!);
-  const confirmation = buildApplicationConfirmation(interaction, config);
-  await sendMessage(confirmation, config.APP_APPROVAL_CHANNEL);
-  await updateMessage(interaction.application_id, interaction.token, {
-    content: `Thanks for applying <@${interaction.member?.user.id}>`,
-  });
+  try {
+    const config = getConfig(interaction.guild_id!);
+    const confirmation = buildApplicationConfirmation(interaction, config);
+    await sendMessage(confirmation, config.APP_APPROVAL_CHANNEL);
+    await updateMessage(interaction.application_id, interaction.token, {
+      content: `Thanks for applying <@${interaction.member?.user.id}>`,
+    });
+  } catch (err) {
+    console.error('Failed to submit modal');
+    await updateMessage(interaction.application_id, interaction.token, {
+        content: 'There may have been an error handling your application, if you do not hear back soon reach out to leaders'
+    });
+  }
 };
 
 const buildApplicationConfirmation = (
