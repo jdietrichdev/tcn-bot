@@ -248,7 +248,7 @@ export const handleComponent = async (
         } else {
           await sendMessage(
             {
-              content: `You do not have permission to approve this ticket ${interaction.member?.user.id}`,
+              content: `You do not have permission to approve this ticket <@${interaction.member?.user.id}>`,
             },
             interaction.channel.id
           );
