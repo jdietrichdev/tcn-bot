@@ -10,6 +10,7 @@ import {
   createChannel,
   sendMessage,
   updateMessage,
+  moveChannel,
 } from "../adapters/discord-adapter";
 import { getConfig, ServerConfig } from "../util/serverConfig";
 
@@ -101,7 +102,7 @@ export const handleComponent = async (
         });
         break;
       } catch (err) {
-        console.error('Failure updating recruit message');
+        console.error(`Failure updating recruit message: ${err}`);
         break;
       }
     case "closeRecruit":
@@ -113,6 +114,56 @@ export const handleComponent = async (
         break;
       } catch (err) {
         console.error(`Failure closing recruit message: ${err}`);
+        break;
+      }
+    case "closeTicket":
+      try {
+        const channelId = interaction.message.channel_id;
+        await moveChannel(channelId, config.ARCHIVE_CATEGORY);
+        await sendMessage({ content: "Ticket has been closed" }, channelId);
+        await updateMessage(interaction.application_id, interaction.token, {
+          components: [{
+            type: ComponentType.ActionRow,
+            components: [{
+              type: ComponentType.Button,
+              style: ButtonStyle.Primary,
+              label: "Reopen",
+              custom_id: "reopenTicket"
+            }]
+          }]
+        });
+        break;
+      } catch (err) {
+        console.error(`Failed to close ticket: ${err}`);
+        break;
+      }
+    case "reopenTicket":
+      try {
+        const channelId = interaction.message.channel_id;
+        await moveChannel(channelId, config.APPLICATION_CATEGORY);
+        await updateMessage(interaction.application_id, interaction.token, {
+          components: [
+            {
+              type: ComponentType.ActionRow,
+              components: [
+                {
+                  type: ComponentType.Button,
+                  style: ButtonStyle.Primary,
+                  label: "Close",
+                  custom_id: "closeTicket"
+                },
+                {
+                  type: ComponentType.Button,
+                  style: ButtonStyle.Danger,
+                  label: "Delete",
+                  custom_id: "deleteTicket"
+                }
+              ]
+            }
+          ]
+        });
+      } catch (err) {
+        console.error(`Failed to reopen ticket: ${err}`);
         break;
       }
   }
