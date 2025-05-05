@@ -232,7 +232,7 @@ export const handleComponent = async (
       try {
         const approver = await getServerUser(
           interaction.guild_id!,
-          interaction.user!.id
+          interaction.member!.user.id
         );
         if (approver.roles.includes(config.RECRUITER_ROLE)) {
           const userId = (interaction.channel as APITextChannel).topic!.split(
