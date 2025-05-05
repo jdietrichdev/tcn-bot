@@ -246,9 +246,12 @@ export const handleComponent = async (
             interaction.channel.id
           );
         } else {
-          await updateMessage(interaction.application_id, interaction.token, {
-            content: "You do not have permission to approve this ticket",
-          });
+          await sendMessage(
+            {
+              content: `You do not have permission to approve this ticket ${interaction.member?.user.id}`,
+            },
+            interaction.channel.id
+          );
         }
       } catch (err) {
         console.error(`Failed to grant roles: ${err}`);
