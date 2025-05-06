@@ -8,7 +8,11 @@
   "license": "ISC",
   "private": true,
   "description": "Discord Bot for TCN (Clash of Clans)",
-  "workspaces": ["infra", "bot", "commands"],
+  "workspaces": [
+    "infra",
+    "bot",
+    "commands"
+  ],
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/node": "20.14.2",
@@ -17,7 +21,7 @@
     "@typescript-eslint/eslint-plugin": "^7.14.1",
     "@typescript-eslint/parser": "^7.14.1",
     "eslint": "^8.56.0"
-},
+  },
   "eslintConfig": {
     "parser": "@typescript-eslint/parser",
     "plugins": [
