@@ -16,10 +16,11 @@ import { BUTTONS } from "../component-handlers/buttons";
 
 const questionMapping = {
   tags: "Player tag(s)",
-  source: "How did you find us? Who reached out to you?",
+  source: "Where/Who did you learn about us from?",
   leaveClan: "Why did you leave your last clan?",
   clanWants: "What do you want in a clan?",
-  strategies: "Favorite strategies",
+  competition:
+    "How competitive do you want to be? What are your favorite strategies?",
 };
 
 export const createApplyModal = () => {
@@ -47,7 +48,7 @@ export const createApplyModal = () => {
             {
               type: ComponentType.TextInput,
               custom_id: "source",
-              label: "How did you find us? Who reached out to you?",
+              label: "Where/Who did you learn about us from?",
               style: TextInputStyle.Paragraph,
               required: true,
             },
@@ -82,8 +83,9 @@ export const createApplyModal = () => {
           components: [
             {
               type: ComponentType.TextInput,
-              custom_id: "strategies",
-              label: "Favorite strategies?",
+              custom_id: "competition",
+              label:
+                "How competitive do you want to be? What are your favorite strategies?",
               style: TextInputStyle.Paragraph,
               required: true,
             },

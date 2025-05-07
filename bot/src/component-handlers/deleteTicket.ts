@@ -2,7 +2,11 @@ import {
   APIMessageComponentInteraction,
   ComponentType,
 } from "discord-api-types/v10";
-import { sendMessage, updateResponse } from "../adapters/discord-adapter";
+import {
+  deleteResponse,
+  sendMessage,
+  updateResponse,
+} from "../adapters/discord-adapter";
 import { isActorRecruiter } from "./utils";
 import { ServerConfig } from "../util/serverConfig";
 import { BUTTONS } from "./buttons";
@@ -35,6 +39,7 @@ export const deleteTicket = async (
         },
         interaction.channel.id
       );
+      await deleteResponse(interaction.application_id, interaction.token);
     }
   } catch (err) {
     console.error(`Failed to delete ticket: ${err}`);

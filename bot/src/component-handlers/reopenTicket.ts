@@ -49,7 +49,6 @@ export const reopenTicket = async (
           },
         ],
       });
-      await deleteResponse(interaction.application_id, interaction.token);
     } else {
       await sendMessage(
         {
@@ -58,6 +57,7 @@ export const reopenTicket = async (
         interaction.channel.id
       );
     }
+    await deleteResponse(interaction.application_id, interaction.token);
   } catch (err) {
     console.error(`Failed to reopen ticket: ${err}`);
     await updateResponse(interaction.application_id, interaction.token, {
