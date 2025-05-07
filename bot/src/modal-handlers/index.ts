@@ -90,16 +90,16 @@ export const createApplyModal = () => {
             },
           ],
         },
-        {
-            type: ComponentType.ActionRow,
-            components: {
-                type: ComponentType.TextInput,
-                custom_id: 'contact',
-                label: 'Who contacted you about our clan (if applicable)?',
-                style: TextInputStyle.Short,
-                required: false,
-            }
-        }
+        // {
+        //     type: ComponentType.ActionRow,
+        //     components: {
+        //         type: ComponentType.TextInput,
+        //         custom_id: 'contact',
+        //         label: 'Who contacted you about our clan (if applicable)?',
+        //         style: TextInputStyle.Short,
+        //         required: false,
+        //     }
+        // }
       ],
     },
   } as APIInteractionResponse;
