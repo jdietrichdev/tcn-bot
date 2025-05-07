@@ -1,6 +1,6 @@
 import axios from "axios";
 import { testCommands } from "./test-commands";
-// import { tcnCommands } from './tcn-commands';
+import { tcnCommands } from "./tcn-commands";
 
 const BASE_URL = `https://discord.com/api/v10/applications/${process.env.APPLICATION_ID}`;
 const headers = {
