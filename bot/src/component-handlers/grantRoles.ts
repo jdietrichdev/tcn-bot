@@ -5,6 +5,7 @@ import {
 } from "discord-api-types/v10";
 import { ServerConfig } from "../util/serverConfig";
 import {
+  deleteResponse,
   grantRole,
   sendMessage,
   updateMessage,
@@ -49,6 +50,7 @@ export const grantRoles = async (
           },
         ],
       });
+      await deleteResponse(interaction.application_id, interaction.token);
     } else {
       await sendMessage(
         {

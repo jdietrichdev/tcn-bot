@@ -1,6 +1,7 @@
 import { APIMessageComponentInteraction } from "discord-api-types/v10";
 import { ServerConfig } from "../util/serverConfig";
 import {
+  deleteResponse,
   sendMessage,
   updateMessage,
   updateResponse,
@@ -23,6 +24,7 @@ export const denyApp = async (
       content: `Denied by ${interaction.member?.user.username}`,
       components: [],
     });
+    await deleteResponse(interaction.application_id, interaction.token);
   } catch (err) {
     console.error(`Failure denying app: ${err}`);
     await updateResponse(interaction.application_id, interaction.token, {

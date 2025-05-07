@@ -1,5 +1,9 @@
 import { APIMessageComponentInteraction } from "discord-api-types/v10";
-import { updateMessage, updateResponse } from "../adapters/discord-adapter";
+import {
+  deleteResponse,
+  updateMessage,
+  updateResponse,
+} from "../adapters/discord-adapter";
 
 export const messageRecruit = async (
   interaction: APIMessageComponentInteraction
@@ -11,6 +15,7 @@ export const messageRecruit = async (
         "\n" +
         `Messaged by ${interaction.member?.user.username}`,
     });
+    await deleteResponse(interaction.application_id, interaction.token);
   } catch (err) {
     console.error(`Failure updating recruit message: ${err}`);
     await updateResponse(interaction.application_id, interaction.token, {

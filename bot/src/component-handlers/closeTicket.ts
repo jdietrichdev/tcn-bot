@@ -5,6 +5,7 @@ import {
 } from "discord-api-types/v10";
 import { ServerConfig } from "../util/serverConfig";
 import {
+  deleteResponse,
   moveChannel,
   sendMessage,
   updateMessage,
@@ -52,6 +53,7 @@ export const closeTicket = async (
           },
         ],
       });
+      await deleteResponse(interaction.application_id, interaction.token);
     } else {
       await sendMessage(
         {

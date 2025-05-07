@@ -8,6 +8,7 @@ import {
 import { ServerConfig } from "../util/serverConfig";
 import {
   createChannel,
+  deleteResponse,
   sendMessage,
   updateMessage,
   updateResponse,
@@ -53,6 +54,7 @@ export const approveApp = async (
       content: `Accepted by ${interaction.member?.user.username}`,
       components: [],
     });
+    await deleteResponse(interaction.application_id, interaction.token);
   } catch (err) {
     console.error(`Failure approving app: ${err}`);
     await updateResponse(interaction.application_id, interaction.token, {

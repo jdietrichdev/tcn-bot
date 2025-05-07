@@ -40,13 +40,27 @@ export const updateMessage = async (
   }
 };
 
-export const deleteMessage = async (
+export const deleteResponse = async (
   applicationId: string,
   interactionToken: string
 ) => {
   const url = `${BASE_URL}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
   try {
     await axios.delete(url);
+  } catch (err) {
+    throw new Error(`Failed to delete response: ${err}`);
+  }
+};
+
+export const deleteMessage = async (channelId: string, messageId: string) => {
+  const url = `${BASE_URL}/channels/${channelId}/messages/${messageId}`;
+  try {
+    await axios.delete(url, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
   } catch (err) {
     throw new Error(`Failed to delete message: ${err}`);
   }
