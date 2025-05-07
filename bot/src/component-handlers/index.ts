@@ -32,7 +32,7 @@ export const handleComponent = async (
       await closeTicket(interaction, config);
       break;
     case "deleteTicket":
-      await deleteTicket(interaction);
+      await deleteTicket(interaction, config);
       break;
     case "reopenTicket":
       await reopenTicket(interaction, config);

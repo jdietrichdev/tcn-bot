@@ -1,50 +1,60 @@
 import { APIMessageComponentInteraction, ButtonStyle, ComponentType } from "discord-api-types/v10";
 import { ServerConfig } from "../util/serverConfig";
 import { moveChannel, sendMessage, updateMessage } from "../adapters/discord-adapter";
+import { isActorRecruiter } from "./utils";
 
 export const closeTicket = async (interaction: APIMessageComponentInteraction, config: ServerConfig) => {
     try {
-        const channelId = interaction.message.channel_id;
-        await moveChannel(channelId, config.ARCHIVE_CATEGORY);
-        await sendMessage(
-            {
-                content: `${interaction.member?.user.username} has closed the ticket`,
-            },
-            channelId
-        );
-        await updateMessage(interaction.application_id, interaction.token, {
-            components: [
+        if (await isActorRecruiter(interaction.guild_id!, interaction.member!.user.id, config)) {
+            const channelId = interaction.message.channel_id;
+            await moveChannel(channelId, config.ARCHIVE_CATEGORY);
+            await sendMessage(
                 {
-                    type: ComponentType.ActionRow,
-                    components: [
-                        {
-                            type: ComponentType.Button,
-                            style: ButtonStyle.Secondary,
-                            label: "Reopen",
-                            custom_id: "reopenTicket",
-                        },
-                        {
-                            type: ComponentType.Button,
-                            style: ButtonStyle.Danger,
-                            label: "Delete",
-                            custom_id: "deleteTicket",
-                        },
-                        {
-                            type: ComponentType.Button,
-                            style: ButtonStyle.Success,
-                            label: "Grant Roles",
-                            custom_id: "grantRoles",
-                        },
-                        {
-                            type: ComponentType.Button,
-                            style: ButtonStyle.Danger,
-                            label: "Remove Roles",
-                            custom_id: "removeRoles",
-                        },
-                    ],
+                    content: `${interaction.member?.user.username} has closed the ticket`,
                 },
-            ],
-        });
+                channelId
+            );
+            await updateMessage(interaction.application_id, interaction.token, {
+                components: [
+                    {
+                        type: ComponentType.ActionRow,
+                        components: [
+                            {
+                                type: ComponentType.Button,
+                                style: ButtonStyle.Secondary,
+                                label: "Reopen",
+                                custom_id: "reopenTicket",
+                            },
+                            {
+                                type: ComponentType.Button,
+                                style: ButtonStyle.Danger,
+                                label: "Delete",
+                                custom_id: "deleteTicket",
+                            },
+                            {
+                                type: ComponentType.Button,
+                                style: ButtonStyle.Success,
+                                label: "Grant Roles",
+                                custom_id: "grantRoles",
+                            },
+                            {
+                                type: ComponentType.Button,
+                                style: ButtonStyle.Danger,
+                                label: "Remove Roles",
+                                custom_id: "removeRoles",
+                            },
+                        ],
+                    },
+                ],
+            });
+        } else {
+            await sendMessage(
+                {
+                    content: `You do not have permission to close this ticket <@${interaction.member?.user.id}>`,
+                },
+                interaction.channel.id
+            );
+        }
     } catch (err) {
         console.error(`Failed to close ticket: ${err}`);
     }
