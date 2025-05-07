@@ -23,7 +23,7 @@ const questionMapping = {
     contact: "Who contacted you about our clan (if applicable)?"
 };
 
-export const createApplyModal = async () => {
+export const createApplyModal = () => {
   return {
     type: InteractionResponseType.Modal,
     data: {

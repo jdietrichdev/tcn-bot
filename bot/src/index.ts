@@ -42,7 +42,7 @@ export const proxy = async (
     body.type === InteractionType.ApplicationCommand &&
     body.data.name === "apply"
   ) {
-    response = await createApplyModal();
+    response = createApplyModal();
   } else {
     await eventClient.send(
       new PutEventsCommand({
