@@ -11,6 +11,7 @@ import {
   APIChatInputApplicationCommandInteraction,
   APIInteraction,
   APIInteractionResponse,
+  APIMessageButtonInteractionData,
   APIMessageComponentInteraction,
   APIModalSubmitInteraction,
   InteractionResponseType,
@@ -20,7 +21,11 @@ import {
 import { handleCommand } from "./command-handlers";
 import { handleAutocomplete } from "./autocomplete-handlers";
 import { handleComponent } from "./component-handlers";
-import { createApplyModal, handleApplySubmit } from "./modal-handlers";
+import {
+  createApplyModal,
+  handleApplySubmit,
+  ModalType,
+} from "./modal-handlers";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -42,7 +47,12 @@ export const proxy = async (
     body.type === InteractionType.ApplicationCommand &&
     body.data.name === "apply"
   ) {
-    response = createApplyModal();
+    response = createApplyModal(body, ModalType.APPLY);
+  } else if (
+    body.type === InteractionType.MessageComponent &&
+    (body.data as APIMessageButtonInteractionData).custom_id === "denyApp"
+  ) {
+    response = createApplyModal(body, ModalType.DENY_APP);
   } else {
     await eventClient.send(
       new PutEventsCommand({

@@ -1,16 +1,16 @@
 import {
+  InteractionResponseType,
+  ComponentType,
+  TextInputStyle,
+  APIInteractionResponse,
+  APIModalSubmitInteraction,
   APIActionRowComponent,
   APIButtonComponentWithCustomId,
   APIEmbed,
-  APIInteractionResponse,
-  APIModalSubmitInteraction,
-  ComponentType,
-  InteractionResponseType,
   ModalSubmitActionRowComponent,
-  TextInputStyle,
-} from "discord-api-types/payloads/v10";
+  RESTPostAPIWebhookWithTokenJSONBody,
+} from "discord-api-types/v10";
 import { sendMessage, updateResponse } from "../adapters/discord-adapter";
-import { RESTPostAPIWebhookWithTokenJSONBody } from "discord-api-types/v10";
 import { getConfig, ServerConfig } from "../util/serverConfig";
 import { BUTTONS } from "../component-handlers/buttons";
 
@@ -94,10 +94,9 @@ export const createApplyModal = () => {
   } as APIInteractionResponse;
 };
 
-export const handleApplySubmit = async (
+export const submitApplyModal = async (
   interaction: APIModalSubmitInteraction
 ) => {
-  //   console.log(JSON.stringify(interaction));
   try {
     const config = getConfig(interaction.guild_id!);
     const confirmation = buildApplicationConfirmation(interaction, config);
