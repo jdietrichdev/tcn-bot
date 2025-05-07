@@ -53,7 +53,7 @@ export const submitDenyAppModal = async (
       .splice(1);
     await sendMessage(
       {
-        content: `<@${userId}> thank you for your application, but your account does not currently meet our criteria: ${interaction.data.components[0].components[0].value}`,
+        content: `<@${userId}> thank you for your application, but it was denied for the following reasons: ${interaction.data.components[0].components[0].value}`,
       },
       config.GUEST_CHAT_CHANNEL
     );
