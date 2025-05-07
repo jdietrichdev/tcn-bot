@@ -2,12 +2,12 @@ import {
   AllowedMentionsTypes,
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
-  ButtonStyle,
   ComponentType,
 } from "discord-api-types/v10";
 import { getCommandOptionData } from "../util/interaction-util";
 import { sendMessage, updateMessage } from "../adapters/discord-adapter";
 import { getConfig } from "../util/serverConfig";
+import { BUTTONS } from "../component-handlers/buttons";
 
 export const handleRecruit = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -36,18 +36,8 @@ export const handleRecruit = async (
           {
             type: ComponentType.ActionRow,
             components: [
-              {
-                type: ComponentType.Button,
-                style: ButtonStyle.Primary,
-                label: "Messaged",
-                custom_id: 'messageRecruit'
-              },
-              {
-                type: ComponentType.Button,
-                style: ButtonStyle.Danger,
-                label: "Close",
-                custom_id: "closeRecruit"
-              },
+              BUTTONS.MESSAGE_RECRUIT,
+              BUTTONS.CLOSE_RECRUIT
             ]
           }
         ],

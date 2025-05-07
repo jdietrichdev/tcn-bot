@@ -1,12 +1,14 @@
-import { APIMessageComponentInteraction, ButtonStyle, ComponentType } from "discord-api-types/v10";
+import { APIMessageComponentInteraction, APITextChannel, ComponentType } from "discord-api-types/v10";
 import { ServerConfig } from "../util/serverConfig";
 import { moveChannel, sendMessage, updateMessage } from "../adapters/discord-adapter";
-import { isActorRecruiter } from "./utils";
+import { determineRolesButton, isActorRecruiter } from "./utils";
+import { BUTTONS } from "./buttons";
 
 export const reopenTicket = async (interaction: APIMessageComponentInteraction, config: ServerConfig) => {
     try {
         if (await isActorRecruiter(interaction.guild_id!, interaction.member!.user.id, config)) {
             const channelId = interaction.message.channel_id;
+            const userId = (interaction.channel as APITextChannel).topic!.split(':')[1];
             await moveChannel(channelId, config.APPLICATION_CATEGORY);
             await sendMessage({
                 content: `${interaction.member?.user.username} has reopened the ticket`,
@@ -17,30 +19,9 @@ export const reopenTicket = async (interaction: APIMessageComponentInteraction, 
                     {
                         type: ComponentType.ActionRow,
                         components: [
-                            {
-                                type: ComponentType.Button,
-                                style: ButtonStyle.Primary,
-                                label: "Close",
-                                custom_id: "closeTicket",
-                            },
-                            {
-                                type: ComponentType.Button,
-                                style: ButtonStyle.Danger,
-                                label: "Delete",
-                                custom_id: "deleteTicket",
-                            },
-                            {
-                                type: ComponentType.Button,
-                                style: ButtonStyle.Success,
-                                label: "Grant Roles",
-                                custom_id: "grantRoles",
-                            },
-                            {
-                                type: ComponentType.Button,
-                                style: ButtonStyle.Danger,
-                                label: "Remove Roles",
-                                custom_id: "removeRoles",
-                            },
+                            BUTTONS.CLOSE_TICKET,
+                            BUTTONS.DELETE_TICKET,
+                            await determineRolesButton(interaction.guild_id!, userId, config)
                         ],
                     },
                 ]
@@ -48,7 +29,7 @@ export const reopenTicket = async (interaction: APIMessageComponentInteraction, 
         } else {
             await sendMessage(
                 {
-                    content: `You do not have permissions to reopen this ticket <@${interaction.member?.user.id}`,
+                    content: `You do not have permissions to reopen this ticket <@${interaction.member?.user.id}>`,
                 },
                 interaction.channel.id
             )

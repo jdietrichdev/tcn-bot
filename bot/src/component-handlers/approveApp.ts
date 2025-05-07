@@ -1,6 +1,8 @@
-import { APIMessageComponentInteraction, ButtonStyle, ChannelType, ComponentType, OverwriteType, PermissionFlagsBits } from "discord-api-types/v10";
+import { APIMessageComponentInteraction, ChannelType, ComponentType, OverwriteType, PermissionFlagsBits } from "discord-api-types/v10";
 import { ServerConfig } from "../util/serverConfig";
 import { createChannel, sendMessage, updateMessage } from "../adapters/discord-adapter";
+import { BUTTONS } from "./buttons";
+import { determineRolesButton } from "./utils";
 
 export const approveApp = async (interaction: APIMessageComponentInteraction, config: ServerConfig) => {
     try {
@@ -18,33 +20,12 @@ export const approveApp = async (interaction: APIMessageComponentInteraction, co
             embeds: [responses],
             components: [
                 {
-                type: ComponentType.ActionRow,
-                components: [
-                    {
-                    type: ComponentType.Button,
-                    style: ButtonStyle.Primary,
-                    label: "Close",
-                    custom_id: "closeTicket",
-                    },
-                    {
-                    type: ComponentType.Button,
-                    style: ButtonStyle.Danger,
-                    label: "Delete",
-                    custom_id: "deleteTicket",
-                    },
-                    {
-                    type: ComponentType.Button,
-                    style: ButtonStyle.Success,
-                    label: "Grant Roles",
-                    custom_id: "grantRoles",
-                    },
-                    {
-                    type: ComponentType.Button,
-                    style: ButtonStyle.Danger,
-                    label: "Remove Roles",
-                    custom_id: "removeRoles",
-                    },
-                ],
+                    type: ComponentType.ActionRow,
+                    components: [
+                        BUTTONS.CLOSE_TICKET,
+                        BUTTONS.DELETE_TICKET,
+                        await determineRolesButton(interaction.guild_id!, userId!, config)
+                    ],
                 },
             ],
             },

@@ -4,7 +4,6 @@ import {
   APIEmbed,
   APIInteractionResponse,
   APIModalSubmitInteraction,
-  ButtonStyle,
   ComponentType,
   InteractionResponseType,
   ModalSubmitActionRowComponent,
@@ -13,6 +12,7 @@ import {
 import { sendMessage, updateMessage } from "../adapters/discord-adapter";
 import { RESTPostAPIWebhookWithTokenJSONBody } from "discord-api-types/v10";
 import { getConfig, ServerConfig } from "../util/serverConfig";
+import { BUTTONS } from "../component-handlers/buttons";
 
 const questionMapping = {
     tags: "Player tag(s)",
@@ -144,18 +144,8 @@ const buildApplicationConfirmation = (
     {
       type: ComponentType.ActionRow,
       components: [
-        {
-          type: ComponentType.Button,
-          style: ButtonStyle.Success,
-          label: "Approve",
-          custom_id: "approveApp",
-        },
-        {
-          type: ComponentType.Button,
-          style: ButtonStyle.Danger,
-          label: "Deny",
-          custom_id: "denyApp",
-        },
+        BUTTONS.APPROVE_APP,
+        BUTTONS.DENY_APP
       ],
     };
   return {

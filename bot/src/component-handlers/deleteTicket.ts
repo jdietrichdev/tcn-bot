@@ -11,7 +11,7 @@ export const deleteTicket = async (interaction: APIMessageComponentInteraction, 
         } else {
             await sendMessage(
                 {
-                    content: `You do not have permissions to delete this ticket <@${interaction.member?.user.id}`,
+                    content: `You do not have permissions to delete this ticket <@${interaction.member?.user.id}>`,
                 },
                 interaction.channel.id
             )
