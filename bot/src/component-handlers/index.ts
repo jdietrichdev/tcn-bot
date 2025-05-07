@@ -1,6 +1,5 @@
 import { getConfig } from "../util/serverConfig";
 import { approveApp } from "./approveApp";
-import { denyApp } from "./denyApp";
 import { messageRecruit } from "./messageRecruit";
 import { closeRecruit } from "./closeRecruit";
 import { closeTicket } from "./closeTicket";
@@ -19,9 +18,6 @@ export const handleComponent = async (
   switch (interaction.data.custom_id) {
     case "approveApp":
       await approveApp(interaction, config);
-      break;
-    case "denyApp":
-      await denyApp(interaction, config);
       break;
     case "messageRecruit":
       await messageRecruit(interaction);

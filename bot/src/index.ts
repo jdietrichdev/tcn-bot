@@ -21,11 +21,8 @@ import {
 import { handleCommand } from "./command-handlers";
 import { handleAutocomplete } from "./autocomplete-handlers";
 import { handleComponent } from "./component-handlers";
-import {
-  createApplyModal,
-  handleApplySubmit,
-  ModalType,
-} from "./modal-handlers";
+import { submitModal } from "./modal-handlers/submit";
+import { createModal, ModalType } from "./modal-handlers/create";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -47,12 +44,12 @@ export const proxy = async (
     body.type === InteractionType.ApplicationCommand &&
     body.data.name === "apply"
   ) {
-    response = createApplyModal(body, ModalType.APPLY);
+    response = createModal(body, ModalType.APPLY);
   } else if (
     body.type === InteractionType.MessageComponent &&
     (body.data as APIMessageButtonInteractionData).custom_id === "denyApp"
   ) {
-    response = createApplyModal(body, ModalType.DENY_APP);
+    response = createModal(body, ModalType.DENY_APP);
   } else {
     await eventClient.send(
       new PutEventsCommand({
@@ -86,7 +83,7 @@ export const handler = async (
   if (event.detail.type === InteractionType.MessageComponent) {
     await handleComponent(event.detail as APIMessageComponentInteraction);
   } else if (event.detail.type === InteractionType.ModalSubmit) {
-    await handleApplySubmit(event.detail as APIModalSubmitInteraction);
+    await submitModal(event.detail as APIModalSubmitInteraction);
   } else {
     await handleCommand(
       event as EventBridgeEvent<
