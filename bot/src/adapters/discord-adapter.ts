@@ -58,7 +58,6 @@ export const deleteMessage = async (channelId: string, messageId: string) => {
     await axios.delete(url, {
       headers: {
         Authorization: `Bot ${process.env.BOT_TOKEN}`,
-        "Content-Type": "application/json",
       },
     });
   } catch (err) {
