@@ -103,6 +103,16 @@ const createApplicationChannel = async (
           ).toString(),
           deny: "0",
         },
+        {
+          id: config.BOT_ID,
+          type: OverwriteType.Member,
+          allow: (
+            PermissionFlagsBits.ViewChannel |
+            PermissionFlagsBits.AddReactions |
+            PermissionFlagsBits.SendMessages
+          ).toString(),
+          deny: "0",
+        },
       ],
     },
     interaction.guild_id!

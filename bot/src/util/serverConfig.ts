@@ -6,6 +6,7 @@ export interface ServerConfig {
   GUEST_CHAT_CHANNEL: string;
   RECRUITER_ROLE: string;
   CLAN_ROLE: string;
+  BOT_ID: string;
 }
 
 const configMap = new Map<string, ServerConfig>();
@@ -19,6 +20,7 @@ configMap.set("1021786969077973022", {
   GUEST_CHAT_CHANNEL: "1279032545413038100",
   RECRUITER_ROLE: "1367944733204152484",
   CLAN_ROLE: "1369016145419702313",
+  BOT_ID: "1257342457868451920",
 });
 
 // TCN Server
@@ -30,6 +32,7 @@ configMap.set("1111490767991615518", {
   GUEST_CHAT_CHANNEL: "1112859424193777814",
   RECRUITER_ROLE: "1162202780845482024",
   CLAN_ROLE: "1112857721910341703",
+  BOT_ID: "1257342457868451920",
 });
 
 export const getConfig = (guidId: string): ServerConfig => {
