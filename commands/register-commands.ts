@@ -27,7 +27,7 @@ axios
     JSON.stringify(tcnCommands),
     { headers }
   )
-  .then(() => console.log("Test commands updated"))
+  .then(() => console.log("TCN commands updated"))
   .catch((e) => {
     console.log("Failed to update test commands", e);
     throw e;
