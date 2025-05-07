@@ -7,7 +7,7 @@ export const denyApp = async (interaction: APIMessageComponentInteraction, confi
         await sendMessage(
             {
             content: `<@${
-                interaction.message.embeds![0].fields![6].value
+                interaction.message.embeds![0].fields![5].value
             }> thank you for your application, but your account does not currently meet our criteria, feel free to reapply at a later time`,
             },
             config.GUEST_CHAT_CHANNEL

@@ -16,11 +16,10 @@ import { getConfig, ServerConfig } from "../util/serverConfig";
 
 const questionMapping = {
     tags: "Player tag(s)",
-    source: "How did you find us?",
+    source: "How did you find us? Who reached out to you?",
     leaveClan: "Why did you leave your last clan?",
     clanWants: "What do you want in a clan?",
     strategies: "Favorite strategies",
-    contact: "Who contacted you about our clan (if applicable)?"
 };
 
 export const createApplyModal = () => {
@@ -48,7 +47,7 @@ export const createApplyModal = () => {
             {
               type: ComponentType.TextInput,
               custom_id: "source",
-              label: "How did you find us?",
+              label: "How did you find us? Who reached out to you?",
               style: TextInputStyle.Paragraph,
               required: true,
             },
@@ -90,16 +89,6 @@ export const createApplyModal = () => {
             },
           ],
         },
-        // {
-        //     type: ComponentType.ActionRow,
-        //     components: {
-        //         type: ComponentType.TextInput,
-        //         custom_id: 'contact',
-        //         label: 'Who contacted you about our clan (if applicable)?',
-        //         style: TextInputStyle.Short,
-        //         required: false,
-        //     }
-        // }
       ],
     },
   } as APIInteractionResponse;
