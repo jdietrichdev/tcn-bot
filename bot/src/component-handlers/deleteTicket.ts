@@ -2,11 +2,7 @@ import {
   APIMessageComponentInteraction,
   ComponentType,
 } from "discord-api-types/v10";
-import {
-  deleteResponse,
-  sendMessage,
-  updateResponse,
-} from "../adapters/discord-adapter";
+import { sendMessage, updateResponse } from "../adapters/discord-adapter";
 import { isActorRecruiter } from "./utils";
 import { ServerConfig } from "../util/serverConfig";
 import { BUTTONS } from "./buttons";
@@ -32,7 +28,6 @@ export const deleteTicket = async (
           },
         ],
       });
-      await deleteResponse(interaction.application_id, interaction.token);
     } else {
       await sendMessage(
         {
