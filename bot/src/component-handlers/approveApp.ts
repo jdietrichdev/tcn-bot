@@ -69,7 +69,7 @@ const createApplicationChannel = async (
     const username = interaction.message.embeds[0].title?.split(" ")[2];
     const response = await createChannel(
       {
-        name: `ticket-${username}`,
+        name: `application-${username}`,
         type: ChannelType.GuildText,
         topic: `Application channel for ${username}:${userId}`,
         parent_id: config.APPLICATION_CATEGORY,

@@ -14,6 +14,15 @@ import { sendMessage, updateMessage } from "../adapters/discord-adapter";
 import { RESTPostAPIWebhookWithTokenJSONBody } from "discord-api-types/v10";
 import { getConfig, ServerConfig } from "../util/serverConfig";
 
+const questionMapping = {
+    tags: "Player tag(s)",
+    source: "How did you find us?",
+    leaveClan: "Why did you leave your last clan?",
+    clanWants: "What do you want in a clan?",
+    strategies: "Favorite strategies",
+    contact: "Who contacted you about our clan (if applicable)?"
+};
+
 export const createApplyModal = async () => {
   return {
     type: InteractionResponseType.Modal,
@@ -81,6 +90,16 @@ export const createApplyModal = async () => {
             },
           ],
         },
+        {
+            type: ComponentType.ActionRow,
+            components: {
+                type: ComponentType.TextInput,
+                custom_id: 'contact',
+                label: 'Who contacted you about our clan (if applicable)?',
+                style: TextInputStyle.Short,
+                required: false,
+            }
+        }
       ],
     },
   } as APIInteractionResponse;
@@ -117,7 +136,7 @@ const buildApplicationConfirmation = (
         (item: ModalSubmitActionRowComponent) => {
           const response = item.components[0];
           return {
-            name: response.custom_id,
+            name: questionMapping[response.custom_id as keyof typeof questionMapping],
             value: response.value,
           };
         }
