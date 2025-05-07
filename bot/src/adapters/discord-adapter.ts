@@ -29,7 +29,12 @@ export const updateMessage = async (
 ) => {
   const url = `${BASE_URL}/api/v10/channels/${channelId}/messages/${messageId}`;
   try {
-    await axios.patch(url, message);
+    await axios.patch(url, message, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
   } catch (err) {
     throw new Error(`Failed to update message: ${err}`);
   }
