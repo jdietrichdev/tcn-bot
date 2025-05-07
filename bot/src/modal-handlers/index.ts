@@ -19,8 +19,7 @@ const questionMapping = {
   source: "Where/Who did you learn about us from?",
   leaveClan: "Why did you leave your last clan?",
   clanWants: "What do you want in a clan?",
-  competition:
-    "How competitive do you want to be? What are your favorite strategies?",
+  competition: "Competition level/favorite strategies?",
 };
 
 export const createApplyModal = () => {
@@ -84,8 +83,7 @@ export const createApplyModal = () => {
             {
               type: ComponentType.TextInput,
               custom_id: "competition",
-              label:
-                "How competitive do you want to be? What are your favorite strategies?",
+              label: "Competition level/favorite strategies?",
               style: TextInputStyle.Paragraph,
               required: true,
             },
