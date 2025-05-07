@@ -28,6 +28,8 @@ export const updateMessage = async (
   message: RESTPostAPIWebhookWithTokenJSONBody
 ) => {
   const url = `${BASE_URL}/api/v10/channels/${channelId}/messages/${messageId}`;
+  console.log(url);
+  console.log(message);
   try {
     await axios.patch(url, message, {
       headers: {
