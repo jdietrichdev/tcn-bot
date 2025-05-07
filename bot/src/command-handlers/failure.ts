@@ -1,5 +1,5 @@
 import { APIChatInputApplicationCommandInteraction } from "discord-api-types/v10";
-import { updateMessage } from "../adapters/discord-adapter";
+import { updateResponse } from "../adapters/discord-adapter";
 
 export const handleFailure = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -7,5 +7,5 @@ export const handleFailure = async (
   const response = {
     content: "Processing of this command failed, please try again",
   };
-  await updateMessage(interaction.application_id, interaction.token, response);
+  await updateResponse(interaction.application_id, interaction.token, response);
 };

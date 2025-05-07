@@ -1,15 +1,21 @@
-import { APIMessageComponentInteraction, ButtonStyle, ComponentType } from "discord-api-types/v10";
-import { updateMessage } from "../adapters/discord-adapter";
+import { APIMessageComponentInteraction } from "discord-api-types/v10";
+import { updateMessage, updateResponse } from "../adapters/discord-adapter";
 
-export const messageRecruit = async (interaction: APIMessageComponentInteraction) => {
-    try {
-        await updateMessage(interaction.application_id, interaction.token, {
-            content:
-                interaction.message.content +
-                "\n" +
-                `Messaged by ${interaction.member?.user.username}`,
-        });
-    } catch (err) {
-        console.error(`Failure updating recruit message: ${err}`);
-    }
-}
+export const messageRecruit = async (
+  interaction: APIMessageComponentInteraction
+) => {
+  try {
+    await updateMessage(interaction.channel.id, interaction.message.id, {
+      content:
+        interaction.message.content +
+        "\n" +
+        `Messaged by ${interaction.member?.user.username}`,
+    });
+  } catch (err) {
+    console.error(`Failure updating recruit message: ${err}`);
+    await updateResponse(interaction.application_id, interaction.token, {
+      content:
+        "There was an issue updating the message, if you do not see your username in the original message please try again or reach out to admins",
+    });
+  }
+};

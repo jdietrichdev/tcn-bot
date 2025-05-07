@@ -3,14 +3,18 @@ import {
   APIChatInputApplicationCommandInteraction,
 } from "discord-api-types/payloads/v10";
 import { verify } from "../adapters/coc-api-adapter";
-import { updateMessage } from "../adapters/discord-adapter";
+import { updateResponse } from "../adapters/discord-adapter";
 import { dbClient } from "../clients/dynamodb-client";
 import {
   DeleteItemCommand,
   ReturnValue,
   UpdateItemCommand,
 } from "@aws-sdk/client-dynamodb";
-import { getGuildId, getMessageSender, getSubCommandOptionData } from "../util/interaction-util";
+import {
+  getGuildId,
+  getMessageSender,
+  getSubCommandOptionData,
+} from "../util/interaction-util";
 
 export const handleLink = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -68,7 +72,7 @@ const linkPlayer = async (
       })
     );
     console.log(response);
-    await updateMessage(interaction.application_id, interaction.token, {
+    await updateResponse(interaction.application_id, interaction.token, {
       content: "User successfully linked",
     });
   } catch (err) {
@@ -99,7 +103,7 @@ const unlinkPlayer = async (
       })
     );
     console.log(response);
-    await updateMessage(interaction.application_id, interaction.token, {
+    await updateResponse(interaction.application_id, interaction.token, {
       content: "User successfully unlinked",
     });
   } catch (err) {

@@ -2,7 +2,7 @@ import {
   APIApplicationCommandInteractionDataUserOption,
   APIChatInputApplicationCommandInteraction,
 } from "discord-api-types/v10";
-import { updateMessage } from "../adapters/discord-adapter";
+import { updateResponse } from "../adapters/discord-adapter";
 import { getCommandOptionData } from "../util/interaction-util";
 
 export const handleHello = async (
@@ -15,7 +15,7 @@ export const handleHello = async (
         "user"
       );
     const response = { content: `Hello <@${userData.value}>!` };
-    await updateMessage(
+    await updateResponse(
       interaction.application_id,
       interaction.token,
       response

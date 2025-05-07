@@ -63,11 +63,6 @@ export const proxy = async (
       },
     } as APIInteractionResponse;
   }
-  if (body.type === InteractionType.MessageComponent) {
-    response = {
-      type: InteractionResponseType.DeferredMessageUpdate,
-    };
-  }
   return {
     statusCode: 200,
     body: JSON.stringify(response),

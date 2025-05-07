@@ -5,7 +5,7 @@ import {
   ComponentType,
 } from "discord-api-types/v10";
 import { getCommandOptionData } from "../util/interaction-util";
-import { sendMessage, updateMessage } from "../adapters/discord-adapter";
+import { sendMessage, updateResponse } from "../adapters/discord-adapter";
 import { getConfig } from "../util/serverConfig";
 import { BUTTONS } from "../component-handlers/buttons";
 
@@ -19,27 +19,25 @@ export const handleRecruit = async (
         interaction,
         "user"
       );
-    const notes = getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
-      interaction,
-      "notes"
-    )
+    const notes =
+      getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
+        interaction,
+        "notes"
+      );
     await sendMessage(
       {
         content: `<@&${config.RECRUITER_ROLE}>`,
         embeds: [
           {
-            title: 'New potential recruit!',
-            description: `${interaction.member?.user.username} recommends <@${userId.value}>\nNotes: ${notes.value}`
-          }
+            title: "New potential recruit!",
+            description: `${interaction.member?.user.username} recommends <@${userId.value}>\nNotes: ${notes.value}`,
+          },
         ],
         components: [
           {
             type: ComponentType.ActionRow,
-            components: [
-              BUTTONS.MESSAGE_RECRUIT,
-              BUTTONS.CLOSE_RECRUIT
-            ]
-          }
+            components: [BUTTONS.MESSAGE_RECRUIT, BUTTONS.CLOSE_RECRUIT],
+          },
         ],
         allowed_mentions: {
           parse: [AllowedMentionsTypes.Role],
@@ -48,13 +46,14 @@ export const handleRecruit = async (
       },
       config.RECRUITMENT_OPP_CHANNEL
     );
-    await updateMessage(interaction.application_id, interaction.token, {
+    await updateResponse(interaction.application_id, interaction.token, {
       content: `Thanks for your recommendation <@${interaction.member?.user.id}>`,
     });
   } catch (err) {
     console.error(`Failed to handle recruit command: ${err}`);
-    await updateMessage(interaction.application_id, interaction.token, {
-      content: 'Your request may have failed, if you do not see a message in the expected channel please try again',
+    await updateResponse(interaction.application_id, interaction.token, {
+      content:
+        "Your request may have failed, if you do not see a message in the expected channel please try again",
     });
   }
 };

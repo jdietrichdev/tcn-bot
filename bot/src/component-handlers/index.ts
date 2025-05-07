@@ -1,4 +1,3 @@
-
 import { getConfig } from "../util/serverConfig";
 import { approveApp } from "./approveApp";
 import { denyApp } from "./denyApp";
@@ -10,6 +9,8 @@ import { reopenTicket } from "./reopenTicket";
 import { grantRoles } from "./grantRoles";
 import { removeRoles } from "./removeRoles";
 import { APIMessageComponentInteraction } from "discord-api-types/v10";
+import { confirmDelete } from "./confirmDelete";
+import { rejectDelete } from "./rejectDelete";
 
 export const handleComponent = async (
   interaction: APIMessageComponentInteraction
@@ -42,6 +43,12 @@ export const handleComponent = async (
       break;
     case "removeRoles":
       await removeRoles(interaction, config);
+      break;
+    case "confirmDelete":
+      await confirmDelete(interaction);
+      break;
+    case "rejectDelete":
+      await rejectDelete(interaction);
       break;
   }
 };

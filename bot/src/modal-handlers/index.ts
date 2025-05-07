@@ -9,17 +9,17 @@ import {
   ModalSubmitActionRowComponent,
   TextInputStyle,
 } from "discord-api-types/payloads/v10";
-import { sendMessage, updateMessage } from "../adapters/discord-adapter";
+import { sendMessage, updateResponse } from "../adapters/discord-adapter";
 import { RESTPostAPIWebhookWithTokenJSONBody } from "discord-api-types/v10";
 import { getConfig, ServerConfig } from "../util/serverConfig";
 import { BUTTONS } from "../component-handlers/buttons";
 
 const questionMapping = {
-    tags: "Player tag(s)",
-    source: "How did you find us? Who reached out to you?",
-    leaveClan: "Why did you leave your last clan?",
-    clanWants: "What do you want in a clan?",
-    strategies: "Favorite strategies",
+  tags: "Player tag(s)",
+  source: "How did you find us? Who reached out to you?",
+  leaveClan: "Why did you leave your last clan?",
+  clanWants: "What do you want in a clan?",
+  strategies: "Favorite strategies",
 };
 
 export const createApplyModal = () => {
@@ -97,18 +97,19 @@ export const createApplyModal = () => {
 export const handleApplySubmit = async (
   interaction: APIModalSubmitInteraction
 ) => {
-//   console.log(JSON.stringify(interaction));
+  //   console.log(JSON.stringify(interaction));
   try {
     const config = getConfig(interaction.guild_id!);
     const confirmation = buildApplicationConfirmation(interaction, config);
     await sendMessage(confirmation, config.APP_APPROVAL_CHANNEL);
-    await updateMessage(interaction.application_id, interaction.token, {
+    await updateResponse(interaction.application_id, interaction.token, {
       content: `Thanks for applying <@${interaction.member?.user.id}>`,
     });
   } catch (err) {
-    console.error('Failed to submit modal');
-    await updateMessage(interaction.application_id, interaction.token, {
-        content: 'There may have been an error handling your application, if you do not hear back soon reach out to leaders'
+    console.error("Failed to submit modal");
+    await updateResponse(interaction.application_id, interaction.token, {
+      content:
+        "There may have been an error handling your application, if you do not hear back soon reach out to leaders",
     });
   }
 };
@@ -125,7 +126,9 @@ const buildApplicationConfirmation = (
         (item: ModalSubmitActionRowComponent) => {
           const response = item.components[0];
           return {
-            name: questionMapping[response.custom_id as keyof typeof questionMapping],
+            name: questionMapping[
+              response.custom_id as keyof typeof questionMapping
+            ],
             value: response.value,
           };
         }
@@ -143,10 +146,7 @@ const buildApplicationConfirmation = (
   const responseButtons: APIActionRowComponent<APIButtonComponentWithCustomId> =
     {
       type: ComponentType.ActionRow,
-      components: [
-        BUTTONS.APPROVE_APP,
-        BUTTONS.DENY_APP
-      ],
+      components: [BUTTONS.APPROVE_APP, BUTTONS.DENY_APP],
     };
   return {
     content: `<@&${config.RECRUITER_ROLE}>`,

@@ -9,7 +9,7 @@ import {
 
 const BASE_URL = "https://discord.com/api/v10";
 
-export const updateMessage = async (
+export const updateResponse = async (
   applicationId: string,
   interactionToken: string,
   response: RESTPostAPIWebhookWithTokenJSONBody
@@ -17,6 +17,19 @@ export const updateMessage = async (
   const url = `${BASE_URL}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
   try {
     await axios.patch(url, response);
+  } catch (err) {
+    throw new Error(`Failed to update response: ${err}`);
+  }
+};
+
+export const updateMessage = async (
+  channelId: string,
+  messageId: string,
+  message: RESTPostAPIWebhookWithTokenJSONBody
+) => {
+  const url = `${BASE_URL}/api/v10/channels/${channelId}/messages/${messageId}`;
+  try {
+    await axios.patch(url, message);
   } catch (err) {
     throw new Error(`Failed to update message: ${err}`);
   }

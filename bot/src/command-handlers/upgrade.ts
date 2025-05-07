@@ -8,7 +8,7 @@ import {
   ComponentType,
 } from "discord-api-types/v10";
 import { TROOPS } from "../constants/upgrades/troops";
-import { updateMessage } from "../adapters/discord-adapter";
+import { updateResponse } from "../adapters/discord-adapter";
 import { MISC } from "../constants/emojis/misc";
 import { getCommandOptionData } from "../util/interaction-util";
 import { numberFormat, timeConvert } from "../util/format-util";
@@ -87,7 +87,7 @@ export const handleUpgrade = async (
       ],
     };
 
-  await updateMessage(interaction.application_id, interaction.token, {
+  await updateResponse(interaction.application_id, interaction.token, {
     embeds: [embed],
     components: [discountButtons],
   });
