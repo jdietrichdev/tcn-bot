@@ -10,7 +10,11 @@ import {
   ModalSubmitActionRowComponent,
   RESTPostAPIWebhookWithTokenJSONBody,
 } from "discord-api-types/v10";
-import { sendMessage, updateResponse } from "../adapters/discord-adapter";
+import {
+  createThread,
+  sendMessage,
+  updateResponse,
+} from "../adapters/discord-adapter";
 import { getConfig, ServerConfig } from "../util/serverConfig";
 import { BUTTONS } from "../component-handlers/buttons";
 
@@ -100,7 +104,18 @@ export const submitApplyModal = async (
   try {
     const config = getConfig(interaction.guild_id!);
     const confirmation = buildApplicationConfirmation(interaction, config);
-    await sendMessage(confirmation, config.APP_APPROVAL_CHANNEL);
+    const message = await sendMessage(
+      confirmation,
+      config.APP_APPROVAL_CHANNEL
+    );
+    await createThread(
+      {
+        name: `Application discussion for ${interaction.member?.user.username}`,
+        auto_archive_duration: 4320,
+      },
+      message.channel_id,
+      message.id
+    );
     await updateResponse(interaction.application_id, interaction.token, {
       content: `Thanks for applying <@${interaction.member?.user.id}>`,
     });

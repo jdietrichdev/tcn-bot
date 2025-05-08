@@ -3,6 +3,8 @@ import {
   APIGuildMember,
   APIUser,
   RESTAPIGuildCreatePartialChannel,
+  RESTPostAPIChannelMessageResult,
+  RESTPostAPIChannelMessagesThreadsJSONBody,
   RESTPostAPICurrentUserCreateDMChannelJSONBody,
   RESTPostAPIWebhookWithTokenJSONBody,
 } from "discord-api-types/v10";
@@ -68,10 +70,10 @@ export const deleteMessage = async (channelId: string, messageId: string) => {
 export const sendMessage = async (
   message: RESTPostAPIWebhookWithTokenJSONBody,
   channelId: string
-) => {
+): Promise<RESTPostAPIChannelMessageResult> => {
   const url = `${BASE_URL}/channels/${channelId}/messages`;
   try {
-    await axios.post(url, message, {
+    return await axios.post(url, message, {
       headers: {
         Authorization: `Bot ${process.env.BOT_TOKEN}`,
         "Content-Type": "application/json",
@@ -79,6 +81,24 @@ export const sendMessage = async (
     });
   } catch (err) {
     throw new Error(`Failed to send message to ${channelId}: ${err}`);
+  }
+};
+
+export const createThread = async (
+  thread: RESTPostAPIChannelMessagesThreadsJSONBody,
+  channelId: string,
+  messageId: string
+) => {
+  const url = `${BASE_URL}/channels/${channelId}/messages/${messageId}/threads`;
+  try {
+    await axios.post(url, thread, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (err) {
+    throw new Error(`Failed to create thread for message ${messageId}: ${err}`);
   }
 };
 
