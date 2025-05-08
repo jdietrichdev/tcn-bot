@@ -85,6 +85,23 @@ export const sendMessage = async (
   }
 };
 
+export const pinMessage = async (channelId: string, messageId: string) => {
+  const url = `${BASE_URL}/channels/${channelId}/pins/${messageId}`;
+  try {
+    await axios.put(
+      url,
+      {},
+      {
+        headers: {
+          Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        },
+      }
+    );
+  } catch (err) {
+    throw new Error(`Failed to pin message: ${err}`);
+  }
+};
+
 export const createThread = async (
   thread: RESTPostAPIChannelMessagesThreadsJSONBody,
   channelId: string,

@@ -9,6 +9,7 @@ import { ServerConfig } from "../util/serverConfig";
 import {
   createChannel,
   deleteResponse,
+  pinMessage,
   sendMessage,
   updateMessage,
   updateResponse,
@@ -29,7 +30,7 @@ export const approveApp = async (
       config
     );
     delete responses.footer;
-    await sendMessage(
+    const message = await sendMessage(
       {
         content: `<@&${config.RECRUITER_ROLE}>\nHey <@${userId}> thanks for applying! We've attached your original responses below for reference, but feel free to tell us more about yourself!`,
         embeds: [responses],
@@ -50,6 +51,7 @@ export const approveApp = async (
       },
       applicationChannel.id
     );
+    await pinMessage(message.channel_id, message.id);
     await updateMessage(interaction.channel.id, interaction.message.id, {
       content: `Accepted by ${interaction.member?.user.username}`,
       components: [],

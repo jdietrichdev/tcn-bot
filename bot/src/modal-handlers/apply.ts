@@ -108,7 +108,6 @@ export const submitApplyModal = async (
       confirmation,
       config.APP_APPROVAL_CHANNEL
     );
-    console.log(message);
     await updateResponse(interaction.application_id, interaction.token, {
       content: `Thanks for applying <@${interaction.member?.user.id}>`,
     });
