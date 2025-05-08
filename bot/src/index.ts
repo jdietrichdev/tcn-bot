@@ -47,7 +47,8 @@ export const proxy = async (
     response = createModal(body, ModalType.APPLY);
   } else if (
     body.type === InteractionType.MessageComponent &&
-    (body.data as APIMessageButtonInteractionData).custom_id === "denyApp"
+    ((body.data as APIMessageButtonInteractionData).custom_id === "denyApp" 
+    || (body.data as APIMessageButtonInteractionData).custom_id === 'apply')
   ) {
     response = createModal(body, ModalType.DENY_APP);
   } else {
