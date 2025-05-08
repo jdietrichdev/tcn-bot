@@ -10,7 +10,11 @@ import {
   ModalSubmitActionRowComponent,
   RESTPostAPIWebhookWithTokenJSONBody,
 } from "discord-api-types/v10";
-import { sendMessage, updateResponse } from "../adapters/discord-adapter";
+import {
+  createThread,
+  sendMessage,
+  updateResponse,
+} from "../adapters/discord-adapter";
 import { getConfig, ServerConfig } from "../util/serverConfig";
 import { BUTTONS } from "../component-handlers/buttons";
 
@@ -100,12 +104,24 @@ export const submitApplyModal = async (
   try {
     const config = getConfig(interaction.guild_id!);
     const confirmation = buildApplicationConfirmation(interaction, config);
-    await sendMessage(confirmation, config.APP_APPROVAL_CHANNEL);
+    const message = await sendMessage(
+      confirmation,
+      config.APP_APPROVAL_CHANNEL
+    );
+    console.log(message);
     await updateResponse(interaction.application_id, interaction.token, {
       content: `Thanks for applying <@${interaction.member?.user.id}>`,
     });
+    await createThread(
+      {
+        name: `Application discussion for ${interaction.member?.user.username}`,
+        auto_archive_duration: 4320,
+      },
+      message.channel_id,
+      message.id
+    );
   } catch (err) {
-    console.error("Failed to submit modal");
+    console.error(`Failed to submit modal: ${err}`);
     await updateResponse(interaction.application_id, interaction.token, {
       content:
         "There may have been an error handling your application, if you do not hear back soon reach out to leaders",
