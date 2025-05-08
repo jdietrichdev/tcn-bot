@@ -73,12 +73,13 @@ export const sendMessage = async (
 ): Promise<RESTPostAPIChannelMessageResult> => {
   const url = `${BASE_URL}/channels/${channelId}/messages`;
   try {
-    return await axios.post(url, message, {
+    const response = await axios.post(url, message, {
       headers: {
         Authorization: `Bot ${process.env.BOT_TOKEN}`,
         "Content-Type": "application/json",
       },
     });
+    return response.data;
   } catch (err) {
     throw new Error(`Failed to send message to ${channelId}: ${err}`);
   }
@@ -108,12 +109,13 @@ export const createChannel = async (
 ) => {
   const url = `${BASE_URL}/guilds/${guildId}/channels`;
   try {
-    return await axios.post(url, channel, {
+    const response = await axios.post(url, channel, {
       headers: {
         Authorization: `Bot ${process.env.BOT_TOKEN}`,
         "Content-Type": "application/json",
       },
     });
+    return response.data;
   } catch (err) {
     throw new Error(`Failed to create channel in ${guildId}: ${err}`);
   }

@@ -70,7 +70,7 @@ const createApplicationChannel = async (
   config: ServerConfig
 ) => {
   const username = interaction.message.embeds[0].title?.split(" ")[2];
-  const response = await createChannel(
+  const channel = await createChannel(
     {
       name: `application-${username}`,
       type: ChannelType.GuildText,
@@ -117,5 +117,5 @@ const createApplicationChannel = async (
     },
     interaction.guild_id!
   );
-  return response.data;
+  return channel;
 };
