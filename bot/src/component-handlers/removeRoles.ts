@@ -29,7 +29,6 @@ export const removeRoles = async (
         ":"
       )[1];
       await removeRole(interaction.guild_id!, userId, config.CLAN_ROLE);
-      await removeRole(interaction.guild_id!, userId, config.ORES_ROLE);
       await sendMessage(
         {
           content: `Roles removed by ${interaction.member?.user.username}`,
