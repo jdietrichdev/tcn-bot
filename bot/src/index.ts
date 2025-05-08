@@ -50,7 +50,7 @@ export const proxy = async (
     ((body.data as APIMessageButtonInteractionData).custom_id === "denyApp" 
     || (body.data as APIMessageButtonInteractionData).custom_id === 'apply')
   ) {
-    response = createModal(body, ModalType.DENY_APP);
+    response = createModal(body, body.data.custom_id === "denyApp" ? ModalType.DENY_APP : ModalType.APPLY);
   } else {
     await eventClient.send(
       new PutEventsCommand({
