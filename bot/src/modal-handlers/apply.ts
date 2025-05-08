@@ -111,13 +111,19 @@ export const submitApplyModal = async (
     await updateResponse(interaction.application_id, interaction.token, {
       content: `Thanks for applying <@${interaction.member?.user.id}>`,
     });
-    await createThread(
+    const thread = await createThread(
       {
         name: `Application discussion for ${interaction.member?.user.username}`,
         auto_archive_duration: 4320,
       },
       message.channel_id,
       message.id
+    );
+    await sendMessage(
+      {
+        content: interaction.data.components[0].components[0].value,
+      },
+      thread.id
     );
   } catch (err) {
     console.error(`Failed to submit modal: ${err}`);

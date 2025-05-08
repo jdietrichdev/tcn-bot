@@ -5,6 +5,7 @@ import {
   RESTAPIGuildCreatePartialChannel,
   RESTPostAPIChannelMessageResult,
   RESTPostAPIChannelMessagesThreadsJSONBody,
+  RESTPostAPIChannelMessagesThreadsResult,
   RESTPostAPICurrentUserCreateDMChannelJSONBody,
   RESTPostAPIWebhookWithTokenJSONBody,
 } from "discord-api-types/v10";
@@ -106,15 +107,16 @@ export const createThread = async (
   thread: RESTPostAPIChannelMessagesThreadsJSONBody,
   channelId: string,
   messageId: string
-) => {
+): Promise<RESTPostAPIChannelMessagesThreadsResult> => {
   const url = `${BASE_URL}/channels/${channelId}/messages/${messageId}/threads`;
   try {
-    await axios.post(url, thread, {
+    const response = await axios.post(url, thread, {
       headers: {
         Authorization: `Bot ${process.env.BOT_TOKEN}`,
         "Content-Type": "application/json",
       },
     });
+    return response.data;
   } catch (err) {
     throw new Error(`Failed to create thread for message ${messageId}: ${err}`);
   }
