@@ -84,6 +84,16 @@ exports[`Infrastructure created 1`] = `
         "RetentionInDays": 30
       }
     },
+    "bothandlerEventInvokeConfig8545F23A": {
+      "Type": "AWS::Lambda::EventInvokeConfig",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "bothandler4BEF77A4"
+        },
+        "MaximumRetryAttempts": 0,
+        "Qualifier": "$LATEST"
+      }
+    },
     "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": {
       "Type": "AWS::IAM::Role",
       "Properties": {
