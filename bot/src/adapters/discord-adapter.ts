@@ -1,7 +1,9 @@
 import axios from "axios";
 import {
   APIGuildMember,
+  APIGuildTextChannel,
   APIUser,
+  GuildTextChannelType,
   RESTAPIGuildCreatePartialChannel,
   RESTPostAPIChannelMessageResult,
   RESTPostAPIChannelMessagesThreadsJSONBody,
@@ -125,7 +127,7 @@ export const createThread = async (
 export const createChannel = async (
   channel: RESTAPIGuildCreatePartialChannel,
   guildId: string
-) => {
+): Promise<APIGuildTextChannel<GuildTextChannelType>> => {
   const url = `${BASE_URL}/guilds/${guildId}/channels`;
   try {
     const response = await axios.post(url, channel, {
