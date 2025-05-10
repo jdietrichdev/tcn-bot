@@ -109,7 +109,7 @@ export const submitApplyModal = async (
       config.APP_APPROVAL_CHANNEL
     );
     await updateResponse(interaction.application_id, interaction.token, {
-      content: `Thanks for applying <@${interaction.member?.user.id}>`,
+      content: `Thanks for applying <@${interaction.member?.user.id}>! Due to a high influx of recruits, there may be a short wait time until a recruiter accepts your application.`,
     });
     const thread = await createThread(
       {
