@@ -121,7 +121,7 @@ export const submitApplyModal = async (
     );
     await sendMessage(
       {
-        content: interaction.data.components[0].components[0].value,
+        content: `\`${interaction.data.components[0].components[0].value}\``,
       },
       thread.id
     );
