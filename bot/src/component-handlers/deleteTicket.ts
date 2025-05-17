@@ -7,7 +7,7 @@ import {
   sendMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
-import { isActorRecruiter } from "./utils";
+import { isActorAdmin, isActorRecruiter } from "./utils";
 import { ServerConfig } from "../util/serverConfig";
 import { BUTTONS } from "./buttons";
 
@@ -16,13 +16,7 @@ export const deleteTicket = async (
   config: ServerConfig
 ) => {
   try {
-    if (
-      await isActorRecruiter(
-        interaction.guild_id!,
-        interaction.member!.user.id,
-        config
-      )
-    ) {
+    if (await isActorAdmin(interaction.guild_id!, interaction.member!.user.id, config)) {
       await updateResponse(interaction.application_id, interaction.token, {
         content: "Are you sure you want to delete this ticket?",
         components: [
@@ -31,6 +25,16 @@ export const deleteTicket = async (
             components: [BUTTONS.CONFIRM_DELETE, BUTTONS.REJECT_DELETE],
           },
         ],
+      });
+    } else if (
+      await isActorRecruiter(
+        interaction.guild_id!,
+        interaction.member!.user.id,
+        config
+      )
+    ) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: "Speak to admins if you would like to delete a ticket"
       });
     } else {
       await sendMessage(
