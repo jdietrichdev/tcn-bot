@@ -1,22 +1,21 @@
 import {
-  APIInteraction,
   APIMessageComponentInteraction,
 } from "discord-api-types/v10";
 import { createApplyModal } from "./apply";
 import { createDenyAppModal } from "./denyApp";
+import { createLeadApplyModal } from "./leadApply";
 
-export enum ModalType {
-  APPLY,
-  DENY_APP,
-}
 export const createModal = (
-  interaction: APIInteraction,
-  modalType: ModalType
+  interaction: APIMessageComponentInteraction
 ) => {
-  switch (modalType) {
-    case ModalType.APPLY:
+  switch (interaction.data.custom_id) {
+    case "apply":
       return createApplyModal();
-    case ModalType.DENY_APP:
+    case "applyLead":
+      return createLeadApplyModal();
+    case "denyApp":
       return createDenyAppModal(interaction as APIMessageComponentInteraction);
+    default:
+      throw new Error("No handler defined for creating modal");
   }
 };

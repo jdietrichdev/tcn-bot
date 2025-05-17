@@ -11,17 +11,35 @@ export const BUTTONS = {
     label: "Close",
     custom_id: "closeTicket",
   } as APIButtonComponentWithCustomId,
+  CLOSE_LEAD_TICKET: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Primary,
+    label: "Close",
+    custom_id: "closeLeadTicket",
+  } as APIButtonComponentWithCustomId,
   REOPEN_TICKET: {
     type: ComponentType.Button,
     style: ButtonStyle.Secondary,
     label: "Reopen",
     custom_id: "reopenTicket",
   } as APIButtonComponentWithCustomId,
+  REOPEN_LEAD_TICKET: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Secondary,
+    label: "Reopen",
+    custom_id: "reopenLeadTicket",
+  } as APIButtonComponentWithCustomId,
   DELETE_TICKET: {
     type: ComponentType.Button,
     style: ButtonStyle.Danger,
     label: "Delete",
     custom_id: "deleteTicket",
+  } as APIButtonComponentWithCustomId,
+  DELETE_LEAD_TICKET: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Danger,
+    label: "Delete",
+    custom_id: "deleteLeadTicket",
   } as APIButtonComponentWithCustomId,
   GRANT_ROLES: {
     type: ComponentType.Button,
