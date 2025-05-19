@@ -1,3 +1,3 @@
-import { apply, ro } from './commands';
+import { apply, recruiterScore, ro } from "./commands";
 
-export const tcnCommands = [apply, ro];
+export const tcnCommands = [apply, ro, recruiterScore];
