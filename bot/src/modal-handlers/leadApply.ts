@@ -1,4 +1,4 @@
-import { APIApplicationCommandInteraction, APIApplicationCommandInteractionDataStringOption, APIChatInputApplicationCommandInteraction, APIMessageComponentInteraction, APIModalSubmitInteraction, ChannelType, ComponentType, InteractionType, OverwriteType, PermissionFlagsBits } from "discord-api-types/v10"
+import { APIApplicationCommandInteraction, APIApplicationCommandInteractionDataStringOption, APIChatInputApplicationCommandInteraction, APIMessageComponentInteraction, APIModalSubmitInteraction, ChannelType, ComponentType, InteractionType, ModalSubmitActionRowComponent, OverwriteType, PermissionFlagsBits } from "discord-api-types/v10"
 import { getConfig, ServerConfig } from "../util/serverConfig";
 import { createChannel, pinMessage, sendMessage, updateResponse } from "../adapters/discord-adapter";
 import { BUTTONS } from "../component-handlers/buttons";
@@ -22,7 +22,7 @@ export const createLeadApplyModal = (interaction: APIMessageComponentInteraction
 
 const buildGeneralLeadApplicationModal = () => {
     return buildModal(
-        "leadApplicationModal", 
+        "leadApplicationModal_General", 
         "Apply for leadership with This Clan Now",
         [
             {
@@ -44,11 +44,24 @@ const buildGeneralLeadApplicationModal = () => {
 export const submitLeadApplyModal = async (interaction: APIModalSubmitInteraction) => {
     try {
         const config = getConfig(interaction.guild_id!);
+        const role = interaction.data.custom_id.split("_")[0];
         const applicationChannel = await createLeadApplicationChannel(interaction, config);
         const message = await sendMessage(
             {
                 content: `<@&${config.ADMIN_ROLE}>\nHey <@${interaction.member!.user.id}> thanks for applying! We've attached your original responses below for reference, but feel free to tell us more about yourself!`,
-                embeds: [],
+                embeds: [{
+                    title: `${role} application for ${interaction.member?.user.username}`,
+                    description: "Application responses",
+                    fields: [
+                        ...interaction.data.components.map((item: ModalSubmitActionRowComponent) => {
+                            const response = item.components[0];
+                            return {
+                                name: response.custom_id,
+                                value: response.value,
+                            }
+                        })
+                    ]
+                }],
                 components: [
                     {
                         type: ComponentType.ActionRow,
@@ -63,7 +76,7 @@ export const submitLeadApplyModal = async (interaction: APIModalSubmitInteractio
         );
         await pinMessage(message.channel_id, message.id);
         await updateResponse(interaction.application_id, interaction.token, {
-            content: `Thanks for your application ${interaction.member?.user.id}!`,
+            content: `Thanks for your application <@${interaction.member?.user.id}>!`,
         })
     } catch (err) {
         console.error(`Failure building lead application channel: ${err}`);

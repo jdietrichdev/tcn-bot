@@ -199,15 +199,15 @@ export const leadApply = new SlashCommandBuilder()
         .setChoices([
           {
             name: "General",
-            value: "general"
+            value: "General"
           },
           {
             name: "Elder",
-            value: "elder"
+            value: "Elder"
           },
           {
             name: "Leader",
-            value: "leader"
+            value: "Leader"
           }
         ])
     }));

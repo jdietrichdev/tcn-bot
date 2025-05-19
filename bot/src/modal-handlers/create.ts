@@ -10,7 +10,6 @@ export const createModal = (
   interaction: APIMessageComponentInteraction | APIApplicationCommandInteraction,
   trigger: string,
 ) => {
-  console.log(trigger);
   switch (trigger) {
     case "apply":
       return createApplyModal();

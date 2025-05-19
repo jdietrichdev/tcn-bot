@@ -44,7 +44,6 @@ export const proxy = async (
     body.type === InteractionType.ApplicationCommand &&
     commandTriggersModal(body.data.name)
   ) {
-    console.log("command modal");
     response = createModal(body, body.data.name);
   } else if (
     body.type === InteractionType.MessageComponent &&
