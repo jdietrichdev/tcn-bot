@@ -6,3 +6,4 @@ export * from "./failure";
 export * from "./event";
 export * from "./upgrade";
 export * from "./recruit";
+export * from "./recruiterScore";

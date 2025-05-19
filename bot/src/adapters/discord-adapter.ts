@@ -3,6 +3,7 @@ import axiosRetry from "axios-retry";
 import {
   APIGuildMember,
   APIGuildTextChannel,
+  APIMessage,
   APIUser,
   GuildTextChannelType,
   RESTAPIGuildCreatePartialChannel,
@@ -126,6 +127,38 @@ export const createThread = async (
   } catch (err) {
     throw new Error(`Failed to create thread for message ${messageId}: ${err}`);
   }
+};
+
+export const getChannelMessages = async (
+  channelId: string,
+  end: Date
+): Promise<APIMessage[]> => {
+  const url = `${BASE_URL}/channels/${channelId}/messages?limit=100`;
+  let fetching = true;
+  let before = "";
+  const messages: APIMessage[] = [];
+  while (fetching) {
+    const response = await axios.get(
+      `${url}${before ? `&before=${before}` : ""}`,
+      {
+        headers: {
+          Authorization: `Bot ${process.env.BOT_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    const messages = response.data as APIMessage[];
+    for (const message of messages) {
+      if (new Date(message.timestamp) < end) {
+        fetching = false;
+        break;
+      } else {
+        messages.push(message);
+      }
+    }
+    before = messages[messages.length - 1].id;
+  }
+  return messages;
 };
 
 export const createChannel = async (

@@ -7,8 +7,9 @@ import {
   test,
   upgrade,
   ro,
-  leadApply
-} from './commands';
+  leadApply,
+  recruiterScore,
+} from "./commands";
 
 export const testCommands = [
   apply,
@@ -17,7 +18,8 @@ export const testCommands = [
   player,
   event,
   test,
-  upgrade, 
+  upgrade,
   ro,
-  leadApply
+  leadApply,
+  recruiterScore,
 ];

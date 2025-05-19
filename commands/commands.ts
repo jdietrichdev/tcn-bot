@@ -138,76 +138,80 @@ export const event = new SlashCommandBuilder()
   });
 
 export const test = new SlashCommandBuilder()
-    .setName("test")
-    .setDescription("Test commands")
-    .addSubcommand((subcommand) => {
-      return subcommand.setName("demo").setDescription("Demo test command");
-    })
-    .addSubcommand((subcommand) => {
-      return subcommand
-        .setName("string-input")
-        .setDescription("Test string input with subcommand")
-        .addStringOption((option) => {
-          return option
-            .setName("input")
-            .setDescription("What should I say?")
-            .setRequired(true);
-        });
-    })
-    .addSubcommand((subcommand) => {
-      return subcommand.setName("emoji").setDescription("Return an emoji");
-    });
+  .setName("test")
+  .setDescription("Test commands")
+  .addSubcommand((subcommand) => {
+    return subcommand.setName("demo").setDescription("Demo test command");
+  })
+  .addSubcommand((subcommand) => {
+    return subcommand
+      .setName("string-input")
+      .setDescription("Test string input with subcommand")
+      .addStringOption((option) => {
+        return option
+          .setName("input")
+          .setDescription("What should I say?")
+          .setRequired(true);
+      });
+  })
+  .addSubcommand((subcommand) => {
+    return subcommand.setName("emoji").setDescription("Return an emoji");
+  });
 export const upgrade = new SlashCommandBuilder()
-    .setName("upgrade")
-    .setDescription("Show upgrade info for selected troop")
-    .addStringOption((option) => {
-      return option
-        .setName("troop")
-        .setDescription("Troop to get upgrade information for")
-        .setRequired(true)
-        .setAutocomplete(true);
-    });
+  .setName("upgrade")
+  .setDescription("Show upgrade info for selected troop")
+  .addStringOption((option) => {
+    return option
+      .setName("troop")
+      .setDescription("Troop to get upgrade information for")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
 
 export const apply = new SlashCommandBuilder()
-    .setName("apply")
-    .setDescription("Apply to join This Clan Now");
+  .setName("apply")
+  .setDescription("Apply to join This Clan Now");
 
 export const ro = new SlashCommandBuilder()
-    .setName("ro")
-    .setDescription("Create recruitment opportunity")
-    .addStringOption((option) => {
-      return option
-        .setName("user")
-        .setDescription("User ID to reach out to")
-        .setRequired(true);
-    })
-    .addStringOption((option) => {
-      return option
-        .setName("notes")
-        .setDescription("Notes about recruit")
-        .setRequired(false);
-    });
+  .setName("ro")
+  .setDescription("Create recruitment opportunity")
+  .addStringOption((option) => {
+    return option
+      .setName("user")
+      .setDescription("User ID to reach out to")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("notes")
+      .setDescription("Notes about recruit")
+      .setRequired(false);
+  });
 
 export const leadApply = new SlashCommandBuilder()
-    .setName("lead-apply")
-    .setDescription("Apply for leadership position with This Clan Now")
-    .addStringOption((option => {
-      return option
-        .setName("role")
-        .setDescription("Role being applied for")
-        .setRequired(true)
-        .setChoices([
-          {
-            name: "General",
-            value: "General"
-          },
-          {
-            name: "Elder",
-            value: "Elder"
-          },
-          {
-            name: "Leader",
-            value: "Leader"
-          }
-        ])
-    }));
+  .setName("lead-apply")
+  .setDescription("Apply for leadership position with This Clan Now")
+  .addStringOption((option) => {
+    return option
+      .setName("role")
+      .setDescription("Role being applied for")
+      .setRequired(true)
+      .setChoices([
+        {
+          name: "General",
+          value: "General",
+        },
+        {
+          name: "Elder",
+          value: "Elder",
+        },
+        {
+          name: "Leader",
+          value: "Leader",
+        },
+      ]);
+  });
+
+export const recruiterScore = new SlashCommandBuilder()
+  .setName("recruiter-score")
+  .setDescription("Score recruiters based on activity in channels");

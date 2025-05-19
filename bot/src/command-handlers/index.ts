@@ -10,25 +10,20 @@ export const handleCommand = async (
     switch (event.detail.data!.name) {
       case "hello":
         return await commands.handleHello(event.detail);
-        break;
       case "player":
         return await commands.handlePlayer(event.detail);
-        break;
       case "event":
         return await commands.handleEvent(event.detail);
-        break;
       case "link":
         return await commands.handleLink(event.detail);
-        break;
       case "test":
         return await handleTest(event.detail);
-        break;
       case "upgrade":
         return await commands.handleUpgrade(event.detail);
-        break;
       case "ro":
         return await commands.handleRecruit(event.detail);
-        break;
+      case "recruiter-score":
+        return await commands.handleRecruiterScore(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);
