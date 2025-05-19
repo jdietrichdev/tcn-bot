@@ -133,11 +133,15 @@ export const getChannelMessages = async (
   channelId: string,
   end: Date
 ): Promise<APIMessage[]> => {
-  const url = `${BASE_URL}/channels/${channelId}/messages?limit=100`;
   let fetching = true;
+  let url = "";
   let before = "";
   const messages: APIMessage[] = [];
   while (fetching) {
+    url = `${BASE_URL}/channels/${channelId}/messages?limit=100${
+      before ? `&before=${before}` : ""
+    }`;
+    console.log(url);
     const response = await axios.get(
       `${url}${before ? `&before=${before}` : ""}`,
       {
@@ -149,6 +153,7 @@ export const getChannelMessages = async (
     );
     const messages = response.data as APIMessage[];
     for (const message of messages) {
+      console.log(message);
       if (new Date(message.timestamp) < end) {
         fetching = false;
         break;
