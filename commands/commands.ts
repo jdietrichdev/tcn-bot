@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 
 export const hello = new SlashCommandBuilder()
   .setName("hello")
@@ -214,4 +214,5 @@ export const leadApply = new SlashCommandBuilder()
 
 export const recruiterScore = new SlashCommandBuilder()
   .setName("recruiter-score")
-  .setDescription("Score recruiters based on activity in channels");
+  .setDescription("Score recruiters based on activity in channels")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
