@@ -1,4 +1,5 @@
 import {
+  APIApplicationCommandInteraction,
   APIMessageComponentInteraction,
 } from "discord-api-types/v10";
 import { createApplyModal } from "./apply";
@@ -6,13 +7,15 @@ import { createDenyAppModal } from "./denyApp";
 import { createLeadApplyModal } from "./leadApply";
 
 export const createModal = (
-  interaction: APIMessageComponentInteraction
+  interaction: APIMessageComponentInteraction | APIApplicationCommandInteraction,
+  trigger: string,
 ) => {
-  switch (interaction.data.custom_id) {
+  switch (trigger) {
     case "apply":
       return createApplyModal();
+    case "lead-apply":
     case "applyLead":
-      return createLeadApplyModal();
+      return createLeadApplyModal(interaction);
     case "denyApp":
       return createDenyAppModal(interaction as APIMessageComponentInteraction);
     default:

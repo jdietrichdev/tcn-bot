@@ -2,7 +2,8 @@ import { getServerUser } from "../adapters/discord-adapter"
 import { ServerConfig } from "../util/serverConfig";
 import { BUTTONS } from "./buttons";
 
-const MODAL_TRIGGERS = ["apply", "leadApply", "denyApp"];
+const BUTTON_MODAL_TRIGGERS = ["apply", "leadApply", "denyApp"];
+const COMMAND_MODAL_TRIGGERS = ["apply", "lead-apply"];
 
 export const isActorAdmin = async (guildId: string, userId: string, config: ServerConfig) => {
     const actor = await getServerUser(guildId, userId);
@@ -20,5 +21,9 @@ export const determineRolesButton = async (guildId: string, userId: string, conf
 }
 
 export const buttonTriggersModal = (customId: string) => {
-    return MODAL_TRIGGERS.includes(customId);
+    return BUTTON_MODAL_TRIGGERS.includes(customId);
+}
+
+export const commandTriggersModal = (name: string) => {
+    return COMMAND_MODAL_TRIGGERS.includes(name);
 }

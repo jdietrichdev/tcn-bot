@@ -187,3 +187,27 @@ export const ro = new SlashCommandBuilder()
         .setDescription("Notes about recruit")
         .setRequired(false);
     });
+
+export const leadApply = new SlashCommandBuilder()
+    .setName("lead-apply")
+    .setDescription("Apply for leadership position with This Clan Now")
+    .addStringOption((option => {
+      return option
+        .setName("role")
+        .setDescription("Role being applied for")
+        .setRequired(true)
+        .setChoices([
+          {
+            name: "General",
+            value: "general"
+          },
+          {
+            name: "Elder",
+            value: "elder"
+          },
+          {
+            name: "Leader",
+            value: "leader"
+          }
+        ])
+    }));

@@ -22,8 +22,7 @@ import { handleAutocomplete } from "./autocomplete-handlers";
 import { handleComponent } from "./component-handlers";
 import { submitModal } from "./modal-handlers/submit";
 import { createModal } from "./modal-handlers/create";
-import { buttonTriggersModal } from "./component-handlers/utils";
-import { createApplyModal } from "./modal-handlers/apply";
+import { buttonTriggersModal, commandTriggersModal } from "./component-handlers/utils";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -43,14 +42,14 @@ export const proxy = async (
     );
   } else if (
     body.type === InteractionType.ApplicationCommand &&
-    body.data.name === "apply"
+    commandTriggersModal(body.data.name)
   ) {
-    response = createApplyModal();
+    response = createModal(body, body.data.name);
   } else if (
     body.type === InteractionType.MessageComponent &&
     buttonTriggersModal(body.data.custom_id)
   ) {
-    response = createModal(body);
+    response = createModal(body, body.data.custom_id);
   } else {
     await eventClient.send(
       new PutEventsCommand({

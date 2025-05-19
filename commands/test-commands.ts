@@ -6,7 +6,8 @@ import {
   event,
   test,
   upgrade,
-  ro
+  ro,
+  leadApply
 } from './commands';
 
 export const testCommands = [
@@ -17,5 +18,6 @@ export const testCommands = [
   event,
   test,
   upgrade, 
-  ro
+  ro,
+  leadApply
 ];

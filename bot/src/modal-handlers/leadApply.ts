@@ -1,55 +1,45 @@
-import { APIInteractionResponse, APIModalSubmitInteraction, ChannelType, ComponentType, InteractionResponseType, OverwriteType, PermissionFlagsBits, TextInputStyle } from "discord-api-types/v10"
+import { APIApplicationCommandInteraction, APIApplicationCommandInteractionDataStringOption, APIChatInputApplicationCommandInteraction, APIMessageComponentInteraction, APIModalSubmitInteraction, ChannelType, ComponentType, InteractionType, OverwriteType, PermissionFlagsBits } from "discord-api-types/v10"
 import { getConfig, ServerConfig } from "../util/serverConfig";
 import { createChannel, pinMessage, sendMessage, updateResponse } from "../adapters/discord-adapter";
 import { BUTTONS } from "../component-handlers/buttons";
+import { getCommandOptionData } from "../util/interaction-util";
+import { buildModal } from "./utils";
 
-export const createLeadApplyModal = () => {
-    return {
-        type: InteractionResponseType.Modal,
-        data: {
-            custom_id: "leadApplicationModal",
-            title: "Apply for leadership with This Clan Now",
-            components: [
-                {
-                    type: ComponentType.ActionRow,
-                    components: [
-                        {
-                            type: ComponentType.TextInput,
-                            custom_id: "role",
-                            label: "What role are you applying for?",
-                            style: TextInputStyle.Short,
-                            required: true
-                        }
-                    ]
-                },
-                {
-                    type: ComponentType.ActionRow,
-                    components: [
-                        {
-                            type: ComponentType.TextInput,
-                            custom_id: "reason",
-                            label: "Why do you think you deserve this role?",
-                            style: TextInputStyle.Paragraph,
-                            required: true,
-                        }
-                    ]
-                },
-                {
-                    type: ComponentType.ActionRow,
-                    components: [
-                        {
-                            type: ComponentType.TextInput,
-                            custom_id: "value",
-                            label: "What value do you think you'd bring to this role?",
-                            style: TextInputStyle.Paragraph,
-                            required: true,
-                        }
-                    ]
-                }
-            ]
+export const createLeadApplyModal = (interaction: APIMessageComponentInteraction | APIApplicationCommandInteraction) => {
+    if (interaction.type === InteractionType.ApplicationCommand) {
+        const role = getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
+            interaction as APIChatInputApplicationCommandInteraction,
+            "role"
+        );
+        switch (role) {
+            default:
+                return buildGeneralLeadApplicationModal();
         }
-    } as APIInteractionResponse;
+    } else {
+        return buildGeneralLeadApplicationModal();
+    }
 };
+
+const buildGeneralLeadApplicationModal = () => {
+    return buildModal(
+        "leadApplicationModal", 
+        "Apply for leadership with This Clan Now",
+        [
+            {
+                id: "role",
+                label: "What role are you applying for?",
+            },
+            {
+                id: "reason",
+                label: "Why do you think you deserve this role?"
+            },
+            {
+                id: "value",
+                label: "What value do you think you'd bring to this role?"
+            }
+        ]
+    );
+}
 
 export const submitLeadApplyModal = async (interaction: APIModalSubmitInteraction) => {
     try {
