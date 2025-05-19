@@ -35,7 +35,7 @@ const buildGeneralLeadApplicationModal = () => {
             },
             {
                 id: "value",
-                label: "What value do you think you'd bring to this role?"
+                label: "What value would you bring to this role?"
             }
         ]
     );
