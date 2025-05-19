@@ -1,4 +1,5 @@
 import axios from "axios";
+import axiosRetry from "axios-retry";
 import {
   APIGuildMember,
   APIGuildTextChannel,
@@ -13,6 +14,8 @@ import {
 } from "discord-api-types/v10";
 
 const BASE_URL = "https://discord.com/api/v10";
+
+axiosRetry(axios, { retries: 2 });
 
 export const updateResponse = async (
   applicationId: string,
