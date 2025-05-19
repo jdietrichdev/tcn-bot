@@ -44,7 +44,7 @@ const buildGeneralLeadApplicationModal = () => {
 export const submitLeadApplyModal = async (interaction: APIModalSubmitInteraction) => {
     try {
         const config = getConfig(interaction.guild_id!);
-        const role = interaction.data.custom_id.split("_")[0];
+        const role = interaction.data.custom_id.split("_")[1] || "General";
         const applicationChannel = await createLeadApplicationChannel(interaction, config);
         const message = await sendMessage(
             {
