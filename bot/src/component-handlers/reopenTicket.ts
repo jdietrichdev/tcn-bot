@@ -2,12 +2,15 @@ import {
   APIMessageComponentInteraction,
   APITextChannel,
   ComponentType,
+  OverwriteType,
+  PermissionFlagsBits,
 } from "discord-api-types/v10";
 import { ServerConfig } from "../util/serverConfig";
 import {
   deleteResponse,
   moveChannel,
   sendMessage,
+  updateChannelPermissions,
   updateMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
@@ -31,6 +34,16 @@ export const reopenTicket = async (
         ":"
       )[1];
       await moveChannel(channelId, config.APPLICATION_CATEGORY);
+      await updateChannelPermissions(channelId, userId, {
+        type: OverwriteType.Member,
+        allow: (
+          PermissionFlagsBits.AddReactions |
+          PermissionFlagsBits.ViewChannel |
+          PermissionFlagsBits.SendMessages |
+          PermissionFlagsBits.ReadMessageHistory
+        ).toString(),
+        deny: "0",
+      });
       await sendMessage(
         {
           content: `${interaction.member?.user.username} has reopened the ticket`,

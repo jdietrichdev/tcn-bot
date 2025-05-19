@@ -11,6 +11,7 @@ import {
   RESTPostAPIChannelMessagesThreadsResult,
   RESTPostAPICurrentUserCreateDMChannelJSONBody,
   RESTPostAPIWebhookWithTokenJSONBody,
+  RESTPutAPIChannelPermissionJSONBody,
 } from "discord-api-types/v10";
 
 const BASE_URL = "https://discord.com/api/v10";
@@ -160,6 +161,24 @@ export const moveChannel = async (channelId: string, categoryId: string) => {
     );
   } catch (err) {
     throw new Error(`Failed to move channel ${channelId}: ${err}`);
+  }
+};
+
+export const updateChannelPermissions = async (
+  channelId: string,
+  id: string,
+  permissions: RESTPutAPIChannelPermissionJSONBody
+) => {
+  const url = `${BASE_URL}/channels/${channelId}/permissions/${id}`;
+  try {
+    await axios.put(url, permissions, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (err) {
+    throw new Error(`Failed to update permissions: ${err}`);
   }
 };
 

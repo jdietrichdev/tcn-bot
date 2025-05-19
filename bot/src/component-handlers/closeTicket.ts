@@ -2,12 +2,14 @@ import {
   APIMessageComponentInteraction,
   APITextChannel,
   ComponentType,
+  OverwriteType,
 } from "discord-api-types/v10";
 import { ServerConfig } from "../util/serverConfig";
 import {
   deleteResponse,
   moveChannel,
   sendMessage,
+  updateChannelPermissions,
   updateMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
@@ -31,6 +33,11 @@ export const closeTicket = async (
         ":"
       )[1];
       await moveChannel(channelId, config.ARCHIVE_CATEGORY);
+      await updateChannelPermissions(channelId, userId, {
+        type: OverwriteType.Member,
+        allow: "0",
+        deny: "0",
+      });
       await sendMessage(
         {
           content: `${interaction.member?.user.username} has closed the ticket`,
