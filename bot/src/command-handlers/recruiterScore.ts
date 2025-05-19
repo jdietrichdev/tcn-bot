@@ -12,7 +12,7 @@ export const handleRecruiterScore = async (
     const config = getConfig(interaction.guild_id!);
     const messages = await getChannelMessages(
       config.RECRUITMENT_OPP_CHANNEL,
-      new Date("05/18/2025")
+      new Date(new Date().getTime() - 14 * 24 * 60 * 60 * 1000)
     );
     console.log(messages);
   } catch (err) {

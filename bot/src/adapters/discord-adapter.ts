@@ -153,7 +153,6 @@ export const getChannelMessages = async (
     );
     const messages = response.data as APIMessage[];
     for (const message of messages) {
-      console.log(message);
       if (new Date(message.timestamp) < end) {
         fetching = false;
         break;
