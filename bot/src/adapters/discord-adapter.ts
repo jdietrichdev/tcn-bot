@@ -136,7 +136,7 @@ export const getChannelMessages = async (
   let fetching = true;
   let url = "";
   let before = "";
-  const messages: APIMessage[] = [];
+  const compiledMessages: APIMessage[] = [];
   while (fetching) {
     url = `${BASE_URL}/channels/${channelId}/messages?limit=100${
       before ? `&before=${before}` : ""
@@ -158,13 +158,13 @@ export const getChannelMessages = async (
         break;
       } else {
         console.log(message);
-        messages.push(message);
+        compiledMessages.push(message);
       }
     }
-    before = messages[messages.length - 1].id;
+    before = compiledMessages[messages.length - 1].id;
   }
-  console.log(messages)
-  return messages;
+  console.log(compiledMessages)
+  return compiledMessages;
 };
 
 export const createChannel = async (
