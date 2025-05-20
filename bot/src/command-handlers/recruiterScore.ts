@@ -1,4 +1,4 @@
-import { APIChatInputApplicationCommandInteraction } from "discord-api-types/v10";
+import { APIChatInputApplicationCommandInteraction, MessageType } from "discord-api-types/v10";
 import { getConfig } from "../util/serverConfig";
 import {
   getChannelMessages,
@@ -15,6 +15,18 @@ export const handleRecruiterScore = async (
       new Date(new Date().getTime() - 1 * 24 * 60 * 60 * 1000)
     );
     console.log(messages);
+    for (const message of messages) {
+      if (message.type === MessageType.ChatInputCommand &&
+          message.embeds[0].title != "You're on Cooldown"
+      ) {
+        console.log("Bump: " + JSON.stringify(message));
+        console.log("User: " + message.interaction_metadata?.user.username);
+      } else if (message.type === MessageType.Default && message.message_reference) {
+        console.log("Forward: " + JSON.stringify(message));
+        console.log("User: " + message.author.username);
+        console.log("Reactions: " + JSON.stringify(message.reactions));
+      }
+    }
   } catch (err) {
     console.error(`Failed to generate recruitment score: ${err}`);
     await updateResponse(interaction.application_id, interaction.token, {
