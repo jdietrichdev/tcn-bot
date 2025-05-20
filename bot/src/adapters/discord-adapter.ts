@@ -161,7 +161,8 @@ export const getChannelMessages = async (
         compiledMessages.push(message);
       }
     }
-    before = compiledMessages[messages.length - 1].id;
+    before = messages[messages.length - 1].id;
+    console.log("Before: " + before);
   }
   console.log(compiledMessages)
   return compiledMessages;
