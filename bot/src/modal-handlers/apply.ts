@@ -21,7 +21,7 @@ import { BUTTONS } from "../component-handlers/buttons";
 const questionMapping = {
   tags: "Player tag(s)",
   source: "Where/Who did you learn about us from?",
-  leaveClan: "Why did you leave your last clan?",
+  leaveClan: "What's wrong with your current/previous clan?",
   clanWants: "What do you want in a clan?",
   competition: "Competition level/favorite strategies?",
 };
@@ -63,7 +63,7 @@ export const createApplyModal = () => {
             {
               type: ComponentType.TextInput,
               custom_id: "leaveClan",
-              label: "Why did you leave your last clan?",
+              label: "What's wrong with your current/previous clan?",
               style: TextInputStyle.Paragraph,
               required: true,
             },
