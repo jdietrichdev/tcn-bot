@@ -13,7 +13,7 @@ export const handleRecruiterScore = async (
     const scoreMap = new Map<string, Record<string, number>>();
     const messages = await getChannelMessages(
       config.RECRUITMENT_OPP_CHANNEL,
-      new Date(new Date().getTime() - 1 * 24 * 60 * 60 * 1000)
+      new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000)
     );
     console.log(messages);
     for (const message of messages) {
