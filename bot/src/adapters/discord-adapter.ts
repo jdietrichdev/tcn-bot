@@ -157,11 +157,13 @@ export const getChannelMessages = async (
         fetching = false;
         break;
       } else {
+        console.log(message);
         messages.push(message);
       }
     }
     before = messages[messages.length - 1].id;
   }
+  console.log(messages)
   return messages;
 };
 
