@@ -55,7 +55,7 @@ exports[`Infrastructure created 1`] = `
             "Arn"
           ]
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 300
       },
       "DependsOn": [
@@ -171,6 +171,98 @@ exports[`Infrastructure created 1`] = `
         "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
         "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
       ]
+    },
+    "botscheduledServiceRoleDA932985": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "botscheduledEB1B6758": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-12345-us-east-1",
+          "S3Key": "files.zip"
+        },
+        "Environment": {
+          "Variables": {
+            "REGION": "us-east-1",
+            "CLASH_API_TOKEN": "TEST_API_TOKEN",
+            "BOT_TOKEN": "BOT_TOKEN"
+          }
+        },
+        "Handler": "index.scheduled",
+        "Role": {
+          "Fn::GetAtt": [
+            "botscheduledServiceRoleDA932985",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 300
+      },
+      "DependsOn": [
+        "botscheduledServiceRoleDA932985"
+      ]
+    },
+    "botscheduledLogRetention7046A295": {
+      "Type": "Custom::LogRetention",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+            "Arn"
+          ]
+        },
+        "LogGroupName": {
+          "Fn::Join": [
+            "",
+            [
+              "/aws/lambda/",
+              {
+                "Ref": "botscheduledEB1B6758"
+              }
+            ]
+          ]
+        },
+        "RetentionInDays": 30
+      }
+    },
+    "botscheduledEventInvokeConfigFC70385D": {
+      "Type": "AWS::Lambda::EventInvokeConfig",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "botscheduledEB1B6758"
+        },
+        "MaximumRetryAttempts": 0,
+        "Qualifier": "$LATEST"
+      }
     },
     "botevents976D647F": {
       "Type": "AWS::Events::EventBus",
@@ -398,6 +490,44 @@ exports[`Infrastructure created 1`] = `
         }
       }
     },
+    "botscheduledrecruiterscoreA8E78EBE": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "ScheduleExpression": "cron(0 12 ? * SUN *)",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "botscheduledEB1B6758",
+                "Arn"
+              ]
+            },
+            "Id": "Target0",
+            "Input": "{\\"source\\":\\"tcn-bot-scheduled\\",\\"detailType\\":\\"Generate Recruiter Score\\",\\"detail\\":{\\"guildId\\":\\"1111490767991615518\\"}}"
+          }
+        ]
+      }
+    },
+    "botscheduledrecruiterscoreAllowEventRulestackbotscheduled64B1F1BE4A01E05B": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "botscheduledEB1B6758",
+            "Arn"
+          ]
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "botscheduledrecruiterscoreA8E78EBE",
+            "Arn"
+          ]
+        }
+      }
+    },
     "botproxyServiceRole56AA3B02": {
       "Type": "AWS::IAM::Role",
       "Properties": {
@@ -475,7 +605,7 @@ exports[`Infrastructure created 1`] = `
             "Arn"
           ]
         },
-        "Runtime": "nodejs20.x"
+        "Runtime": "nodejs22.x"
       },
       "DependsOn": [
         "botproxyServiceRoleDefaultPolicy5F03A8FF",

@@ -23,6 +23,7 @@ import { handleComponent } from "./component-handlers";
 import { submitModal } from "./modal-handlers/submit";
 import { createModal } from "./modal-handlers/create";
 import { buttonTriggersModal, commandTriggersModal } from "./component-handlers/utils";
+import { handleRecruiterScore } from "./command-handlers/recruiterScore";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -93,3 +94,12 @@ export const handler = async (
     );
   }
 };
+
+export const scheduled = async (
+  event: EventBridgeEvent<string, Record<string, string>>
+) => {
+  console.log(JSON.stringify(event));
+  if (event["detail-type"] === 'Generate Recruitment Score') {
+    await handleRecruiterScore(event.detail.guildId);
+  }
+}
