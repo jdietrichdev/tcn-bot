@@ -5,6 +5,7 @@ import {
 import { getConfig } from "../util/serverConfig";
 import {
   getChannelMessages,
+  getMessageReaction,
   updateResponse,
 } from "../adapters/discord-adapter";
 
@@ -44,7 +45,19 @@ export const handleRecruiterScore = async (
         };
         stats.forward++;
         scoreMap.set(user, stats);
-        console.log("Reactions: " + JSON.stringify(message.reactions));
+        if (message.reactions?.find((reaction) => reaction.emoji.name === `\u{2709}`)) {
+          const userReactions = await getMessageReaction(message.channel_id, message.id, `\u{2709}`);
+          console.log(userReactions);
+          for (const user of userReactions) {
+            const stats = scoreMap.get(user.username) || {
+              bump: 0,
+              forward: 0,
+              reachOut: 0,
+            };
+            stats.reachOut++;
+            scoreMap.set(user.username, stats);
+          }
+        }
       }
       console.log(JSON.stringify(Object.fromEntries(scoreMap)));
     }

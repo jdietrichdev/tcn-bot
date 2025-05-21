@@ -7,6 +7,7 @@ import {
   APIUser,
   GuildTextChannelType,
   RESTAPIGuildCreatePartialChannel,
+  RESTGetAPIChannelMessageReactionUsersResult,
   RESTPostAPIChannelMessageResult,
   RESTPostAPIChannelMessagesThreadsJSONBody,
   RESTPostAPIChannelMessagesThreadsResult,
@@ -137,33 +138,56 @@ export const getChannelMessages = async (
   let url = "";
   let before = "";
   const compiledMessages: APIMessage[] = [];
-  while (fetching) {
-    url = `${BASE_URL}/channels/${channelId}/messages?limit=100${
-      before ? `&before=${before}` : ""
-    }`;
-    console.log(url);
-    const response = await axios.get(
-      `${url}${before ? `&before=${before}` : ""}`,
-      {
-        headers: {
-          Authorization: `Bot ${process.env.BOT_TOKEN}`,
-          "Content-Type": "application/json",
-        },
+  try {
+    while (fetching) {
+      url = `${BASE_URL}/channels/${channelId}/messages?limit=100${
+        before ? `&before=${before}` : ""
+      }`;
+      console.log(url);
+      const response = await axios.get(
+        `${url}${before ? `&before=${before}` : ""}`,
+        {
+          headers: {
+            Authorization: `Bot ${process.env.BOT_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const messages = response.data as APIMessage[];
+      for (const message of messages) {
+        if (new Date(message.timestamp) < end) {
+          fetching = false;
+          break;
+        } else {
+          compiledMessages.push(message);
+        }
       }
-    );
-    const messages = response.data as APIMessage[];
-    for (const message of messages) {
-      if (new Date(message.timestamp) < end) {
-        fetching = false;
-        break;
-      } else {
-        compiledMessages.push(message);
-      }
+      before = messages[messages.length - 1].id;
     }
-    before = messages[messages.length - 1].id;
+    return compiledMessages;
+  } catch (err) {
+    throw new Error(`Failed to compile channel messages: ${err}`);
   }
-  return compiledMessages;
 };
+
+export const getMessageReaction = async (
+  channelId: string,
+  messageId: string,
+  reaction: string
+): Promise<RESTGetAPIChannelMessageReactionUsersResult> => {
+  const url = `${BASE_URL}/channels/${channelId}/messages/${messageId}/reactions/${reaction}`;
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data as APIUser[];
+  } catch (err) {
+    throw new Error(`Failed to retrieve user reactions for ${reaction}: ${err}`);
+  }
+}
 
 export const createChannel = async (
   channel: RESTAPIGuildCreatePartialChannel,
