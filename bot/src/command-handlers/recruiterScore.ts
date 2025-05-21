@@ -89,7 +89,7 @@ export const handleRecruiterScore = async (
 const buildEmbed = (scoreMap: Map<string, Record<string, number>>, config: ServerConfig) => {
   return {
     title: "Recruiter Scoring for Last Week",
-    description: `Scores based on participation in the <#${config.RECRUITMENT_OPP_CHANNEL}>`,
+    description: `Scores based on participation in <#${config.RECRUITMENT_OPP_CHANNEL}>`,
     fields: Array.from(scoreMap, ([key, value]) => {
       return {
         name: `**${key}**`,
