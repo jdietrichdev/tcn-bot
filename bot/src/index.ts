@@ -99,7 +99,7 @@ export const scheduled = async (
   event: EventBridgeEvent<string, Record<string, string>>
 ) => {
   console.log(JSON.stringify(event));
-  if (event["detail-type"] === 'Generate Recruitment Score') {
+  if (event["detail-type"] === 'Generate Recruiter Score') {
     await handleRecruiterScore(event.detail.guildId);
   }
 }
