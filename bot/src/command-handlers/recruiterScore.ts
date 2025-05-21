@@ -1,11 +1,13 @@
 import {
   APIChatInputApplicationCommandInteraction,
+  APIEmbed,
   MessageType,
 } from "discord-api-types/v10";
-import { getConfig } from "../util/serverConfig";
+import { getConfig, ServerConfig } from "../util/serverConfig";
 import {
   getChannelMessages,
   getMessageReaction,
+  sendMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
 
@@ -47,7 +49,6 @@ export const handleRecruiterScore = async (
         scoreMap.set(user, stats);
         if (message.reactions?.some((reaction) => reaction.emoji.name === `✉️`)) {
           const userReactions = await getMessageReaction(message.channel_id, message.id, `✉️`);
-          console.log(userReactions);
           for (const user of userReactions) {
             if (user.username !== message.author.username) {
               const stats = scoreMap.get(user.username) || {
@@ -63,6 +64,13 @@ export const handleRecruiterScore = async (
       }
     }
     console.log(JSON.stringify(Object.fromEntries(scoreMap)));
+    const embed = buildEmbed(scoreMap, config);
+    await sendMessage({
+      embeds: [embed]
+    }, config.RECRUITER_CHANNEL);
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: `Information has been compiled and sent to <#${config.RECRUITER_CHANNEL}>`
+    });
   } catch (err) {
     console.error(`Failed to generate recruitment score: ${err}`);
     await updateResponse(interaction.application_id, interaction.token, {
@@ -71,3 +79,24 @@ export const handleRecruiterScore = async (
     });
   }
 };
+
+const buildEmbed = (scoreMap: Map<string, Record<string, number>>, config: ServerConfig) => {
+  return {
+    title: "Recruiter Scoring for Last Week",
+    description: `Scores based on participation in the <#${config.RECRUITMENT_OPP_CHANNEL}>`,
+    fields: Array.from(scoreMap, ([key, value]) => {
+      return {
+        name: `**${key}**`,
+        value: [
+          `Bumps: ${value.bump}`,
+          `Forwards: ${value.forward}`,
+          `Reach Outs: ${value.reachOut}`,
+          `**Score**: ${(value.bump * 5) + value.forward + value.reachOut}`
+        ].join("\n")
+      }
+    }),
+    footer: {
+      text: "Who will be on top next week?"
+    }
+  } as APIEmbed;
+}
