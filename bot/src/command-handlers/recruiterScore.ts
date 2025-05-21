@@ -43,21 +43,21 @@ export const handleRecruiterScore = async (
           reachOut: 0,
         };
         stats.forward++;
+        stats.reachOut++;
         scoreMap.set(user, stats);
-        if (message.reactions?.some((reaction) => {
-          console.log(`${reaction.emoji.name} - ✉️`);
-          return reaction.emoji.name === `✉️`
-        })) {
+        if (message.reactions?.some((reaction) => reaction.emoji.name === `✉️`)) {
           const userReactions = await getMessageReaction(message.channel_id, message.id, `✉️`);
           console.log(userReactions);
           for (const user of userReactions) {
-            const stats = scoreMap.get(user.username) || {
-              bump: 0,
-              forward: 0,
-              reachOut: 0,
-            };
-            stats.reachOut++;
-            scoreMap.set(user.username, stats);
+            if (user.username !== message.author.username) {
+              const stats = scoreMap.get(user.username) || {
+                bump: 0,
+                forward: 0,
+                reachOut: 0,
+              };
+              stats.reachOut++;
+              scoreMap.set(user.username, stats);
+            }
           }
         }
       }
