@@ -15,7 +15,9 @@ export const handleRecruiterScore = async (
   input: APIChatInputApplicationCommandInteraction | string
 ) => {
   try {
-    const config = getConfig(typeof input === 'string' ? input : input.guild_id!);
+    const config = getConfig(
+      typeof input === "string" ? input : input.guild_id!
+    );
     const scoreMap = new Map<string, Record<string, number>>();
     const messages = await getChannelMessages(
       config.RECRUITMENT_OPP_CHANNEL,
@@ -47,10 +49,19 @@ export const handleRecruiterScore = async (
         stats.forward++;
         stats.reachOut++;
         scoreMap.set(user, stats);
-        if (message.reactions?.some((reaction) => reaction.emoji.name === `✉️`)) {
-          const userReactions = await getMessageReaction(message.channel_id, message.id, `✉️`);
+        if (
+          message.reactions?.some((reaction) => reaction.emoji.name === `✉️`)
+        ) {
+          const userReactions = await getMessageReaction(
+            message.channel_id,
+            message.id,
+            `✉️`
+          );
           for (const user of userReactions) {
-            if (user.username !== message.author.username) {
+            if (
+              user.username !== message.author.username &&
+              user.username !== "O.T.T.O"
+            ) {
               const stats = scoreMap.get(user.username) || {
                 bump: 0,
                 forward: 0,
@@ -65,28 +76,34 @@ export const handleRecruiterScore = async (
     }
     console.log(JSON.stringify(Object.fromEntries(scoreMap)));
     const embed = buildEmbed(scoreMap, config);
-    await sendMessage({
-      embeds: [embed]
-    }, config.RECRUITER_CHANNEL);
-    if (typeof input !== 'string') {
+    await sendMessage(
+      {
+        embeds: [embed],
+      },
+      config.RECRUITER_CHANNEL
+    );
+    if (typeof input !== "string") {
       await updateResponse(input.application_id, input.token, {
-        content: `Information has been compiled and sent to <#${config.RECRUITER_CHANNEL}>`
+        content: `Information has been compiled and sent to <#${config.RECRUITER_CHANNEL}>`,
       });
     }
   } catch (err) {
     console.error(`Failed to generate recruitment score: ${err}`);
-    if (typeof input !== 'string') {
+    if (typeof input !== "string") {
       await updateResponse(input.application_id, input.token, {
         content:
           "There was a failure generating the recruitment score, please try again or contact admins for assistance",
       });
     } else {
-      throw new Error('Failure generating recruitment score');
+      throw new Error("Failure generating recruitment score");
     }
   }
 };
 
-const buildEmbed = (scoreMap: Map<string, Record<string, number>>, config: ServerConfig) => {
+const buildEmbed = (
+  scoreMap: Map<string, Record<string, number>>,
+  config: ServerConfig
+) => {
   return {
     title: "Recruiter Scoring for Last Week",
     description: `Scores based on participation in <#${config.RECRUITMENT_OPP_CHANNEL}>`,
@@ -97,12 +114,12 @@ const buildEmbed = (scoreMap: Map<string, Record<string, number>>, config: Serve
           `Bumps: ${value.bump}`,
           `Forwards: ${value.forward}`,
           `Reach Outs: ${value.reachOut}`,
-          `**Score**: ${(value.bump * 5) + value.forward + value.reachOut}`
-        ].join("\n")
-      }
+          `**Score**: ${value.bump * 5 + value.forward + value.reachOut}`,
+        ].join("\n"),
+      };
     }),
     footer: {
-      text: "Who will be on top next week?"
-    }
+      text: "Who will be on top next week?",
+    },
   } as APIEmbed;
-}
+};
