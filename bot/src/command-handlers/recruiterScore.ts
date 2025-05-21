@@ -12,10 +12,10 @@ import {
 } from "../adapters/discord-adapter";
 
 export const handleRecruiterScore = async (
-  interaction: APIChatInputApplicationCommandInteraction
+  input: APIChatInputApplicationCommandInteraction | string
 ) => {
   try {
-    const config = getConfig(interaction.guild_id!);
+    const config = getConfig(typeof input === 'string' ? input : input.guild_id!);
     const scoreMap = new Map<string, Record<string, number>>();
     const messages = await getChannelMessages(
       config.RECRUITMENT_OPP_CHANNEL,
@@ -68,15 +68,21 @@ export const handleRecruiterScore = async (
     await sendMessage({
       embeds: [embed]
     }, config.RECRUITER_CHANNEL);
-    await updateResponse(interaction.application_id, interaction.token, {
-      content: `Information has been compiled and sent to <#${config.RECRUITER_CHANNEL}>`
-    });
+    if (typeof input !== 'string') {
+      await updateResponse(input.application_id, input.token, {
+        content: `Information has been compiled and sent to <#${config.RECRUITER_CHANNEL}>`
+      });
+    }
   } catch (err) {
     console.error(`Failed to generate recruitment score: ${err}`);
-    await updateResponse(interaction.application_id, interaction.token, {
-      content:
-        "There was a failure generating the recruitment score, please try again or contact admins for assistance",
-    });
+    if (typeof input !== 'string') {
+      await updateResponse(input.application_id, input.token, {
+        content:
+          "There was a failure generating the recruitment score, please try again or contact admins for assistance",
+      });
+    } else {
+      throw new Error('Failure generating recruitment score');
+    }
   }
 };
 
