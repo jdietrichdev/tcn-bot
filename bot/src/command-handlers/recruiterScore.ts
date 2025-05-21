@@ -45,10 +45,10 @@ export const handleRecruiterScore = async (
         stats.forward++;
         scoreMap.set(user, stats);
         if (message.reactions?.some((reaction) => {
-          console.log(`${reaction.emoji.name} - \u{FE0F}`);
-          return reaction.emoji.name === `\u{FE0F}`
+          console.log(`${reaction.emoji.name} - ✉️`);
+          return reaction.emoji.name === `✉️`
         })) {
-          const userReactions = await getMessageReaction(message.channel_id, message.id, `\u{FE0F}`);
+          const userReactions = await getMessageReaction(message.channel_id, message.id, `✉️`);
           console.log(userReactions);
           for (const user of userReactions) {
             const stats = scoreMap.get(user.username) || {
