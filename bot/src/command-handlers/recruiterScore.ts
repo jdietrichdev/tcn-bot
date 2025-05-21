@@ -19,7 +19,6 @@ export const handleRecruiterScore = async (
       config.RECRUITMENT_OPP_CHANNEL,
       new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000)
     );
-    console.log(messages);
     for (const message of messages) {
       if (
         message.type === MessageType.ChatInputCommand &&
@@ -45,7 +44,10 @@ export const handleRecruiterScore = async (
         };
         stats.forward++;
         scoreMap.set(user, stats);
-        if (message.reactions?.find((reaction) => reaction.emoji.name === `\u{2709}`)) {
+        if (message.reactions?.some((reaction) => {
+          console.log(`${reaction.emoji.name} - \u{2709}`);
+          return reaction.emoji.name === `\u{2709}`
+        })) {
           const userReactions = await getMessageReaction(message.channel_id, message.id, `\u{2709}`);
           console.log(userReactions);
           for (const user of userReactions) {
@@ -59,8 +61,8 @@ export const handleRecruiterScore = async (
           }
         }
       }
-      console.log(JSON.stringify(Object.fromEntries(scoreMap)));
     }
+    console.log(JSON.stringify(Object.fromEntries(scoreMap)));
   } catch (err) {
     console.error(`Failed to generate recruitment score: ${err}`);
     await updateResponse(interaction.application_id, interaction.token, {
