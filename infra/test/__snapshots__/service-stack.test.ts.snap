@@ -504,7 +504,7 @@ exports[`Infrastructure created 1`] = `
               ]
             },
             "Id": "Target0",
-            "Input": "{\\"source\\":\\"tcn-bot-scheduled\\",\\"detailType\\":\\"Generate Recruiter Score\\",\\"detail\\":{\\"guildId\\":\\"1111490767991615518\\"}}"
+            "Input": "{\\"source\\":\\"tcn-bot-scheduled\\",\\"detail-type\\":\\"Generate Recruiter Score\\",\\"detail\\":{\\"guildId\\":\\"1111490767991615518\\"}}"
           }
         ]
       }
