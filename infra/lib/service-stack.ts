@@ -95,7 +95,7 @@ export class ServiceStack extends Stack {
       targets: [new LambdaFunction(this.scheduled, {
         event: RuleTargetInput.fromObject({
           source: "tcn-bot-scheduled",
-          detailType: "Generate Recruiter Score",
+          "detail-type": "Generate Recruiter Score",
           detail: {
             guildId: "1111490767991615518"
           }
