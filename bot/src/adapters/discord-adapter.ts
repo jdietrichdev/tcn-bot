@@ -189,7 +189,7 @@ export const createThread = async (
 
 export const getChannelMessages = async (
   channelId: string,
-  end: Date
+  end?: Date
 ): Promise<APIMessage[]> => {
   let fetching = true;
   let url = "";
@@ -212,7 +212,7 @@ export const getChannelMessages = async (
       );
       const messages = response.data as APIMessage[];
       for (const message of messages) {
-        if (new Date(message.timestamp) < end) {
+        if (end && new Date(message.timestamp) < end) {
           fetching = false;
           break;
         } else {
