@@ -11,7 +11,7 @@ import {
   sendMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
-import { getConfig } from "../util/serverConfig";
+import { getConfig, ServerConfig } from "../util/serverConfig";
 import { createDiscordTimestamp } from "../util/format-util";
 
 export const confirmDelete = async (
@@ -29,7 +29,12 @@ export const confirmDelete = async (
         message.type !== 6
       );
     });
-    const transcript = createTranscript(interaction, messages, eventMessages);
+    const transcript = createTranscript(
+      interaction,
+      messages,
+      eventMessages,
+      config
+    );
     await sendMessage(
       {
         embeds: [transcript],
@@ -49,7 +54,8 @@ export const confirmDelete = async (
 const createTranscript = (
   interaction: APIMessageComponentInteraction,
   messages: APIMessage[],
-  eventMessages: APIMessage[]
+  eventMessages: APIMessage[],
+  config: ServerConfig
 ): APIEmbed => {
   const applicationChannel =
     interaction.channel as APIGuildTextChannel<GuildTextChannelType>;
@@ -58,8 +64,10 @@ const createTranscript = (
   const participantMap = new Map<string, number>();
   for (const message of messages) {
     const author = message.author.id;
-    const score = participantMap.get(author) ?? 0;
-    participantMap.set(author, score + 1);
+    if (author !== config.BOT_ID) {
+      const score = participantMap.get(author) ?? 0;
+      participantMap.set(author, score + 1);
+    }
   }
   return {
     author: {
