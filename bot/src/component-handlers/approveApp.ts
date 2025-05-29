@@ -112,7 +112,8 @@ const createApplicationChannel = async (
             PermissionFlagsBits.ViewChannel |
             PermissionFlagsBits.AddReactions |
             PermissionFlagsBits.SendMessages |
-            PermissionFlagsBits.ManageChannels
+            PermissionFlagsBits.ManageChannels | 
+            PermissionFlagsBits.ManageRoles
           ).toString(),
           deny: "0",
         },
