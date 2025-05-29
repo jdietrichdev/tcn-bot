@@ -70,7 +70,7 @@ const createTranscript = (
       {
         name: "Created by",
         value: `<@${applicantId}> <t:${createDiscordTimestamp(
-          messages[messages.length - 1].timestamp
+          messages[0].timestamp
         )}:R>`,
         inline: false,
       },
@@ -103,7 +103,7 @@ const createTranscript = (
         name: "Deleted by",
         value: `<@${interaction.member!.user.id}> <t:${createDiscordTimestamp(
           new Date().toUTCString()
-        )}`,
+        )}:R>`,
         inline: false,
       },
       {
