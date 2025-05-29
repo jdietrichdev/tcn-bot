@@ -20,5 +20,5 @@ test("updateResponse should throw error when request fails", async () => {
   });
   await expect(() =>
     updateResponse("appId", "token", { content: "test" })
-  ).rejects.toThrow(new Error("Failed to update response: Error: Failed"));
+  ).rejects.toThrow(new Error("Failed to update response"));
 });
