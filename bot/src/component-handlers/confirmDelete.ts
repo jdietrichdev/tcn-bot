@@ -29,12 +29,7 @@ export const confirmDelete = async (
         message.type !== 6
       );
     });
-    const transcript = createTranscript(
-      interaction,
-      messages,
-      eventMessages,
-      config
-    );
+    const transcript = createTranscript(interaction, messages, eventMessages);
     await sendMessage(
       {
         embeds: [transcript],
@@ -54,8 +49,7 @@ export const confirmDelete = async (
 const createTranscript = (
   interaction: APIMessageComponentInteraction,
   messages: APIMessage[],
-  eventMessages: APIMessage[],
-  config: ServerConfig
+  eventMessages: APIMessage[]
 ): APIEmbed => {
   const applicationChannel =
     interaction.channel as APIGuildTextChannel<GuildTextChannelType>;
@@ -64,7 +58,7 @@ const createTranscript = (
   const participantMap = new Map<string, number>();
   for (const message of messages) {
     const author = message.author.id;
-    if (author !== config.BOT_ID) {
+    if (!message.author.bot) {
       const score = participantMap.get(author) ?? 0;
       participantMap.set(author, score + 1);
     }
