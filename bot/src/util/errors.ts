@@ -1,9 +1,9 @@
 export class DiscordError extends Error {
-    public statusCode: string;
+    public statusCode: number;
     public message: string;
     public reason: string;
 
-    constructor(message: string, reason: string, statusCode: string) {
+    constructor(message: string, reason: string, statusCode: number) {
         super(message);
         this.name = 'DiscordError';
         this.statusCode = statusCode;

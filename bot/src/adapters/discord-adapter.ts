@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import axiosRetry from "axios-retry";
 import {
   APIGuildMember,
@@ -30,11 +30,15 @@ export const updateResponse = async (
   try {
     await axios.patch(url, response);
   } catch (err) {
-    throw new DiscordError(
-      "Failed to update response", 
-      (err as AxiosError).message, 
-      (err as AxiosError).code ?? '500'
-    );
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to update response", 
+        err.response?.data.message, 
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
   }
 };
 
@@ -52,11 +56,15 @@ export const updateMessage = async (
       },
     });
   } catch (err) {
-    throw new DiscordError(
-      "Failed to update message", 
-      (err as AxiosError).message, 
-      (err as AxiosError).code ?? '500'
-    );
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to update message", 
+        err.response?.data.message, 
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
   }
 };
 
@@ -68,11 +76,15 @@ export const deleteResponse = async (
   try {
     await axios.delete(url);
   } catch (err) {
-    throw new DiscordError(
-      "Failed to delete response", 
-      (err as AxiosError).message, 
-      (err as AxiosError).code ?? '500'
-    );
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to delete response", 
+        err.response?.data.message, 
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
   }
 };
 
@@ -85,11 +97,15 @@ export const deleteMessage = async (channelId: string, messageId: string) => {
       },
     });
   } catch (err) {
-    throw new DiscordError(
-      "Failed to delete message", 
-      (err as AxiosError).message, 
-      (err as AxiosError).code ?? '500'
-    );
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to delete message", 
+        err.response?.data.message, 
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
   }
 };
 
@@ -107,11 +123,15 @@ export const sendMessage = async (
     });
     return response.data;
   } catch (err) {
-    throw new DiscordError(
-      "Failed to send message", 
-      (err as AxiosError).message, 
-      (err as AxiosError).code ?? '500'
-    );
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to send message", 
+        err.response?.data.message, 
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
   }
 };
 
@@ -128,11 +148,15 @@ export const pinMessage = async (channelId: string, messageId: string) => {
       }
     );
   } catch (err) {
-    throw new DiscordError(
-      "Failed to pin message", 
-      (err as AxiosError).message, 
-      (err as AxiosError).code ?? '500'
-    );
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to pin message", 
+        err.response?.data.message, 
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
   }
 };
 
@@ -151,11 +175,15 @@ export const createThread = async (
     });
     return response.data;
   } catch (err) {
-    throw new DiscordError(
-      "Failed to create thread", 
-      (err as AxiosError).message, 
-      (err as AxiosError).code ?? '500'
-    );
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to create thread", 
+        err.response?.data.message, 
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
   }
 };
 
@@ -195,11 +223,15 @@ export const getChannelMessages = async (
     }
     return compiledMessages;
   } catch (err) {
-    throw new DiscordError(
-      "Failed to compile channel messages", 
-      (err as AxiosError).message, 
-      (err as AxiosError).code ?? '500'
-    );
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to compile channel messages", 
+        err.response?.data.message, 
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
   }
 };
 
@@ -218,11 +250,15 @@ export const getMessageReaction = async (
     });
     return response.data as APIUser[];
   } catch (err) {
-    throw new DiscordError(
-      "Failed to fetch user reactions", 
-      (err as AxiosError).message, 
-      (err as AxiosError).code ?? '500'
-    );
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to fetch message reactions", 
+        err.response?.data.message, 
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
   }
 }
 
@@ -240,11 +276,15 @@ export const createChannel = async (
     });
     return response.data;
   } catch (err) {
-    throw new DiscordError(
-      "Failed to create channel", 
-      (err as AxiosError).message, 
-      (err as AxiosError).code ?? '500'
-    );
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to create channel", 
+        err.response?.data.message, 
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
   }
 };
 
@@ -262,11 +302,15 @@ export const moveChannel = async (channelId: string, categoryId: string) => {
       }
     );
   } catch (err) {
-    throw new DiscordError(
-      "Failed to move channel", 
-      (err as AxiosError).message, 
-      (err as AxiosError).code ?? '500'
-    );
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to move channel", 
+        err.response?.data.message, 
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
   }
 };
 
@@ -284,11 +328,15 @@ export const updateChannelPermissions = async (
       },
     });
   } catch (err) {
-    throw new DiscordError(
-      "Failed to update permissions", 
-      (err as AxiosError).message, 
-      (err as AxiosError).code ?? '500'
-    );
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to update permissions", 
+        err.response?.data.message, 
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
   }
 };
 
@@ -302,11 +350,15 @@ export const deleteChannel = async (channelId: string) => {
       },
     });
   } catch (err) {
-    throw new DiscordError(
-      "Failed to delete channel", 
-      (err as AxiosError).message, 
-      (err as AxiosError).code ?? '500'
-    );
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to delete channel", 
+        err.response?.data.message, 
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
   }
 };
 
@@ -323,11 +375,15 @@ export const createDM = async (
     });
     return response.data;
   } catch (err) {
-    throw new DiscordError(
-      "Failed to create DM", 
-      (err as AxiosError).message, 
-      (err as AxiosError).code ?? '500'
-    );
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to create DM", 
+        err.response?.data.message, 
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
   }
 };
 
@@ -342,11 +398,15 @@ export const getUser = async (userId: string): Promise<APIUser> => {
     });
     return response.data;
   } catch (err) {
-    throw new DiscordError(
-      "Failed to fetch user", 
-      (err as AxiosError).message, 
-      (err as AxiosError).code ?? '500'
-    );
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to fetch user", 
+        err.response?.data.message, 
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
   }
 };
 
@@ -364,11 +424,15 @@ export const getServerUser = async (
     });
     return response.data;
   } catch (err) {
-    throw new DiscordError(
-      "Failed to fetch server user", 
-      (err as AxiosError).message, 
-      (err as AxiosError).code ?? '500'
-    );
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to fetch server user", 
+        err.response?.data.message, 
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
   }
 };
 
@@ -390,11 +454,15 @@ export const grantRole = async (
       }
     );
   } catch (err) {
-    throw new DiscordError(
-      "Failed to grant role", 
-      (err as AxiosError).message, 
-      (err as AxiosError).code ?? '500'
-    );
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to grant role", 
+        err.response?.data.message, 
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
   }
 };
 
@@ -412,10 +480,14 @@ export const removeRole = async (
       },
     });
   } catch (err) {
-    throw new DiscordError(
-      "Failed to remove role", 
-      (err as AxiosError).message, 
-      (err as AxiosError).code ?? '500'
-    );
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to remove role", 
+        err.response?.data.message, 
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
   }
 };
