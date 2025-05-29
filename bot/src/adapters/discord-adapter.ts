@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import axiosRetry from "axios-retry";
 import {
   APIGuildMember,
@@ -15,6 +15,7 @@ import {
   RESTPostAPIWebhookWithTokenJSONBody,
   RESTPutAPIChannelPermissionJSONBody,
 } from "discord-api-types/v10";
+import { DiscordError } from "../util/errors";
 
 const BASE_URL = "https://discord.com/api/v10";
 
@@ -29,7 +30,11 @@ export const updateResponse = async (
   try {
     await axios.patch(url, response);
   } catch (err) {
-    throw new Error(`Failed to update response: ${err}`);
+    throw new DiscordError(
+      "Failed to update response", 
+      (err as AxiosError).message, 
+      (err as AxiosError).code ?? '500'
+    );
   }
 };
 
@@ -47,7 +52,11 @@ export const updateMessage = async (
       },
     });
   } catch (err) {
-    throw new Error(`Failed to update message: ${err}`);
+    throw new DiscordError(
+      "Failed to update message", 
+      (err as AxiosError).message, 
+      (err as AxiosError).code ?? '500'
+    );
   }
 };
 
@@ -59,7 +68,11 @@ export const deleteResponse = async (
   try {
     await axios.delete(url);
   } catch (err) {
-    throw new Error(`Failed to delete response: ${err}`);
+    throw new DiscordError(
+      "Failed to delete response", 
+      (err as AxiosError).message, 
+      (err as AxiosError).code ?? '500'
+    );
   }
 };
 
@@ -72,7 +85,11 @@ export const deleteMessage = async (channelId: string, messageId: string) => {
       },
     });
   } catch (err) {
-    throw new Error(`Failed to delete message: ${err}`);
+    throw new DiscordError(
+      "Failed to delete message", 
+      (err as AxiosError).message, 
+      (err as AxiosError).code ?? '500'
+    );
   }
 };
 
@@ -90,7 +107,11 @@ export const sendMessage = async (
     });
     return response.data;
   } catch (err) {
-    throw new Error(`Failed to send message to ${channelId}: ${err}`);
+    throw new DiscordError(
+      "Failed to send message", 
+      (err as AxiosError).message, 
+      (err as AxiosError).code ?? '500'
+    );
   }
 };
 
@@ -107,7 +128,11 @@ export const pinMessage = async (channelId: string, messageId: string) => {
       }
     );
   } catch (err) {
-    throw new Error(`Failed to pin message: ${err}`);
+    throw new DiscordError(
+      "Failed to pin message", 
+      (err as AxiosError).message, 
+      (err as AxiosError).code ?? '500'
+    );
   }
 };
 
@@ -126,7 +151,11 @@ export const createThread = async (
     });
     return response.data;
   } catch (err) {
-    throw new Error(`Failed to create thread for message ${messageId}: ${err}`);
+    throw new DiscordError(
+      "Failed to create thread", 
+      (err as AxiosError).message, 
+      (err as AxiosError).code ?? '500'
+    );
   }
 };
 
@@ -166,7 +195,11 @@ export const getChannelMessages = async (
     }
     return compiledMessages;
   } catch (err) {
-    throw new Error(`Failed to compile channel messages: ${err}`);
+    throw new DiscordError(
+      "Failed to compile channel messages", 
+      (err as AxiosError).message, 
+      (err as AxiosError).code ?? '500'
+    );
   }
 };
 
@@ -185,7 +218,11 @@ export const getMessageReaction = async (
     });
     return response.data as APIUser[];
   } catch (err) {
-    throw new Error(`Failed to retrieve user reactions for ${reaction}: ${err}`);
+    throw new DiscordError(
+      "Failed to fetch user reactions", 
+      (err as AxiosError).message, 
+      (err as AxiosError).code ?? '500'
+    );
   }
 }
 
@@ -203,7 +240,11 @@ export const createChannel = async (
     });
     return response.data;
   } catch (err) {
-    throw new Error(`Failed to create channel in ${guildId}: ${err}`);
+    throw new DiscordError(
+      "Failed to create channel", 
+      (err as AxiosError).message, 
+      (err as AxiosError).code ?? '500'
+    );
   }
 };
 
@@ -221,7 +262,11 @@ export const moveChannel = async (channelId: string, categoryId: string) => {
       }
     );
   } catch (err) {
-    throw new Error(`Failed to move channel ${channelId}: ${err}`);
+    throw new DiscordError(
+      "Failed to move channel", 
+      (err as AxiosError).message, 
+      (err as AxiosError).code ?? '500'
+    );
   }
 };
 
@@ -239,7 +284,11 @@ export const updateChannelPermissions = async (
       },
     });
   } catch (err) {
-    throw new Error(`Failed to update permissions: ${err}`);
+    throw new DiscordError(
+      "Failed to update permissions", 
+      (err as AxiosError).message, 
+      (err as AxiosError).code ?? '500'
+    );
   }
 };
 
@@ -253,7 +302,11 @@ export const deleteChannel = async (channelId: string) => {
       },
     });
   } catch (err) {
-    throw new Error(`Failed to delete channel ${channelId}: ${err}`);
+    throw new DiscordError(
+      "Failed to delete channel", 
+      (err as AxiosError).message, 
+      (err as AxiosError).code ?? '500'
+    );
   }
 };
 
@@ -270,7 +323,11 @@ export const createDM = async (
     });
     return response.data;
   } catch (err) {
-    throw new Error("Unable to create DM with user");
+    throw new DiscordError(
+      "Failed to create DM", 
+      (err as AxiosError).message, 
+      (err as AxiosError).code ?? '500'
+    );
   }
 };
 
@@ -285,7 +342,11 @@ export const getUser = async (userId: string): Promise<APIUser> => {
     });
     return response.data;
   } catch (err) {
-    throw new Error("Unable to fetch user data");
+    throw new DiscordError(
+      "Failed to fetch user", 
+      (err as AxiosError).message, 
+      (err as AxiosError).code ?? '500'
+    );
   }
 };
 
@@ -303,7 +364,11 @@ export const getServerUser = async (
     });
     return response.data;
   } catch (err) {
-    throw new Error("Unable to fetch user data");
+    throw new DiscordError(
+      "Failed to fetch server user", 
+      (err as AxiosError).message, 
+      (err as AxiosError).code ?? '500'
+    );
   }
 };
 
@@ -325,7 +390,11 @@ export const grantRole = async (
       }
     );
   } catch (err) {
-    throw new Error("Unable to grant role to user");
+    throw new DiscordError(
+      "Failed to grant role", 
+      (err as AxiosError).message, 
+      (err as AxiosError).code ?? '500'
+    );
   }
 };
 
@@ -343,6 +412,10 @@ export const removeRole = async (
       },
     });
   } catch (err) {
-    throw new Error("Unable to remove role from user");
+    throw new DiscordError(
+      "Failed to remove role", 
+      (err as AxiosError).message, 
+      (err as AxiosError).code ?? '500'
+    );
   }
 };
