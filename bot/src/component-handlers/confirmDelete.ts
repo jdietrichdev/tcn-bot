@@ -70,9 +70,6 @@ const createTranscript = (
     }
   }
   return {
-    author: {
-      name: applicantUsername,
-    },
     title: `Clan application for ${applicantUsername}`,
     fields: [
       {
