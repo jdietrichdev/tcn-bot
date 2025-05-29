@@ -20,10 +20,13 @@ export const confirmDelete = async (
   try {
     const config = getConfig(interaction.guild_id!);
     const messages = await getChannelMessages(interaction.channel.id);
+    messages.reverse();
     const eventMessages = messages.filter((message) => {
       return (
         message.author.id === config.BOT_ID &&
-        !message.content.startsWith("You do not have permission")
+        !message.content.startsWith("You do not have permission") &&
+        message.embeds.length === 0 &&
+        message.type !== 6
       );
     });
     const transcript = createTranscript(interaction, messages, eventMessages);
@@ -67,7 +70,7 @@ const createTranscript = (
       {
         name: "Created by",
         value: `<@${applicantId}> <t:${createDiscordTimestamp(
-          eventMessages[0].timestamp
+          messages[messages.length - 1].timestamp
         )}:R>`,
         inline: false,
       },
@@ -93,6 +96,7 @@ const createTranscript = (
         return {
           name,
           value: `${user} <t:${createDiscordTimestamp(time)}:R>`,
+          inline: false,
         };
       }),
       {
@@ -100,6 +104,13 @@ const createTranscript = (
         value: `<@${interaction.member!.user.id}> <t:${createDiscordTimestamp(
           new Date().toUTCString()
         )}`,
+        inline: false,
+      },
+      {
+        name: "Participants",
+        value: Array.from(participantMap, ([key, value]) => {
+          return `${value} messages from <@${key}>`;
+        }).join("\n"),
         inline: false,
       },
     ],
