@@ -1,14 +1,38 @@
-// import { APIEmbed, APIGuildTextChannel, APIMessage, APIMessageComponentInteraction, GuildTextChannelType } from "discord-api-types/v10";
-// import { deleteChannel, getChannelMessages, getUser, updateResponse } from "../adapters/discord-adapter";
-import { APIMessageComponentInteraction } from "discord-api-types/v10";
-import { deleteChannel, updateResponse } from "../adapters/discord-adapter";
+import {
+  APIEmbed,
+  APIGuildTextChannel,
+  APIMessage,
+  APIMessageComponentInteraction,
+  GuildTextChannelType,
+} from "discord-api-types/v10";
+import {
+  deleteChannel,
+  getChannelMessages,
+  sendMessage,
+  updateResponse,
+} from "../adapters/discord-adapter";
+import { getConfig } from "../util/serverConfig";
+import { createDiscordTimestamp } from "../util/format-util";
 
 export const confirmDelete = async (
   interaction: APIMessageComponentInteraction
 ) => {
   try {
-    // const messages = await getChannelMessages(interaction.channel.id);
-    // const transcript = createTranscript(interaction, messages);
+    const config = getConfig(interaction.guild_id!);
+    const messages = await getChannelMessages(interaction.channel.id);
+    const eventMessages = messages.filter((message) => {
+      return (
+        message.author.id === config.BOT_ID &&
+        !message.content.startsWith("You do not have permission")
+      );
+    });
+    const transcript = createTranscript(interaction, messages, eventMessages);
+    await sendMessage(
+      {
+        embeds: [transcript],
+      },
+      config.TRANSCRIPT_CHANNEL
+    );
     await deleteChannel(interaction.channel.id);
   } catch (err) {
     console.error(`Failed to delete channel: ${err}`);
@@ -19,32 +43,62 @@ export const confirmDelete = async (
   }
 };
 
-// const createTranscript = async (interaction: APIMessageComponentInteraction, messages: APIMessage[]): Promise<APIEmbed> => {
-//   const applicationChannel = interaction.channel as APIGuildTextChannel<GuildTextChannelType>;
-//   const applicantUsername = applicationChannel.name.split('-')[1];
-//   const applicantId = applicationChannel.topic!.split(':')[1];
-//   const participantMap = new Map<string, number>();
-//   for (const message of messages) {
-//     const author = message.author.id;
-//     const score = participantMap.get(author) ?? 0;
-//     participantMap.set(author, score+1);
-//   }
-//   return {
-//     author: {
-//       name: applicantUsername
-//     },
-//     title: `Clan application for ${applicantUsername}`,
-//     fields: [
-//       {
-//         name: "Created by",
-//         value: `<@${applicantId}>`,
-//         inline: false,
-//       },
-//       {
-//         name: "Deleted by",
-//         value: `<@${interaction.member!.user.id}>`,
-//         inline: false,
-//       }
-//     ]
-//   }
-// }
+const createTranscript = (
+  interaction: APIMessageComponentInteraction,
+  messages: APIMessage[],
+  eventMessages: APIMessage[]
+): APIEmbed => {
+  const applicationChannel =
+    interaction.channel as APIGuildTextChannel<GuildTextChannelType>;
+  const applicantUsername = applicationChannel.name.split("-")[1];
+  const applicantId = applicationChannel.topic!.split(":")[1];
+  const participantMap = new Map<string, number>();
+  for (const message of messages) {
+    const author = message.author.id;
+    const score = participantMap.get(author) ?? 0;
+    participantMap.set(author, score + 1);
+  }
+  return {
+    author: {
+      name: applicantUsername,
+    },
+    title: `Clan application for ${applicantUsername}`,
+    fields: [
+      {
+        name: "Created by",
+        value: `<@${applicantId}> <t:${createDiscordTimestamp(
+          eventMessages[0].timestamp
+        )}:R>`,
+        inline: false,
+      },
+      ...eventMessages.map((message) => {
+        const update = message.content;
+        let name = "",
+          user = "",
+          time = "";
+        if (update.startsWith("Roles granted")) {
+          name = "Roles Granted By";
+          user = update.split(" ")[3];
+        } else if (update.startsWith("Roles removed")) {
+          name = "Roles Removed By";
+          user = update.split(" ")[3];
+        } else if (update.includes("closed the ticket")) {
+          name = "Closed By";
+          user = update.split(" ")[0];
+        }
+        time = message.timestamp;
+        return {
+          name,
+          value: `${user} <t:${createDiscordTimestamp(time)}:R>`,
+        };
+      }),
+      {
+        name: "Deleted by",
+        value: `<@${interaction.member!.user.id}> <t:${createDiscordTimestamp(
+          new Date().toUTCString()
+        )}`,
+        inline: false,
+      },
+    ],
+  };
+};

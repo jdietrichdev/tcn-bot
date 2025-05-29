@@ -11,3 +11,7 @@ export const timeConvert = (seconds: number) => {
 export const numberFormat = (value: number) => {
   return new Intl.NumberFormat().format(value);
 };
+
+export const createDiscordTimestamp = (date: string) => {
+  return Math.floor(new Date(date).getTime() / 1000);
+};
