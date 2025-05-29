@@ -32,8 +32,8 @@ export const updateResponse = async (
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to update response", 
-        err.response?.data.message, 
+        "Failed to update response",
+        err.response?.data.message,
         err.response?.status ?? 500
       );
     } else {
@@ -58,8 +58,8 @@ export const updateMessage = async (
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to update message", 
-        err.response?.data.message, 
+        "Failed to update message",
+        err.response?.data.message,
         err.response?.status ?? 500
       );
     } else {
@@ -78,8 +78,8 @@ export const deleteResponse = async (
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to delete response", 
-        err.response?.data.message, 
+        "Failed to delete response",
+        err.response?.data.message,
         err.response?.status ?? 500
       );
     } else {
@@ -99,8 +99,8 @@ export const deleteMessage = async (channelId: string, messageId: string) => {
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to delete message", 
-        err.response?.data.message, 
+        "Failed to delete message",
+        err.response?.data.message,
         err.response?.status ?? 500
       );
     } else {
@@ -125,8 +125,8 @@ export const sendMessage = async (
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to send message", 
-        err.response?.data.message, 
+        "Failed to send message",
+        err.response?.data.message,
         err.response?.status ?? 500
       );
     } else {
@@ -150,8 +150,8 @@ export const pinMessage = async (channelId: string, messageId: string) => {
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to pin message", 
-        err.response?.data.message, 
+        "Failed to pin message",
+        err.response?.data.message,
         err.response?.status ?? 500
       );
     } else {
@@ -177,8 +177,8 @@ export const createThread = async (
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to create thread", 
-        err.response?.data.message, 
+        "Failed to create thread",
+        err.response?.data.message,
         err.response?.status ?? 500
       );
     } else {
@@ -219,14 +219,18 @@ export const getChannelMessages = async (
           compiledMessages.push(message);
         }
       }
-      before = messages[messages.length - 1].id;
+      if (messages.length < 100) {
+        fetching = false;
+      } else {
+        before = messages[messages.length - 1].id;
+      }
     }
     return compiledMessages;
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to compile channel messages", 
-        err.response?.data.message, 
+        "Failed to compile channel messages",
+        err.response?.data.message,
         err.response?.status ?? 500
       );
     } else {
@@ -252,15 +256,15 @@ export const getMessageReaction = async (
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to fetch message reactions", 
-        err.response?.data.message, 
+        "Failed to fetch message reactions",
+        err.response?.data.message,
         err.response?.status ?? 500
       );
     } else {
       throw new Error(`Unexpected error: ${err}`);
     }
   }
-}
+};
 
 export const createChannel = async (
   channel: RESTAPIGuildCreatePartialChannel,
@@ -278,8 +282,8 @@ export const createChannel = async (
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to create channel", 
-        err.response?.data.message, 
+        "Failed to create channel",
+        err.response?.data.message,
         err.response?.status ?? 500
       );
     } else {
@@ -304,8 +308,8 @@ export const moveChannel = async (channelId: string, categoryId: string) => {
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to move channel", 
-        err.response?.data.message, 
+        "Failed to move channel",
+        err.response?.data.message,
         err.response?.status ?? 500
       );
     } else {
@@ -330,8 +334,8 @@ export const updateChannelPermissions = async (
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to update permissions", 
-        err.response?.data.message, 
+        "Failed to update permissions",
+        err.response?.data.message,
         err.response?.status ?? 500
       );
     } else {
@@ -352,8 +356,8 @@ export const deleteChannel = async (channelId: string) => {
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to delete channel", 
-        err.response?.data.message, 
+        "Failed to delete channel",
+        err.response?.data.message,
         err.response?.status ?? 500
       );
     } else {
@@ -377,8 +381,8 @@ export const createDM = async (
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to create DM", 
-        err.response?.data.message, 
+        "Failed to create DM",
+        err.response?.data.message,
         err.response?.status ?? 500
       );
     } else {
@@ -400,8 +404,8 @@ export const getUser = async (userId: string): Promise<APIUser> => {
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to fetch user", 
-        err.response?.data.message, 
+        "Failed to fetch user",
+        err.response?.data.message,
         err.response?.status ?? 500
       );
     } else {
@@ -426,8 +430,8 @@ export const getServerUser = async (
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to fetch server user", 
-        err.response?.data.message, 
+        "Failed to fetch server user",
+        err.response?.data.message,
         err.response?.status ?? 500
       );
     } else {
@@ -456,8 +460,8 @@ export const grantRole = async (
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to grant role", 
-        err.response?.data.message, 
+        "Failed to grant role",
+        err.response?.data.message,
         err.response?.status ?? 500
       );
     } else {
@@ -482,8 +486,8 @@ export const removeRole = async (
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to remove role", 
-        err.response?.data.message, 
+        "Failed to remove role",
+        err.response?.data.message,
         err.response?.status ?? 500
       );
     } else {

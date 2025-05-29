@@ -85,6 +85,9 @@ const createTranscript = (
         } else if (update.includes("closed the ticket")) {
           name = "Closed By";
           user = update.split(" ")[0];
+        } else if (update.includes("reopened the ticket")) {
+          name = "Reopened By";
+          user = update.split(" ")[0];
         }
         time = message.timestamp;
         return {
