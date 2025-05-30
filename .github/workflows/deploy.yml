@@ -6,8 +6,6 @@ on:
       - infra/**
       - bot/**
       - .github/workflows/deploy.yml
-    branches:
-      - main
 
 permissions:
   id-token: write
@@ -44,5 +42,6 @@ jobs:
 
       - run: npm test
 
-      - run: npm run bootstrap --workspace infra
-      - run: npm run deploy --workspace infra -- --require-approval never
+      - name: Deploy
+        if: github.ref == 'refs/heads/main'
+        run: npm run deploy --workspace infra -- --require-approval never
