@@ -11,7 +11,7 @@ import {
   sendMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
-import { getConfig, ServerConfig } from "../util/serverConfig";
+import { getConfig } from "../util/serverConfig";
 import { createDiscordTimestamp } from "../util/format-util";
 
 export const confirmDelete = async (
