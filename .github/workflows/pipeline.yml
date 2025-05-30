@@ -1,11 +1,11 @@
-name: Deploy Stack
+name: Pipeline
 
 on:
   push:
     paths:
       - infra/**
       - bot/**
-      - .github/workflows/deploy.yml
+      - .github/workflows/pipeline.yml
 
 permissions:
   id-token: write
@@ -17,7 +17,7 @@ env:
     BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
 
 jobs:
-  deploy-stack:
+  pipeline:
     runs-on: ubuntu-latest
     env:
       AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}
@@ -31,6 +31,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Configure AWS credentials
+        if: github.ref == 'refs/heads/main'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.OIDC_ROLE }}
