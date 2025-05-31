@@ -12,6 +12,7 @@ import {
   RESTPostAPIChannelMessagesThreadsJSONBody,
   RESTPostAPIChannelMessagesThreadsResult,
   RESTPostAPICurrentUserCreateDMChannelJSONBody,
+  RESTPostAPICurrentUserCreateDMChannelResult,
   RESTPostAPIWebhookWithTokenJSONBody,
   RESTPutAPIChannelPermissionJSONBody,
 } from "discord-api-types/v10";
@@ -249,7 +250,6 @@ export const getMessageReaction = async (
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bot ${process.env.BOT_TOKEN}`,
-        "Content-Type": "application/json",
       },
     });
     return response.data as APIUser[];
@@ -350,7 +350,6 @@ export const deleteChannel = async (channelId: string) => {
     await axios.delete(url, {
       headers: {
         Authorization: `Bot ${process.env.BOT_TOKEN}`,
-        "Content-Type": "application/json",
       },
     });
   } catch (err) {
@@ -368,7 +367,7 @@ export const deleteChannel = async (channelId: string) => {
 
 export const createDM = async (
   recipient: RESTPostAPICurrentUserCreateDMChannelJSONBody
-) => {
+): Promise<RESTPostAPICurrentUserCreateDMChannelResult> => {
   const url = `${BASE_URL}/users/@me/channels`;
   try {
     const response = await axios.post(url, recipient, {
@@ -397,7 +396,6 @@ export const getUser = async (userId: string): Promise<APIUser> => {
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bot ${process.env.BOT_TOKEN}`,
-        "Content-Type": "application/json",
       },
     });
     return response.data;
@@ -423,7 +421,6 @@ export const getServerUser = async (
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bot ${process.env.BOT_TOKEN}`,
-        "Content-Type": "application/json",
       },
     });
     return response.data;
@@ -480,7 +477,6 @@ export const removeRole = async (
     await axios.delete(url, {
       headers: {
         Authorization: `Bot ${process.env.BOT_TOKEN}`,
-        "Content-Type": "application/json",
       },
     });
   } catch (err) {
