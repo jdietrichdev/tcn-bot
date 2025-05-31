@@ -8,9 +8,9 @@ export const verify = async (playerTag: string, apiToken: string) => {
       "#",
       "%23"
     )}/verifytoken`;
-    const response = await axios.post(
+    await axios.post(
       url,
-      JSON.stringify({ token: apiToken }),
+      { token: apiToken },
       {
         headers: {
           Authorization: `Bearer ${process.env.CLASH_API_TOKEN}`,
@@ -18,7 +18,6 @@ export const verify = async (playerTag: string, apiToken: string) => {
         },
       }
     );
-    return response.data;
   } catch (err) {
     console.error("Failed to verify account with Clash API", err);
     throw err;
