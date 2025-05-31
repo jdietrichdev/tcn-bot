@@ -1,7 +1,6 @@
 import { EventBridgeEvent } from "aws-lambda";
 import { APIChatInputApplicationCommandInteraction } from "discord-api-types/v10";
 import * as commands from "./handlers";
-import { handleTest } from "./test";
 
 export const handleCommand = async (
   event: EventBridgeEvent<string, APIChatInputApplicationCommandInteraction>
@@ -17,7 +16,7 @@ export const handleCommand = async (
       case "link":
         return await commands.handleLink(event.detail);
       case "test":
-        return await handleTest(event.detail);
+        return await commands.handleTest(event.detail);
       case "upgrade":
         return await commands.handleUpgrade(event.detail);
       case "ro":

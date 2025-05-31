@@ -46,11 +46,9 @@ test("should update message", async () => {
   });
 });
 
-// test("should throw error when failure updating message", async () => {
-//   jest.mocked(updateMessage).mockImplementation(() => {
-//     throw new Error("Failed");
-//   });
-//   await expect(() => {
-//     handleHello(mockInteraction);
-//   }).rejects.toThrow(new Error("Failed"));
-// });
+test("should throw error when failure updating message", async () => {
+  jest.mocked(updateResponse).mockImplementation(() => {
+    throw new Error("Failed");
+  });
+  await expect(handleHello(mockInteraction)).rejects.toThrow(new Error("Failed"));
+});
