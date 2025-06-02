@@ -23,10 +23,8 @@ export const handleLink = async (
     switch (interaction.data.options![0].name) {
       case "create":
         return await linkPlayer(interaction);
-        break;
       case "remove":
         return await unlinkPlayer(interaction);
-        break;
       default:
         throw new Error("No processing defined for that command");
     }
