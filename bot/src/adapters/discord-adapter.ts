@@ -333,11 +333,15 @@ export const updateChannelPermissions = async (
     });
   } catch (err) {
     if (axios.isAxiosError(err)) {
-      throw new DiscordError(
-        "Failed to update permissions",
-        err.response?.data.message,
-        err.response?.status ?? 500
-      );
+      if (err.response?.status === 404) {
+        console.log("User/role no longer in server");
+      } else {
+        throw new DiscordError(
+          "Failed to update permissions",
+          err.response?.data.message,
+          err.response?.status ?? 500
+        );
+      }
     } else {
       throw new Error(`Unexpected error: ${err}`);
     }
