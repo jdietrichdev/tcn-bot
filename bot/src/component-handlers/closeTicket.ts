@@ -44,7 +44,7 @@ export const closeTicket = async (
         },
         channelId
       );
-      await updateMessage(interaction.channel.id, interaction.message.id, {
+      await updateMessage(interaction.message.channel_id, interaction.message.id, {
         components: [
           {
             type: ComponentType.ActionRow,
@@ -65,7 +65,7 @@ export const closeTicket = async (
         {
           content: `You do not have permission to close this ticket <@${interaction.member?.user.id}>`,
         },
-        interaction.channel.id
+        interaction.message.channel_id
       );
     }
     await deleteResponse(interaction.application_id, interaction.token);
