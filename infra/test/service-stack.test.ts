@@ -2,6 +2,7 @@ import { App } from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
 import { ServiceStack } from "../lib/service-stack";
 import { Table } from "aws-cdk-lib/aws-dynamodb";
+import { Bucket } from "aws-cdk-lib/aws-s3";
 
 let app: App;
 let stack: ServiceStack;
@@ -16,6 +17,8 @@ test("Infrastructure created", () => {
   stack = new ServiceStack(app, "stack", {
     env: { account: "12345", region: "us-east-1" },
     table: { grantReadWriteData: jest.fn() } as unknown as Table,
+    rosterTable: { grantReadWriteData: jest.fn() } as unknown as Table,
+    rosterBucket: { addEventNotification: jest.fn() } as unknown as Bucket,
   });
   template = JSON.stringify(Template.fromStack(stack).toJSON(), null, 2);
   template = template.replace(/("S3Key": )".*\.zip"/g, '$1"files.zip"');

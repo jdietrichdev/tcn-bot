@@ -13,9 +13,13 @@ import {
   LambdaFunction,
 } from "aws-cdk-lib/aws-events-targets";
 import { Table } from "aws-cdk-lib/aws-dynamodb";
+import { Bucket, EventType } from "aws-cdk-lib/aws-s3";
+import { LambdaDestination } from "aws-cdk-lib/aws-s3-notifications";
 
 interface ServiceStackProps extends StackProps {
   table: Table;
+  rosterTable: Table;
+  rosterBucket: Bucket;
 }
 
 export class ServiceStack extends Stack {
@@ -28,6 +32,7 @@ export class ServiceStack extends Stack {
     super(scope, id, props);
 
     this.handler = new Lambda(this, "bot-handler", {
+      functionName: 'bot-handler',
       runtime: Runtime.NODEJS_22_X,
       handler: "index.handler",
       code: Code.fromAsset("../bot/dist"),
@@ -43,6 +48,7 @@ export class ServiceStack extends Stack {
     props.table.grantReadWriteData(this.handler);
 
     this.scheduled = new Lambda(this, "bot-scheduled", {
+      functionName: 'bot-scheduled',
       runtime: Runtime.NODEJS_22_X,
       handler: "index.scheduled",
       code: Code.fromAsset("../bot/dist"),
@@ -104,6 +110,7 @@ export class ServiceStack extends Stack {
     });
 
     this.proxy = new Lambda(this, "bot-proxy", {
+      functionName: 'bot-proxy',
       runtime: Runtime.NODEJS_22_X,
       handler: "index.proxy",
       code: Code.fromAsset("../bot/dist"),
@@ -129,5 +136,21 @@ export class ServiceStack extends Stack {
         accessLogFormat: AccessLogFormat.jsonWithStandardFields(),
       },
     });
+
+    const rosterProcessor = new Lambda(this, 'roster-processor', {
+      functionName: 'roster-processor',
+      runtime: Runtime.NODEJS_22_X,
+      handler: 'index.processor',
+      code: Code.fromAsset("../bot/dist"),
+      logRetention: RetentionDays.ONE_MONTH,
+    });
+
+    props.rosterBucket.addEventNotification(
+      EventType.OBJECT_CREATED,
+      new LambdaDestination(rosterProcessor),
+    );
+
+    props.rosterBucket.grantRead(rosterProcessor);
+    props.rosterTable.grantReadWriteData(rosterProcessor);
   }
 }

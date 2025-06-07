@@ -17,4 +17,6 @@ const persistence = new PersistenceStack(
 new ServiceStack(app, "DiscordBotStack", {
   ...DEFAULT_STACK_PROPS,
   table: persistence.table,
+  rosterTable: persistence.rosterTable,
+  rosterBucket: persistence.rosterBucket,
 });

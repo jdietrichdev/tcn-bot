@@ -950,6 +950,80 @@ exports[`Infrastructure created 1`] = `
           "Ref": "discordbotapi5484B478"
         }
       }
+    },
+    "rosterprocessorServiceRoleFA149FAC": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "rosterprocessor6F56C965": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-12345-us-east-1",
+          "S3Key": "files.zip"
+        },
+        "Handler": "index.processor",
+        "Role": {
+          "Fn::GetAtt": [
+            "rosterprocessorServiceRoleFA149FAC",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs22.x"
+      },
+      "DependsOn": [
+        "rosterprocessorServiceRoleFA149FAC"
+      ]
+    },
+    "rosterprocessorLogRetention4C3BD978": {
+      "Type": "Custom::LogRetention",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+            "Arn"
+          ]
+        },
+        "LogGroupName": {
+          "Fn::Join": [
+            "",
+            [
+              "/aws/lambda/",
+              {
+                "Ref": "rosterprocessor6F56C965"
+              }
+            ]
+          ]
+        },
+        "RetentionInDays": 30
+      }
     }
   },
   "Outputs": {

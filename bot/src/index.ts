@@ -2,6 +2,7 @@ import {
   APIGatewayProxyEvent,
   APIGatewayProxyResult,
   EventBridgeEvent,
+  S3Event,
 } from "aws-lambda";
 import { authorizeRequest } from "./authorizer/authorizer";
 import { eventClient } from "./clients/eventbridge-client";
@@ -102,4 +103,8 @@ export const scheduled = async (
   if (event["detail-type"] === 'Generate Recruiter Score') {
     await handleRecruiterScore(event.detail.guildId);
   }
+}
+
+export const processor = async (event: S3Event) => {
+  console.log(JSON.stringify(event));
 }
