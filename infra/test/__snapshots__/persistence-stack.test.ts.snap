@@ -77,29 +77,6 @@ exports[`Infrastructure created 1`] = `
       },
       "UpdateReplacePolicy": "Retain",
       "DeletionPolicy": "Retain"
-    },
-    "rosterbucket1B948C06": {
-      "Type": "AWS::S3::Bucket",
-      "Properties": {
-        "BucketEncryption": {
-          "ServerSideEncryptionConfiguration": [
-            {
-              "ServerSideEncryptionByDefault": {
-                "SSEAlgorithm": "AES256"
-              }
-            }
-          ]
-        },
-        "BucketName": "bot-roster-bucket",
-        "PublicAccessBlockConfiguration": {
-          "BlockPublicAcls": true,
-          "BlockPublicPolicy": true,
-          "IgnorePublicAcls": true,
-          "RestrictPublicBuckets": true
-        }
-      },
-      "UpdateReplacePolicy": "Retain",
-      "DeletionPolicy": "Retain"
     }
   },
   "Parameters": {

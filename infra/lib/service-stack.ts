@@ -13,13 +13,12 @@ import {
   LambdaFunction,
 } from "aws-cdk-lib/aws-events-targets";
 import { Table } from "aws-cdk-lib/aws-dynamodb";
-import { Bucket, EventType } from "aws-cdk-lib/aws-s3";
+import { BlockPublicAccess, Bucket, BucketEncryption, EventType } from "aws-cdk-lib/aws-s3";
 import { LambdaDestination } from "aws-cdk-lib/aws-s3-notifications";
 
 interface ServiceStackProps extends StackProps {
   table: Table;
   rosterTable: Table;
-  rosterBucket: Bucket;
 }
 
 export class ServiceStack extends Stack {
@@ -137,6 +136,12 @@ export class ServiceStack extends Stack {
       },
     });
 
+    const rosterBucket = new Bucket(this, 'roster-bucket', {
+      bucketName: 'bot-roster-bucket',
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      encryption: BucketEncryption.S3_MANAGED,
+    });
+
     const rosterProcessor = new Lambda(this, 'roster-processor', {
       functionName: 'roster-processor',
       runtime: Runtime.NODEJS_22_X,
@@ -145,12 +150,12 @@ export class ServiceStack extends Stack {
       logRetention: RetentionDays.ONE_MONTH,
     });
 
-    props.rosterBucket.addEventNotification(
+    rosterBucket.addEventNotification(
       EventType.OBJECT_CREATED,
       new LambdaDestination(rosterProcessor),
     );
 
-    props.rosterBucket.grantRead(rosterProcessor);
+    rosterBucket.grantRead(rosterProcessor);
     props.rosterTable.grantReadWriteData(rosterProcessor);
   }
 }
