@@ -48,6 +48,7 @@ exports[`Infrastructure created 1`] = `
             "BOT_TOKEN": "BOT_TOKEN"
           }
         },
+        "FunctionName": "bot-handler",
         "Handler": "index.handler",
         "Role": {
           "Fn::GetAtt": [
@@ -217,6 +218,7 @@ exports[`Infrastructure created 1`] = `
             "BOT_TOKEN": "BOT_TOKEN"
           }
         },
+        "FunctionName": "bot-scheduled",
         "Handler": "index.scheduled",
         "Role": {
           "Fn::GetAtt": [
@@ -598,6 +600,7 @@ exports[`Infrastructure created 1`] = `
             "DISCORD_PUBLIC_KEY": "TEST_KEY"
           }
         },
+        "FunctionName": "bot-proxy",
         "Handler": "index.proxy",
         "Role": {
           "Fn::GetAtt": [
@@ -699,7 +702,7 @@ exports[`Infrastructure created 1`] = `
       "UpdateReplacePolicy": "Retain",
       "DeletionPolicy": "Retain"
     },
-    "discordbotapiDeploymentFB90C3EC30cfe8b73deb19370aa5042b5397b3fb": {
+    "discordbotapiDeploymentFB90C3EC1b779d7b52de8cc2a86b5f567f789bf6": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "Description": "Automatically created by the RestApi construct",
@@ -726,7 +729,7 @@ exports[`Infrastructure created 1`] = `
           "Format": "{\\"requestId\\":\\"$context.requestId\\",\\"ip\\":\\"$context.identity.sourceIp\\",\\"user\\":\\"$context.identity.user\\",\\"caller\\":\\"$context.identity.caller\\",\\"requestTime\\":\\"$context.requestTime\\",\\"httpMethod\\":\\"$context.httpMethod\\",\\"resourcePath\\":\\"$context.resourcePath\\",\\"status\\":\\"$context.status\\",\\"protocol\\":\\"$context.protocol\\",\\"responseLength\\":\\"$context.responseLength\\"}"
         },
         "DeploymentId": {
-          "Ref": "discordbotapiDeploymentFB90C3EC30cfe8b73deb19370aa5042b5397b3fb"
+          "Ref": "discordbotapiDeploymentFB90C3EC1b779d7b52de8cc2a86b5f567f789bf6"
         },
         "RestApiId": {
           "Ref": "discordbotapi5484B478"
@@ -989,6 +992,7 @@ exports[`Infrastructure created 1`] = `
           "S3Bucket": "cdk-hnb659fds-assets-12345-us-east-1",
           "S3Key": "files.zip"
         },
+        "FunctionName": "roster-processor",
         "Handler": "index.processor",
         "Role": {
           "Fn::GetAtt": [
