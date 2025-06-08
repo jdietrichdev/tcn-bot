@@ -20,7 +20,7 @@ export const processCwlRoster = async (event: S3Event) => {
 
         const records = parse(csvData, {
             columns: true,
-            skipEmptyLines: true,
+            skip_empty_lines: true,
             trim: true
         });
         // console.log(records);
