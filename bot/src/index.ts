@@ -25,6 +25,7 @@ import { submitModal } from "./modal-handlers/submit";
 import { createModal } from "./modal-handlers/create";
 import { buttonTriggersModal, commandTriggersModal } from "./component-handlers/utils";
 import { handleRecruiterScore } from "./command-handlers/recruiterScore";
+import { processCwlRoster } from "./processors/cwlRosterProcessor";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -106,5 +107,5 @@ export const scheduled = async (
 }
 
 export const processor = async (event: S3Event) => {
-  console.log(JSON.stringify(event));
+  await processCwlRoster(event);
 }

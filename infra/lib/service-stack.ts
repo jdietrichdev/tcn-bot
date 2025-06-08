@@ -148,6 +148,9 @@ export class ServiceStack extends Stack {
       handler: 'index.processor',
       code: Code.fromAsset("../bot/dist"),
       logRetention: RetentionDays.ONE_MONTH,
+      environment: {
+        REGION: props.env!.region!
+      }
     });
 
     rosterBucket.addEventNotification(
