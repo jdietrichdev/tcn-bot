@@ -4,6 +4,18 @@ import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { Readable } from "stream";
 import { parse } from "csv-parse/sync";
 
+interface Player {
+    playerTag: string;
+    playerName: string;
+    userId: string;
+}
+
+interface ClanRoster {
+    clanTag: string;
+    league: string;
+    players: Player[]
+}
+
 export const processCwlRoster = async (event: S3Event) => {
     console.log(JSON.stringify(event));
     for (const record of event.Records) {
@@ -26,19 +38,30 @@ export const processCwlRoster = async (event: S3Event) => {
         // console.log(records);
 
         let clanTag = '';
-        let clanLeague = '';
+        let league = '';
+        const clanMap = new Map<string, ClanRoster>();
         for (const record of records) {
             if (!Object.values(record).every(value => value.trim() === '')) {
                 if (record['@'] === '') {
-                    console.log(JSON.stringify(record));
-                    clanLeague = record['Player Name'],
+                    league = record['Player Name'],
                     clanTag = record['Combined Heroes'].split('=')[2];
-                    console.log(`Setting clanLeague to ${clanLeague} and clanTag to ${clanTag}`)
+                    clanMap.set(clanTag, {
+                        clanTag,
+                        league,
+                        players: []
+                    });
                 } else {
-                    console.log(`${record['@']} has account ${record['Player Tag']} in ${clanLeague} clan: ${clanTag}`);
+                    console.log(`${record['@']} has account ${record['Player Tag']} in ${league} clan: ${clanTag}`);
+                    const clanRoster = clanMap.get(clanTag);
+                    clanRoster?.players.push({
+                        playerTag: record['Player Tag'],
+                        playerName: record['Player Name'],
+                        userId: record['@'],
+                    })
                 }
             }
         }
+        console.log(JSON.stringify(Object.fromEntries(clanMap)));
     }
 }
 
