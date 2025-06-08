@@ -20,9 +20,21 @@ export const processCwlRoster = async (event: S3Event) => {
 
         const records = parse(csvData, {
             columns: true,
+            skipEmptyLines: true,
             trim: true
         });
         console.log(records);
+
+        let clanTag = '';
+        let clanLeague = '';
+        for (const record of records) {
+            if (!record['@']) {
+                clanLeague = record['Player Name'],
+                clanTag = record['Combined Heroes'].split('=')[2];
+            } else {
+                console.log(`${record['@']} has account ${record['Player Tag']} in ${clanLeague} clan: ${clanTag}`);
+            }
+        }
     }
 }
 
