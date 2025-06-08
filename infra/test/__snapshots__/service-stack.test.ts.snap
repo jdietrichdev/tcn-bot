@@ -1115,6 +1115,11 @@ exports[`Infrastructure created 1`] = `
           "S3Bucket": "cdk-hnb659fds-assets-12345-us-east-1",
           "S3Key": "files.zip"
         },
+        "Environment": {
+          "Variables": {
+            "REGION": "us-east-1"
+          }
+        },
         "FunctionName": "roster-processor",
         "Handler": "index.processor",
         "Role": {
