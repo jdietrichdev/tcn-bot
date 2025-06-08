@@ -18,7 +18,7 @@ export const processCwlRoster = async (event: S3Event) => {
         const csvData = await streamCsv(response.Body as Readable);
         console.log(csvData);
 
-        const records = parse(csvData, {
+        const records: Record<string, string>[] = parse(csvData, {
             columns: true,
             skip_empty_lines: true,
             trim: true
@@ -28,13 +28,15 @@ export const processCwlRoster = async (event: S3Event) => {
         let clanTag = '';
         let clanLeague = '';
         for (const record of records) {
-            if (record['@'] === '') {
-                console.log(JSON.stringify(record));
-                clanLeague = record['Player Name'],
-                clanTag = record['Combined Heroes'].split('=')[2];
-                console.log(`Setting clanLeague to ${clanLeague} and clanTag to ${clanTag}`)
-            } else {
-                console.log(`${record['@']} has account ${record['Player Tag']} in ${clanLeague} clan: ${clanTag}`);
+            if (!Object.values(record).every(value => value.trim() === '')) {
+                if (record['@'] === '') {
+                    console.log(JSON.stringify(record));
+                    clanLeague = record['Player Name'],
+                    clanTag = record['Combined Heroes'].split('=')[2];
+                    console.log(`Setting clanLeague to ${clanLeague} and clanTag to ${clanTag}`)
+                } else {
+                    console.log(`${record['@']} has account ${record['Player Tag']} in ${clanLeague} clan: ${clanTag}`);
+                }
             }
         }
     }
