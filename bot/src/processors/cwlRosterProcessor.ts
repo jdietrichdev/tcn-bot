@@ -17,51 +17,56 @@ interface ClanRoster {
 }
 
 export const processCwlRoster = async (event: S3Event) => {
-    console.log(JSON.stringify(event));
-    for (const record of event.Records) {
-        const bucket = record.s3.bucket.name;
-        const key = record.s3.object.key;
+    try {
+        console.log(JSON.stringify(event));
+        for (const record of event.Records) {
+            const bucket = record.s3.bucket.name;
+            const key = record.s3.object.key;
 
-        const response = await s3Client.send(new GetObjectCommand({
-            Bucket: bucket,
-            Key: key
-        }));
+            const response = await s3Client.send(new GetObjectCommand({
+                Bucket: bucket,
+                Key: key
+            }));
 
-        const csvData = await streamCsv(response.Body as Readable);
-        console.log(csvData);
+            const csvData = await streamCsv(response.Body as Readable);
+            console.log(csvData);
 
-        const records: Record<string, string>[] = parse(csvData, {
-            columns: true,
-            skip_empty_lines: true,
-            trim: true
-        });
-        // console.log(records);
+            const records: Record<string, string>[] = parse(csvData, {
+                columns: true,
+                skip_empty_lines: true,
+                trim: true
+            });
 
-        let clanTag = '';
-        let league = '';
-        const clanMap = new Map<string, ClanRoster>();
-        for (const record of records) {
-            if (!Object.values(record).every(value => value.trim() === '')) {
-                if (record['@'] === '') {
-                    league = record['Player Name'],
-                    clanTag = record['Combined Heroes'].split('=')[2];
-                    clanMap.set(clanTag, {
-                        clanTag,
-                        league,
-                        players: []
-                    });
-                } else {
-                    console.log(`${record['@']} has account ${record['Player Tag']} in ${league} clan: ${clanTag}`);
-                    const clanRoster = clanMap.get(clanTag);
-                    clanRoster?.players.push({
-                        playerTag: record['Player Tag'],
-                        playerName: record['Player Name'],
-                        userId: record['@'],
-                    })
+            let clanTag = '';
+            let league = '';
+            const clanMap = new Map<string, ClanRoster>();
+            for (const record of records) {
+                if (!Object.values(record).every(value => value.trim() === '') && record['@'] !== '@') {
+                    if (record['@'] === '' && record['Player Name'] !== '' && record['Combined Heroes'] !== '') {
+                        league = record['Player Name'],
+                        clanTag = record['Combined Heroes'].split('=')[2];
+                        if (clanTag.startsWith('%23')) clanTag.replace('%23', '#');
+                        else clanTag = `#${clanTag}`;
+                        clanMap.set(clanTag, {
+                            clanTag,
+                            league,
+                            players: []
+                        });
+                    } else {
+                        console.log(`${record['@']} has account ${record['Player Tag']} in ${league} clan: ${clanTag}`);
+                        const clanRoster = clanMap.get(clanTag);
+                        clanRoster?.players.push({
+                            playerTag: record['Player Tag'],
+                            playerName: record['Player Name'],
+                            userId: record['@'],
+                        })
+                    }
                 }
             }
+            console.log(JSON.stringify(Object.fromEntries(clanMap)));
         }
-        console.log(JSON.stringify(Object.fromEntries(clanMap)));
+    } catch (err) {
+        console.log(`Failed processing CWL roster: ${err}`);
     }
 }
 
