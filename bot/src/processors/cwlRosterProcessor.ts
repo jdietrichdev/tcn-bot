@@ -28,7 +28,7 @@ export const processCwlRoster = async (event: S3Event) => {
         let clanTag = '';
         let clanLeague = '';
         for (const record of records) {
-            if (!record['@']) {
+            if (record['@'] === '') {
                 clanLeague = record['Player Name'],
                 clanTag = record['Combined Heroes'].split('=')[2];
             } else {
