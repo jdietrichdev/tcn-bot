@@ -39,7 +39,7 @@ exports[`Infrastructure created 1`] = `
       "UpdateReplacePolicy": "Retain",
       "DeletionPolicy": "Retain"
     },
-    "rostertableD9ABA61B": {
+    "bottableD8ACD17D": {
       "Type": "AWS::DynamoDB::Table",
       "Properties": {
         "AttributeDefinitions": [
@@ -69,7 +69,7 @@ exports[`Infrastructure created 1`] = `
         "SSESpecification": {
           "SSEEnabled": true
         },
-        "TableName": "RosterTable",
+        "TableName": "BotTable",
         "TimeToLiveSpecification": {
           "AttributeName": "expires",
           "Enabled": true

@@ -4,7 +4,7 @@ import {
 } from "discord-api-types/payloads/v10";
 import { verify } from "../adapters/coc-api-adapter";
 import { updateResponse } from "../adapters/discord-adapter";
-import { dbClient } from "../clients/dynamodb-client";
+import { dynamoDbClient } from "../clients/dynamodb-client";
 import {
   DeleteItemCommand,
   ReturnValue,
@@ -56,7 +56,7 @@ const linkPlayer = async (
 
   try {
     await verify(playerTag, apiToken);
-    const response = await dbClient.send(
+    const response = await dynamoDbClient.send(
       new UpdateItemCommand({
         TableName: "SchedulingTable",
         Key: {
@@ -93,7 +93,7 @@ const unlinkPlayer = async (
       ).value;
     const guildId = getGuildId(interaction);
     const user = getMessageSender(interaction).id;
-    const response = await dbClient.send(
+    const response = await dynamoDbClient.send(
       new DeleteItemCommand({
         TableName: "SchedulingTable",
         Key: {

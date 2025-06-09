@@ -28,7 +28,7 @@ import { LambdaDestination } from "aws-cdk-lib/aws-s3-notifications";
 
 interface ServiceStackProps extends StackProps {
   table: Table;
-  rosterTable: Table;
+  botTable: Table;
 }
 
 export class ServiceStack extends Stack {
@@ -173,6 +173,6 @@ export class ServiceStack extends Stack {
     );
 
     rosterBucket.grantRead(rosterProcessor);
-    props.rosterTable.grantReadWriteData(rosterProcessor);
+    props.botTable.grantReadWriteData(rosterProcessor);
   }
 }

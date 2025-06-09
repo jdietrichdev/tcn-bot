@@ -5,6 +5,8 @@ import { Readable } from "stream";
 import { parse } from "csv-parse/sync";
 import { getServerMembers } from "../adapters/discord-adapter";
 import { APIGuildMember } from "discord-api-types/v10";
+import { dynamoDbClient } from "../clients/dynamodb-client";
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
 
 interface Player {
   playerTag: string;
@@ -85,6 +87,19 @@ export const processCwlRoster = async (event: S3Event) => {
         }
       }
       console.log(JSON.stringify(Object.fromEntries(clanMap)));
+
+      const dbItem = {
+        pk: guildId,
+        sk: `roster#${key.split("/")[1]}`,
+        roster: Object.fromEntries(clanMap),
+      };
+
+      await dynamoDbClient.send(
+        new PutCommand({
+          TableName: "BotTable",
+          Item: dbItem,
+        })
+      );
     }
   } catch (err) {
     console.log(`Failed processing CWL roster: ${err}`);

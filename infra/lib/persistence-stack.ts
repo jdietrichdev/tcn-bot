@@ -1,10 +1,14 @@
 import { Construct } from "constructs";
 import { Stack, StackProps } from "aws-cdk-lib";
-import { AttributeType, Table, TableEncryption } from "aws-cdk-lib/aws-dynamodb";
+import {
+  AttributeType,
+  Table,
+  TableEncryption,
+} from "aws-cdk-lib/aws-dynamodb";
 
 export class PersistenceStack extends Stack {
   readonly table: Table;
-  readonly rosterTable: Table;
+  readonly botTable: Table;
 
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
@@ -22,8 +26,8 @@ export class PersistenceStack extends Stack {
       timeToLiveAttribute: "expiration",
     });
 
-    this.rosterTable = new Table(this, 'roster-table', {
-      tableName: "RosterTable",
+    this.botTable = new Table(this, "bot-table", {
+      tableName: "BotTable",
       encryption: TableEncryption.AWS_MANAGED,
       partitionKey: {
         name: "pk",
@@ -33,7 +37,7 @@ export class PersistenceStack extends Stack {
         name: "sk",
         type: AttributeType.STRING,
       },
-      timeToLiveAttribute: "expires"
+      timeToLiveAttribute: "expires",
     });
   }
 }
