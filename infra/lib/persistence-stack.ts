@@ -1,5 +1,5 @@
 import { Construct } from "constructs";
-import { Stack, StackProps } from "aws-cdk-lib";
+import { RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
 import {
   AttributeType,
   Table,
@@ -9,6 +9,7 @@ import {
 export class PersistenceStack extends Stack {
   readonly table: Table;
   readonly botTable: Table;
+  readonly rosterRable: Table;
 
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
@@ -24,6 +25,22 @@ export class PersistenceStack extends Stack {
         type: AttributeType.STRING,
       },
       timeToLiveAttribute: "expiration",
+    });
+
+    //To be removed in next commit
+    this.rosterRable = new Table(this, "roster-table", {
+      tableName: "RosterTable",
+      encryption: TableEncryption.AWS_MANAGED,
+      partitionKey: {
+        name: "pk",
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: "sk",
+        type: AttributeType.STRING,
+      },
+      timeToLiveAttribute: "expires",
+      removalPolicy: RemovalPolicy.DESTROY,
     });
 
     this.botTable = new Table(this, "bot-table", {
