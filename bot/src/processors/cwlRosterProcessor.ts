@@ -43,6 +43,7 @@ export const processCwlRoster = async (event: S3Event) => {
 
       const guildId = key.split("/")[0];
       const guildMembers = await getServerMembers(guildId);
+      console.log(JSON.stringify(guildMembers));
 
       let clanTag = "";
       let league = "";
