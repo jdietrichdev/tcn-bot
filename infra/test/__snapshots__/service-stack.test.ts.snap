@@ -3,6 +3,83 @@
 exports[`Infrastructure created 1`] = `
 "{
   "Resources": {
+    "rosterbucket1B948C06": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "BucketName": "bot-roster-bucket",
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        }
+      },
+      "UpdateReplacePolicy": "Retain",
+      "DeletionPolicy": "Retain"
+    },
+    "rosterbucketNotifications11317640": {
+      "Type": "Custom::S3BucketNotifications",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "BucketNotificationsHandler050a0587b7544547bf325f094a3db8347ECC3691",
+            "Arn"
+          ]
+        },
+        "BucketName": {
+          "Ref": "rosterbucket1B948C06"
+        },
+        "NotificationConfiguration": {
+          "LambdaFunctionConfigurations": [
+            {
+              "Events": [
+                "s3:ObjectCreated:*"
+              ],
+              "LambdaFunctionArn": {
+                "Fn::GetAtt": [
+                  "rosterprocessor6F56C965",
+                  "Arn"
+                ]
+              }
+            }
+          ]
+        },
+        "Managed": true,
+        "SkipDestinationValidation": false
+      },
+      "DependsOn": [
+        "rosterbucketAllowBucketNotificationsTostackrosterprocessor736CC475FC7BE099"
+      ]
+    },
+    "rosterbucketAllowBucketNotificationsTostackrosterprocessor736CC475FC7BE099": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "rosterprocessor6F56C965",
+            "Arn"
+          ]
+        },
+        "Principal": "s3.amazonaws.com",
+        "SourceAccount": "12345",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "rosterbucket1B948C06",
+            "Arn"
+          ]
+        }
+      }
+    },
     "bothandlerServiceRole712D848A": {
       "Type": "AWS::IAM::Role",
       "Properties": {
@@ -575,6 +652,36 @@ exports[`Infrastructure created 1`] = `
                   "Arn"
                 ]
               }
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "rosterbucket1B948C06",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "rosterbucket1B948C06",
+                          "Arn"
+                        ]
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
             }
           ],
           "Version": "2012-10-17"
@@ -951,83 +1058,6 @@ exports[`Infrastructure created 1`] = `
         },
         "RestApiId": {
           "Ref": "discordbotapi5484B478"
-        }
-      }
-    },
-    "rosterbucket1B948C06": {
-      "Type": "AWS::S3::Bucket",
-      "Properties": {
-        "BucketEncryption": {
-          "ServerSideEncryptionConfiguration": [
-            {
-              "ServerSideEncryptionByDefault": {
-                "SSEAlgorithm": "AES256"
-              }
-            }
-          ]
-        },
-        "BucketName": "bot-roster-bucket",
-        "PublicAccessBlockConfiguration": {
-          "BlockPublicAcls": true,
-          "BlockPublicPolicy": true,
-          "IgnorePublicAcls": true,
-          "RestrictPublicBuckets": true
-        }
-      },
-      "UpdateReplacePolicy": "Retain",
-      "DeletionPolicy": "Retain"
-    },
-    "rosterbucketNotifications11317640": {
-      "Type": "Custom::S3BucketNotifications",
-      "Properties": {
-        "ServiceToken": {
-          "Fn::GetAtt": [
-            "BucketNotificationsHandler050a0587b7544547bf325f094a3db8347ECC3691",
-            "Arn"
-          ]
-        },
-        "BucketName": {
-          "Ref": "rosterbucket1B948C06"
-        },
-        "NotificationConfiguration": {
-          "LambdaFunctionConfigurations": [
-            {
-              "Events": [
-                "s3:ObjectCreated:*"
-              ],
-              "LambdaFunctionArn": {
-                "Fn::GetAtt": [
-                  "rosterprocessor6F56C965",
-                  "Arn"
-                ]
-              }
-            }
-          ]
-        },
-        "Managed": true,
-        "SkipDestinationValidation": false
-      },
-      "DependsOn": [
-        "rosterbucketAllowBucketNotificationsTostackrosterprocessor736CC475FC7BE099"
-      ]
-    },
-    "rosterbucketAllowBucketNotificationsTostackrosterprocessor736CC475FC7BE099": {
-      "Type": "AWS::Lambda::Permission",
-      "Properties": {
-        "Action": "lambda:InvokeFunction",
-        "FunctionName": {
-          "Fn::GetAtt": [
-            "rosterprocessor6F56C965",
-            "Arn"
-          ]
-        },
-        "Principal": "s3.amazonaws.com",
-        "SourceAccount": "12345",
-        "SourceArn": {
-          "Fn::GetAtt": [
-            "rosterbucket1B948C06",
-            "Arn"
-          ]
         }
       }
     },

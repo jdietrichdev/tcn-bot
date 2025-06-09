@@ -40,6 +40,12 @@ export class ServiceStack extends Stack {
   constructor(scope: Construct, id: string, props: ServiceStackProps) {
     super(scope, id, props);
 
+    const rosterBucket = new Bucket(this, "roster-bucket", {
+      bucketName: "bot-roster-bucket",
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      encryption: BucketEncryption.S3_MANAGED,
+    });
+
     this.handler = new Lambda(this, "bot-handler", {
       functionName: "bot-handler",
       runtime: Runtime.NODEJS_22_X,
@@ -132,6 +138,7 @@ export class ServiceStack extends Stack {
       },
     });
     this.eventBus.grantPutEventsTo(this.proxy);
+    rosterBucket.grantRead(this.proxy);
 
     const accessLogs = new LogGroup(this, "access-logs", {
       logGroupName: "BotAccessLogs",
@@ -146,12 +153,6 @@ export class ServiceStack extends Stack {
         accessLogDestination: new LogGroupLogDestination(accessLogs),
         accessLogFormat: AccessLogFormat.jsonWithStandardFields(),
       },
-    });
-
-    const rosterBucket = new Bucket(this, "roster-bucket", {
-      bucketName: "bot-roster-bucket",
-      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-      encryption: BucketEncryption.S3_MANAGED,
     });
 
     const rosterProcessor = new Lambda(this, "roster-processor", {

@@ -8,7 +8,8 @@ export const handleAutocomplete = async (
     switch (interaction.data!.name) {
       case "upgrade":
         return await autocomplete.handleUpgrade(interaction);
-        break;
+      case "cwl-reminder":
+        return await autocomplete.handleCwlReminder(interaction);
       default:
         console.log("Autocomplete not found, no response needed");
         throw new Error("No autocomplete process defined");

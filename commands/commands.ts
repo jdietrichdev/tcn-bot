@@ -216,3 +216,15 @@ export const recruiterScore = new SlashCommandBuilder()
   .setName("recruiter-score")
   .setDescription("Score recruiters based on activity in channels")
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+export const cwlReminder = new SlashCommandBuilder()
+  .setName("cwl-reminder")
+  .setDescription("Send reminder for people not in correct clans for CWL")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("roster")
+      .setDescription("Roster version to use")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
