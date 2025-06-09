@@ -1117,7 +1117,9 @@ exports[`Infrastructure created 1`] = `
         },
         "Environment": {
           "Variables": {
-            "REGION": "us-east-1"
+            "REGION": "us-east-1",
+            "CLASH_API_TOKEN": "TEST_API_TOKEN",
+            "BOT_TOKEN": "BOT_TOKEN"
           }
         },
         "FunctionName": "roster-processor",

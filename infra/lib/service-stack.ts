@@ -7,13 +7,23 @@ import {
   LogGroupLogDestination,
 } from "aws-cdk-lib/aws-apigateway";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
-import { EventBus, Rule, RuleTargetInput, Schedule } from "aws-cdk-lib/aws-events";
+import {
+  EventBus,
+  Rule,
+  RuleTargetInput,
+  Schedule,
+} from "aws-cdk-lib/aws-events";
 import {
   CloudWatchLogGroup,
   LambdaFunction,
 } from "aws-cdk-lib/aws-events-targets";
 import { Table } from "aws-cdk-lib/aws-dynamodb";
-import { BlockPublicAccess, Bucket, BucketEncryption, EventType } from "aws-cdk-lib/aws-s3";
+import {
+  BlockPublicAccess,
+  Bucket,
+  BucketEncryption,
+  EventType,
+} from "aws-cdk-lib/aws-s3";
 import { LambdaDestination } from "aws-cdk-lib/aws-s3-notifications";
 
 interface ServiceStackProps extends StackProps {
@@ -31,7 +41,7 @@ export class ServiceStack extends Stack {
     super(scope, id, props);
 
     this.handler = new Lambda(this, "bot-handler", {
-      functionName: 'bot-handler',
+      functionName: "bot-handler",
       runtime: Runtime.NODEJS_22_X,
       handler: "index.handler",
       code: Code.fromAsset("../bot/dist"),
@@ -47,7 +57,7 @@ export class ServiceStack extends Stack {
     props.table.grantReadWriteData(this.handler);
 
     this.scheduled = new Lambda(this, "bot-scheduled", {
-      functionName: 'bot-scheduled',
+      functionName: "bot-scheduled",
       runtime: Runtime.NODEJS_22_X,
       handler: "index.scheduled",
       code: Code.fromAsset("../bot/dist"),
@@ -58,7 +68,7 @@ export class ServiceStack extends Stack {
         BOT_TOKEN: process.env.BOT_TOKEN!,
       },
       timeout: Duration.minutes(5),
-      retryAttempts: 0
+      retryAttempts: 0,
     });
 
     this.eventBus = new EventBus(this, "bot-events", {
@@ -93,23 +103,25 @@ export class ServiceStack extends Stack {
 
     new Rule(this, "bot-scheduled-recruiter-score", {
       schedule: Schedule.cron({
-        minute: '0',
-        hour: '12',
-        weekDay: 'SUN'
+        minute: "0",
+        hour: "12",
+        weekDay: "SUN",
       }),
-      targets: [new LambdaFunction(this.scheduled, {
-        event: RuleTargetInput.fromObject({
-          source: "tcn-bot-scheduled",
-          "detail-type": "Generate Recruiter Score",
-          detail: {
-            guildId: "1111490767991615518"
-          }
-        })
-      })]
+      targets: [
+        new LambdaFunction(this.scheduled, {
+          event: RuleTargetInput.fromObject({
+            source: "tcn-bot-scheduled",
+            "detail-type": "Generate Recruiter Score",
+            detail: {
+              guildId: "1111490767991615518",
+            },
+          }),
+        }),
+      ],
     });
 
     this.proxy = new Lambda(this, "bot-proxy", {
-      functionName: 'bot-proxy',
+      functionName: "bot-proxy",
       runtime: Runtime.NODEJS_22_X,
       handler: "index.proxy",
       code: Code.fromAsset("../bot/dist"),
@@ -136,26 +148,28 @@ export class ServiceStack extends Stack {
       },
     });
 
-    const rosterBucket = new Bucket(this, 'roster-bucket', {
-      bucketName: 'bot-roster-bucket',
+    const rosterBucket = new Bucket(this, "roster-bucket", {
+      bucketName: "bot-roster-bucket",
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       encryption: BucketEncryption.S3_MANAGED,
     });
 
-    const rosterProcessor = new Lambda(this, 'roster-processor', {
-      functionName: 'roster-processor',
+    const rosterProcessor = new Lambda(this, "roster-processor", {
+      functionName: "roster-processor",
       runtime: Runtime.NODEJS_22_X,
-      handler: 'index.processor',
+      handler: "index.processor",
       code: Code.fromAsset("../bot/dist"),
       logRetention: RetentionDays.ONE_MONTH,
       environment: {
-        REGION: props.env!.region!
-      }
+        REGION: props.env!.region!,
+        CLASH_API_TOKEN: process.env.CLASH_API_TOKEN!,
+        BOT_TOKEN: process.env.BOT_TOKEN!,
+      },
     });
 
     rosterBucket.addEventNotification(
       EventType.OBJECT_CREATED,
-      new LambdaDestination(rosterProcessor),
+      new LambdaDestination(rosterProcessor)
     );
 
     rosterBucket.grantRead(rosterProcessor);
