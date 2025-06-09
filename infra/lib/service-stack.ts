@@ -165,6 +165,7 @@ export class ServiceStack extends Stack {
         CLASH_API_TOKEN: process.env.CLASH_API_TOKEN!,
         BOT_TOKEN: process.env.BOT_TOKEN!,
       },
+      timeout: Duration.minutes(3),
     });
 
     rosterBucket.addEventNotification(
