@@ -447,7 +447,7 @@ export const getServerUser = async (
 export const getServerMembers = async (
   guildId: string
 ): Promise<APIGuildMember[]> => {
-  const url = `${BASE_URL}/guilds/${guildId}/members`;
+  const url = `${BASE_URL}/guilds/${guildId}/members?limit=1000`;
   try {
     const response = await axios.get(url, {
       headers: {
