@@ -444,6 +444,30 @@ export const getServerUser = async (
   }
 };
 
+export const getServerMembers = async (
+  guildId: string
+): Promise<APIGuildMember[]> => {
+  const url = `${BASE_URL}/guilds/${guildId}/members`;
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+      },
+    });
+    return response.data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to fetch server members",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
 export const grantRole = async (
   guildId: string,
   userId: string,
