@@ -9,7 +9,6 @@ import {
 export class PersistenceStack extends Stack {
   readonly table: Table;
   readonly botTable: Table;
-  readonly rosterTable: Table;
 
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
@@ -27,22 +26,6 @@ export class PersistenceStack extends Stack {
       timeToLiveAttribute: "expiration",
     });
 
-    //To be removed in next commit
-    this.rosterTable = new Table(this, "roster-table", {
-      tableName: "RosterTable",
-      encryption: TableEncryption.AWS_MANAGED,
-      partitionKey: {
-        name: "pk",
-        type: AttributeType.STRING,
-      },
-      sortKey: {
-        name: "sk",
-        type: AttributeType.STRING,
-      },
-      timeToLiveAttribute: "expires",
-      removalPolicy: RemovalPolicy.DESTROY,
-    });
-
     this.botTable = new Table(this, "bot-table", {
       tableName: "BotTable",
       encryption: TableEncryption.AWS_MANAGED,
@@ -55,8 +38,7 @@ export class PersistenceStack extends Stack {
         type: AttributeType.STRING,
       },
       timeToLiveAttribute: "expires",
+      removalPolicy: RemovalPolicy.RETAIN,
     });
-
-    this.exportValue(this.rosterTable.tableArn);
   }
 }

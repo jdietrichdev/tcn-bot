@@ -94,12 +94,14 @@ export const processCwlRoster = async (event: S3Event) => {
         roster: Object.fromEntries(clanMap),
       };
 
-      await dynamoDbClient.send(
+      console.log("Storing roster to table");
+      const tableResponse = await dynamoDbClient.send(
         new PutCommand({
           TableName: "BotTable",
           Item: dbItem,
         })
       );
+      console.log(`Stored roster to table: ${JSON.stringify(tableResponse)}`);
     }
   } catch (err) {
     console.log(`Failed processing CWL roster: ${err}`);
