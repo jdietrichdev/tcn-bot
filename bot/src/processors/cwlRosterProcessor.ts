@@ -90,7 +90,7 @@ export const processCwlRoster = async (event: S3Event) => {
 
       const dbItem = {
         pk: guildId,
-        sk: `roster#${key.split("/")[1]}`,
+        sk: `roster#${key.split("/")[1].replace(".csv", "")}`,
         roster: Object.fromEntries(clanMap),
       };
 
