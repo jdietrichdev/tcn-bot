@@ -2,13 +2,14 @@ import {
   APIApplicationCommandAutocompleteInteraction,
   APIApplicationCommandInteractionDataStringOption,
   APICommandAutocompleteInteractionResponseCallbackData,
+  InteractionResponseType,
 } from "discord-api-types/v10";
 import { s3Client } from "../clients/s3-client";
 import { ListObjectsV2Command } from "@aws-sdk/client-s3";
 
 export const handleCwlReminder = async (
   interaction: APIApplicationCommandAutocompleteInteraction
-): Promise<APICommandAutocompleteInteractionResponseCallbackData> => {
+) => {
   const options: APICommandAutocompleteInteractionResponseCallbackData = {
     choices: [],
   };
@@ -41,5 +42,8 @@ export const handleCwlReminder = async (
     console.log(options);
   }
 
-  return options;
+  return {
+    type: InteractionResponseType.ApplicationCommandAutocompleteResult,
+    data: options
+  };
 };
