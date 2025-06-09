@@ -25,6 +25,7 @@ export const handleCwlReminder = async (
       new ListObjectsCommand({
         Bucket: "bot-roster-bucket",
         Prefix: `${interaction.guild_id}/`,
+        Delimiter: "/",
       })
     );
 
@@ -36,6 +37,8 @@ export const handleCwlReminder = async (
         value: object.Key!.replace(".csv", ""),
       };
     });
+
+    console.log(options);
   }
 
   return options;
