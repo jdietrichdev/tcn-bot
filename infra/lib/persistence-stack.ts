@@ -57,6 +57,6 @@ export class PersistenceStack extends Stack {
       timeToLiveAttribute: "expires",
     });
 
-    this.exportValue(this.rosterTable.tableName);
+    this.exportValue(this.rosterTable.tableArn);
   }
 }

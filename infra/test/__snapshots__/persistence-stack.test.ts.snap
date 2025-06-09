@@ -119,12 +119,15 @@ exports[`Infrastructure created 1`] = `
     }
   },
   "Outputs": {
-    "ExportsOutputRefrostertableD9ABA61BF95025EF": {
+    "ExportsOutputFnGetAttrostertableD9ABA61BArnB204E024": {
       "Value": {
-        "Ref": "rostertableD9ABA61B"
+        "Fn::GetAtt": [
+          "rostertableD9ABA61B",
+          "Arn"
+        ]
       },
       "Export": {
-        "Name": "stack:ExportsOutputRefrostertableD9ABA61BF95025EF"
+        "Name": "stack:ExportsOutputFnGetAttrostertableD9ABA61BArnB204E024"
       }
     }
   },
