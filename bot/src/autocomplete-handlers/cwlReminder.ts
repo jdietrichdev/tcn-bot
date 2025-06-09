@@ -4,7 +4,7 @@ import {
   APICommandAutocompleteInteractionResponseCallbackData,
 } from "discord-api-types/v10";
 import { s3Client } from "../clients/s3-client";
-import { ListObjectsCommand } from "@aws-sdk/client-s3";
+import { ListObjectsV2Command } from "@aws-sdk/client-s3";
 
 export const handleCwlReminder = async (
   interaction: APIApplicationCommandAutocompleteInteraction
@@ -22,7 +22,7 @@ export const handleCwlReminder = async (
 
   if (focused && focused.name === "roster") {
     const objects = await s3Client.send(
-      new ListObjectsCommand({
+      new ListObjectsV2Command({
         Bucket: "bot-roster-bucket",
         Prefix: `${interaction.guild_id}/`,
         Delimiter: "/",
@@ -33,8 +33,8 @@ export const handleCwlReminder = async (
 
     options.choices = objects.Contents?.map((object) => {
       return {
-        name: object.Key!.replace(".csv", ""),
-        value: object.Key!.replace(".csv", ""),
+        name: object.Key!.split("/")[1].replace(".csv", ""),
+        value: object.Key!.split("/")[1].replace(".csv", ""),
       };
     });
 
