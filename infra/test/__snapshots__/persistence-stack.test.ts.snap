@@ -118,6 +118,16 @@ exports[`Infrastructure created 1`] = `
       "DeletionPolicy": "Retain"
     }
   },
+  "Outputs": {
+    "ExportsOutputRefrostertableD9ABA61BF95025EF": {
+      "Value": {
+        "Ref": "rostertableD9ABA61B"
+      },
+      "Export": {
+        "Name": "stack:ExportsOutputRefrostertableD9ABA61BF95025EF"
+      }
+    }
+  },
   "Parameters": {
     "BootstrapVersion": {
       "Type": "AWS::SSM::Parameter::Value<String>",
