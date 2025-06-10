@@ -62,7 +62,7 @@ export const processCwlRoster = async (event: S3Event) => {
           ) {
             (league = record["Player Name"]),
               (clanTag = record["Combined Heroes"].split("=")[2]);
-            if (clanTag.startsWith("%23")) clanTag.replace("%23", "#");
+            if (clanTag.startsWith("%23")) clanTag = clanTag.replace("%23", "#");
             else clanTag = `#${clanTag}`;
             clanMap.set(clanTag, {
               clanTag,
