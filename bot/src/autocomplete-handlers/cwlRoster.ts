@@ -7,7 +7,7 @@ import {
 import { s3Client } from "../clients/s3-client";
 import { ListObjectsV2Command } from "@aws-sdk/client-s3";
 
-export const handleCwlReminder = async (
+export const handleCwlRoster = async (
   interaction: APIApplicationCommandAutocompleteInteraction
 ) => {
   const options: APICommandAutocompleteInteractionResponseCallbackData = {
@@ -32,8 +32,10 @@ export const handleCwlReminder = async (
 
     console.log(JSON.stringify(objects));
 
-    const rosters = objects.Contents?.filter(object => object.Key! !== `${interaction.guild_id}/`);
-    console.log(rosters)
+    const rosters = objects.Contents?.filter(
+      (object) => object.Key! !== `${interaction.guild_id}/`
+    );
+    console.log(rosters);
 
     options.choices = rosters?.map((object) => {
       return {
@@ -47,6 +49,6 @@ export const handleCwlReminder = async (
 
   return {
     type: InteractionResponseType.ApplicationCommandAutocompleteResult,
-    data: options
+    data: options,
   };
 };

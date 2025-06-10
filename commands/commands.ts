@@ -217,8 +217,8 @@ export const recruiterScore = new SlashCommandBuilder()
   .setDescription("Score recruiters based on activity in channels")
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-export const cwlReminder = new SlashCommandBuilder()
-  .setName("cwl-reminder")
+export const cwlRoster = new SlashCommandBuilder()
+  .setName("cwl-roster")
   .setDescription("Send reminder for people not in correct clans for CWL")
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .addStringOption((option) => {
@@ -227,4 +227,14 @@ export const cwlReminder = new SlashCommandBuilder()
       .setDescription("Roster version to use")
       .setRequired(true)
       .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("type")
+      .setDescription("What type of notification do you want to send out?")
+      .setRequired(true)
+      .setChoices([
+        { name: "Announcement", value: "Announcement" },
+        { name: "Reminder", value: "Reminder" },
+      ]);
   });

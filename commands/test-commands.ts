@@ -9,7 +9,7 @@ import {
   ro,
   leadApply,
   recruiterScore,
-  cwlReminder,
+  cwlRoster,
 } from "./commands";
 
 export const testCommands = [
@@ -23,5 +23,5 @@ export const testCommands = [
   ro,
   leadApply,
   recruiterScore,
-  cwlReminder,
+  cwlRoster,
 ];
