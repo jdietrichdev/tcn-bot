@@ -32,9 +32,10 @@ export const handleCwlReminder = async (
 
     console.log(JSON.stringify(objects));
 
-    options.choices = objects.Contents?.filter((object) => {
-      object.Key! !== `${interaction.guild_id!}/`
-    }).map((object) => {
+    const rosters = objects.Contents?.filter(object => object.Key! !== `${interaction.guild_id}/`);
+    console.log(rosters)
+
+    options.choices = rosters?.map((object) => {
       return {
         name: object.Key!.split("/")[1].replace(".csv", ""),
         value: object.Key!.split("/")[1].replace(".csv", ""),
