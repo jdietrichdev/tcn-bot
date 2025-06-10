@@ -61,6 +61,7 @@ export class ServiceStack extends Stack {
       retryAttempts: 0,
     });
     props.table.grantReadWriteData(this.handler);
+    props.botTable.grantReadData(this.handler);
 
     this.scheduled = new Lambda(this, "bot-scheduled", {
       functionName: "bot-scheduled",

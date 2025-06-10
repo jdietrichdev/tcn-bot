@@ -7,3 +7,4 @@ export * from "./event";
 export * from "./upgrade";
 export * from "./recruit";
 export * from "./recruiterScore";
+export * from "./cwlReminder";
