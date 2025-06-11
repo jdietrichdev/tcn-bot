@@ -78,9 +78,9 @@ const buildAnnouncement = async (
       WAR_LEAGUE[clanData.warLeague.name as keyof typeof WAR_LEAGUE]
     } **${clanData.warLeague.name}**\n[${
       clanData.name
-    }](https://link.clashofclans.com/en/?action=OpenClanProfile&tag=${
+    }](<https://link.clashofclans.com/en/?action=OpenClanProfile&tag=${
       clan.clanTag
-    })\n`;
+    }>)\n`;
     for (const player of clan.players) {
       message += `<@${player.userId}> ${player.playerName}\n`;
     }
