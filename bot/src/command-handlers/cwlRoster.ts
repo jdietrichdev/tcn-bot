@@ -74,9 +74,9 @@ const buildAnnouncement = async (
   });
   for (const clan of roster) {
     const clanData = await getClan(`#${clan.clanTag}`);
-    let message = `${
+    let message = `# ${
       WAR_LEAGUE[clanData.warLeague.name as keyof typeof WAR_LEAGUE]
-    } **${clanData.warLeague.name}**\n[${
+    } **${clanData.warLeague.name}**\n## [${
       clanData.name
     }](<https://link.clashofclans.com/en/?action=OpenClanProfile&tag=${
       clan.clanTag
