@@ -4,7 +4,7 @@ import {
   RESTPostAPIWebhookWithTokenJSONBody,
 } from "discord-api-types/v10";
 import { getConfig, ServerConfig } from "../util/serverConfig";
-import { updateResponse } from "../adapters/discord-adapter";
+import { sendMessage, updateResponse } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
 import { getCommandOptionData } from "../util/interaction-util";
@@ -40,7 +40,12 @@ export const handleCwlRoster = async (
     if (notificationType === "Announcement") {
       console.log("Sending roster announcement");
       const announcementMessages = buildAnnouncement(rosterData.roster, config);
-      console.log(JSON.stringify(announcementMessages));
+      for (const message of announcementMessages) {
+        await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
+      }
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: "CWL roster announcement sent"
+      });
     } else if (notificationType === "Reminder") {
       console.log("Sending roster reminder");
     }
@@ -61,7 +66,7 @@ const buildAnnouncement = (roster: Record<string, any>[], config: ServerConfig) 
     for (const player of clan.players) {
       message += `<@${player.userId}> ${player.playerName}\n`;
     }
-    messages.push({ content: message });
+    messages.push({ content: message, allowed_mentions: { parse: []} });
   }
   return messages;
 }
