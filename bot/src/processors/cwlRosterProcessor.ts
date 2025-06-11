@@ -35,7 +35,6 @@ export const processCwlRoster = async (event: S3Event) => {
       );
 
       const csvData = await streamCsv(response.Body as Readable);
-      console.log(csvData);
 
       const records: Record<string, string>[] = parse(csvData, {
         columns: true,
@@ -45,7 +44,6 @@ export const processCwlRoster = async (event: S3Event) => {
 
       const guildId = key.split("/")[0];
       const guildMembers = await getServerMembers(guildId);
-      console.log(JSON.stringify(guildMembers));
 
       let clanTag = "";
       let league = "";
@@ -68,10 +66,7 @@ export const processCwlRoster = async (event: S3Event) => {
               league,
               players: [],
             });
-          } else {
-            console.log(
-              `${record["@"]} has account ${record["Player Tag"]} in ${league} clan: ${clanTag}`
-            );
+          } else if (record["Player Name"] !== '' && record["Discord"] !== '') {
             const clanRoster = clanMap.get(clanTag);
             clanRoster?.players.push({
               playerTag: record["Player Tag"],
@@ -85,8 +80,6 @@ export const processCwlRoster = async (event: S3Event) => {
           }
         }
       }
-      console.log(JSON.stringify(Object.fromEntries(clanMap)));
-      console.log(JSON.stringify(Array.from(clanMap.values())))
 
       const dbItem = {
         pk: guildId,
