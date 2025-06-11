@@ -60,10 +60,9 @@ export const processCwlRoster = async (event: S3Event) => {
             record["Player Name"] !== "" &&
             record["Combined Heroes"] !== ""
           ) {
-            (league = record["Player Name"]),
-              (clanTag = record["Combined Heroes"].split("=")[2]);
-            if (clanTag.startsWith("%23")) clanTag = clanTag.replace("%23", "#");
-            else clanTag = `#${clanTag}`;
+            league = record["Player Name"];
+            clanTag = record["Combined Heroes"].split("=")[2];
+            if (clanTag.startsWith("%23")) clanTag = clanTag.replace("%23", "");
             clanMap.set(clanTag, {
               clanTag,
               league,
@@ -87,11 +86,12 @@ export const processCwlRoster = async (event: S3Event) => {
         }
       }
       console.log(JSON.stringify(Object.fromEntries(clanMap)));
+      console.log(JSON.stringify(Array.from(clanMap.values())))
 
       const dbItem = {
         pk: guildId,
         sk: `roster#${key.split("/")[1].replace(".csv", "")}`,
-        roster: Object.fromEntries(clanMap),
+        roster: Array.from(clanMap.values()),
       };
 
       console.log("Storing roster to table");
