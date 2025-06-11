@@ -24,3 +24,18 @@ export const verify = async (playerTag: string, apiToken: string) => {
     throw err;
   }
 };
+
+export const getClan = async (clanTag: string) => {
+  try {
+    const url = `${BASE_URL}/clans/${clanTag.replace("#", "%23")}`;
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${process.env.CLASH_API_TOKEN}`,
+      },
+    });
+    return response.data;
+  } catch (err) {
+    console.error("Failed to retrieve clan data", err);
+    throw err;
+  }
+};

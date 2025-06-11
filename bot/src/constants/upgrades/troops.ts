@@ -1,5 +1,5 @@
-import { RESOURCES } from "../emojis/resources";
-import { DARK_ELIXIR_TROOPS } from "../emojis/troops";
+import { RESOURCES } from "../emojis/coc/resources";
+import { DARK_ELIXIR_TROOPS } from "../emojis/coc/troops";
 
 const MINION = {
   name: "Minion",
