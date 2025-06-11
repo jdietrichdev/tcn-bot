@@ -42,6 +42,7 @@ export const handleCwlRoster = async (
       const announcementMessages = buildAnnouncement(rosterData.roster, config);
       for (const message of announcementMessages) {
         await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
+        await new Promise(resolve => setTimeout(resolve, 1500));
       }
       await updateResponse(interaction.application_id, interaction.token, {
         content: "CWL roster announcement sent"
