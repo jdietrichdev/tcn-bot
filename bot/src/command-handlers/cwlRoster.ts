@@ -7,6 +7,7 @@ import { getConfig, ServerConfig } from "../util/serverConfig";
 import {
   deleteMessage,
   sendMessage,
+  updateMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
@@ -57,6 +58,11 @@ export const handleCwlRoster = async (
       const previousMessages: string[] = [];
       for (const message of announcementMessages) {
         const { id } = await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
+        if (message.allowed_mentions) {
+          await updateMessage(config.ANNOUNCEMENT_CHANNEL, id, {
+            content: message.content,
+          });
+        }
         previousMessages.push(id);
         await new Promise((resolve) => setTimeout(resolve, 1500));
       }
@@ -76,7 +82,12 @@ export const handleCwlRoster = async (
       console.log("Sending roster reminder");
       const reminderMessages = await buildReminder(rosterData.roster);
       for (const message of reminderMessages) {
-        await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
+        const { id } = await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
+        if (message.allowed_mentions) {
+          await updateMessage(config.ANNOUNCEMENT_CHANNEL, id, {
+            content: message.content,
+          });
+        }
         await new Promise((resolve) => setTimeout(resolve, 1500));
       }
       await updateResponse(interaction.application_id, interaction.token, {
