@@ -1,4 +1,5 @@
 import {
+  AllowedMentionsTypes,
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
   RESTPostAPIWebhookWithTokenJSONBody,
@@ -60,7 +61,7 @@ export const handleCwlRoster = async (
         const { id } = await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
         if (message.allowed_mentions) {
           await updateMessage(config.ANNOUNCEMENT_CHANNEL, id, {
-            content: message.content,
+            allowed_mentions: { parse: [AllowedMentionsTypes.User] },
           });
         }
         previousMessages.push(id);
@@ -85,7 +86,7 @@ export const handleCwlRoster = async (
         const { id } = await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
         if (message.allowed_mentions) {
           await updateMessage(config.ANNOUNCEMENT_CHANNEL, id, {
-            content: message.content,
+            allowed_mentions: { parse: [AllowedMentionsTypes.User] },
           });
         }
         await new Promise((resolve) => setTimeout(resolve, 1500));
