@@ -4,9 +4,13 @@ import {
   RESTPostAPIWebhookWithTokenJSONBody,
 } from "discord-api-types/v10";
 import { getConfig, ServerConfig } from "../util/serverConfig";
-import { sendMessage, updateResponse } from "../adapters/discord-adapter";
+import {
+  deleteMessage,
+  sendMessage,
+  updateResponse,
+} from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
-import { GetCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { getCommandOptionData } from "../util/interaction-util";
 import { getClan } from "../adapters/coc-api-adapter";
 import { WAR_LEAGUE } from "../constants/emojis/coc/cwlLeague";
@@ -45,10 +49,26 @@ export const handleCwlRoster = async (
         rosterData.roster,
         config
       );
+      if (rosterData.previousMessages) {
+        for (const messageId in rosterData.previousMessages) {
+          await deleteMessage(config.ANNOUNCEMENT_CHANNEL, messageId);
+        }
+      }
+      const previousMessages: string[] = [];
       for (const message of announcementMessages) {
-        await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
+        const { id } = await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
+        previousMessages.push(id);
         await new Promise((resolve) => setTimeout(resolve, 1500));
       }
+      await dynamoDbClient.send(
+        new PutCommand({
+          TableName: "BotTable",
+          Item: {
+            ...rosterData,
+            previousMessages,
+          },
+        })
+      );
       await updateResponse(interaction.application_id, interaction.token, {
         content: "CWL roster announcement sent",
       });
