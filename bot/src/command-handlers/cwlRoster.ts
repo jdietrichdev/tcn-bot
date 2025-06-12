@@ -61,6 +61,7 @@ export const handleCwlRoster = async (
         const { id } = await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
         if (message.allowed_mentions) {
           await updateMessage(config.ANNOUNCEMENT_CHANNEL, id, {
+            content: message.content,
             allowed_mentions: { parse: [AllowedMentionsTypes.User] },
           });
         }
@@ -86,6 +87,7 @@ export const handleCwlRoster = async (
         const { id } = await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
         if (message.allowed_mentions) {
           await updateMessage(config.ANNOUNCEMENT_CHANNEL, id, {
+            content: message.content,
             allowed_mentions: { parse: [AllowedMentionsTypes.User] },
           });
         }
