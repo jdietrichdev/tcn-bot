@@ -74,12 +74,20 @@ export const handleCwlRoster = async (
       });
     } else if (notificationType === "Reminder") {
       console.log("Sending roster reminder");
+      const reminderMessages = await buildReminder(rosterData.roster);
+      for (const message of reminderMessages) {
+        await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: "CWL roster reminders sent",
+      });
     }
   } catch (err) {
     console.error(`Failed to send roster message: ${err}`);
     await updateResponse(interaction.application_id, interaction.token, {
       content:
-        "There was a failure sending the CWL reminders, please try again",
+        "There was a failure sending the roster information, please try again",
     });
   }
 };
@@ -105,6 +113,37 @@ const buildAnnouncement = async (
       message += `<@${player.userId}> ${player.playerName}\n`;
     }
     messages.push({ content: message, allowed_mentions: { parse: [] } });
+  }
+  return messages;
+};
+
+const buildReminder = async (roster: Record<string, any>[]) => {
+  const messages: RESTPostAPIWebhookWithTokenJSONBody[] = [];
+  messages.push({
+    content:
+      "CWL spin is coming soon! Please make sure you are in the right clan and help those that are not!",
+  });
+  for (const clan of roster) {
+    const clanData = await getClan(`#${clan.clanTag}`);
+    let message = `# ${
+      WAR_LEAGUE[clanData.warLeague.name as keyof typeof WAR_LEAGUE]
+    } **${clanData.warLeague.name}**\n## [${
+      clanData.name
+    }](<https://link.clashofclans.com/en/?action=OpenClanProfile&tag=${
+      clan.clanTag
+    }>)\n`;
+    const missingPlayers = clan.players.filter(
+      (player: Record<string, string>) => {
+        return !clanData.memberList.some(
+          (member: Record<string, any>) => member.tag === player.playerTag
+        );
+      }
+    );
+
+    for (const player of missingPlayers) {
+      message += `<@${player.userId}> ${player.playerName}\n`;
+    }
+    messages.push({ content: message });
   }
   return messages;
 };
