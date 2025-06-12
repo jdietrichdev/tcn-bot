@@ -118,7 +118,7 @@ const buildAnnouncement = async (
     for (const player of clan.players) {
       message += `<@${player.userId}> ${player.playerName}\n`;
     }
-    messages.push({ content: message, allowed_mentions: { parse: [] } });
+    messages.push({ content: message });
   }
   return messages;
 };
