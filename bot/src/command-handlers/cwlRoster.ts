@@ -50,7 +50,7 @@ export const handleCwlRoster = async (
         config
       );
       if (rosterData.previousMessages) {
-        for (const messageId in rosterData.previousMessages) {
+        for (const messageId of rosterData.previousMessages) {
           await deleteMessage(config.ANNOUNCEMENT_CHANNEL, messageId);
         }
       }
