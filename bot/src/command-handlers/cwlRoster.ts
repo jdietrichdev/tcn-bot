@@ -108,7 +108,7 @@ const buildAnnouncement = async (
   });
   for (const clan of roster) {
     const clanData = await getClan(`#${clan.clanTag}`);
-    let message = `@silent # ${
+    let message = `# ${
       WAR_LEAGUE[clanData.warLeague.name as keyof typeof WAR_LEAGUE]
     } **${clanData.warLeague.name}**\n## [${
       clanData.name
@@ -118,7 +118,7 @@ const buildAnnouncement = async (
     for (const player of clan.players) {
       message += `<@${player.userId}> ${player.playerName}\n`;
     }
-    messages.push({ content: message });
+    messages.push({ content: message, allowed_mentions: { parse: [] } });
   }
   return messages;
 };
