@@ -6,7 +6,7 @@ import { parse } from "csv-parse/sync";
 import { getServerMembers } from "../adapters/discord-adapter";
 import { APIGuildMember } from "discord-api-types/v10";
 import { dynamoDbClient } from "../clients/dynamodb-client";
-import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 
 interface Player {
   playerTag: string;
@@ -66,7 +66,7 @@ export const processCwlRoster = async (event: S3Event) => {
               league,
               players: [],
             });
-          } else if (record["Player Name"] !== '' && record["Discord"] !== '') {
+          } else if (record["Player Name"] !== "" && record["Discord"] !== "") {
             const clanRoster = clanMap.get(clanTag);
             clanRoster?.players.push({
               playerTag: record["Player Tag"],
@@ -81,17 +81,21 @@ export const processCwlRoster = async (event: S3Event) => {
         }
       }
 
-      const dbItem = {
-        pk: guildId,
-        sk: `roster#${key.split("/")[1].replace(".csv", "")}`,
-        roster: Array.from(clanMap.values()),
-      };
-
       console.log("Storing roster to table");
       const tableResponse = await dynamoDbClient.send(
-        new PutCommand({
+        new UpdateCommand({
           TableName: "BotTable",
-          Item: dbItem,
+          Key: {
+            pk: guildId,
+            sk: `roster#${key.split("/"[1].replace(".csv", ""))}`,
+          },
+          ExpressionAttributeNames: {
+            "#roster": "roster",
+          },
+          ExpressionAttributeValues: {
+            ":roster": Array.from(clanMap.values()),
+          },
+          UpdateExpression: "set #roster = :roster",
         })
       );
       console.log(`Stored roster to table: ${JSON.stringify(tableResponse)}`);
