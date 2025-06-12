@@ -1,5 +1,4 @@
 import {
-  AllowedMentionsTypes,
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
   RESTPostAPIWebhookWithTokenJSONBody,
@@ -8,7 +7,6 @@ import { getConfig, ServerConfig } from "../util/serverConfig";
 import {
   deleteMessage,
   sendMessage,
-  updateMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
@@ -59,12 +57,12 @@ export const handleCwlRoster = async (
       const previousMessages: string[] = [];
       for (const message of announcementMessages) {
         const { id } = await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
-        if (message.allowed_mentions) {
-          await updateMessage(config.ANNOUNCEMENT_CHANNEL, id, {
-            content: message.content,
-            allowed_mentions: { parse: [AllowedMentionsTypes.User] },
-          });
-        }
+        // if (message.allowed_mentions) {
+        //   await updateMessage(config.ANNOUNCEMENT_CHANNEL, id, {
+        //     content: message.content,
+        //     allowed_mentions: { parse: [AllowedMentionsTypes.User] },
+        //   });
+        // }
         previousMessages.push(id);
         await new Promise((resolve) => setTimeout(resolve, 1500));
       }
@@ -84,13 +82,7 @@ export const handleCwlRoster = async (
       console.log("Sending roster reminder");
       const reminderMessages = await buildReminder(rosterData.roster);
       for (const message of reminderMessages) {
-        const { id } = await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
-        if (message.allowed_mentions) {
-          await updateMessage(config.ANNOUNCEMENT_CHANNEL, id, {
-            content: message.content,
-            allowed_mentions: { parse: [AllowedMentionsTypes.User] },
-          });
-        }
+        await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
         await new Promise((resolve) => setTimeout(resolve, 1500));
       }
       await updateResponse(interaction.application_id, interaction.token, {
@@ -116,7 +108,7 @@ const buildAnnouncement = async (
   });
   for (const clan of roster) {
     const clanData = await getClan(`#${clan.clanTag}`);
-    let message = `# ${
+    let message = `@silent # ${
       WAR_LEAGUE[clanData.warLeague.name as keyof typeof WAR_LEAGUE]
     } **${clanData.warLeague.name}**\n## [${
       clanData.name
