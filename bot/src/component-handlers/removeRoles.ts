@@ -6,6 +6,7 @@ import {
 import { ServerConfig } from "../util/serverConfig";
 import {
   deleteResponse,
+  grantRole,
   removeRole,
   sendMessage,
   updateMessage,
@@ -30,6 +31,7 @@ export const removeRoles = async (
       )[1];
       await removeRole(interaction.guild_id!, userId, config.CLAN_ROLE);
       await removeRole(interaction.guild_id!, userId, config.ORES_ROLE);
+      await grantRole(interaction.guild_id!, userId, config.VISITOR_ROLE);
       await sendMessage(
         {
           content: `Roles removed by ${interaction.member?.user.username}`,
