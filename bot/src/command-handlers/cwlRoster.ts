@@ -2,6 +2,7 @@ import {
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
   RESTPostAPIWebhookWithTokenJSONBody,
+  AllowedMentionsTypes,
 } from "discord-api-types/v10";
 import { getConfig, ServerConfig } from "../util/serverConfig";
 import {
