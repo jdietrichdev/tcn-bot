@@ -9,6 +9,7 @@ import {
   deleteMessage,
   sendMessage,
   updateResponse,
+  updateMessage,
 } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
