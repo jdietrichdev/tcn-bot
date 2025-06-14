@@ -57,12 +57,12 @@ export const handleCwlRoster = async (
       const previousMessages: string[] = [];
       for (const message of announcementMessages) {
         const { id } = await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
-        // if (message.allowed_mentions) {
-        //   await updateMessage(config.ANNOUNCEMENT_CHANNEL, id, {
-        //     content: message.content,
-        //     allowed_mentions: { parse: [AllowedMentionsTypes.User] },
-        //   });
-        // }
+        if (message.allowed_mentions) {
+          await updateMessage(config.ANNOUNCEMENT_CHANNEL, id, {
+            content: message.content,
+            allowed_mentions: { parse: [AllowedMentionsTypes.User] },
+          });
+        }
         previousMessages.push(id);
         await new Promise((resolve) => setTimeout(resolve, 1500));
       }
