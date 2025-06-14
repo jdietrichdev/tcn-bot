@@ -118,7 +118,7 @@ const buildAnnouncement = async (
     for (const player of clan.players) {
       message += `<@${player.userId}> ${player.playerName}\n`;
     }
-    messages.push({ content: message, allowed_mentions: { parse: [] } });
+    messages.push({ content: message.replace(/_/g, '\\_'), allowed_mentions: { parse: [] } });
   }
   return messages;
 };
@@ -149,7 +149,7 @@ const buildReminder = async (roster: Record<string, any>[]) => {
     for (const player of missingPlayers) {
       message += `<@${player.userId}> ${player.playerName}\n`;
     }
-    messages.push({ content: message });
+    messages.push({ content: message.replace(/_/g, '\\_') });
   }
   return messages;
 };
