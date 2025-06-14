@@ -47,24 +47,21 @@ export const handleCwlRoster = async (
 
     if (notificationType === "Announcement") {
       console.log("Sending roster announcement");
-      const announcementMessages = await buildAnnouncement(
-        rosterData.roster,
-        config
-      );
+      const announcementMessages = await buildAnnouncement(rosterData.roster);
       if (rosterData.previousMessages) {
         for (const messageId of rosterData.previousMessages) {
           await deleteMessage(config.ANNOUNCEMENT_CHANNEL, messageId);
         }
       }
       const previousMessages: string[] = [];
+      const { id } = await sendMessage({
+        content: `<@&${config.CLAN_ROLE}>\nRosters have been set for the upcoming CWL season! Please take a look and feel free to reach out to leads/admins if you have questions about placement or don't see your accounts in the list.`,
+      }, config.ANNOUNCEMENT_CHANNEL);
+      previousMessages.push(id);
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       for (const message of announcementMessages) {
-        const { id } = await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
-        if (message.allowed_mentions) {
-          await updateMessage(config.ANNOUNCEMENT_CHANNEL, id, {
-            content: message.content,
-            allowed_mentions: { parse: [AllowedMentionsTypes.User] },
-          });
-        }
+        const { id } = await sendMessage({ content: 'Test' }, config.ANNOUNCEMENT_CHANNEL);
+        await updateMessage(config.ANNOUNCEMENT_CHANNEL, id, message);
         previousMessages.push(id);
         await new Promise((resolve) => setTimeout(resolve, 1500));
       }
@@ -101,13 +98,9 @@ export const handleCwlRoster = async (
 };
 
 const buildAnnouncement = async (
-  roster: Record<string, any>[],
-  config: ServerConfig
+  roster: Record<string, any>[]
 ) => {
   const messages: RESTPostAPIWebhookWithTokenJSONBody[] = [];
-  messages.push({
-    content: `<@&${config.CLAN_ROLE}>\nRosters have been set for the upcoming CWL season! Please take a look and feel free to reach out to leads/admins if you have questions about placement or don't see your accounts in the list.`,
-  });
   for (const clan of roster) {
     const clanData = await getClan(`#${clan.clanTag}`);
     let message = `# ${
@@ -120,7 +113,7 @@ const buildAnnouncement = async (
     for (const player of clan.players) {
       message += `<@${player.userId}> ${player.playerName}\n`;
     }
-    messages.push({ content: message.replace(/_/g, '\\_'), allowed_mentions: { parse: [] } });
+    messages.push({ content: message.replace(/_/g, '\\_') });
   }
   return messages;
 };
