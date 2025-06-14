@@ -140,8 +140,11 @@ const buildReminder = async (roster: Record<string, any>[]) => {
       }
     );
 
-    for (const player of missingPlayers) {
-      message += `<@${player.userId}> ${player.playerName}\n`;
+    if (missingPlayers.length === 0) message += "All players in clan, well done\n";
+    else {
+      for (const player of missingPlayers) {
+        message += `<@${player.userId}> ${player.playerName}\n`;
+      }
     }
     messages.push({ content: message.replace(/_/g, '\\_') });
   }
