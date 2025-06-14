@@ -2,9 +2,8 @@ import {
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
   RESTPostAPIWebhookWithTokenJSONBody,
-  AllowedMentionsTypes,
 } from "discord-api-types/v10";
-import { getConfig, ServerConfig } from "../util/serverConfig";
+import { getConfig } from "../util/serverConfig";
 import {
   deleteMessage,
   sendMessage,
@@ -60,7 +59,7 @@ export const handleCwlRoster = async (
       previousMessages.push(id);
       await new Promise((resolve) => setTimeout(resolve, 1500));
       for (const message of announcementMessages) {
-        const { id } = await sendMessage({ content: 'Test' }, config.ANNOUNCEMENT_CHANNEL);
+        const { id } = await sendMessage({ content: message.content?.split("\n")[0] }, config.ANNOUNCEMENT_CHANNEL);
         await updateMessage(config.ANNOUNCEMENT_CHANNEL, id, message);
         previousMessages.push(id);
         await new Promise((resolve) => setTimeout(resolve, 1500));
