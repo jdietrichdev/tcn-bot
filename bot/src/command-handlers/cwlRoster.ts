@@ -154,7 +154,7 @@ const buildReminder = async (roster: Record<string, any>[]) => {
       }
       messages.push({ content: message.replace(/_/g, '\\_') });
     } else {
-      const clanCwlData = cwlStatus.clans.find((cwlClan: Record<string, any>) => cwlClan.tag === clan.tag)
+      const clanCwlData = cwlStatus.clans.find((cwlClan: Record<string, any>) => cwlClan.tag === clan.clanTag)
       const missedSpin = clan.players.filter((player: Record<string, any>) => {
         return !clanCwlData.members.some(
           (member: Record<string, any>) => member.tag === player.playerTag
