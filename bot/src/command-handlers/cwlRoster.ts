@@ -78,8 +78,8 @@ export const handleCwlRoster = async (
       });
     } else if (notificationType === "Reminder") {
       console.log("Sending roster reminder");
-      await buildReminder(rosterData.roster);
-      // const reminderMessages = await buildReminder(rosterData.roster);
+      const reminderMessages = await buildReminder(rosterData.roster);
+      console.log(JSON.stringify(reminderMessages));
       // for (const message of reminderMessages) {
       //   await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
       //   await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -126,8 +126,9 @@ const buildReminder = async (roster: Record<string, any>[]) => {
   });
   for (const clan of roster) {
     const cwlStatus = await getCwl(`#${clan.clanTag}`);
-    console.log(cwlStatus);
+    console.log(JSON.stringify(cwlStatus));
     const clanData = await getClan(`#${clan.clanTag}`);
+    
     let message = `# ${
       WAR_LEAGUE[clanData.warLeague.name as keyof typeof WAR_LEAGUE]
     } **${clanData.warLeague.name}**\n## [${
@@ -135,21 +136,39 @@ const buildReminder = async (roster: Record<string, any>[]) => {
     }](<https://link.clashofclans.com/en/?action=OpenClanProfile&tag=${
       clan.clanTag
     }>)\n`;
-    const missingPlayers = clan.players.filter(
-      (player: Record<string, string>) => {
-        return !clanData.memberList.some(
+
+    if (cwlStatus.state === 'not_spun') {
+      const missingPlayers = clan.players.filter(
+        (player: Record<string, string>) => {
+          return !clanData.memberList.some(
+            (member: Record<string, any>) => member.tag === player.playerTag
+          );
+        }
+      );
+
+      if (missingPlayers.length === 0) message += "All players in clan, well done\n";
+      else {
+        for (const player of missingPlayers) {
+          message += `<@${player.userId}> ${player.playerName}\n`;
+        }
+      }
+      messages.push({ content: message.replace(/_/g, '\\_') });
+    } else {
+      const clanCwlData = cwlStatus.clans.find((cwlClan: Record<string, any>) => cwlClan.tag === clan.tag)
+      const missedSpin = clan.players.filter((player: Record<string, any>) => {
+        return !clanCwlData.members.some(
           (member: Record<string, any>) => member.tag === player.playerTag
         );
+      });
+      if (missedSpin.length === 0) message += 'CWL spun with all members, good luck all!'
+      else {
+        message += 'CWL has been spun. If your name is below, better reach out to some important people!\n';
+        for (const missed of missedSpin) {
+          message += `<@${missed.userId}> ${missed.playerName}\n`;
+        }
       }
-    );
-
-    if (missingPlayers.length === 0) message += "All players in clan, well done\n";
-    else {
-      for (const player of missingPlayers) {
-        message += `<@${player.userId}> ${player.playerName}\n`;
-      }
+      messages.push({ content: message.replace(/_/g, '\\_') });
     }
-    messages.push({ content: message.replace(/_/g, '\\_') });
   }
   return messages;
 };

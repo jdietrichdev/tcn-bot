@@ -54,7 +54,7 @@ export const getCwl = async (clanTag: string) => {
       console.log('Clan not in CWL');
       return {
         tag: clanTag,
-        state: 'NOT_SPUN'
+        state: 'not_spun'
       };
     } else {
       console.error("Failed to retrieve CWL data for clan");
