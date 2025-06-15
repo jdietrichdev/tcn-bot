@@ -2,9 +2,8 @@ import {
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
   RESTPostAPIWebhookWithTokenJSONBody,
-  AllowedMentionsTypes,
 } from "discord-api-types/v10";
-import { getConfig, ServerConfig } from "../util/serverConfig";
+import { getConfig } from "../util/serverConfig";
 import {
   deleteMessage,
   sendMessage,
@@ -14,7 +13,7 @@ import {
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { getCommandOptionData } from "../util/interaction-util";
-import { getClan } from "../adapters/coc-api-adapter";
+import { getClan, getCwl } from "../adapters/coc-api-adapter";
 import { WAR_LEAGUE } from "../constants/emojis/coc/cwlLeague";
 
 export const handleCwlRoster = async (
@@ -50,13 +49,18 @@ export const handleCwlRoster = async (
       const announcementMessages = await buildAnnouncement(rosterData.roster);
       if (rosterData.previousMessages) {
         for (const messageId of rosterData.previousMessages) {
-          await deleteMessage(config.ANNOUNCEMENT_CHANNEL, messageId);
+          await deleteMessage(config.CWL_ROSTER_CHANNEL, messageId);
         }
       }
       const previousMessages: string[] = [];
+      const { id } = await sendMessage({
+        content: `[ANNOUNCEMENT]\n<@&${config.CLAN_ROLE}>\nRosters have been set for the upcoming CWL season! Please take a look and feel free to reach out to leads/admins if you have questions about placement or don't see your accounts in the list.`,
+      }, config.CWL_ROSTER_CHANNEL);
+      previousMessages.push(id);
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       for (const message of announcementMessages) {
-        const { id } = await sendMessage({ content: 'Test' }, config.ANNOUNCEMENT_CHANNEL);
-        await updateMessage(config.ANNOUNCEMENT_CHANNEL, id, message);
+        const { id } = await sendMessage({ content: message.content?.split("\n")[0] }, config.CWL_ROSTER_CHANNEL);
+        await updateMessage(config.CWL_ROSTER_CHANNEL, id, message);
         previousMessages.push(id);
         await new Promise((resolve) => setTimeout(resolve, 1500));
       }
@@ -76,7 +80,7 @@ export const handleCwlRoster = async (
       console.log("Sending roster reminder");
       const reminderMessages = await buildReminder(rosterData.roster);
       for (const message of reminderMessages) {
-        await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
+        await sendMessage(message, config.GENERAL_CHANNEL);
         await new Promise((resolve) => setTimeout(resolve, 1500));
       }
       await updateResponse(interaction.application_id, interaction.token, {
@@ -117,10 +121,13 @@ const buildReminder = async (roster: Record<string, any>[]) => {
   const messages: RESTPostAPIWebhookWithTokenJSONBody[] = [];
   messages.push({
     content:
-      "CWL spin is coming soon! Please make sure you are in the right clan and help those that are not!",
+      "[REMINDER]\nCWL spin is coming soon! Please make sure you are in the right clan and help those that are not!",
   });
   for (const clan of roster) {
+    const cwlStatus = await getCwl(`#${clan.clanTag}`);
+    console.log(JSON.stringify(cwlStatus));
     const clanData = await getClan(`#${clan.clanTag}`);
+    
     let message = `# ${
       WAR_LEAGUE[clanData.warLeague.name as keyof typeof WAR_LEAGUE]
     } **${clanData.warLeague.name}**\n## [${
@@ -128,18 +135,39 @@ const buildReminder = async (roster: Record<string, any>[]) => {
     }](<https://link.clashofclans.com/en/?action=OpenClanProfile&tag=${
       clan.clanTag
     }>)\n`;
-    const missingPlayers = clan.players.filter(
-      (player: Record<string, string>) => {
-        return !clanData.memberList.some(
+
+    if (cwlStatus.state === 'not_spun' || cwlStatus.state === 'ended') {
+      const missingPlayers = clan.players.filter(
+        (player: Record<string, string>) => {
+          return !clanData.memberList.some(
+            (member: Record<string, any>) => member.tag === player.playerTag
+          );
+        }
+      );
+
+      if (missingPlayers.length === 0) message += "All players in clan, well done\n";
+      else {
+        for (const player of missingPlayers) {
+          message += `<@${player.userId}> ${player.playerName}\n`;
+        }
+      }
+      messages.push({ content: message.replace(/_/g, '\\_') });
+    } else {
+      const clanCwlData = cwlStatus.clans.find((cwlClan: Record<string, any>) => cwlClan.tag === `#${clan.clanTag}`)
+      const missedSpin = clan.players.filter((player: Record<string, any>) => {
+        return !clanCwlData.members.some(
           (member: Record<string, any>) => member.tag === player.playerTag
         );
+      });
+      if (missedSpin.length === 0) message += 'CWL spun with all members, good luck all!'
+      else {
+        message += 'CWL has been spun. If your name is below, better reach out to some important people!\n';
+        for (const missed of missedSpin) {
+          message += `<@${missed.userId}> ${missed.playerName}\n`;
+        }
       }
-    );
-
-    for (const player of missingPlayers) {
-      message += `<@${player.userId}> ${player.playerName}\n`;
+      messages.push({ content: message.replace(/_/g, '\\_') });
     }
-    messages.push({ content: message.replace(/_/g, '\\_') });
   }
   return messages;
 };
