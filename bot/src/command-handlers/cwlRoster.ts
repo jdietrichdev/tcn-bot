@@ -53,11 +53,6 @@ export const handleCwlRoster = async (
         }
       }
       const previousMessages: string[] = [];
-      const { id } = await sendMessage({
-        content: `[ANNOUNCEMENT]\n<@&${config.CLAN_ROLE}>\nRosters have been set for the upcoming CWL season! Please take a look and feel free to reach out to leads/admins if you have questions about placement or don't see your accounts in the list.`,
-      }, config.CWL_ROSTER_CHANNEL);
-      previousMessages.push(id);
-      await new Promise((resolve) => setTimeout(resolve, 1500));
       for (const message of announcementMessages) {
         const { id } = await sendMessage({ content: message.content?.split("\n")[0] }, config.CWL_ROSTER_CHANNEL);
         await updateMessage(config.CWL_ROSTER_CHANNEL, id, message);
