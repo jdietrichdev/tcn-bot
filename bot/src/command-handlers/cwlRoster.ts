@@ -79,11 +79,10 @@ export const handleCwlRoster = async (
     } else if (notificationType === "Reminder") {
       console.log("Sending roster reminder");
       const reminderMessages = await buildReminder(rosterData.roster);
-      console.log(JSON.stringify(reminderMessages));
-      // for (const message of reminderMessages) {
-      //   await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
-      //   await new Promise((resolve) => setTimeout(resolve, 1500));
-      // }
+      for (const message of reminderMessages) {
+        await sendMessage(message, config.GENERAL_CHANNEL);
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
       await updateResponse(interaction.application_id, interaction.token, {
         content: "CWL roster reminders sent",
       });
@@ -137,7 +136,7 @@ const buildReminder = async (roster: Record<string, any>[]) => {
       clan.clanTag
     }>)\n`;
 
-    if (cwlStatus.state === 'not_spun') {
+    if (cwlStatus.state === 'not_spun' || cwlStatus.state === 'ended') {
       const missingPlayers = clan.players.filter(
         (player: Record<string, string>) => {
           return !clanData.memberList.some(
