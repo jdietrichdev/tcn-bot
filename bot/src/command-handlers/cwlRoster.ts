@@ -13,7 +13,7 @@ import {
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { getCommandOptionData } from "../util/interaction-util";
-import { getClan } from "../adapters/coc-api-adapter";
+import { getClan, getCwl } from "../adapters/coc-api-adapter";
 import { WAR_LEAGUE } from "../constants/emojis/coc/cwlLeague";
 
 export const handleCwlRoster = async (
@@ -78,11 +78,12 @@ export const handleCwlRoster = async (
       });
     } else if (notificationType === "Reminder") {
       console.log("Sending roster reminder");
-      const reminderMessages = await buildReminder(rosterData.roster);
-      for (const message of reminderMessages) {
-        await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-      }
+      await buildReminder(rosterData.roster);
+      // const reminderMessages = await buildReminder(rosterData.roster);
+      // for (const message of reminderMessages) {
+      //   await sendMessage(message, config.ANNOUNCEMENT_CHANNEL);
+      //   await new Promise((resolve) => setTimeout(resolve, 1500));
+      // }
       await updateResponse(interaction.application_id, interaction.token, {
         content: "CWL roster reminders sent",
       });
@@ -124,6 +125,8 @@ const buildReminder = async (roster: Record<string, any>[]) => {
       "CWL spin is coming soon! Please make sure you are in the right clan and help those that are not!",
   });
   for (const clan of roster) {
+    const cwlStatus = await getCwl(`#${clan.clanTag}`);
+    console.log(cwlStatus);
     const clanData = await getClan(`#${clan.clanTag}`);
     let message = `# ${
       WAR_LEAGUE[clanData.warLeague.name as keyof typeof WAR_LEAGUE]

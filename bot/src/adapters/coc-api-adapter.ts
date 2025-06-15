@@ -39,3 +39,26 @@ export const getClan = async (clanTag: string) => {
     throw err;
   }
 };
+
+export const getCwl = async (clanTag: string) => {
+  const url = `${BASE_URL}/clans/${clanTag.replace('#', '%23')}/currentwar/leaguegroup`;
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${process.env.CLASH_API_TOKEN}`
+      }
+    });
+    return response.data;
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response!.status === 404) {
+      console.log('Clan not in CWL');
+      return {
+        tag: clanTag,
+        state: 'NOT_SPUN'
+      };
+    } else {
+      console.error("Failed to retrieve CWL data for clan");
+      throw err;
+    }
+  }
+}
