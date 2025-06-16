@@ -110,7 +110,7 @@ const buildAnnouncement = async (
     }
     messages.push({ content: message.replace(/_/g, '\\_') });
   }
-  messages.push({ content: `*Last updated: <t:${createDiscordTimestamp(new Date().toUTCString())}:R>`})
+  messages.push({ content: `*Last updated: <t:${createDiscordTimestamp(new Date().toUTCString())}:R>*`})
   return messages;
 };
 
