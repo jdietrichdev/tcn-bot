@@ -15,6 +15,7 @@ import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { getCommandOptionData } from "../util/interaction-util";
 import { getClan, getCwl } from "../adapters/coc-api-adapter";
 import { WAR_LEAGUE } from "../constants/emojis/coc/cwlLeague";
+import { createDiscordTimestamp } from "../util/format-util";
 
 export const handleCwlRoster = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -109,6 +110,7 @@ const buildAnnouncement = async (
     }
     messages.push({ content: message.replace(/_/g, '\\_') });
   }
+  messages.push({ content: `*Last updated: <t:${createDiscordTimestamp(new Date().toUTCString())}:R>`})
   return messages;
 };
 
