@@ -106,6 +106,10 @@ export const scheduled = async (
   }
 }
 
-export const processor = async (event: S3Event) => {
-  await processCwlRoster(event);
+export const processor = async (event: S3Event | Record<string, string>) => {
+  if (event.Records) {
+    await processCwlRoster(event as S3Event);
+  } else {
+    await process
+  }
 }

@@ -2,6 +2,7 @@ import { Construct } from "constructs";
 import { RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
 import {
   AttributeType,
+  StreamViewType,
   Table,
   TableEncryption,
 } from "aws-cdk-lib/aws-dynamodb";
@@ -37,6 +38,7 @@ export class PersistenceStack extends Stack {
         name: "sk",
         type: AttributeType.STRING,
       },
+      stream: StreamViewType.NEW_AND_OLD_IMAGES,
       timeToLiveAttribute: "expires",
       removalPolicy: RemovalPolicy.RETAIN,
     });

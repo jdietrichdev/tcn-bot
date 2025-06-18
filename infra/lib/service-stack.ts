@@ -1,6 +1,6 @@
 import { Construct } from "constructs";
 import { Duration, RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
-import { Code, Function as Lambda, Runtime } from "aws-cdk-lib/aws-lambda";
+import { Code, Function as Lambda, Runtime, StartingPosition } from "aws-cdk-lib/aws-lambda";
 import {
   AccessLogFormat,
   LambdaRestApi,
@@ -25,6 +25,8 @@ import {
   EventType,
 } from "aws-cdk-lib/aws-s3";
 import { LambdaDestination } from "aws-cdk-lib/aws-s3-notifications";
+import { Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
+import { CfnPipe } from "aws-cdk-lib/aws-pipes";
 
 interface ServiceStackProps extends StackProps {
   table: Table;
@@ -157,8 +159,8 @@ export class ServiceStack extends Stack {
       },
     });
 
-    const rosterProcessor = new Lambda(this, "roster-processor", {
-      functionName: "roster-processor",
+    const botProcessor = new Lambda(this, "bot-processor", {
+      functionName: "bot-processor",
       runtime: Runtime.NODEJS_22_X,
       handler: "index.processor",
       code: Code.fromAsset("../bot/dist"),
@@ -173,10 +175,52 @@ export class ServiceStack extends Stack {
 
     rosterBucket.addEventNotification(
       EventType.OBJECT_CREATED,
-      new LambdaDestination(rosterProcessor)
+      new LambdaDestination(botProcessor)
     );
 
-    rosterBucket.grantRead(rosterProcessor);
-    props.botTable.grantReadWriteData(rosterProcessor);
+    const pipeRole = new Role(this, 'pipe-role', {
+        roleName: 'CfnPipeRole',
+        assumedBy: new ServicePrincipal('pipes.amazonaws.com'),
+    });
+
+    props.botTable.grantStreamRead(pipeRole);
+    botProcessor.grantInvoke(pipeRole);
+
+    new CfnPipe(this, 'user-data-pipe', {
+        source: props.botTable.tableStreamArn!,
+        target: botProcessor.functionArn,
+        roleArn: pipeRole.roleArn,
+        sourceParameters: {
+            dynamoDbStreamParameters: {
+                startingPosition: StartingPosition.LATEST,
+                batchSize: 1,
+            },
+            filterCriteria: {
+                filters: [{
+                    pattern: JSON.stringify({
+                        eventName: ["INSERT"],
+                        dynamodb: {
+                            Keys: {
+                                sk: {
+                                    S: [ { prefix: "player" } ]
+                                }
+                            }
+                        }
+                    })
+                }]
+            }
+        },
+        targetParameters: {
+            lambdaFunctionParameters: {
+                invocationType: 'FIRE_AND_FORGET'
+            },
+            inputTemplate: JSON.stringify({
+                invoiceId: '<$.dynamodb.NewImage.pk.S>'
+            }),
+        },
+    });
+
+    rosterBucket.grantRead(botProcessor);
+    props.botTable.grantReadWriteData(botProcessor);
   }
 }

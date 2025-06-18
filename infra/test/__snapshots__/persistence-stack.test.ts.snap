@@ -69,6 +69,9 @@ exports[`Infrastructure created 1`] = `
         "SSESpecification": {
           "SSEEnabled": true
         },
+        "StreamSpecification": {
+          "StreamViewType": "NEW_AND_OLD_IMAGES"
+        },
         "TableName": "BotTable",
         "TimeToLiveSpecification": {
           "AttributeName": "expires",

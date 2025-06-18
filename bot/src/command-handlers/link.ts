@@ -104,7 +104,9 @@ const unlinkPlayer = async (
       content: "User successfully unlinked",
     });
   } catch (err) {
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: "Failure removing account link, please try again"
+    })
     console.log("Failure unlinking account", err);
-    throw err;
   }
 };
