@@ -24,7 +24,7 @@ export const handleLink = async (interaction: APIApplicationCommandAutocompleteI
                 TableName: "BotTable",
                 KeyConditionExpression: "pk = :userId",
                 ExpressionAttributeValues: {
-                    ":userId": user
+                    ":userId": user.id
                 }
             })
         )).Items;
