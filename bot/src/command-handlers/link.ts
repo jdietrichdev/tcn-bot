@@ -8,12 +8,12 @@ import { dynamoDbClient } from "../clients/dynamodb-client";
 import {
   DeleteItemCommand,
   ReturnValue,
-  UpdateItemCommand,
 } from "@aws-sdk/client-dynamodb";
 import {
   getMessageSender,
   getSubCommandOptionData,
 } from "../util/interaction-util";
+import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 
 export const handleLink = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -53,16 +53,16 @@ const linkPlayer = async (
   try {
     await verify(playerTag, apiToken);
     const response = await dynamoDbClient.send(
-      new UpdateItemCommand({
+      new UpdateCommand({
         TableName: "BotTable",
         Key: {
-          pk: { S: user },
-          sk: { S: `player#${playerTag.substring(1)}` },
+          pk: user ,
+          sk: `player#${playerTag.substring(1)}`,
         },
         UpdateExpression: "SET id=:id, tag=:tag",
         ExpressionAttributeValues: {
-          ":id": { S: user },
-          ":tag": { S: playerTag },
+          ":id": user ,
+          ":tag": playerTag,
         },
         ReturnValues: ReturnValue.NONE,
       })

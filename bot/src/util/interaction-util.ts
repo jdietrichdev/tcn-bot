@@ -1,6 +1,7 @@
 import {
   APIApplicationCommandInteractionDataSubcommandOption,
   APIChatInputApplicationCommandInteraction,
+  APIInteraction,
 } from "discord-api-types/v10";
 
 export const getCommandOptionData = <T>(
@@ -29,7 +30,7 @@ export const getGuildId = (
 };
 
 export const getMessageSender = (
-  interaction: APIChatInputApplicationCommandInteraction
+  interaction: APIInteraction
 ) => {
   return interaction.member!.user;
 };

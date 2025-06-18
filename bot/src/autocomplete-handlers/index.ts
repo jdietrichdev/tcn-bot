@@ -10,6 +10,8 @@ export const handleAutocomplete = async (
         return await autocomplete.handleUpgrade(interaction);
       case "cwl-roster":
         return await autocomplete.handleCwlRoster(interaction);
+      case "link":
+        return await autocomplete.handleLink(interaction);
       default:
         console.log("Autocomplete not found, no response needed");
         throw new Error("No autocomplete process defined");
