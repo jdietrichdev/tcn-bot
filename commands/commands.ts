@@ -38,7 +38,8 @@ export const link = new SlashCommandBuilder()
         return option
           .setName("tag")
           .setDescription("Player tag")
-          .setRequired(true);
+          .setRequired(true)
+          .setAutocomplete(true);
       });
   });
 
