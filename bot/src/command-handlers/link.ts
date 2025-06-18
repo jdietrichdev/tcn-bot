@@ -13,7 +13,7 @@ import {
   getMessageSender,
   getSubCommandOptionData,
 } from "../util/interaction-util";
-import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
 
 export const handleLink = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -53,16 +53,13 @@ const linkPlayer = async (
   try {
     await verify(playerTag, apiToken);
     const response = await dynamoDbClient.send(
-      new UpdateCommand({
+      new PutCommand({
         TableName: "BotTable",
-        Key: {
-          pk: user ,
+        Item: {
+          pk: user,
           sk: `player#${playerTag.substring(1)}`,
-        },
-        UpdateExpression: "SET id=:id, tag=:tag",
-        ExpressionAttributeValues: {
-          ":id": user ,
-          ":tag": playerTag,
+          id: user,
+          tag: playerTag
         },
         ReturnValues: ReturnValue.NONE,
       })
