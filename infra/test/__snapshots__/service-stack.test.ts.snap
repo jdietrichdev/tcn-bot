@@ -46,7 +46,7 @@ exports[`Infrastructure created 1`] = `
               ],
               "LambdaFunctionArn": {
                 "Fn::GetAtt": [
-                  "rosterprocessor6F56C965",
+                  "botprocessor20605CB5",
                   "Arn"
                 ]
               }
@@ -57,16 +57,16 @@ exports[`Infrastructure created 1`] = `
         "SkipDestinationValidation": false
       },
       "DependsOn": [
-        "rosterbucketAllowBucketNotificationsTostackrosterprocessor736CC475FC7BE099"
+        "rosterbucketAllowBucketNotificationsTostackbotprocessorE42C06EDE864D6DB"
       ]
     },
-    "rosterbucketAllowBucketNotificationsTostackrosterprocessor736CC475FC7BE099": {
+    "rosterbucketAllowBucketNotificationsTostackbotprocessorE42C06EDE864D6DB": {
       "Type": "AWS::Lambda::Permission",
       "Properties": {
         "Action": "lambda:InvokeFunction",
         "FunctionName": {
           "Fn::GetAtt": [
-            "rosterprocessor6F56C965",
+            "botprocessor20605CB5",
             "Arn"
           ]
         },
@@ -1061,7 +1061,7 @@ exports[`Infrastructure created 1`] = `
         }
       }
     },
-    "rosterprocessorServiceRoleFA149FAC": {
+    "botprocessorServiceRole3BEBD0E9": {
       "Type": "AWS::IAM::Role",
       "Properties": {
         "AssumeRolePolicyDocument": {
@@ -1092,7 +1092,7 @@ exports[`Infrastructure created 1`] = `
         ]
       }
     },
-    "rosterprocessorServiceRoleDefaultPolicyA74D0B9A": {
+    "botprocessorServiceRoleDefaultPolicy478BA4B9": {
       "Type": "AWS::IAM::Policy",
       "Properties": {
         "PolicyDocument": {
@@ -1130,15 +1130,15 @@ exports[`Infrastructure created 1`] = `
           ],
           "Version": "2012-10-17"
         },
-        "PolicyName": "rosterprocessorServiceRoleDefaultPolicyA74D0B9A",
+        "PolicyName": "botprocessorServiceRoleDefaultPolicy478BA4B9",
         "Roles": [
           {
-            "Ref": "rosterprocessorServiceRoleFA149FAC"
+            "Ref": "botprocessorServiceRole3BEBD0E9"
           }
         ]
       }
     },
-    "rosterprocessor6F56C965": {
+    "botprocessor20605CB5": {
       "Type": "AWS::Lambda::Function",
       "Properties": {
         "Code": {
@@ -1152,11 +1152,11 @@ exports[`Infrastructure created 1`] = `
             "BOT_TOKEN": "BOT_TOKEN"
           }
         },
-        "FunctionName": "roster-processor",
+        "FunctionName": "bot-processor",
         "Handler": "index.processor",
         "Role": {
           "Fn::GetAtt": [
-            "rosterprocessorServiceRoleFA149FAC",
+            "botprocessorServiceRole3BEBD0E9",
             "Arn"
           ]
         },
@@ -1164,11 +1164,11 @@ exports[`Infrastructure created 1`] = `
         "Timeout": 180
       },
       "DependsOn": [
-        "rosterprocessorServiceRoleDefaultPolicyA74D0B9A",
-        "rosterprocessorServiceRoleFA149FAC"
+        "botprocessorServiceRoleDefaultPolicy478BA4B9",
+        "botprocessorServiceRole3BEBD0E9"
       ]
     },
-    "rosterprocessorLogRetention4C3BD978": {
+    "botprocessorLogRetentionA9264A34": {
       "Type": "Custom::LogRetention",
       "Properties": {
         "ServiceToken": {
@@ -1183,7 +1183,7 @@ exports[`Infrastructure created 1`] = `
             [
               "/aws/lambda/",
               {
-                "Ref": "rosterprocessor6F56C965"
+                "Ref": "botprocessor20605CB5"
               }
             ]
           ]
@@ -1264,6 +1264,103 @@ exports[`Infrastructure created 1`] = `
         "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleDefaultPolicy2CF63D36",
         "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC"
       ]
+    },
+    "piperoleB7FECE54": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "pipes.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "RoleName": "CfnPipeRole"
+      }
+    },
+    "piperoleDefaultPolicyBDF71245": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "botprocessor20605CB5",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "botprocessor20605CB5",
+                          "Arn"
+                        ]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "piperoleDefaultPolicyBDF71245",
+        "Roles": [
+          {
+            "Ref": "piperoleB7FECE54"
+          }
+        ]
+      }
+    },
+    "userdatapipe": {
+      "Type": "AWS::Pipes::Pipe",
+      "Properties": {
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "piperoleB7FECE54",
+            "Arn"
+          ]
+        },
+        "Source": "streamArm",
+        "SourceParameters": {
+          "DynamoDBStreamParameters": {
+            "BatchSize": 1,
+            "StartingPosition": "LATEST"
+          },
+          "FilterCriteria": {
+            "Filters": [
+              {
+                "Pattern": "{\\"eventName\\":[\\"INSERT\\"],\\"dynamodb\\":{\\"Keys\\":{\\"sk\\":{\\"S\\":[{\\"prefix\\":\\"player\\"}]}}}}"
+              }
+            ]
+          }
+        },
+        "Target": {
+          "Fn::GetAtt": [
+            "botprocessor20605CB5",
+            "Arn"
+          ]
+        },
+        "TargetParameters": {
+          "InputTemplate": "{\\"id\\":\\"<$.dynamodb.NewImage.id.S>\\",\\"tag\\":\\"<$.dynamodb.NewImage.tag.S>\\"}",
+          "LambdaFunctionParameters": {
+            "InvocationType": "FIRE_AND_FORGET"
+          }
+        }
+      }
     }
   },
   "Outputs": {

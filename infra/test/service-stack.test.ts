@@ -19,7 +19,8 @@ test("Infrastructure created", () => {
     botTable: {
       grantReadWriteData: jest.fn(),
       grantReadData: jest.fn(),
-      grantStreamRead: jest.fn()
+      grantStreamRead: jest.fn(),
+      tableStreamArn: 'streamArm',
     } as unknown as Table,
   });
   template = JSON.stringify(Template.fromStack(stack).toJSON(), null, 2);

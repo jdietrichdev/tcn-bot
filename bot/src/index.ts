@@ -26,6 +26,7 @@ import { createModal } from "./modal-handlers/create";
 import { buttonTriggersModal, commandTriggersModal } from "./component-handlers/utils";
 import { handleRecruiterScore } from "./command-handlers/recruiterScore";
 import { processCwlRoster } from "./processors/cwlRosterProcessor";
+import { newAccountProcessor } from "./processors/newAccountProcessor";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -110,6 +111,6 @@ export const processor = async (event: S3Event | Record<string, string>) => {
   if (event.Records) {
     await processCwlRoster(event as S3Event);
   } else {
-    await process
+    await newAccountProcessor(event as Record<string, string>);
   }
 }
