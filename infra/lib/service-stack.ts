@@ -178,8 +178,8 @@ export class ServiceStack extends Stack {
       new LambdaDestination(botProcessor)
     );
 
-    const pipeRole = new Role(this, 'pipe-role', {
-        roleName: 'CfnPipeRole',
+    const pipeRole = new Role(this, 'bot-pipe-role', {
+        roleName: 'BotPipeRole',
         assumedBy: new ServicePrincipal('pipes.amazonaws.com'),
     });
 
