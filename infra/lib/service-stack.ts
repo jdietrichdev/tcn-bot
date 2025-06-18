@@ -215,7 +215,8 @@ export class ServiceStack extends Stack {
                 invocationType: 'FIRE_AND_FORGET'
             },
             inputTemplate: JSON.stringify({
-                invoiceId: '<$.dynamodb.NewImage.pk.S>'
+                id: '<$.dynamodb.NewImage.id.S>',
+                tag: '<$.dynamodb.NewImage.tag.S>'
             }),
         },
     });
