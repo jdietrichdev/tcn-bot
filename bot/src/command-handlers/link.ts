@@ -54,7 +54,7 @@ const linkPlayer = async (
     await verify(playerTag, apiToken);
     const response = await dynamoDbClient.send(
       new UpdateItemCommand({
-        TableName: "SchedulingTable",
+        TableName: "BotTable",
         Key: {
           pk: { S: user },
           sk: { S: `player#${playerTag.substring(1)}` },
@@ -92,7 +92,7 @@ const unlinkPlayer = async (
     const user = getMessageSender(interaction).id;
     const response = await dynamoDbClient.send(
       new DeleteItemCommand({
-        TableName: "SchedulingTable",
+        TableName: "BotTable",
         Key: {
           pk: { S: user },
           sk: { S: `player#${playerTag.substring(1)}` },
