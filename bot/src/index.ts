@@ -107,11 +107,11 @@ export const scheduled = async (
   }
 }
 
-export const processor = async (event: S3Event | Record<string, string>) => {
+export const processor = async (event: S3Event | Record<string, string>[]) => {
   console.log(JSON.stringify(event));
   if (event.Records) {
     await processCwlRoster(event as S3Event);
   } else {
-    await newAccountProcessor(event as Record<string, string>);
+    await newAccountProcessor(event[0] as Record<string, string>);
   }
 }
