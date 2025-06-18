@@ -11,7 +11,6 @@ import {
   UpdateItemCommand,
 } from "@aws-sdk/client-dynamodb";
 import {
-  getGuildId,
   getMessageSender,
   getSubCommandOptionData,
 } from "../util/interaction-util";
@@ -23,10 +22,8 @@ export const handleLink = async (
     switch (interaction.data.options![0].name) {
       case "create":
         return await linkPlayer(interaction);
-        break;
       case "remove":
         return await unlinkPlayer(interaction);
-        break;
       default:
         throw new Error("No processing defined for that command");
     }
@@ -51,7 +48,6 @@ const linkPlayer = async (
       "create",
       "token"
     ).value;
-  const guildId = getGuildId(interaction);
   const user = getMessageSender(interaction).id;
 
   try {
@@ -60,8 +56,8 @@ const linkPlayer = async (
       new UpdateItemCommand({
         TableName: "SchedulingTable",
         Key: {
-          pk: { S: guildId },
-          sk: { S: `player#${user}#${playerTag.substring(1)}` },
+          pk: { S: user },
+          sk: { S: `player#${playerTag.substring(1)}` },
         },
         UpdateExpression: "SET id=:id, tag=:tag",
         ExpressionAttributeValues: {
@@ -77,7 +73,9 @@ const linkPlayer = async (
     });
   } catch (err) {
     console.log("Failure linking account", err);
-    throw err;
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: "Failed to link user, please try again",
+    });
   }
 };
 
@@ -91,14 +89,13 @@ const unlinkPlayer = async (
         "remove",
         "tag"
       ).value;
-    const guildId = getGuildId(interaction);
     const user = getMessageSender(interaction).id;
     const response = await dynamoDbClient.send(
       new DeleteItemCommand({
         TableName: "SchedulingTable",
         Key: {
-          pk: { S: guildId },
-          sk: { S: `player#${user}#${playerTag.substring(1)}` },
+          pk: { S: user },
+          sk: { S: `player#${playerTag.substring(1)}` },
         },
       })
     );
