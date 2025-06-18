@@ -1,4 +1,4 @@
-import { APIApplicationCommandAutocompleteInteraction, APIApplicationCommandInteractionDataStringOption, APIApplicationCommandInteractionDataSubcommandOption, APICommandAutocompleteInteractionResponseCallbackData } from "discord-api-types/v10";
+import { APIApplicationCommandAutocompleteInteraction, APIApplicationCommandInteractionDataStringOption, APIApplicationCommandInteractionDataSubcommandOption, APICommandAutocompleteInteractionResponseCallbackData, InteractionResponseType } from "discord-api-types/v10";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { getMessageSender } from "../util/interaction-util";
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
@@ -29,6 +29,8 @@ export const handleLink = async (interaction: APIApplicationCommandAutocompleteI
             })
         )).Items;
 
+        console.log(accounts);
+
         options.choices = accounts?.map((account) => {
             return {
                 name: account.tag,
@@ -37,5 +39,8 @@ export const handleLink = async (interaction: APIApplicationCommandAutocompleteI
         })
     }
 
-    return options;
+    return {
+        type: InteractionResponseType.ApplicationCommandAutocompleteResult,
+        data: options,
+    };
 }
