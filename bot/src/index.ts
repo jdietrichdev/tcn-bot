@@ -112,6 +112,6 @@ export const processor = async (event: S3Event | Record<string, string>[]) => {
   if ((event as S3Event).Records) {
     await processCwlRoster(event as S3Event);
   } else {
-    await newAccountProcessor(event[0] as Record<string, string>);
+    await newAccountProcessor((event as Record<string, string>[])[0]);
   }
 }
