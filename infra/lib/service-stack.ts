@@ -140,6 +140,7 @@ export class ServiceStack extends Stack {
     });
     this.eventBus.grantPutEventsTo(this.proxy);
     rosterBucket.grantRead(this.proxy);
+    props.botTable.grantReadData(this.proxy);
 
     const accessLogs = new LogGroup(this, "access-logs", {
       logGroupName: "BotAccessLogs",
