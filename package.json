@@ -11,7 +11,8 @@
   "workspaces": [
     "infra",
     "bot",
-    "commands"
+    "commands",
+    "ui"
   ],
   "devDependencies": {
     "@types/jest": "^29.5.12",
