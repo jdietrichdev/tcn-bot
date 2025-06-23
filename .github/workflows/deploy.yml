@@ -5,6 +5,7 @@ on:
     paths:
       - infra/**
       - bot/**
+      - ui/**
       - .github/workflows/deploy.yml
     branches:
       - main
