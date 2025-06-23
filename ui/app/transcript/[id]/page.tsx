@@ -1,7 +1,8 @@
 import { fetchTranscript } from "@/utils/transcriptHelper";
 import { notFound } from "next/navigation";
 
-export default async function Transcript({ params }: { params: { id: string } }) {
+export default async function Transcript(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   let transcript;
   try {
     transcript = await fetchTranscript(`${params.id}.json`);
