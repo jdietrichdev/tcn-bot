@@ -31,7 +31,7 @@ dist/
 /coverage
 
 # next.js
-/.next/
+ui/.next/
 /out/
 
 # production

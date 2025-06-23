@@ -14,7 +14,7 @@ export class UIStack extends Stack {
     super(scope, id, props);
 
     this.nextjs = new Nextjs(this, "bot-ui", {
-      nextjsPath: "./ui/",
+      nextjsPath: "../ui/",
     });
 
     props.transcriptBucket.grantRead(this.nextjs.serverFunction.lambdaFunction);
