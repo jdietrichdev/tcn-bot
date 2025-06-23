@@ -1,6 +1,11 @@
 import { Construct } from "constructs";
 import { Duration, RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
-import { Code, Function as Lambda, Runtime, StartingPosition } from "aws-cdk-lib/aws-lambda";
+import {
+  Code,
+  Function as Lambda,
+  Runtime,
+  StartingPosition,
+} from "aws-cdk-lib/aws-lambda";
 import {
   AccessLogFormat,
   LambdaRestApi,
@@ -48,6 +53,12 @@ export class ServiceStack extends Stack {
       encryption: BucketEncryption.S3_MANAGED,
     });
 
+    const transcriptBucket = new Bucket(this, "transcript-bucket", {
+      bucketName: "bot-transcript-bucket",
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      encryption: BucketEncryption.S3_MANAGED,
+    });
+
     this.handler = new Lambda(this, "bot-handler", {
       functionName: "bot-handler",
       runtime: Runtime.NODEJS_22_X,
@@ -64,6 +75,7 @@ export class ServiceStack extends Stack {
     });
     props.table.grantReadWriteData(this.handler);
     props.botTable.grantReadWriteData(this.handler);
+    transcriptBucket.grantWrite(this.handler);
 
     this.scheduled = new Lambda(this, "bot-scheduled", {
       functionName: "bot-scheduled",
@@ -178,47 +190,49 @@ export class ServiceStack extends Stack {
       new LambdaDestination(botProcessor)
     );
 
-    const pipeRole = new Role(this, 'bot-pipe-role', {
-        roleName: 'BotPipeRole',
-        assumedBy: new ServicePrincipal('pipes.amazonaws.com'),
+    const pipeRole = new Role(this, "bot-pipe-role", {
+      roleName: "BotPipeRole",
+      assumedBy: new ServicePrincipal("pipes.amazonaws.com"),
     });
 
     props.botTable.grantStreamRead(pipeRole);
     botProcessor.grantInvoke(pipeRole);
 
-    new CfnPipe(this, 'user-data-pipe', {
-        source: props.botTable.tableStreamArn!,
-        target: botProcessor.functionArn,
-        roleArn: pipeRole.roleArn,
-        sourceParameters: {
-            dynamoDbStreamParameters: {
-                startingPosition: StartingPosition.LATEST,
-                batchSize: 1,
-            },
-            filterCriteria: {
-                filters: [{
-                    pattern: JSON.stringify({
-                        eventName: ["INSERT"],
-                        dynamodb: {
-                            Keys: {
-                                sk: {
-                                    S: [ { prefix: "player" } ]
-                                }
-                            }
-                        }
-                    })
-                }]
-            }
+    new CfnPipe(this, "user-data-pipe", {
+      source: props.botTable.tableStreamArn!,
+      target: botProcessor.functionArn,
+      roleArn: pipeRole.roleArn,
+      sourceParameters: {
+        dynamoDbStreamParameters: {
+          startingPosition: StartingPosition.LATEST,
+          batchSize: 1,
         },
-        targetParameters: {
-            lambdaFunctionParameters: {
-                invocationType: 'FIRE_AND_FORGET'
+        filterCriteria: {
+          filters: [
+            {
+              pattern: JSON.stringify({
+                eventName: ["INSERT"],
+                dynamodb: {
+                  Keys: {
+                    sk: {
+                      S: [{ prefix: "player" }],
+                    },
+                  },
+                },
+              }),
             },
-            inputTemplate: JSON.stringify({
-                id: '<$.dynamodb.NewImage.id.S>',
-                tag: '<$.dynamodb.NewImage.tag.S>'
-            }),
+          ],
         },
+      },
+      targetParameters: {
+        lambdaFunctionParameters: {
+          invocationType: "FIRE_AND_FORGET",
+        },
+        inputTemplate: JSON.stringify({
+          id: "<$.dynamodb.NewImage.id.S>",
+          tag: "<$.dynamodb.NewImage.tag.S>",
+        }),
+      },
     });
 
     rosterBucket.grantRead(botProcessor);

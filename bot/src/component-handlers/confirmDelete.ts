@@ -3,6 +3,8 @@ import {
   APIGuildTextChannel,
   APIMessage,
   APIMessageComponentInteraction,
+  // ButtonStyle,
+  // ComponentType,
   GuildTextChannelType,
 } from "discord-api-types/v10";
 import {
@@ -13,14 +15,27 @@ import {
 } from "../adapters/discord-adapter";
 import { getConfig } from "../util/serverConfig";
 import { createDiscordTimestamp } from "../util/format-util";
+import { v4 as uuidv4 } from "uuid";
+import { s3Client } from "../clients/s3-client";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 
 export const confirmDelete = async (
   interaction: APIMessageComponentInteraction
 ) => {
   try {
     const config = getConfig(interaction.guild_id!);
+    const transcriptId = uuidv4();
     const messages = await getChannelMessages(interaction.channel.id);
     messages.reverse();
+    console.log(JSON.stringify(messages));
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: "bot-transcript-bucket",
+        Key: `${interaction.guild_id!}/${transcriptId}.json`,
+        Body: JSON.stringify(messages),
+        ContentType: "application/json",
+      })
+    );
     const eventMessages = messages.filter((message) => {
       return (
         message.author.id === config.BOT_ID &&
@@ -33,6 +48,19 @@ export const confirmDelete = async (
     await sendMessage(
       {
         embeds: [transcript],
+        // components: [
+        //   {
+        //     type: ComponentType.ActionRow,
+        //     components: [
+        //       {
+        //         type: ComponentType.Button,
+        //         style: ButtonStyle.Link,
+        //         label: "Transcript",
+        //         url: `https://jdietrichdev.us/${trnascriptId}`,
+        //       },
+        //     ],
+        //   },
+        // ],
       },
       config.TRANSCRIPT_CHANNEL
     );
