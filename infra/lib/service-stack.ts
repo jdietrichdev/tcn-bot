@@ -43,6 +43,7 @@ export class ServiceStack extends Stack {
   private proxy: Lambda;
   private handler: Lambda;
   private scheduled: Lambda;
+  readonly transcriptBucket: Bucket;
 
   constructor(scope: Construct, id: string, props: ServiceStackProps) {
     super(scope, id, props);
@@ -53,7 +54,7 @@ export class ServiceStack extends Stack {
       encryption: BucketEncryption.S3_MANAGED,
     });
 
-    const transcriptBucket = new Bucket(this, "transcript-bucket", {
+    this.transcriptBucket = new Bucket(this, "transcript-bucket", {
       bucketName: "bot-transcript-bucket",
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       encryption: BucketEncryption.S3_MANAGED,
@@ -75,7 +76,7 @@ export class ServiceStack extends Stack {
     });
     props.table.grantReadWriteData(this.handler);
     props.botTable.grantReadWriteData(this.handler);
-    transcriptBucket.grantWrite(this.handler);
+    this.transcriptBucket.grantWrite(this.handler);
 
     this.scheduled = new Lambda(this, "bot-scheduled", {
       functionName: "bot-scheduled",

@@ -27,11 +27,10 @@ export const confirmDelete = async (
     const transcriptId = uuidv4();
     const messages = await getChannelMessages(interaction.channel.id);
     messages.reverse();
-    console.log(JSON.stringify(messages));
     await s3Client.send(
       new PutObjectCommand({
         Bucket: "bot-transcript-bucket",
-        Key: `${interaction.guild_id!}/${transcriptId}.json`,
+        Key: `${transcriptId}.json`,
         Body: JSON.stringify(messages),
         ContentType: "application/json",
       })
