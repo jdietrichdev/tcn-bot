@@ -1,5 +1,5 @@
 import { fetchTranscript } from "@/utils/transcriptHelper";
-import { DiscordMessage, DiscordMessages } from "@skyra/discord-components-react";
+import { DiscordEmbed, DiscordMessage, DiscordMessages } from "@skyra/discord-components-react";
 import { notFound } from "next/navigation";
 
 export default async function Transcript({ params }: { params: Promise<{ id: string }> }) {
@@ -19,8 +19,13 @@ export default async function Transcript({ params }: { params: Promise<{ id: str
 
       <DiscordMessages>
         {transcript.map((message) => {
+          message.mentions.forEach((mention) => message.content.replace(`<@${mention.id}>`, `@${mention.username}`));
           return <DiscordMessage key={message.id} content={message.content} author={message.author.username}
-            timestamp={message.timestamp}>{message.content}</DiscordMessage>
+            timestamp={message.timestamp}>
+              {message.content}
+              ...{message.embeds.length !== 0 && <DiscordEmbed>{message.embeds[0]}</DiscordEmbed>}
+          </DiscordMessage>;
+          
         })}
       </DiscordMessages>
     </main>
