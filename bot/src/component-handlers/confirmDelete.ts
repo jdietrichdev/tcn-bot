@@ -3,8 +3,8 @@ import {
   APIGuildTextChannel,
   APIMessage,
   APIMessageComponentInteraction,
-  // ButtonStyle,
-  // ComponentType,
+  ButtonStyle,
+  ComponentType,
   GuildTextChannelType,
 } from "discord-api-types/v10";
 import {
@@ -47,19 +47,19 @@ export const confirmDelete = async (
     await sendMessage(
       {
         embeds: [transcript],
-        // components: [
-        //   {
-        //     type: ComponentType.ActionRow,
-        //     components: [
-        //       {
-        //         type: ComponentType.Button,
-        //         style: ButtonStyle.Link,
-        //         label: "Transcript",
-        //         url: `https://jdietrichdev.us/${trnascriptId}`,
-        //       },
-        //     ],
-        //   },
-        // ],
+        components: [
+          {
+            type: ComponentType.ActionRow,
+            components: [
+              {
+                type: ComponentType.Button,
+                style: ButtonStyle.Link,
+                label: "Transcript",
+                url: `https://d19x3gu4qo04f3.cloudfront.net/transcript/${trnascriptId}`,
+              },
+            ],
+          },
+        ],
       },
       config.TRANSCRIPT_CHANNEL
     );
