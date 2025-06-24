@@ -1,3 +1,5 @@
+"use server";
+
 import { storeRoster } from "./data";
 
 export type State = {
