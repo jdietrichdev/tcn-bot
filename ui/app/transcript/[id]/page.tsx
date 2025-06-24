@@ -1,4 +1,5 @@
 import { fetchTranscript } from "@/utils/transcriptHelper";
+import { DiscordMessage, DiscordMessages } from "@skyra/discord-components-react";
 import { notFound } from "next/navigation";
 
 export default async function Transcript({ params }: { params: Promise<{ id: string }> }) {
@@ -15,9 +16,13 @@ export default async function Transcript({ params }: { params: Promise<{ id: str
   return (
     <main className="p-4">
       <h1 className="text-xl font-bold">Transcript for {id}</h1>
-      <pre className="bg-gray-100 p-4 rounded text-sm overflow-auto">
-        {JSON.stringify(transcript, null, 2)}
-      </pre>
+
+      <DiscordMessages>
+        {transcript.map((message: Record<string, any>) => {
+          <DiscordMessage key={message.id} content={message.content} author={message.author}
+            avatar={message.avatarUrl} timestamp={message.timestamp} />
+        })}
+      </DiscordMessages>
     </main>
   )
 }

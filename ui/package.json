@@ -10,6 +10,7 @@
     "test": "exit 0"
   },
   "dependencies": {
+    "@skyra/discord-components-react": "4.0.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "next": "15.3.4"
