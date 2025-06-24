@@ -19,8 +19,8 @@ export default async function Transcript({ params }: { params: Promise<{ id: str
 
       <DiscordMessages>
         {transcript.map((message) => {
-          return <DiscordMessage key={message.id} content={message.content} author={message.author}
-            avatar={message.avatarUrl} timestamp={message.timestamp} />
+          return <DiscordMessage key={message.id} content={message.content} author={message.author.username}
+            timestamp={message.timestamp}>{message.content}</DiscordMessage>
         })}
       </DiscordMessages>
     </main>
