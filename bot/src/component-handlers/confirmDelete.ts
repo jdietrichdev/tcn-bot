@@ -55,7 +55,7 @@ export const confirmDelete = async (
                 type: ComponentType.Button,
                 style: ButtonStyle.Link,
                 label: "Transcript",
-                url: `https://d19x3gu4qo04f3.cloudfront.net/transcript/${trnascriptId}`,
+                url: `https://d19x3gu4qo04f3.cloudfront.net/transcript/${transcriptId}`,
               },
             ],
           },
