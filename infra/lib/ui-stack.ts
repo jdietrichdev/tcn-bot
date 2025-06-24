@@ -4,6 +4,7 @@ import { Construct } from "constructs";
 import { Nextjs } from "cdk-nextjs-standalone";
 
 interface UIStackProps extends StackProps {
+  rosterBucket: Bucket;
   transcriptBucket: Bucket;
 }
 
@@ -17,6 +18,7 @@ export class UIStack extends Stack {
       nextjsPath: "../ui/",
     });
 
+    props.rosterBucket.grantWrite(this.nextjs.serverFunction.lambdaFunction);
     props.transcriptBucket.grantRead(this.nextjs.serverFunction.lambdaFunction);
   }
 }

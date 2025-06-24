@@ -43,12 +43,13 @@ export class ServiceStack extends Stack {
   private proxy: Lambda;
   private handler: Lambda;
   private scheduled: Lambda;
+  readonly rosterBucket: Bucket;
   readonly transcriptBucket: Bucket;
 
   constructor(scope: Construct, id: string, props: ServiceStackProps) {
     super(scope, id, props);
 
-    const rosterBucket = new Bucket(this, "roster-bucket", {
+    this.rosterBucket = new Bucket(this, "roster-bucket", {
       bucketName: "bot-roster-bucket",
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       encryption: BucketEncryption.S3_MANAGED,
@@ -154,7 +155,7 @@ export class ServiceStack extends Stack {
       },
     });
     this.eventBus.grantPutEventsTo(this.proxy);
-    rosterBucket.grantRead(this.proxy);
+    this.rosterBucket.grantRead(this.proxy);
     props.botTable.grantReadData(this.proxy);
 
     const accessLogs = new LogGroup(this, "access-logs", {
@@ -186,7 +187,7 @@ export class ServiceStack extends Stack {
       timeout: Duration.minutes(3),
     });
 
-    rosterBucket.addEventNotification(
+    this.rosterBucket.addEventNotification(
       EventType.OBJECT_CREATED,
       new LambdaDestination(botProcessor)
     );
@@ -236,7 +237,7 @@ export class ServiceStack extends Stack {
       },
     });
 
-    rosterBucket.grantRead(botProcessor);
+    this.rosterBucket.grantRead(botProcessor);
     props.botTable.grantReadWriteData(botProcessor);
   }
 }

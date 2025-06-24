@@ -22,5 +22,6 @@ const service = new ServiceStack(app, "DiscordBotStack", {
 });
 new UIStack(app, "DiscordUIStack", {
   ...DEFAULT_STACK_PROPS,
+  rosterBucket: service.rosterBucket,
   transcriptBucket: service.transcriptBucket,
 });
