@@ -35,7 +35,7 @@ export default async function Transcript({ params }: { params: Promise<{ id: str
     <DiscordMessages>
       {transcript.map((message) => {
         if (message.type !== 6) {
-          message.mentions.forEach((mention: Record<string, any>) => message.content = message.content.replace(`<@${mention.id}>`, `@${mention.username}`));
+          message.mentions.forEach((mention: Record<string, any>) => message.content = message.content.replace(`<@${mention.id}>`, `@${mention.global_name ?? mention.username}`));
           return <DiscordMessage key={message.id} content={message.content} author={message.author.global_name ?? message.author.username}
             timestamp={message.timestamp} avatar={getAvatar(message.author.id, message.author.avatar)}>
               {message.interaction && <DiscordCommand slot="reply" author={message.interaction.user.global_name ?? message.interaction.user.username} command={`/${message.interaction.name}`} />}
