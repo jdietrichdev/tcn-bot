@@ -1,6 +1,11 @@
 import { fetchTranscript } from "@/utils/transcriptHelper";
-import { DiscordEmbed, DiscordEmbedField, DiscordEmbedFields, DiscordMessage, DiscordMessages } from "@skyra/discord-components-react";
+import { DiscordEmbed, DiscordEmbedDescription, DiscordEmbedField, DiscordEmbedFields, DiscordMessage, DiscordMessages } from "@skyra/discord-components-react";
+import { Metadata } from "next";
 import { notFound } from "next/navigation";
+
+export const metadata: Metadata = {
+  title: "Application Transcript"
+}
 
 export default async function Transcript({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -23,10 +28,12 @@ export default async function Transcript({ params }: { params: Promise<{ id: str
           return <DiscordMessage key={message.id} content={message.content} author={message.author.username}
             timestamp={message.timestamp}>
               {message.content}
-              {message.embeds.length !== 0 && <DiscordEmbed embedTitle={message.embeds[0].title}>
-                  {message.embeds[0].description}
+              {message.embeds.length !== 0 && <DiscordEmbed slot="embeds" embedTitle={message.embeds[0].title}>
+                  <DiscordEmbedDescription>
+                    {message.embeds[0].description}
+                  </DiscordEmbedDescription>
                   <DiscordEmbedFields slot="fields">
-                    {message.embeds[0].fields.map((field: Record<string, any>) => {
+                    {message.embeds[0].fields && message.embeds[0].fields.map((field: Record<string, any>) => {
                       return <DiscordEmbedField fieldTitle={field.name} key={field.name}>
                         {field.value}
                       </DiscordEmbedField>
