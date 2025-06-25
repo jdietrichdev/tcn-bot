@@ -1,5 +1,5 @@
 import { fetchTranscript } from "@/utils/transcriptHelper";
-import { DiscordAttachments, DiscordCommand, DiscordEmbed, DiscordEmbedDescription, DiscordEmbedField, DiscordEmbedFields, DiscordImageAttachment, DiscordMention, DiscordMessage, DiscordMessages, DiscordReaction, DiscordReactions } from "@skyra/discord-components-react";
+import { DiscordAttachments, DiscordCommand, DiscordEmbed, DiscordEmbedDescription, DiscordEmbedField, DiscordEmbedFields, DiscordImageAttachment, DiscordMessage, DiscordMessages, DiscordReaction, DiscordReactions } from "@skyra/discord-components-react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
