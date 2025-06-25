@@ -1,6 +1,12 @@
 import { fetchTranscript } from "@/utils/transcriptHelper";
 import { DiscordEmbed, DiscordEmbedField, DiscordEmbedFields, DiscordMessage, DiscordMessages } from "@skyra/discord-components-react";
+import { Metadata } from "next";
 import { notFound } from "next/navigation";
+
+export const metadata: Metadata = {
+  title: "Application Transcript",
+  description: "Transcript for deleted application ticket"
+}
 
 export default async function Transcript({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
