@@ -7,7 +7,7 @@ export const storeRoster = async (roster: File, server: string) => {
     await s3Client.send(
       new PutObjectCommand({
         Bucket: "bot-roster-bucket",
-        Key: `${server}/${roster.name}.csv`,
+        Key: `${server}/${roster.name}`,
         Body: buffer,
         ContentType: "text/csv",
       })
