@@ -16,6 +16,8 @@ import {
 } from "../adapters/discord-adapter";
 import { BUTTONS } from "./buttons";
 import { determineRolesButton } from "./utils";
+import { dynamoDbClient } from "../clients/dynamodb-client";
+import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 
 export const approveApp = async (
   interaction: APIMessageComponentInteraction,
@@ -24,9 +26,11 @@ export const approveApp = async (
   try {
     const responses = interaction.message.embeds[0];
     const userId = responses.fields?.splice(5, 1)[0].value;
+    const ticketNumber = await getTicketNumber(interaction.guild_id!);
     const applicationChannel = await createApplicationChannel(
       interaction,
       userId!,
+      ticketNumber,
       config
     );
     delete responses.footer;
@@ -66,15 +70,46 @@ export const approveApp = async (
   }
 };
 
+const getTicketNumber = async (guildId: string) => {
+  try {
+    let ticketNumber = 1;
+    const response = await dynamoDbClient.send(new GetCommand({
+      TableName: "BotTable",
+      Key: {
+        pk: guildId,
+        sk: 'ticketNumber'
+      }
+    }));
+    
+    if (response.Item) {
+      ticketNumber = response.Item.number;
+    }
+
+    await dynamoDbClient.send(new PutCommand({
+      TableName: "BotTable",
+      Item: {
+        pk: guildId,
+        sk: 'ticketNumber',
+        number: ticketNumber + 1
+      }
+    }));
+
+    return ticketNumber;
+  } catch (err) {
+    throw new Error(`Failure fetching next ticket number: ${err}`);
+  }
+}
+
 const createApplicationChannel = async (
   interaction: APIMessageComponentInteraction,
   userId: string,
+  ticketNumber: number,
   config: ServerConfig
 ) => {
   const username = interaction.message.embeds[0].title?.split(" ")[2];
   const channel = await createChannel(
     {
-      name: `\u{1F39F}-${username?.toLowerCase().replace(/[^a-z0-9_-]/g, "")}`,
+      name: `\u{1F39F}-${ticketNumber}-${username?.toLowerCase().replace(/[^a-z0-9_-]/g, "")}`,
       type: ChannelType.GuildText,
       topic: `Application channel for ${username}:${userId}`,
       parent_id: config.APPLICATION_CATEGORY,
