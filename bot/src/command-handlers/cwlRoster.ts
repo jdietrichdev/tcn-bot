@@ -16,6 +16,7 @@ import { getCommandOptionData } from "../util/interaction-util";
 import { getClan, getCwl } from "../adapters/coc-api-adapter";
 import { WAR_LEAGUE } from "../constants/emojis/coc/cwlLeague";
 import { createDiscordTimestamp } from "../util/format-util";
+import { isAxiosError } from "axios";
 
 export const handleCwlRoster = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -50,7 +51,13 @@ export const handleCwlRoster = async (
       const announcementMessages = await buildAnnouncement(rosterData.roster);
       if (rosterData.previousMessages) {
         for (const messageId of rosterData.previousMessages) {
-          await deleteMessage(config.CWL_ROSTER_CHANNEL, messageId);
+          try {
+            await deleteMessage(config.CWL_ROSTER_CHANNEL, messageId);
+          } catch (err) {
+            if (isAxiosError(err) && err.response?.status === 404) {
+              console.log('Message already deleted, continuing...');
+            } else throw err;
+          }
         }
       }
       const previousMessages: string[] = [];
