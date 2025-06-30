@@ -53,6 +53,7 @@ export class ServiceStack extends Stack {
       bucketName: "bot-roster-bucket",
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       encryption: BucketEncryption.S3_MANAGED,
+      versioned: true,
     });
 
     this.transcriptBucket = new Bucket(this, "transcript-bucket", {
