@@ -140,7 +140,7 @@ const buildReminder = async (roster: Record<string, any>[]) => {
       clan.clanTag
     }>)\n`;
 
-    if (cwlStatus.state === 'not_spun' || cwlStatus.state === 'ended') {
+    if (cwlStatus.state === 'not_spun' || cwlStatus.state === "notInWar" || cwlStatus.state === 'ended') {
       const missingPlayers = clan.players.filter(
         (player: Record<string, string>) => {
           return !clanData.memberList.some(
