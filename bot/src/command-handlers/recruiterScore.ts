@@ -26,6 +26,7 @@ export const handleRecruiterScore = async (
     for (const message of messages) {
       if (
         message.type === MessageType.ChatInputCommand &&
+        message.embeds[0] &&
         message.embeds[0].title != "You're on Cooldown"
       ) {
         const user = message.interaction_metadata!.user.username;
