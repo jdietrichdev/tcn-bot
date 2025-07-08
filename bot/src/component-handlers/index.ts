@@ -10,6 +10,7 @@ import { removeRoles } from "./removeRoles";
 import { APIMessageComponentInteraction } from "discord-api-types/v10";
 import { confirmDelete } from "./confirmDelete";
 import { rejectDelete } from "./rejectDelete";
+import { signupCwl } from "./signupCwl";
 
 export const handleComponent = async (
   interaction: APIMessageComponentInteraction
@@ -45,6 +46,9 @@ export const handleComponent = async (
       break;
     case "rejectDelete":
       await rejectDelete(interaction);
+      break;
+    case "signupCwl":
+      await signupCwl(interaction);
       break;
   }
 };

@@ -26,6 +26,8 @@ export const handleCommand = async (
         return await commands.handleRecruiterScore(event.detail);
       case "cwl-roster":
         return await commands.handleCwlRoster(event.detail);
+      case "initiate-cwl-signup":
+        return await commands.handleInitiateCwlSignup(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);
