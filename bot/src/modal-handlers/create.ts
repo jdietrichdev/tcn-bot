@@ -5,10 +5,13 @@ import {
 import { createApplyModal } from "./apply";
 import { createDenyAppModal } from "./denyApp";
 import { createLeadApplyModal } from "./leadApply";
+import { createCwlAccountSignupModal } from "./signupAccount";
 
 export const createModal = (
-  interaction: APIMessageComponentInteraction | APIApplicationCommandInteraction,
-  trigger: string,
+  interaction:
+    | APIMessageComponentInteraction
+    | APIApplicationCommandInteraction,
+  trigger: string
 ) => {
   switch (trigger) {
     case "apply":
@@ -18,6 +21,10 @@ export const createModal = (
       return createLeadApplyModal(interaction);
     case "denyApp":
       return createDenyAppModal(interaction as APIMessageComponentInteraction);
+    case "signupAccount":
+      return createCwlAccountSignupModal(
+        interaction as APIMessageComponentInteraction
+      );
     default:
       throw new Error("No handler defined for creating modal");
   }

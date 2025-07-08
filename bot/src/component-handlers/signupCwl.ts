@@ -39,7 +39,7 @@ export const signupCwl = async (
               options: accounts
                 ? accounts.map((account) => {
                     return {
-                      label: `${account.tag} ${account.username}`,
+                      label: `${account.tag} ${account.playerName}`,
                       value: account.tag,
                     };
                   })

@@ -19,7 +19,7 @@ export const handleInitiateCwlSignup = async (
         "name"
       ).value;
 
-    await sendMessage(
+    const signupMessage = await sendMessage(
       {
         embeds: [
           {
@@ -39,6 +39,7 @@ export const handleInitiateCwlSignup = async (
       },
       config.CWL_SIGNUP_CHANNEL
     );
+    console.log(signupMessage);
     await updateResponse(interaction.application_id, interaction.token, {
       content: "CWL signup has been started",
     });
