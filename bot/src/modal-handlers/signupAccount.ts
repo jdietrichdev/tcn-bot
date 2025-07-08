@@ -1,6 +1,5 @@
 import {
   APIEmbed,
-  APIEmbedField,
   APIInteractionResponse,
   APIMessageComponentInteraction,
   APIMessageSelectMenuInteractionData,
@@ -137,13 +136,13 @@ export const submitCwlAccountSignupModal = async (
 const buildEmbed = (signup: Record<string, any>) => {
   return {
     title: signup.signupName,
-    fields: signup.accounts.map((account: Record<string, string>) => {
-      return {
-        name: account.playerTag,
-        value: account.username,
-        inline: true,
-      } as APIEmbedField;
-    }),
+    description: signup.accounts
+      .slice(-40)
+      .map(
+        (account: Record<string, string>) =>
+          `\`emoji\` \`${account.username}\` \`${account.playerTag}\``
+      )
+      .join("\n"),
     footer: {
       text: `Total accounts: ${signup.accounts.length}\nSignup is OPEN`,
     },
