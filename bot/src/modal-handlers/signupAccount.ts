@@ -42,7 +42,7 @@ export const createCwlAccountSignupModal = async (
               {
                 type: ComponentType.TextInput,
                 custom_id: "availability",
-                label: "How available will you be during week of CWL?",
+                label: "How available will you be during CWL?",
                 style: TextInputStyle.Short,
                 required: false,
               },
