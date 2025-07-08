@@ -13,6 +13,7 @@ export const createCwlAccountSignupModal = async (
   interaction: APIMessageComponentInteraction
 ) => {
   try {
+    console.log(JSON.stringify(interaction));
     await updateMessage(interaction.channel.id, interaction.message.id, {
       content: "Account being added to roster",
     });
