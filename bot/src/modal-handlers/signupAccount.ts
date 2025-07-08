@@ -76,12 +76,10 @@ export const submitCwlAccountSignupModal = async (
 ) => {
   try {
     console.log(JSON.stringify(interaction));
-    const responses: { [key: string]: string }[] = [];
+    const responses: { [key: string]: string } = {};
     interaction.data.components.forEach((component) => {
-      const response: { [key: string]: string } = {};
-      response[component.components[0].custom_id] =
+      responses[component.components[0].custom_id] =
         component.components[0].value;
-      responses.push(response);
     });
     const account = {
       id: interaction.member!.user.id,
