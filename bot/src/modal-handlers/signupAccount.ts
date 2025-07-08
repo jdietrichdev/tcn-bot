@@ -76,18 +76,20 @@ export const submitCwlAccountSignupModal = async (
 ) => {
   try {
     console.log(JSON.stringify(interaction));
+    const responses: { [key: string]: string }[] = [];
+    interaction.data.components.forEach((component) => {
+      const response: { [key: string]: string } = {};
+      response[component.components[0].custom_id] =
+        component.components[0].value;
+      responses.push(response);
+    });
     const account = {
       id: interaction.member!.user.id,
       playerTag: (
         interaction.message!.components![0]
           .components[0] as APIStringSelectComponent
       ).options[0].value,
-      ...interaction.data.components.map((component) => {
-        const response: { [key: string]: string } = {};
-        response[component.components[0].custom_id] =
-          component.components[0].value;
-        return response;
-      }),
+      ...responses,
     };
     const signup = (
       await dynamoDbClient.send(
