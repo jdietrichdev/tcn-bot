@@ -52,13 +52,13 @@ export const proxy = async (
     commandTriggersModal(body.data.name)
   ) {
     console.log("Command modal triggered");
-    response = createModal(body, body.data.name);
+    response = await createModal(body, body.data.name);
   } else if (
     body.type === InteractionType.MessageComponent &&
     buttonTriggersModal(body.data.custom_id)
   ) {
     console.log("Button modal triggered");
-    response = createModal(body, body.data.custom_id);
+    response = await createModal(body, body.data.custom_id);
   } else {
     await eventClient.send(
       new PutEventsCommand({
