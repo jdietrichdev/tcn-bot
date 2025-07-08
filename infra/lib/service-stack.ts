@@ -153,7 +153,6 @@ export class ServiceStack extends Stack {
       environment: {
         REGION: props.env!.region!,
         DISCORD_PUBLIC_KEY: process.env.DISCORD_PUBLIC_KEY!,
-        BOT_TOKEN: process.env.BOT_TOKEN!,
       },
     });
     this.eventBus.grantPutEventsTo(this.proxy);

@@ -781,8 +781,7 @@ exports[`Infrastructure created 1`] = `
         "Environment": {
           "Variables": {
             "REGION": "us-east-1",
-            "DISCORD_PUBLIC_KEY": "TEST_KEY",
-            "BOT_TOKEN": "BOT_TOKEN"
+            "DISCORD_PUBLIC_KEY": "TEST_KEY"
           }
         },
         "FunctionName": "bot-proxy",
