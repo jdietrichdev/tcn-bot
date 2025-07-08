@@ -239,3 +239,13 @@ export const cwlRoster = new SlashCommandBuilder()
         { name: "Reminder", value: "Reminder" },
       ]);
   });
+
+export const initiateCwlSignup = new SlashCommandBuilder()
+  .setName('initiate-cwl-signup')
+  .setDescription('Create new signup for CWL')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option.setName('name')
+      .setDescription('Signup name')
+      .setRequired(true);
+  });

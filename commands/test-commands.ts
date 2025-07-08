@@ -10,6 +10,7 @@ import {
   leadApply,
   recruiterScore,
   cwlRoster,
+  initiateCwlSignup,
 } from "./commands";
 
 export const testCommands = [
@@ -24,4 +25,5 @@ export const testCommands = [
   leadApply,
   recruiterScore,
   cwlRoster,
+  initiateCwlSignup
 ];
