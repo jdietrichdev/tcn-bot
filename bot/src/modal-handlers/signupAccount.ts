@@ -3,11 +3,14 @@ import {
   APIMessageComponentInteraction,
   APIMessageSelectMenuInteractionData,
   APIModalSubmitInteraction,
+  APIStringSelectComponent,
   ComponentType,
   InteractionResponseType,
   TextInputStyle,
 } from "discord-api-types/v10";
 import { updateResponse } from "../adapters/discord-adapter";
+import { dynamoDbClient } from "../clients/dynamodb-client";
+import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 
 export const createCwlAccountSignupModal = (
   interaction: APIMessageComponentInteraction
@@ -18,7 +21,8 @@ export const createCwlAccountSignupModal = (
       type: InteractionResponseType.Modal,
       data: {
         custom_id: "cwlSignupModal",
-        title: `Signup for ${
+        title: interaction.message.content.split("\n")[0],
+        description: `Signup for ${
           (interaction.data as APIMessageSelectMenuInteractionData).values[0]
         }`,
         components: [
@@ -72,8 +76,42 @@ export const submitCwlAccountSignupModal = async (
 ) => {
   try {
     console.log(JSON.stringify(interaction));
+    const account = {
+      id: interaction.member!.user.id,
+      playerTag: (
+        interaction.message!.components![0]
+          .components[0] as APIStringSelectComponent
+      ).options[0].value,
+      ...interaction.data.components.map((component) => {
+        const response: { [key: string]: string } = {};
+        response[component.components[0].custom_id] =
+          component.components[0].value;
+        return response;
+      }),
+    };
+    const signup = (
+      await dynamoDbClient.send(
+        new GetCommand({
+          TableName: "BotTable",
+          Key: {
+            pk: interaction.guild_id!,
+            sk: `signup#${interaction.message?.content.split("\n")[0]}`,
+          },
+        })
+      )
+    ).Item!;
+    console.log(JSON.stringify(signup));
+
+    signup.accounts.push(account);
+
+    await dynamoDbClient.send(
+      new PutCommand({
+        TableName: "BotTable",
+        Item: signup,
+      })
+    );
     await updateResponse(interaction.application_id, interaction.token, {
-      content: "Thanks for signing up!",
+      content: `Thanks for signing up <@${interaction.member?.user.id}>`,
     });
   } catch (err) {
     console.log(`Failed to finalize account signup: ${err}`);

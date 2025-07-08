@@ -26,7 +26,7 @@ export const signupCwl = async (
     ).Items;
     console.log(JSON.stringify(accounts));
     await updateResponse(interaction.application_id, interaction.token, {
-      content: "Select the account you would like to sign up",
+      content: `${interaction.message.embeds[0].title}\nSelect the account you would like to sign up`,
       components: [
         {
           type: ComponentType.ActionRow,

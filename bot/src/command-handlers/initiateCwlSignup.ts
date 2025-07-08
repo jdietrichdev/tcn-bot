@@ -7,6 +7,8 @@ import { getCommandOptionData } from "../util/interaction-util";
 import { sendMessage, updateResponse } from "../adapters/discord-adapter";
 import { BUTTONS } from "../component-handlers/buttons";
 import { getConfig } from "../util/serverConfig";
+import { dynamoDbClient } from "../clients/dynamodb-client";
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
 
 export const handleInitiateCwlSignup = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -39,7 +41,18 @@ export const handleInitiateCwlSignup = async (
       },
       config.CWL_SIGNUP_CHANNEL
     );
-    console.log(signupMessage);
+    await dynamoDbClient.send(
+      new PutCommand({
+        TableName: "BotTable",
+        Item: {
+          pk: interaction.guild_id!,
+          sk: `signup#${signupName}`,
+          message: signupMessage.id,
+          signupName,
+          accounts: [],
+        },
+      })
+    );
     await updateResponse(interaction.application_id, interaction.token, {
       content: "CWL signup has been started",
     });
