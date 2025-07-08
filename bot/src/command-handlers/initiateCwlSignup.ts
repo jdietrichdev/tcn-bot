@@ -28,7 +28,7 @@ export const handleInitiateCwlSignup = async (
             title: signupName,
             fields: [],
             footer: {
-              text: "Total accounts: 0\nSignup is **open**",
+              text: "Total accounts: 0\nSignup is OPEN",
             },
           },
         ],
