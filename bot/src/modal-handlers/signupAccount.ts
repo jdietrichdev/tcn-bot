@@ -7,16 +7,13 @@ import {
   InteractionResponseType,
   TextInputStyle,
 } from "discord-api-types/v10";
-import { updateMessage, updateResponse } from "../adapters/discord-adapter";
+import { updateResponse } from "../adapters/discord-adapter";
 
-export const createCwlAccountSignupModal = async (
+export const createCwlAccountSignupModal = (
   interaction: APIMessageComponentInteraction
 ) => {
   try {
     console.log(JSON.stringify(interaction));
-    await updateMessage(interaction.channel.id, interaction.message.id, {
-      content: "Account being added to roster",
-    });
     return {
       type: InteractionResponseType.Modal,
       data: {

@@ -7,7 +7,7 @@ import { createDenyAppModal } from "./denyApp";
 import { createLeadApplyModal } from "./leadApply";
 import { createCwlAccountSignupModal } from "./signupAccount";
 
-export const createModal = async (
+export const createModal = (
   interaction:
     | APIMessageComponentInteraction
     | APIApplicationCommandInteraction,
@@ -22,7 +22,7 @@ export const createModal = async (
     case "denyApp":
       return createDenyAppModal(interaction as APIMessageComponentInteraction);
     case "signupAccount":
-      return await createCwlAccountSignupModal(
+      return createCwlAccountSignupModal(
         interaction as APIMessageComponentInteraction
       );
     default:
