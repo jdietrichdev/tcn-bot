@@ -17,6 +17,7 @@ import { getClan, getCwl } from "../adapters/coc-api-adapter";
 import { WAR_LEAGUE } from "../constants/emojis/coc/cwlLeague";
 import { createDiscordTimestamp } from "../util/format-util";
 import { isAxiosError } from "axios";
+import { DiscordError } from "../util/errors";
 
 export const handleCwlRoster = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -54,7 +55,7 @@ export const handleCwlRoster = async (
           try {
             await deleteMessage(config.CWL_ROSTER_CHANNEL, messageId);
           } catch (err) {
-            if (isAxiosError(err) && err.response?.status === 404) {
+            if ((err as DiscordError).statusCode === 404) {
               console.log('Message already deleted, continuing...');
             } else throw err;
           }
