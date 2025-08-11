@@ -25,7 +25,8 @@ export const processCwlRoster = async (event: S3Event) => {
     console.log(JSON.stringify(event));
     for (const record of event.Records) {
       const bucket = record.s3.bucket.name;
-      const key = record.s3.object.key;
+      const key = record.s3.object.key.replace(/\+/g, ' ');
+      console.log(key);
       
       if (record.s3.object.size !== 0) {
         const response = await s3Client.send(
