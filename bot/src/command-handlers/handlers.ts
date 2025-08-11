@@ -9,3 +9,4 @@ export * from "./recruit";
 export * from "./recruiterScore";
 export * from "./cwlRoster";
 export * from "./initiateCwlSignup";
+export * from "./closeTicket";

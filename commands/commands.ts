@@ -249,3 +249,11 @@ export const initiateCwlSignup = new SlashCommandBuilder()
       .setDescription('Signup name')
       .setRequired(true);
   });
+
+export const closeTicket = new SlashCommandBuilder()
+  .setName('close-ticket')
+  .setDescription('Close current application ticket');
+
+export const deleteTicket = new SlashCommandBuilder()
+  .setName('delete-ticket')
+  .setDescription('Delete current application ticket');

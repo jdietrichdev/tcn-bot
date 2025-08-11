@@ -16,7 +16,6 @@ import { getCommandOptionData } from "../util/interaction-util";
 import { getClan, getCwl } from "../adapters/coc-api-adapter";
 import { WAR_LEAGUE } from "../constants/emojis/coc/cwlLeague";
 import { createDiscordTimestamp } from "../util/format-util";
-import { isAxiosError } from "axios";
 import { DiscordError } from "../util/errors";
 
 export const handleCwlRoster = async (
