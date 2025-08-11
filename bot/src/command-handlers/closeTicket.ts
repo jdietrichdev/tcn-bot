@@ -1,7 +1,6 @@
 import {
     APIApplicationCommandInteraction,
   APITextChannel,
-  ComponentType,
   OverwriteType,
 } from "discord-api-types/v10";
 import { getConfig } from "../util/serverConfig";
@@ -10,11 +9,9 @@ import {
   moveChannel,
   sendMessage,
   updateChannelPermissions,
-  updateMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
-import { determineRolesButton, isActorRecruiter } from "../component-handlers/utils";
-import { BUTTONS } from "../component-handlers/buttons";
+import { isActorRecruiter } from "../component-handlers/utils";
 
 export const closeTicket = async (
   interaction: APIApplicationCommandInteraction
@@ -45,22 +42,6 @@ export const closeTicket = async (
             },
             channelId
         );
-        await updateMessage(interaction.channel.id, interaction.message!.id, {
-            components: [
-            {
-                type: ComponentType.ActionRow,
-                components: [
-                BUTTONS.REOPEN_TICKET,
-                BUTTONS.DELETE_TICKET,
-                await determineRolesButton(
-                    interaction.guild_id!,
-                    userId!,
-                    config
-                ),
-                ],
-            },
-            ],
-        });
         } else {
             await sendMessage(
                 {
