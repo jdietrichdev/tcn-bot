@@ -101,7 +101,9 @@ export const handleCwlRoster = async (
         const role = await createRole(interaction.guild_id!, `${clan.clan}_CWL`);
         clan.role = role.id;
         for (const player of clan.players) {
-          await grantRole(interaction.guild_id!, player.userId, role.id);
+          if (/^\d{17,19}$/.test(player.userId)) {
+            await grantRole(interaction.guild_id!, player.userId, role.id);
+          }
         }
         const channel = await createChannel({
           name: `cwl_${clan.clan}`,
