@@ -22,7 +22,6 @@ interface ClanRoster {
 
 export const processCwlRoster = async (event: S3Event) => {
   try {
-    console.log(JSON.stringify(event));
     for (const record of event.Records) {
       const bucket = record.s3.bucket.name;
       const key = record.s3.object.key.replace(/\+/g, ' ');
@@ -43,6 +42,7 @@ export const processCwlRoster = async (event: S3Event) => {
           skip_empty_lines: true,
           trim: true,
         });
+        console.log(JSON.stringify(records));
 
         const guildId = key.split("/")[0];
         const guildMembers = await getServerMembers(guildId);
