@@ -235,6 +235,7 @@ export const cwlRoster = new SlashCommandBuilder()
       .setDescription("What type of notification do you want to send out?")
       .setRequired(true)
       .setChoices([
+        { name: "Setup", value: "Setup" },
         { name: "Announcement", value: "Announcement" },
         { name: "Reminder", value: "Reminder" },
       ]);
