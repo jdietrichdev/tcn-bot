@@ -476,6 +476,11 @@ export const createRole = async (guildId: string, roleName: string): Promise<API
       name: roleName,
       mentionable: true,
       color: Math.floor(Math.random() * 0xFFFFFF)
+    },
+    {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+      },
     });
     return response.data;
   } catch (err) {

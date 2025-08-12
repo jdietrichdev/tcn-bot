@@ -152,7 +152,7 @@ export const handleCwlRoster = async (
     console.error(`Failed to send roster message: ${err}`);
     await updateResponse(interaction.application_id, interaction.token, {
       content:
-        "There was a failure sending the roster information, please try again",
+        "There was a failure processing roster command, please try again",
     });
   }
 };
