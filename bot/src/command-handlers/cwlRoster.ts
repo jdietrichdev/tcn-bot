@@ -139,6 +139,14 @@ export const handleCwlRoster = async (
         }, interaction.guild_id!);
         clan.channel = channel.id;
       }
+      await dynamoDbClient.send(
+        new PutCommand({
+          TableName: "BotTable",
+          Item: {
+            ...rosterData,
+          },
+        })
+      );
     }
   } catch (err) {
     console.error(`Failed to send roster message: ${err}`);
