@@ -61,14 +61,17 @@ export const handleCwlRoster = async (
             await deleteMessage(config.CWL_ROSTER_CHANNEL, messageId);
           } catch (err) {
             if ((err as DiscordError).statusCode === 404) {
-              console.log('Message already deleted, continuing...');
+              console.log("Message already deleted, continuing...");
             } else throw err;
           }
         }
       }
       const previousMessages: string[] = [];
       for (const message of announcementMessages) {
-        const { id } = await sendMessage({ content: message.content?.split("\n")[0] }, config.CWL_ROSTER_CHANNEL);
+        const { id } = await sendMessage(
+          { content: message.content?.split("\n")[0] },
+          config.CWL_ROSTER_CHANNEL
+        );
         await updateMessage(config.CWL_ROSTER_CHANNEL, id, message);
         previousMessages.push(id);
         await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -95,51 +98,61 @@ export const handleCwlRoster = async (
       await updateResponse(interaction.application_id, interaction.token, {
         content: "CWL roster reminders sent",
       });
-    } else if (notificationType === 'Setup') {
+    } else if (notificationType === "Setup") {
       console.log("Setting up roles and channels for CWL");
       for (const clan of rosterData.roster) {
-        const role = await createRole(interaction.guild_id!, `${clan.clan}_CWL`);
-        clan.role = role.id;
+        if (!clan.role) {
+          const role = await createRole(
+            interaction.guild_id!,
+            `${clan.clan}_CWL`
+          );
+          clan.role = role.id;
+        }
         for (const player of clan.players) {
           if (/^\d{17,19}$/.test(player.userId)) {
-            await grantRole(interaction.guild_id!, player.userId, role.id);
+            await grantRole(interaction.guild_id!, player.userId, clan.role);
           }
         }
-        const channel = await createChannel({
-          name: `cwl_${clan.clan}`,
-          type: ChannelType.GuildText,
-          topic: `CWL channel for ${clan.clan}`,
-          parent_id: config.CWL_CATEGORY,
-          permission_overwrites: [
+        if (!clan.channel) {
+          const channel = await createChannel(
             {
-              id: interaction.guild_id!,
-              type: OverwriteType.Role,
-              allow: "0",
-              deny: PermissionFlagsBits.ViewChannel.toString(),
+              name: `cwl_${clan.clan}`,
+              type: ChannelType.GuildText,
+              topic: `CWL channel for ${clan.clan}`,
+              parent_id: config.CWL_CATEGORY,
+              permission_overwrites: [
+                {
+                  id: interaction.guild_id!,
+                  type: OverwriteType.Role,
+                  allow: "0",
+                  deny: PermissionFlagsBits.ViewChannel.toString(),
+                },
+                {
+                  id: clan.role,
+                  type: OverwriteType.Role,
+                  allow: (
+                    PermissionFlagsBits.ViewChannel |
+                    PermissionFlagsBits.AddReactions |
+                    PermissionFlagsBits.SendMessages
+                  ).toString(),
+                  deny: "0",
+                },
+                {
+                  id: config.BOT_ID,
+                  type: OverwriteType.Member,
+                  allow: (
+                    PermissionFlagsBits.ViewChannel |
+                    PermissionFlagsBits.AddReactions |
+                    PermissionFlagsBits.SendMessages
+                  ).toString(),
+                  deny: "0",
+                },
+              ],
             },
-            {
-              id: role.id,
-              type: OverwriteType.Role,
-              allow: (
-                PermissionFlagsBits.ViewChannel |
-                PermissionFlagsBits.AddReactions |
-                PermissionFlagsBits.SendMessages
-              ).toString(),
-              deny: "0",
-            },
-            {
-              id: config.BOT_ID,
-              type: OverwriteType.Member,
-              allow: (
-                PermissionFlagsBits.ViewChannel |
-                PermissionFlagsBits.AddReactions |
-                PermissionFlagsBits.SendMessages
-              ).toString(),
-              deny: "0",
-            },
-          ]
-        }, interaction.guild_id!);
-        clan.channel = channel.id;
+            interaction.guild_id!
+          );
+          clan.channel = channel.id;
+        }
       }
       await dynamoDbClient.send(
         new PutCommand({
@@ -159,9 +172,7 @@ export const handleCwlRoster = async (
   }
 };
 
-const buildAnnouncement = async (
-  roster: Record<string, any>[]
-) => {
+const buildAnnouncement = async (roster: Record<string, any>[]) => {
   const messages: RESTPostAPIWebhookWithTokenJSONBody[] = [];
   for (const clan of roster) {
     const clanData = await getClan(`#${clan.clanTag}`);
@@ -175,9 +186,13 @@ const buildAnnouncement = async (
     for (const player of clan.players) {
       message += `<@${player.userId}> ${player.playerName}\n`;
     }
-    messages.push({ content: message.replace(/_/g, '\\_') });
+    messages.push({ content: message.replace(/_/g, "\\_") });
   }
-  messages.push({ content: `*Last updated: <t:${createDiscordTimestamp(new Date().toUTCString())}:R>*`})
+  messages.push({
+    content: `*Last updated: <t:${createDiscordTimestamp(
+      new Date().toUTCString()
+    )}:R>*`,
+  });
   return messages;
 };
 
@@ -191,7 +206,7 @@ const buildReminder = async (roster: Record<string, any>[]) => {
     const cwlStatus = await getCwl(`#${clan.clanTag}`);
     console.log(JSON.stringify(cwlStatus));
     const clanData = await getClan(`#${clan.clanTag}`);
-    
+
     let message = `# ${
       WAR_LEAGUE[clanData.warLeague.name as keyof typeof WAR_LEAGUE]
     } **${clanData.warLeague.name}**\n## [${
@@ -200,7 +215,11 @@ const buildReminder = async (roster: Record<string, any>[]) => {
       clan.clanTag
     }>)\n`;
 
-    if (cwlStatus.state === 'not_spun' || cwlStatus.state === "notInWar" || cwlStatus.state === 'ended') {
+    if (
+      cwlStatus.state === "not_spun" ||
+      cwlStatus.state === "notInWar" ||
+      cwlStatus.state === "ended"
+    ) {
       const missingPlayers = clan.players.filter(
         (player: Record<string, string>) => {
           return !clanData.memberList.some(
@@ -209,28 +228,33 @@ const buildReminder = async (roster: Record<string, any>[]) => {
         }
       );
 
-      if (missingPlayers.length === 0) message += "All players in clan, well done\n";
+      if (missingPlayers.length === 0)
+        message += "All players in clan, well done\n";
       else {
         for (const player of missingPlayers) {
           message += `<@${player.userId}> ${player.playerName}\n`;
         }
       }
-      messages.push({ content: message.replace(/_/g, '\\_') });
+      messages.push({ content: message.replace(/_/g, "\\_") });
     } else {
-      const clanCwlData = cwlStatus.clans.find((cwlClan: Record<string, any>) => cwlClan.tag === `#${clan.clanTag}`)
+      const clanCwlData = cwlStatus.clans.find(
+        (cwlClan: Record<string, any>) => cwlClan.tag === `#${clan.clanTag}`
+      );
       const missedSpin = clan.players.filter((player: Record<string, any>) => {
         return !clanCwlData.members.some(
           (member: Record<string, any>) => member.tag === player.playerTag
         );
       });
-      if (missedSpin.length === 0) message += 'CWL spun with all members, good luck all!'
+      if (missedSpin.length === 0)
+        message += "CWL spun with all members, good luck all!";
       else {
-        message += 'CWL has been spun. If your name is below, better reach out to some important people!\n';
+        message +=
+          "CWL has been spun. If your name is below, better reach out to some important people!\n";
         for (const missed of missedSpin) {
           message += `<@${missed.userId}> ${missed.playerName}\n`;
         }
       }
-      messages.push({ content: message.replace(/_/g, '\\_') });
+      messages.push({ content: message.replace(/_/g, "\\_") });
     }
   }
   return messages;
