@@ -15,6 +15,7 @@ interface Player {
 }
 
 interface ClanRoster {
+  clan: string;
   clanTag: string;
   league: string;
   players: Player[];
@@ -47,6 +48,7 @@ export const processCwlRoster = async (event: S3Event) => {
         const guildId = key.split("/")[0];
         const guildMembers = await getServerMembers(guildId);
 
+        let clan = "";
         let clanTag = "";
         let league = "";
         const clanMap = new Map<string, ClanRoster>();
@@ -60,10 +62,13 @@ export const processCwlRoster = async (event: S3Event) => {
               record["Player Name"] !== "" &&
               record["Combined Heroes"] !== ""
             ) {
+              console.log(Object.keys(record)[0]);
+              clan = record[Object.keys(record)[0]];
               league = record["Player Name"];
               clanTag = record["Combined Heroes"].split("=")[2];
               if (clanTag.startsWith("%23")) clanTag = clanTag.replace("%23", "");
               clanMap.set(clanTag, {
+                clan,
                 clanTag,
                 league,
                 players: [],
