@@ -62,7 +62,6 @@ export const processCwlRoster = async (event: S3Event) => {
               record["Player Name"] !== "" &&
               record["Combined Heroes"] !== ""
             ) {
-              console.log(Object.keys(record)[0]);
               clan = record[Object.keys(record)[0]];
               league = record["Player Name"];
               clanTag = record["Combined Heroes"].split("=")[2];

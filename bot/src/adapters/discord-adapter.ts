@@ -4,6 +4,7 @@ import {
   APIGuildMember,
   APIGuildTextChannel,
   APIMessage,
+  APIRole,
   APIUser,
   GuildTextChannelType,
   RESTAPIGuildCreatePartialChannel,
@@ -467,6 +468,28 @@ export const getServerMembers = async (
     }
   }
 };
+
+export const createRole = async (guildId: string, roleName: string): Promise<APIRole> => {
+  const url = `${BASE_URL}/guilds/${guildId}/roles`;
+  try {
+    const response = await axios.post(url, {
+      name: roleName,
+      mentionable: true,
+      color: Math.floor(Math.random() * 0xFFFFFF)
+    });
+    return response.data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to fetch server members",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+}
 
 export const grantRole = async (
   guildId: string,

@@ -1,6 +1,9 @@
 import {
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
+  ChannelType,
+  OverwriteType,
+  PermissionFlagsBits,
   RESTPostAPIWebhookWithTokenJSONBody,
 } from "discord-api-types/v10";
 import { getConfig } from "../util/serverConfig";
@@ -9,6 +12,9 @@ import {
   sendMessage,
   updateResponse,
   updateMessage,
+  createRole,
+  createChannel,
+  grantRole,
 } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
@@ -89,6 +95,50 @@ export const handleCwlRoster = async (
       await updateResponse(interaction.application_id, interaction.token, {
         content: "CWL roster reminders sent",
       });
+    } else if (notificationType === 'Setup') {
+      console.log("Setting up roles and channels for CWL");
+      for (const clan of rosterData.roster) {
+        const role = await createRole(interaction.guild_id!, `${clan.clan}_CWL`);
+        clan.role = role.id;
+        for (const player of clan.players) {
+          await grantRole(interaction.guild_id!, player.userId, role.id);
+        }
+        const channel = await createChannel({
+          name: `cwl_${clan.clan}`,
+          type: ChannelType.GuildText,
+          topic: `CWL channel for ${clan.clan}`,
+          parent_id: config.CWL_CATEGORY,
+          permission_overwrites: [
+            {
+              id: interaction.guild_id!,
+              type: OverwriteType.Role,
+              allow: "0",
+              deny: PermissionFlagsBits.ViewChannel.toString(),
+            },
+            {
+              id: role.id,
+              type: OverwriteType.Role,
+              allow: (
+                PermissionFlagsBits.ViewChannel |
+                PermissionFlagsBits.AddReactions |
+                PermissionFlagsBits.SendMessages
+              ).toString(),
+              deny: "0",
+            },
+            {
+              id: config.BOT_ID,
+              type: OverwriteType.Member,
+              allow: (
+                PermissionFlagsBits.ViewChannel |
+                PermissionFlagsBits.AddReactions |
+                PermissionFlagsBits.SendMessages
+              ).toString(),
+              deny: "0",
+            },
+          ]
+        }, interaction.guild_id!);
+        clan.channel = channel.id;
+      }
     }
   } catch (err) {
     console.error(`Failed to send roster message: ${err}`);
