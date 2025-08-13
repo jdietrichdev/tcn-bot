@@ -486,7 +486,28 @@ export const createRole = async (guildId: string, roleName: string): Promise<API
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to fetch server members",
+        "Failed to create new role",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+}
+
+export const deleteRole = async (guildId: string, roleId: string) => {
+  const url = `${BASE_URL}/guilds/${guildId}/roles/${roleId}`;
+  try {
+    await axios.delete(url, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`
+      }
+    })
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to delete role",
         err.response?.data.message,
         err.response?.status ?? 500
       );

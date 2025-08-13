@@ -238,6 +238,7 @@ export const cwlRoster = new SlashCommandBuilder()
         { name: "Setup", value: "Setup" },
         { name: "Announcement", value: "Announcement" },
         { name: "Reminder", value: "Reminder" },
+        { name: "Cleanup", value: "Cleanup" }
       ]);
   });
 

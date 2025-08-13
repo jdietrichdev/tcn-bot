@@ -15,6 +15,8 @@ import {
   createRole,
   createChannel,
   grantRole,
+  deleteRole,
+  deleteChannel,
 } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
@@ -162,6 +164,32 @@ export const handleCwlRoster = async (
           },
         })
       );
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: "Channels and roles have been created for CWL"
+      });
+    } else if (notificationType === "Cleanup") {
+      console.log("Cleaning up roles and channels for CWL");
+      for (const clan of rosterData.roster) {
+        if (clan.role) {
+          await deleteRole(interaction.guild_id!, clan.role);
+          delete clan.role;
+        }
+        if (clan.channel) {
+          await deleteChannel(clan.channel);
+          delete clan.channel;
+        }
+      }
+      await dynamoDbClient.send(
+        new PutCommand({
+          TableName: "BotTable",
+          Item: {
+            ...rosterData,
+          },
+        })
+      );
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: "Roles and channels have been cleaned up from CWL"
+      })
     }
   } catch (err) {
     console.error(`Failed to send roster message: ${err}`);
