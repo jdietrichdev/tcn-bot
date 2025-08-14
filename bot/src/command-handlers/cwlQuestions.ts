@@ -17,13 +17,16 @@ export const handleCwlQuestions = async (
         ).value;
 
         await sendMessage({
-            content: "Please answer a few questions about this months CWL to help us give you the best experience",
+            embeds: [{
+                title: questionName,
+                description: "Please answer a few questions about this months CWL to help us give you the best experience",
+            }],
             components: [{
                 type: ComponentType.ActionRow,
                 components: [BUTTONS.CWL_QUESTIONS],
             }]
         },
-        config.CWL_SIGNUP_CHANNEL
+            config.CWL_SIGNUP_CHANNEL
         );
 
         await dynamoDbClient.send(

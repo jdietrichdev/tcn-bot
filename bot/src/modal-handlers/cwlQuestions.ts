@@ -17,13 +17,13 @@ export const createCwlQuestionsModal = (
 ) => {
     try {
         console.log(JSON.stringify(interaction));
+
         return {
             type: InteractionResponseType.Modal,
             data: {
                 custom_id: "cwlQuestions",
-                title: interaction.message.content.split("\n")[0],
-                description: `Questions for ${(interaction.data as APIMessageSelectMenuInteractionData).values[0]
-                    }`,
+                title: interaction.message.embeds[0].title,
+                description: `Questions for ${interaction.user!.username}`,
                 components: [
                     {
                         type: ComponentType.ActionRow,
