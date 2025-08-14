@@ -92,7 +92,7 @@ export const submitCwlQuestionsModal = async (
                     TableName: "BotTable",
                     Key: {
                         pk: interaction.guild_id!,
-                        sk: `signup#${interaction.message?.content.split("\n")[0]}`,
+                        sk: `questions#${interaction.message!.embeds[0].title}}`,
                     },
                 })
             )
