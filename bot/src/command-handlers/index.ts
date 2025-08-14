@@ -28,6 +28,8 @@ export const handleCommand = async (
         return await commands.handleCwlRoster(event.detail);
       case "initiate-cwl-signup":
         return await commands.handleInitiateCwlSignup(event.detail);
+      case "cwl-questions":
+        return await commands.handleCwlQuestions(event.detail);
       case "close-ticket":
         return await commands.closeTicket(event.detail);
       case "delete-ticket":
