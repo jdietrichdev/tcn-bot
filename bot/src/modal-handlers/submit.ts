@@ -3,6 +3,7 @@ import { submitApplyModal } from "./apply";
 import { submitDenyAppModal } from "./denyApp";
 import { submitLeadApplyModal } from "./leadApply";
 import { submitCwlAccountSignupModal } from "./signupAccount";
+import { submitCwlQuestionsModal } from "./cwlQuestions";
 
 export const submitModal = async (interaction: APIModalSubmitInteraction) => {
   const id = interaction.data.custom_id.split("_")[0];
@@ -18,6 +19,9 @@ export const submitModal = async (interaction: APIModalSubmitInteraction) => {
       break;
     case "cwlSignupModal":
       await submitCwlAccountSignupModal(interaction);
+      break;
+    case "cwlQuestions":
+      await submitCwlQuestionsModal(interaction);
       break;
   }
 };
