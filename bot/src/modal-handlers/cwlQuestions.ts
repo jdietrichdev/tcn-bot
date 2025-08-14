@@ -23,7 +23,7 @@ export const createCwlQuestionsModal = (
             data: {
                 custom_id: "cwlQuestions",
                 title: interaction.message.embeds[0].title,
-                description: `Questions for ${interaction.user!.username}`,
+                description: `Questions for ${interaction.member!.user.username}`,
                 components: [
                     {
                         type: ComponentType.ActionRow,
