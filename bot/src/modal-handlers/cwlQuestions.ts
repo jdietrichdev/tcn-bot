@@ -86,6 +86,7 @@ export const submitCwlQuestionsModal = async (
             username: interaction.member!.user.global_name,
             ...responses,
         };
+        console.log(interaction.message!.embeds[0].title);
         const signup = (
             await dynamoDbClient.send(
                 new GetCommand({
