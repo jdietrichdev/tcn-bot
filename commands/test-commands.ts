@@ -13,6 +13,7 @@ import {
   initiateCwlSignup,
   closeTicket,
   deleteTicket,
+  cwlQuestions,
 } from "./commands";
 
 export const testCommands = [
@@ -28,6 +29,7 @@ export const testCommands = [
   recruiterScore,
   cwlRoster,
   initiateCwlSignup,
+  cwlQuestions,
   closeTicket,
   deleteTicket
 ];

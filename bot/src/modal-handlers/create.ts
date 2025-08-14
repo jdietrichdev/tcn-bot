@@ -22,6 +22,7 @@ export const createModal = (
     case "denyApp":
       return createDenyAppModal(interaction as APIMessageComponentInteraction);
     case "signupAccount":
+    case "cwlQuestions":
       return createCwlAccountSignupModal(
         interaction as APIMessageComponentInteraction
       );

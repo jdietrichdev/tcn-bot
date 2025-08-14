@@ -89,6 +89,12 @@ export const BUTTONS = {
     label: "Never mind",
     custom_id: "rejectDelete",
   } as APIButtonComponentWithCustomId,
+  CWL_QUESTIONS: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Success,
+    label: "Answer Questions",
+    custom_id: "cwlQuestions",
+  } as APIButtonComponentWithCustomId,
   SIGNUP_CWL: {
     type: ComponentType.Button,
     style: ButtonStyle.Success,

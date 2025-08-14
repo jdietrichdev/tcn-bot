@@ -252,6 +252,16 @@ export const initiateCwlSignup = new SlashCommandBuilder()
       .setRequired(true);
   });
 
+export const cwlQuestions = new SlashCommandBuilder()
+  .setName('cwl-questions')
+  .setDescription('Ask questions for CWL')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option.setName('name')
+      .setDescription('Questionnaire name')
+      .setRequired(true)
+  });
+
 export const closeTicket = new SlashCommandBuilder()
   .setName('close-ticket')
   .setDescription('Close current application ticket');

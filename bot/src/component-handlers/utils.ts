@@ -7,6 +7,7 @@ const BUTTON_MODAL_TRIGGERS = [
   "leadApply",
   "denyApp",
   "signupAccount",
+  "cwlQuestions"
 ];
 const COMMAND_MODAL_TRIGGERS = ["apply", "lead-apply"];
 
