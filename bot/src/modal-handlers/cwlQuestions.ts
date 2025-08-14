@@ -43,7 +43,7 @@ export const createCwlQuestionsModal = (
               {
                 type: ComponentType.TextInput,
                 custom_id: "league",
-                label: "What league would you like your account(s) in?",
+                label: "What league do you want your account(s) in?",
                 style: TextInputStyle.Paragraph,
                 required: false,
               },
@@ -67,7 +67,7 @@ export const createCwlQuestionsModal = (
               {
                 type: ComponentType.TextInput,
                 custom_id: "competitiveness",
-                label: "Would you prefer competitive or relaxed CWL(s)?",
+                label: "Do you want competitive or relaxed CWL(s)?",
                 style: TextInputStyle.Paragraph,
                 required: false,
               },
