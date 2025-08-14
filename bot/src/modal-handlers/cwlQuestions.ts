@@ -83,17 +83,16 @@ export const submitCwlQuestionsModal = async (
         });
         const account = {
             id: interaction.member!.user.id,
-            username: interaction.member!.user.global_name,
+            username: interaction.member!.user.username,
             ...responses,
         };
-        console.log(interaction.message!.embeds[0].title);
         const signup = (
             await dynamoDbClient.send(
                 new GetCommand({
                     TableName: "BotTable",
                     Key: {
                         pk: interaction.guild_id!,
-                        sk: `questions#${interaction.message!.embeds[0].title}}`,
+                        sk: `questions#${interaction.message!.embeds[0].title}`,
                     },
                 })
             )
