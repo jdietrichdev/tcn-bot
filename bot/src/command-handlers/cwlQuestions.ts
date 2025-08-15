@@ -19,7 +19,7 @@ export const handleCwlQuestions = async (
         await sendMessage({
             embeds: [{
                 title: questionName,
-                description: "Please answer a few questions about this months CWL to help us give you the best experience",
+                description: "Please answer a few questions about this month's CWL to help us give you the best experience",
             }],
             components: [{
                 type: ComponentType.ActionRow,
