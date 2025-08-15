@@ -21,10 +21,12 @@ export const exportCwlQuestions = async (interaction: APIMessageComponentInterac
             const row = [
                 account.id,
                 account.username,
-                account.league,
-                account.availability,
-                account.competitiveness,
-                account.notes
+                [
+                    account.league,
+                    account.availability,
+                    account.competitiveness,
+                    account.notes
+                ].join(' / '),
             ];
             records.push(row);
         }
