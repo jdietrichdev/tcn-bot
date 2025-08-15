@@ -11,6 +11,7 @@ import { APIMessageComponentInteraction } from "discord-api-types/v10";
 import { confirmDelete } from "./confirmDelete";
 import { rejectDelete } from "./rejectDelete";
 import { signupCwl } from "./signupCwl";
+import { exportCwlQuestions } from "./exportCwlQuestions";
 
 export const handleComponent = async (
   interaction: APIMessageComponentInteraction
@@ -49,6 +50,9 @@ export const handleComponent = async (
       break;
     case "signupCwl":
       await signupCwl(interaction);
+      break;
+    case "exportCwlQuestions":
+      await exportCwlQuestions(interaction);
       break;
   }
 };
