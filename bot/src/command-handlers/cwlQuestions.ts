@@ -23,7 +23,7 @@ export const handleCwlQuestions = async (
             }],
             components: [{
                 type: ComponentType.ActionRow,
-                components: [BUTTONS.CWL_QUESTIONS],
+                components: [BUTTONS.CWL_QUESTIONS, BUTTONS.EXPORT_CWL_QUESTIONS],
             }]
         },
             config.CWL_SIGNUP_CHANNEL

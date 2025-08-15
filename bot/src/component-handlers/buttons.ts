@@ -95,6 +95,12 @@ export const BUTTONS = {
     label: "Answer Questions",
     custom_id: "cwlQuestions",
   } as APIButtonComponentWithCustomId,
+  EXPORT_CWL_QUESTIONS: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Secondary,
+    label: "Export Responses",
+    custom_id: "exportCwlQuestions",
+  } as APIButtonComponentWithCustomId,
   SIGNUP_CWL: {
     type: ComponentType.Button,
     style: ButtonStyle.Success,

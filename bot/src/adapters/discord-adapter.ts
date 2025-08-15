@@ -7,6 +7,7 @@ import {
   APIRole,
   APIUser,
   GuildTextChannelType,
+  InteractionResponseType,
   RESTAPIGuildCreatePartialChannel,
   RESTGetAPIChannelMessageReactionUsersResult,
   RESTPostAPIChannelMessageResult,
@@ -42,6 +43,23 @@ export const updateResponse = async (
     }
   }
 };
+
+export const updateResponseWithAttachment = async (applicationId: string, interactionToken: string, response: FormData) => {
+  const url = `${BASE_URL}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
+  try {
+    await axios.patch(url, response);
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to update response",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+}
 
 export const updateMessage = async (
   channelId: string,
@@ -198,9 +216,8 @@ export const getChannelMessages = async (
   const compiledMessages: APIMessage[] = [];
   try {
     while (fetching) {
-      url = `${BASE_URL}/channels/${channelId}/messages?limit=100${
-        before ? `&before=${before}` : ""
-      }`;
+      url = `${BASE_URL}/channels/${channelId}/messages?limit=100${before ? `&before=${before}` : ""
+        }`;
       console.log(url);
       const response = await axios.get(
         `${url}${before ? `&before=${before}` : ""}`,
@@ -477,11 +494,11 @@ export const createRole = async (guildId: string, roleName: string): Promise<API
       mentionable: true,
       color: Math.floor(Math.random() * 0xFFFFFF)
     },
-    {
-      headers: {
-        Authorization: `Bot ${process.env.BOT_TOKEN}`,
-      },
-    });
+      {
+        headers: {
+          Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        },
+      });
     return response.data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
