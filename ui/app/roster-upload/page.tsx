@@ -5,7 +5,7 @@ import { useActionState } from "react";
 
 export default function UploadRoster() {
   const initialState: State = { message: null, errors: {}};
-  const [, formAction] = useActionState(uploadRoster, initialState);
+  const [state, formAction] = useActionState(uploadRoster, initialState);
 
   return (
     <>
@@ -42,6 +42,9 @@ export default function UploadRoster() {
             <button type="submit" className="flex justify-center">Upload Roster</button>
         </div>
       </form>
+      <div className="text-center">
+        {state.message}
+      </div>
     </>
   )
 }

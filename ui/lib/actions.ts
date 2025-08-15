@@ -16,8 +16,15 @@ export async function uploadRoster(
 ): Promise<State> {
   const roster = formData.get("roster") as File;
   const server = formData.get("server") as string;
-
-  await storeRoster(roster, server);
+  try {
+    await storeRoster(roster, server);
+  } catch (err) {
+    console.log(err);
+    return {
+      errors: {},
+      message: "Failed to upload roster, please try again",
+    };
+  }
 
   return {
     errors: {},
