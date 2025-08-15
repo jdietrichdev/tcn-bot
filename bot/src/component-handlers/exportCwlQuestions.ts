@@ -22,10 +22,10 @@ export const exportCwlQuestions = async (interaction: APIMessageComponentInterac
                 account.id,
                 account.username,
                 [
-                    account.league,
-                    account.availability,
-                    account.competitiveness,
-                    account.notes
+                    `League: ${account.league}`,
+                    `Availability: ${account.availability}`,
+                    `Competitiveness: ${account.competitiveness}`,
+                    `Other notes: ${account.notes}`
                 ].join(' / '),
             ];
             records.push(row);
