@@ -95,6 +95,7 @@ export const submitCwlQuestionsModal = async (
         });
         const account = {
             id: interaction.member!.user.id,
+            username: interaction.member!.user.username,
             ...responses,
         };
         const questions = (

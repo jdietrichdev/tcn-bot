@@ -15,11 +15,12 @@ export const exportCwlQuestions = async (interaction: APIMessageComponentInterac
         }))).Item!;
         console.log(JSON.stringify(questions));
 
-        const records = [['id', 'league', 'availability', 'competitiveness', 'notes']];
+        const records = [['id', 'username', 'league', 'availability', 'competitiveness', 'notes']];
         for (const account of questions.accounts) {
             console.log(JSON.stringify(account));
             const row = [
                 account.id,
+                account.username,
                 account.league,
                 account.availability,
                 account.competitiveness,
