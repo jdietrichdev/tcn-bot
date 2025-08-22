@@ -36,30 +36,30 @@ const getEventData = (
     name: getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
       interaction,
       "name"
-    ).value,
+    )?.value,
     channelType:
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
         "type"
-      ).value,
+      )?.value,
     start:
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
         "start"
-      ).value,
+      )?.value,
     end: getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
       interaction,
       "end"
-    ).value,
+    )?.value,
     description:
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
         "description"
-      ).value,
+      )?.value,
     thumbnail:
       getCommandOptionData<APIApplicationCommandInteractionDataAttachmentOption>(
         interaction,
         "thumbnail"
-      ).value,
+      )?.value,
   };
 };
