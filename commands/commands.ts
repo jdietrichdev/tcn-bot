@@ -283,7 +283,7 @@ export const createEvent = new SlashCommandBuilder()
   })
   .addStringOption((option) => {
     return option
-      .setName("channelType")
+      .setName("type")
       .setDescription("Type of channel for event")
       .setRequired(true)
       .setChoices([

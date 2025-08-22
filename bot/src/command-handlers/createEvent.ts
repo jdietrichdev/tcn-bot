@@ -29,7 +29,7 @@ const getEventData = (
     channelType:
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
-        "channelType"
+        "type"
       ).value,
     start:
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
