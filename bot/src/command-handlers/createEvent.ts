@@ -5,14 +5,25 @@ import {
 } from "discord-api-types/v10";
 // import { getConfig } from "../util/serverConfig";
 import { getCommandOptionData } from "../util/interaction-util";
+import { getAttachment } from "../adapters/discord-adapter";
 
 export const createEvent = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
   try {
     // const config = getConfig(interaction.guild_id!);
+    // let thumbnail;
     const eventData = getEventData(interaction);
     console.log(eventData);
+
+    if (eventData.thumbnail) {
+      const thumbnailUrl =
+        interaction.data.resolved!.attachments![eventData.thumbnail].url;
+      console.log(thumbnailUrl);
+
+      const attachment = await getAttachment(thumbnailUrl);
+      console.log(attachment);
+    }
   } catch (err) {
     throw err;
   }

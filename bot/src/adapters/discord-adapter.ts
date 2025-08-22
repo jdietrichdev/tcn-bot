@@ -600,6 +600,23 @@ export const removeRole = async (
   }
 };
 
+export const getAttachment = async (attachmentUrl: string) => {
+  try {
+    const response = await axios.get(attachmentUrl);
+    return response.data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to retrieve attachment data",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
 export const createEvent = async (
   event: RESTPostAPIGuildScheduledEventJSONBody,
   guildId: string
