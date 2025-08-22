@@ -238,34 +238,81 @@ export const cwlRoster = new SlashCommandBuilder()
         { name: "Setup", value: "Setup" },
         { name: "Announcement", value: "Announcement" },
         { name: "Reminder", value: "Reminder" },
-        { name: "Cleanup", value: "Cleanup" }
+        { name: "Cleanup", value: "Cleanup" },
       ]);
   });
 
 export const initiateCwlSignup = new SlashCommandBuilder()
-  .setName('initiate-cwl-signup')
-  .setDescription('Create new signup for CWL')
+  .setName("initiate-cwl-signup")
+  .setDescription("Create new signup for CWL")
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .addStringOption((option) => {
-    return option.setName('name')
-      .setDescription('Signup name')
+    return option
+      .setName("name")
+      .setDescription("Signup name")
       .setRequired(true);
   });
 
 export const cwlQuestions = new SlashCommandBuilder()
-  .setName('cwl-questions')
-  .setDescription('Ask questions for CWL')
+  .setName("cwl-questions")
+  .setDescription("Ask questions for CWL")
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .addStringOption((option) => {
-    return option.setName('name')
-      .setDescription('Questionnaire name')
-      .setRequired(true)
+    return option
+      .setName("name")
+      .setDescription("Questionnaire name")
+      .setRequired(true);
   });
 
 export const closeTicket = new SlashCommandBuilder()
-  .setName('close-ticket')
-  .setDescription('Close current application ticket');
+  .setName("close-ticket")
+  .setDescription("Close current application ticket");
 
 export const deleteTicket = new SlashCommandBuilder()
-  .setName('delete-ticket')
-  .setDescription('Delete current application ticket');
+  .setName("delete-ticket")
+  .setDescription("Delete current application ticket");
+
+export const createEvent = new SlashCommandBuilder()
+  .setName("create-event")
+  .setDescription("Create a new event")
+  .addStringOption((option) => {
+    return option
+      .setName("name")
+      .setDescription("Name of the event")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("channelType")
+      .setDescription("Type of channel for event")
+      .setRequired(true)
+      .setChoices([
+        { name: "Text", value: "Text" },
+        { name: "Voice", value: "Voice" },
+        { name: "Stage", value: "Stage" },
+      ]);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("start")
+      .setDescription("Start time in UTC (yyyy-mm-ddThh:mm")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("end")
+      .setDescription("End time in UTC (yyyy-mm-ddThh:mm")
+      .setRequired(false);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("description")
+      .setDescription("Description for the event")
+      .setRequired(false);
+  })
+  .addAttachmentOption((option) => {
+    return option
+      .setName("thumbnail")
+      .setDescription("Thumbnail for the event")
+      .setRequired(false);
+  });

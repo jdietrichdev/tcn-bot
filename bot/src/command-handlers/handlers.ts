@@ -12,3 +12,4 @@ export * from "./initiateCwlSignup";
 export * from "./cwlQuestions";
 export * from "./closeTicket";
 export * from "./deleteTicket";
+export * from "./createEvent";

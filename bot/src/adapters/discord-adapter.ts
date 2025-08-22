@@ -7,13 +7,13 @@ import {
   APIRole,
   APIUser,
   GuildTextChannelType,
-  InteractionResponseType,
   RESTAPIGuildCreatePartialChannel,
   RESTGetAPIChannelMessageReactionUsersResult,
   RESTPostAPIChannelMessageResult,
   RESTPostAPIChannelMessagesThreadsJSONBody,
   RESTPostAPIChannelMessagesThreadsResult,
   RESTPostAPICurrentUserCreateDMChannelJSONBody,
+  RESTPostAPIGuildScheduledEventJSONBody,
   RESTPostAPIWebhookWithTokenJSONBody,
   RESTPutAPIChannelPermissionJSONBody,
 } from "discord-api-types/v10";
@@ -44,7 +44,11 @@ export const updateResponse = async (
   }
 };
 
-export const updateResponseWithAttachment = async (applicationId: string, interactionToken: string, response: FormData) => {
+export const updateResponseWithAttachment = async (
+  applicationId: string,
+  interactionToken: string,
+  response: FormData
+) => {
   const url = `${BASE_URL}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
   try {
     await axios.patch(url, response);
@@ -59,7 +63,7 @@ export const updateResponseWithAttachment = async (applicationId: string, intera
       throw new Error(`Unexpected error: ${err}`);
     }
   }
-}
+};
 
 export const updateMessage = async (
   channelId: string,
@@ -216,8 +220,9 @@ export const getChannelMessages = async (
   const compiledMessages: APIMessage[] = [];
   try {
     while (fetching) {
-      url = `${BASE_URL}/channels/${channelId}/messages?limit=100${before ? `&before=${before}` : ""
-        }`;
+      url = `${BASE_URL}/channels/${channelId}/messages?limit=100${
+        before ? `&before=${before}` : ""
+      }`;
       console.log(url);
       const response = await axios.get(
         `${url}${before ? `&before=${before}` : ""}`,
@@ -486,19 +491,25 @@ export const getServerMembers = async (
   }
 };
 
-export const createRole = async (guildId: string, roleName: string): Promise<APIRole> => {
+export const createRole = async (
+  guildId: string,
+  roleName: string
+): Promise<APIRole> => {
   const url = `${BASE_URL}/guilds/${guildId}/roles`;
   try {
-    const response = await axios.post(url, {
-      name: roleName,
-      mentionable: true,
-      color: Math.floor(Math.random() * 0xFFFFFF)
-    },
+    const response = await axios.post(
+      url,
+      {
+        name: roleName,
+        mentionable: true,
+        color: Math.floor(Math.random() * 0xffffff),
+      },
       {
         headers: {
           Authorization: `Bot ${process.env.BOT_TOKEN}`,
         },
-      });
+      }
+    );
     return response.data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
@@ -511,16 +522,16 @@ export const createRole = async (guildId: string, roleName: string): Promise<API
       throw new Error(`Unexpected error: ${err}`);
     }
   }
-}
+};
 
 export const deleteRole = async (guildId: string, roleId: string) => {
   const url = `${BASE_URL}/guilds/${guildId}/roles/${roleId}`;
   try {
     await axios.delete(url, {
       headers: {
-        Authorization: `Bot ${process.env.BOT_TOKEN}`
-      }
-    })
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+      },
+    });
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
@@ -532,7 +543,7 @@ export const deleteRole = async (guildId: string, roleId: string) => {
       throw new Error(`Unexpected error: ${err}`);
     }
   }
-}
+};
 
 export const grantRole = async (
   guildId: string,
@@ -574,13 +585,38 @@ export const removeRole = async (
     await axios.delete(url, {
       headers: {
         Authorization: `Bot ${process.env.BOT_TOKEN}`,
-        "Content-Type": "application/json",
       },
     });
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
         "Failed to remove role",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
+export const createEvent = async (
+  event: RESTPostAPIGuildScheduledEventJSONBody,
+  guildId: string
+) => {
+  const url = `${BASE_URL}/guilds/${guildId}/scheduled-events`;
+  try {
+    const response = await axios.post(url, event, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to create event",
         err.response?.data.message,
         err.response?.status ?? 500
       );
