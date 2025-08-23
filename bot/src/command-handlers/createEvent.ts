@@ -15,6 +15,7 @@ import {
   createChannel,
   createEvent,
   getAttachment,
+  updateResponse,
 } from "../adapters/discord-adapter";
 
 const channelTypeMap = new Map<string, Record<string, any>>([
@@ -100,8 +101,16 @@ export const handleCreateEvent = async (
       },
       interaction.guild_id!
     );
+
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: `Your event has been created, go to <#${channel.id}> to add any additional details you'd like!`,
+    });
   } catch (err) {
-    throw err;
+    console.error(`Failed to create event: ${err}`);
+    await updateResponse(interaction.application_id, interaction.token, {
+      content:
+        "There was a failure creating your event, please try again or contact admin",
+    });
   }
 };
 
