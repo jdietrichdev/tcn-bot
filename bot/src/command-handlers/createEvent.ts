@@ -25,7 +25,7 @@ export const handleCreateEvent = async (
 
       const attachment = await getAttachment(thumbnailUrl);
       thumbnail = `data:image/png;base64,${Buffer.from(attachment).toString('base64')}`
-      console.log(attachment);
+      console.log(thumbnail);
     }
 
     await createEvent({
