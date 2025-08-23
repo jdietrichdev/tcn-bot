@@ -275,6 +275,7 @@ export const deleteTicket = new SlashCommandBuilder()
 export const createEvent = new SlashCommandBuilder()
   .setName("create-event")
   .setDescription("Create a new event")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .addStringOption((option) => {
     return option
       .setName("name")
@@ -314,5 +315,11 @@ export const createEvent = new SlashCommandBuilder()
     return option
       .setName("thumbnail")
       .setDescription("Thumbnail for the event")
+      .setRequired(false);
+  })
+  .addUserOption((option) => {
+    return option
+      .setName("sponsor")
+      .setDescription("Sponsor for the event")
       .setRequired(false);
   });

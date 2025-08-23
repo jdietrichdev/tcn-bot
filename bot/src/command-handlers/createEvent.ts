@@ -1,18 +1,20 @@
 import {
   APIApplicationCommandInteractionDataAttachmentOption,
   APIApplicationCommandInteractionDataStringOption,
+  APIApplicationCommandInteractionDataUserOption,
   APIChatInputApplicationCommandInteraction,
+  GuildScheduledEventEntityType,
 } from "discord-api-types/v10";
 // import { getConfig } from "../util/serverConfig";
 import { getCommandOptionData } from "../util/interaction-util";
-import { getAttachment } from "../adapters/discord-adapter";
+import { createEvent, getAttachment } from "../adapters/discord-adapter";
 
-export const createEvent = async (
+export const handleCreateEvent = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
   try {
     // const config = getConfig(interaction.guild_id!);
-    // let thumbnail;
+    let thumbnail: string | null = null;
     const eventData = getEventData(interaction);
     console.log(eventData);
 
@@ -22,8 +24,20 @@ export const createEvent = async (
       console.log(thumbnailUrl);
 
       const attachment = await getAttachment(thumbnailUrl);
+      thumbnail = `data:image/png;base64,${Buffer.from(attachment).toString('base64')}`
       console.log(attachment);
     }
+
+    await createEvent({
+      name: eventData.name,
+      scheduled_start_time: new Date(`${eventData.start}`).toISOString(),
+      ...(eventData.end && { scheduled_end_time: new Date(`${eventData.end}`).toISOString() }),
+      privacy_level: 2,
+      entity_type: GuildScheduledEventEntityType.External, // Needs to be dependent on type passed
+      channel_id: undefined, // Will be dependent on type passed
+      description: "Test Description", // Will be based on a couple fields that are passed in
+      ...(thumbnail && { image: thumbnail }),
+    }, interaction.guild_id!);
   } catch (err) {
     throw err;
   }
@@ -60,6 +74,11 @@ const getEventData = (
       getCommandOptionData<APIApplicationCommandInteractionDataAttachmentOption>(
         interaction,
         "thumbnail"
+      )?.value,
+    sponsor:
+      getCommandOptionData<APIApplicationCommandInteractionDataUserOption>(
+        interaction,
+        "sponsor"
       )?.value,
   };
 };
