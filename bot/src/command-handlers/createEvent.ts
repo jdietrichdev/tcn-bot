@@ -21,25 +21,28 @@ export const handleCreateEvent = async (
     if (eventData.thumbnail) {
       const thumbnailUrl =
         interaction.data.resolved!.attachments![eventData.thumbnail].url;
-      console.log(thumbnailUrl);
 
       const attachment = await getAttachment(thumbnailUrl);
-      thumbnail = `data:image/png;base64,${Buffer.from(attachment, "binary").toString('base64')}`
-      console.log(thumbnail);
+      thumbnail = `data:image/png;base64,${Buffer.from(
+        attachment,
+        "binary"
+      ).toString("base64")}`;
     }
 
-    console.log(new Date(`${eventData.start}`).toISOString());
-
-    await createEvent({
-      name: eventData.name,
-      scheduled_start_time: new Date(`${eventData.start}`).toISOString(),
-      ...(eventData.end && { scheduled_end_time: new Date(`${eventData.end}`).toISOString() }),
-      privacy_level: 2,
-      entity_type: GuildScheduledEventEntityType.External, // Needs to be dependent on type passed
-      channel_id: undefined, // Will be dependent on type passed
-      description: "Test Description", // Will be based on a couple fields that are passed in
-      ...(thumbnail && { image: thumbnail }),
-    }, interaction.guild_id!);
+    await createEvent(
+      {
+        name: eventData.name,
+        scheduled_start_time: new Date(`${eventData.start}`).toISOString(),
+        ...(eventData.end && {
+          scheduled_end_time: new Date(`${eventData.end}`).toISOString(),
+        }),
+        privacy_level: 2,
+        entity_type: GuildScheduledEventEntityType.External, // Needs to be dependent on type passed
+        description: "Test Description", // Will be based on a couple fields that are passed in
+        ...(thumbnail && { image: thumbnail }),
+      },
+      interaction.guild_id!
+    );
   } catch (err) {
     throw err;
   }

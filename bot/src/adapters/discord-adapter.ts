@@ -622,6 +622,7 @@ export const createEvent = async (
   guildId: string
 ) => {
   const url = `${BASE_URL}/guilds/${guildId}/scheduled-events`;
+  console.log(JSON.stringify(event));
   try {
     const response = await axios.post(url, event, {
       headers: {
