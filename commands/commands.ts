@@ -303,7 +303,7 @@ export const createEvent = new SlashCommandBuilder()
     return option
       .setName("end")
       .setDescription("End time in UTC (yyyy-mm-ddThh:mm")
-      .setRequired(false);
+      .setRequired(true);
   })
   .addStringOption((option) => {
     return option

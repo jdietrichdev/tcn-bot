@@ -3,20 +3,76 @@ import {
   APIApplicationCommandInteractionDataStringOption,
   APIApplicationCommandInteractionDataUserOption,
   APIChatInputApplicationCommandInteraction,
+  ChannelType,
   GuildScheduledEventEntityType,
+  GuildScheduledEventPrivacyLevel,
+  OverwriteType,
+  PermissionFlagsBits,
 } from "discord-api-types/v10";
-// import { getConfig } from "../util/serverConfig";
+import { getConfig } from "../util/serverConfig";
 import { getCommandOptionData } from "../util/interaction-util";
-import { createEvent, getAttachment } from "../adapters/discord-adapter";
+import {
+  createChannel,
+  createEvent,
+  getAttachment,
+} from "../adapters/discord-adapter";
+
+const channelTypeMap = new Map<string, Record<string, any>>([
+  ["Text", [ChannelType.GuildText, GuildScheduledEventEntityType.External]],
+  ["Voice", [ChannelType.GuildVoice, GuildScheduledEventEntityType.Voice]],
+  [
+    "Stage",
+    [ChannelType.GuildStageVoice, GuildScheduledEventEntityType.StageInstance],
+  ],
+]);
 
 export const handleCreateEvent = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
   try {
-    // const config = getConfig(interaction.guild_id!);
+    const config = getConfig(interaction.guild_id!);
     let thumbnail: string | null = null;
     const eventData = getEventData(interaction);
     console.log(eventData);
+
+    const channel = await createChannel(
+      {
+        name: eventData.name.toLowerCase().trim().replace(/\s+/g, "-"),
+        type: channelTypeMap.get(eventData.type)![0],
+        topic: eventData.description || "",
+        parent_id: config.EVENTS_CATEGORY,
+        permission_overwrites: [
+          {
+            id: interaction.guild_id!,
+            type: OverwriteType.Role,
+            allow: "0",
+            deny: PermissionFlagsBits.ViewChannel.toString(),
+          },
+          {
+            id: config.CLAN_ROLE,
+            type: OverwriteType.Role,
+            allow: (
+              PermissionFlagsBits.ViewChannel |
+              PermissionFlagsBits.AddReactions |
+              PermissionFlagsBits.SendMessages |
+              PermissionFlagsBits.Connect
+            ).toString(),
+            deny: "0",
+          },
+          {
+            id: config.BOT_ID,
+            type: OverwriteType.Member,
+            allow: (
+              PermissionFlagsBits.ViewChannel |
+              PermissionFlagsBits.AddReactions |
+              PermissionFlagsBits.SendMessages
+            ).toString(),
+            deny: "0",
+          },
+        ],
+      },
+      interaction.guild_id!
+    );
 
     if (eventData.thumbnail) {
       const thumbnailUrl =
@@ -33,12 +89,13 @@ export const handleCreateEvent = async (
       {
         name: eventData.name,
         scheduled_start_time: new Date(`${eventData.start}`).toISOString(),
-        ...(eventData.end && {
-          scheduled_end_time: new Date(`${eventData.end}`).toISOString(),
-        }),
-        privacy_level: 2,
-        entity_type: GuildScheduledEventEntityType.External, // Needs to be dependent on type passed
-        description: "Test Description", // Will be based on a couple fields that are passed in
+        scheduled_end_time: new Date(`${eventData.end}`).toISOString(),
+        privacy_level: GuildScheduledEventPrivacyLevel.GuildOnly,
+        entity_type: channelTypeMap.get(eventData.type)![1],
+        ...(eventData.type === "Text"
+          ? { entity_metadata: { location: `<#${channel.id}>` } }
+          : { channel_id: channel.id }),
+        description: `${eventData.description}`, // Will be based on a couple fields that are passed in
         ...(thumbnail && { image: thumbnail }),
       },
       interaction.guild_id!
@@ -56,11 +113,10 @@ const getEventData = (
       interaction,
       "name"
     ).value,
-    channelType:
-      getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
-        interaction,
-        "type"
-      ).value,
+    type: getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
+      interaction,
+      "type"
+    ).value,
     start:
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
