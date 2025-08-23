@@ -24,9 +24,11 @@ export const handleCreateEvent = async (
       console.log(thumbnailUrl);
 
       const attachment = await getAttachment(thumbnailUrl);
-      thumbnail = `data:image/png;base64,${Buffer.from(attachment).toString('base64')}`
+      thumbnail = `data:image/png;base64,${Buffer.from(attachment, "binary").toString('base64')}`
       console.log(thumbnail);
     }
+
+    console.log(new Date(`${eventData.start}`).toISOString());
 
     await createEvent({
       name: eventData.name,
@@ -50,17 +52,17 @@ const getEventData = (
     name: getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
       interaction,
       "name"
-    )?.value,
+    ).value,
     channelType:
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
         "type"
-      )?.value,
+      ).value,
     start:
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
         "start"
-      )?.value,
+      ).value,
     end: getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
       interaction,
       "end"
