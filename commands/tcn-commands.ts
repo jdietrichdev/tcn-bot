@@ -1,10 +1,11 @@
-import { apply, cwlRoster, recruiterScore, ro, closeTicket, deleteTicket } from "./commands";
+import { apply, cwlRoster, recruiterScore, ro, cwlQuestions, closeTicket, deleteTicket } from "./commands";
 
 export const tcnCommands = [
     apply,
     cwlRoster,
     ro, 
     recruiterScore,
+    cwlQuestions,
     closeTicket,
     deleteTicket
 ];
