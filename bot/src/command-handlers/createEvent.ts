@@ -162,12 +162,12 @@ const getEventData = (
 const createEventMessage = (eventData: Record<string, any>, thumbnail: any | null, config: ServerConfig) => {
   const formData = new FormData();
 
-  const message = `#${eventData.name}`;
-  message.concat(`\n\nStart: ${createDiscordTimestamp(eventData.start.toUTCString())}`);
-  message.concat(`\nEnd: ${createDiscordTimestamp(eventData.end.toUTCString())}`);
-  if (eventData.description) message.concat(`\n\nDescription: ${eventData.description}`);
-  if (eventData.sponsor) message.concat(`\n\nThanks to our sponsor <@${eventData.sponsor}>`);
-  message.concat(`<@&${config.CLAN_ROLE}>`);
+  let message = `# ${eventData.name}`;
+  message = message.concat(`\n\nStart: ${createDiscordTimestamp(eventData.start.toUTCString())}`);
+  message = message.concat(`\nEnd: ${createDiscordTimestamp(eventData.end.toUTCString())}`);
+  if (eventData.description) message = message.concat(`\n\nDescription: ${eventData.description}`);
+  if (eventData.sponsor) message = message.concat(`\n\nThanks to our sponsor <@${eventData.sponsor}>`);
+  message = message.concat(`<@&${config.CLAN_ROLE}>`);
 
   formData.append("payload_json", JSON.stringify({ content: message }));
   if (thumbnail) formData.append("files[0]", new Blob([thumbnail], { type: 'image/png' }), 'eventThumbnail.png')
