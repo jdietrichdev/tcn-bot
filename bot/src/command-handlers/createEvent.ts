@@ -163,11 +163,11 @@ const createEventMessage = (eventData: Record<string, any>, thumbnail: any | nul
   const formData = new FormData();
 
   let message = `# ${eventData.name}`;
-  message = message.concat(`\n\nStart: ${createDiscordTimestamp(eventData.start.toUTCString())}`);
-  message = message.concat(`\nEnd: ${createDiscordTimestamp(eventData.end.toUTCString())}`);
+  message = message.concat(`\n\nStart: <t:${createDiscordTimestamp(eventData.start.toUTCString())}:F>`);
+  message = message.concat(`\nEnd: <t:${createDiscordTimestamp(eventData.end.toUTCString())}:F>`);
   if (eventData.description) message = message.concat(`\n\nDescription: ${eventData.description}`);
   if (eventData.sponsor) message = message.concat(`\n\nThanks to our sponsor <@${eventData.sponsor}>`);
-  message = message.concat(`<@&${config.CLAN_ROLE}>`);
+  message = message.concat(`\n\n<@&${config.CLAN_ROLE}>`);
 
   formData.append("payload_json", JSON.stringify({ content: message }));
   if (thumbnail) formData.append("files[0]", new Blob([thumbnail], { type: 'image/png' }), 'eventThumbnail.png')
