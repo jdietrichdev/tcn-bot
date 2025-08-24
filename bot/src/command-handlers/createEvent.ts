@@ -9,14 +9,16 @@ import {
   OverwriteType,
   PermissionFlagsBits,
 } from "discord-api-types/v10";
-import { getConfig } from "../util/serverConfig";
+import { getConfig, ServerConfig } from "../util/serverConfig";
 import { getCommandOptionData } from "../util/interaction-util";
 import {
   createChannel,
   createEvent,
   getAttachment,
+  sendMessageWithAttachment,
   updateResponse,
 } from "../adapters/discord-adapter";
+import { createDiscordTimestamp } from "../util/format-util";
 
 const channelTypeMap = new Map<string, Record<string, any>>([
   ["Text", [ChannelType.GuildText, GuildScheduledEventEntityType.External]],
@@ -32,6 +34,7 @@ export const handleCreateEvent = async (
 ) => {
   try {
     const config = getConfig(interaction.guild_id!);
+    let attachment: any | null = null;
     let thumbnail: string | null = null;
     const eventData = getEventData(interaction);
     console.log(eventData);
@@ -79,7 +82,7 @@ export const handleCreateEvent = async (
       const thumbnailUrl =
         interaction.data.resolved!.attachments![eventData.thumbnail].url;
 
-      const attachment = await getAttachment(thumbnailUrl);
+      attachment = await getAttachment(thumbnailUrl);
       thumbnail = `data:image/png;base64,${Buffer.from(
         attachment,
         "binary"
@@ -89,8 +92,8 @@ export const handleCreateEvent = async (
     await createEvent(
       {
         name: eventData.name,
-        scheduled_start_time: new Date(`${eventData.start}`).toISOString(),
-        scheduled_end_time: new Date(`${eventData.end}`).toISOString(),
+        scheduled_start_time: eventData.start.toISOString(),
+        scheduled_end_time: eventData.end.toISOString(),
         privacy_level: GuildScheduledEventPrivacyLevel.GuildOnly,
         entity_type: channelTypeMap.get(eventData.type)![1],
         ...(eventData.type === "Text"
@@ -101,6 +104,9 @@ export const handleCreateEvent = async (
       },
       interaction.guild_id!
     );
+
+    const eventMessage = createEventMessage(eventData, attachment, config);
+    await sendMessageWithAttachment(eventMessage, channel.id);
 
     await updateResponse(interaction.application_id, interaction.token, {
       content: `Your event has been created, go to <#${channel.id}> to add any additional details you'd like!`,
@@ -127,14 +133,14 @@ const getEventData = (
       "type"
     ).value,
     start:
-      getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
+      new Date(getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
         "start"
-      ).value,
-    end: getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
+      ).value),
+    end: new Date(getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
       interaction,
       "end"
-    )?.value,
+    )?.value),
     description:
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
@@ -152,3 +158,18 @@ const getEventData = (
       )?.value,
   };
 };
+
+const createEventMessage = (eventData: Record<string, any>, thumbnail: any | null, config: ServerConfig) => {
+  const formData = new FormData();
+
+  const message = `#${eventData.name}`;
+  message.concat(`\n\nStart: ${createDiscordTimestamp(eventData.start.toUTCString())}`);
+  message.concat(`\nEnd: ${createDiscordTimestamp(eventData.end.toUTCString())}`);
+  if (eventData.description) message.concat(`\n\nDescription: ${eventData.description}`);
+  if (eventData.sponsor) message.concat(`\n\nThanks to our sponsor <@${eventData.sponsor}>`);
+  message.concat(`<@&${config.CLAN_ROLE}>`);
+
+  formData.append("payload_json", JSON.stringify({ content: message }));
+  if (thumbnail) formData.append("files[0]", new Blob([thumbnail], { type: 'image/png' }), 'eventThumbnail.png')
+  return formData;
+}

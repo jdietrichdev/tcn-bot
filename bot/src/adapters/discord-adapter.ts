@@ -158,6 +158,30 @@ export const sendMessage = async (
   }
 };
 
+export const sendMessageWithAttachment = async (
+  message: FormData,
+  channelId: string,
+) => {
+  const url = `${BASE_URL}/channels/${channelId}/messages`;
+  try {
+    await axios.post(url, message, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`
+      }
+    });
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to update response",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
 export const pinMessage = async (channelId: string, messageId: string) => {
   const url = `${BASE_URL}/channels/${channelId}/pins/${messageId}`;
   try {
@@ -220,9 +244,8 @@ export const getChannelMessages = async (
   const compiledMessages: APIMessage[] = [];
   try {
     while (fetching) {
-      url = `${BASE_URL}/channels/${channelId}/messages?limit=100${
-        before ? `&before=${before}` : ""
-      }`;
+      url = `${BASE_URL}/channels/${channelId}/messages?limit=100${before ? `&before=${before}` : ""
+        }`;
       console.log(url);
       const response = await axios.get(
         `${url}${before ? `&before=${before}` : ""}`,
@@ -602,7 +625,7 @@ export const removeRole = async (
 
 export const getAttachment = async (attachmentUrl: string) => {
   try {
-    const response = await axios.get(attachmentUrl);
+    const response = await axios.get(attachmentUrl, { responseType: 'arraybuffer' });
     return response.data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
