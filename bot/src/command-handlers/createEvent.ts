@@ -99,7 +99,7 @@ export const handleCreateEvent = async (
         ...(eventData.type === "Text"
           ? { entity_metadata: { location: `<#${channel.id}>` } }
           : { channel_id: channel.id }),
-        description: `${eventData.description}`, // Will be based on a couple fields that are passed in
+        description: `${eventData.description}${eventData.sponsor ? `\n\nThanks to our sponsor <@${eventData.sponsor}>!` : ''}`,
         ...(thumbnail && { image: thumbnail }),
       },
       interaction.guild_id!
