@@ -23,7 +23,7 @@ export const claimEvent = async (interaction: APIMessageComponentInteraction) =>
             parent_id: config.EVENTS_CATEGORY,
             permission_overwrites: [
                 {
-                    id: interaction.guild_id!,
+                    id: guildId,
                     type: OverwriteType.Role,
                     allow: "0",
                     deny: PermissionFlagsBits.ViewChannel.toString(),

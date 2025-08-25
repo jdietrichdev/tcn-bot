@@ -318,7 +318,6 @@ export const createChannel = async (
   guildId: string
 ): Promise<APIGuildTextChannel<GuildTextChannelType>> => {
   const url = `${BASE_URL}/guilds/${guildId}/channels`;
-  console.log(JSON.stringify(channel));
   try {
     const response = await axios.post(url, channel, {
       headers: {
