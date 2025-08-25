@@ -62,7 +62,7 @@ export const claimEvent = async (interaction: APIMessageComponentInteraction) =>
         }, guildId);
 
         await sendMessage({
-            content: `Congrats again on winning a prize in our event <@${interaction.user!.id}>! Please coordinate with <@${eventData.sponsor}> to claim your prize.`
+            content: `Congrats again on winning a prize in our ${eventData.name} event <@${interaction.user!.id}>! Please coordinate with <@${eventData.sponsor}> to claim your prize.`
         }, channel.id);
 
         await updateMessage(interaction.channel.id, interaction.message.id, {
