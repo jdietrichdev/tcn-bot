@@ -15,7 +15,11 @@ export const handleEventWinner = async (interaction: APIChatInputApplicationComm
                 pk: interaction.guild_id!,
                 sk: `event#${eventId}`
             }
-        }))).Item!;
+        }))).Item;
+
+        if (!eventData) {
+            throw new Error("No event found for this channel");
+        }
 
         const dmChannel = await createDM({
             recipient_id: winner
@@ -47,7 +51,7 @@ export const handleEventWinner = async (interaction: APIChatInputApplicationComm
         console.error(`Failed to create winner for event: ${err}`);
         await updateResponse(interaction.application_id, interaction.token, {
             content:
-                "There was a failure adding winner for event, please try again or contact admin",
+                "There was a failure adding winner for event, verify you are in a valid event channel and try again or contact admins",
         });
     }
 }
