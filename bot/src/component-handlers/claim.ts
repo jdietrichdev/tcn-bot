@@ -17,7 +17,7 @@ export const claimEvent = async (interaction: APIMessageComponentInteraction) =>
         }))).Item!;
 
         const channel = await createChannel({
-            name: `🏆-${interaction.user!.username}`,
+            name: `claim-${interaction.user!.username}`,
             topic: `Claim prize from ${eventData.name}`,
             type: ChannelType.GuildText,
             parent_id: config.EVENTS_CATEGORY,
