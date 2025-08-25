@@ -15,6 +15,7 @@ import {
   deleteTicket,
   cwlQuestions,
   createEvent,
+  eventWinner,
 } from "./commands";
 
 export const testCommands = [
@@ -34,4 +35,5 @@ export const testCommands = [
   closeTicket,
   deleteTicket,
   createEvent,
+  eventWinner,
 ];

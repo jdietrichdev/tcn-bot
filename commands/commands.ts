@@ -323,3 +323,14 @@ export const createEvent = new SlashCommandBuilder()
       .setDescription("Sponsor for the event")
       .setRequired(false);
   });
+
+export const eventWinner = new SlashCommandBuilder()
+  .setName("event-winner")
+  .setDescription("Create winner for current event")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addUserOption((option) => {
+    return option
+      .setName("winner")
+      .setDescription("Winner for event")
+      .setRequired(true)
+  });

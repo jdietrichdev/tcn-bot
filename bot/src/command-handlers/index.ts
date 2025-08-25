@@ -36,6 +36,8 @@ export const handleCommand = async (
         return await commands.deleteTicket(event.detail);
       case "create-event":
         return await commands.handleCreateEvent(event.detail);
+      case "event-winner":
+        return await commands.handleEventWinner(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);

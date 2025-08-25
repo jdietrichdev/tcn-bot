@@ -13,6 +13,7 @@ import {
   RESTPostAPIChannelMessagesThreadsJSONBody,
   RESTPostAPIChannelMessagesThreadsResult,
   RESTPostAPICurrentUserCreateDMChannelJSONBody,
+  RESTPostAPICurrentUserCreateDMChannelResult,
   RESTPostAPIGuildScheduledEventJSONBody,
   RESTPostAPIWebhookWithTokenJSONBody,
   RESTPutAPIChannelPermissionJSONBody,
@@ -418,7 +419,7 @@ export const deleteChannel = async (channelId: string) => {
 
 export const createDM = async (
   recipient: RESTPostAPICurrentUserCreateDMChannelJSONBody
-) => {
+): Promise<RESTPostAPICurrentUserCreateDMChannelResult> => {
   const url = `${BASE_URL}/users/@me/channels`;
   try {
     const response = await axios.post(url, recipient, {

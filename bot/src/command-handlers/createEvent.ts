@@ -19,6 +19,9 @@ import {
   updateResponse,
 } from "../adapters/discord-adapter";
 import { createDiscordTimestamp } from "../util/format-util";
+import { v4 as uuidv4 } from "uuid";
+import { dynamoDbClient } from "../clients/dynamodb-client";
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
 
 const channelTypeMap = new Map<string, Record<string, any>>([
   ["Text", [ChannelType.GuildText, GuildScheduledEventEntityType.External]],
@@ -34,6 +37,7 @@ export const handleCreateEvent = async (
 ) => {
   try {
     const config = getConfig(interaction.guild_id!);
+    const eventId = uuidv4();
     let attachment: any | null = null;
     let thumbnail: string | null = null;
     const eventData = getEventData(interaction);
@@ -43,7 +47,7 @@ export const handleCreateEvent = async (
       {
         name: eventData.name.toLowerCase().trim().replace(/\s+/g, "-"),
         type: channelTypeMap.get(eventData.type)![0],
-        topic: eventData.description || "",
+        topic: eventId,
         parent_id: config.EVENTS_CATEGORY,
         permission_overwrites: [
           {
@@ -107,6 +111,21 @@ export const handleCreateEvent = async (
 
     const eventMessage = createEventMessage(eventData, attachment, config);
     await sendMessageWithAttachment(eventMessage, channel.id);
+
+    await dynamoDbClient.send(new PutCommand({
+      TableName: "BotTable",
+      Item: {
+        pk: interaction.guild_id!,
+        sk: `event#${eventId}`,
+        eventId,
+        name: eventData.name,
+        startTime: eventData.start.toISOString(),
+        endTime: eventData.end.toISOString(),
+        description: eventData.description,
+        sponsor: eventData.sponsor,
+        channel: channel.id,
+      }
+    }));
 
     await updateResponse(interaction.application_id, interaction.token, {
       content: `Your event has been created, go to <#${channel.id}> to add any additional details you'd like!`,
