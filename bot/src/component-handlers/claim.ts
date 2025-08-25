@@ -1,12 +1,13 @@
 import { APIMessageComponentInteraction, ChannelType, OverwriteType, PermissionFlagsBits } from "discord-api-types/v10";
-import { ServerConfig } from "../util/serverConfig";
+import { getConfig } from "../util/serverConfig";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
 import { createChannel, sendMessage, updateMessage, updateResponse } from "../adapters/discord-adapter";
 
-export const claimEvent = async (interaction: APIMessageComponentInteraction, config: ServerConfig) => {
+export const claimEvent = async (interaction: APIMessageComponentInteraction) => {
     try {
         const [, guildId, eventId] = interaction.data.custom_id.split("_");
+        const config = getConfig(guildId);
         const eventData = (await dynamoDbClient.send(new GetCommand({
             TableName: "BotTable",
             Key: {

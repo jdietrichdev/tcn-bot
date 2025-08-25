@@ -17,24 +17,23 @@ import { claimEvent } from "./claim";
 export const handleComponent = async (
   interaction: APIMessageComponentInteraction
 ) => {
-  const config = getConfig(interaction.guild_id!);
   const customId = interaction.data.custom_id;
   if (customId === 'approveApp') {
-    await approveApp(interaction, config);
+    await approveApp(interaction, getConfig(interaction.guild_id!));
   } else if (customId === 'messageRecruit') {
     await messageRecruit(interaction);
   } else if (customId === 'closeRecruit') {
     await closeRecruit(interaction);
   } else if (customId === 'closeTicket') {
-    await closeTicket(interaction, config);
+    await closeTicket(interaction, getConfig(interaction.guild_id!));
   } else if (customId === "deleteTicket") {
-    await deleteTicket(interaction, config);
+    await deleteTicket(interaction, getConfig(interaction.guild_id!));
   } else if (customId === 'reopenTicket') {
-    await reopenTicket(interaction, config);
+    await reopenTicket(interaction, getConfig(interaction.guild_id!));
   } else if (customId === 'grantRoles') {
-    await grantRoles(interaction, config);
+    await grantRoles(interaction, getConfig(interaction.guild_id!));
   } else if (customId === 'removeRoles') {
-    await removeRoles(interaction, config);
+    await removeRoles(interaction, getConfig(interaction.guild_id!));
   } else if (customId === 'confirmDelete') {
     await confirmDelete(interaction);
   } else if (customId === 'rejectDelete') {
@@ -44,6 +43,6 @@ export const handleComponent = async (
   } else if (customId === 'exportCwlQuestions') {
     await exportCwlQuestions(interaction);
   } else if (customId.startsWith("claim")) {
-    await claimEvent(interaction, config);
+    await claimEvent(interaction);
   }
 };
