@@ -147,7 +147,7 @@ const buildEmbed = (
     }),
     footer: {
       text: [
-        "**TOTALS**",
+        "TOTALS:",
         `Candidate Forwards: ${totals.candidateForwards}`,
         `Messages Sent: ${totals.messages}`,
         `Clan Posts: ${totals.clanPosts}`,
