@@ -110,7 +110,8 @@ const getClanPostsMessages = async (
       message.type === MessageType.Default &&
       message.content.startsWith(
         "https://discord.com/channels/236523452230533121/1058589765508800644"
-      )
+      ) &&
+      !message.message_reference
     ) {
       const user = message.embeds[0].title!.split(" ")[0];
       console.log(user);
