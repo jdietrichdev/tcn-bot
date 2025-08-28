@@ -23,6 +23,7 @@ export const handleRecruiterScore = async (
       config.RECRUITMENT_OPP_CHANNEL,
       new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000)
     );
+    console.log(JSON.stringify(messages));
     for (const message of messages) {
       if (
         message.type === MessageType.ChatInputCommand &&
