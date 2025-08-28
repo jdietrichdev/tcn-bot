@@ -40,6 +40,13 @@ export const handleRecruiterScore = async (
       await updateResponse(input.application_id, input.token, {
         content: `Information has been compiled and sent to <#${config.RECRUITER_CHANNEL}>`,
       });
+    } else {
+      await sendMessage(
+        {
+          embeds: [embed],
+        },
+        config.RECRUITMENT_LEADERBOARD_CHANNEL
+      );
     }
   } catch (err) {
     console.error(`Failed to generate recruitment score: ${err}`);
