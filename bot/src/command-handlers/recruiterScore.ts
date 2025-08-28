@@ -106,7 +106,6 @@ const getClanPostsMessages = async (
     new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000)
   );
   for (const message of messages) {
-    console.log(JSON.stringify(message));
     if (
       message.type === MessageType.Default &&
       message.content.startsWith(
@@ -116,7 +115,6 @@ const getClanPostsMessages = async (
       message.embeds.length !== 0
     ) {
       const user = message.embeds[0].title!.split(" ")[0];
-      console.log(user);
       const stats = scoreMap.get(user) || {
         messages: 0,
         clanPosts: 0,
