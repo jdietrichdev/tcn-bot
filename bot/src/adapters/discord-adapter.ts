@@ -9,6 +9,7 @@ import {
   GuildTextChannelType,
   RESTAPIGuildCreatePartialChannel,
   RESTGetAPIChannelMessageReactionUsersResult,
+  RESTPatchAPIChannelJSONBody,
   RESTPostAPIChannelMessageResult,
   RESTPostAPIChannelMessagesThreadsJSONBody,
   RESTPostAPIChannelMessagesThreadsResult,
@@ -161,14 +162,14 @@ export const sendMessage = async (
 
 export const sendMessageWithAttachment = async (
   message: FormData,
-  channelId: string,
+  channelId: string
 ) => {
   const url = `${BASE_URL}/channels/${channelId}/messages`;
   try {
     await axios.post(url, message, {
       headers: {
-        Authorization: `Bot ${process.env.BOT_TOKEN}`
-      }
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+      },
     });
   } catch (err) {
     if (axios.isAxiosError(err)) {
@@ -245,8 +246,9 @@ export const getChannelMessages = async (
   const compiledMessages: APIMessage[] = [];
   try {
     while (fetching) {
-      url = `${BASE_URL}/channels/${channelId}/messages?limit=100${before ? `&before=${before}` : ""
-        }`;
+      url = `${BASE_URL}/channels/${channelId}/messages?limit=100${
+        before ? `&before=${before}` : ""
+      }`;
       console.log(url);
       const response = await axios.get(
         `${url}${before ? `&before=${before}` : ""}`,
@@ -330,6 +332,31 @@ export const createChannel = async (
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
         "Failed to create channel",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
+export const updateChannel = async (
+  channelUpdate: RESTPatchAPIChannelJSONBody,
+  channelId: string
+) => {
+  const url = `${BASE_URL}/channels/${channelId}`;
+  try {
+    await axios.patch(url, channelUpdate, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to update channel",
         err.response?.data.message,
         err.response?.status ?? 500
       );
@@ -626,7 +653,9 @@ export const removeRole = async (
 
 export const getAttachment = async (attachmentUrl: string) => {
   try {
-    const response = await axios.get(attachmentUrl, { responseType: 'arraybuffer' });
+    const response = await axios.get(attachmentUrl, {
+      responseType: "arraybuffer",
+    });
     return response.data;
   } catch (err) {
     if (axios.isAxiosError(err)) {

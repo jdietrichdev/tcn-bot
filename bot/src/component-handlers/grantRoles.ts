@@ -9,6 +9,7 @@ import {
   grantRole,
   removeRole,
   sendMessage,
+  updateChannel,
   updateMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
@@ -35,6 +36,12 @@ export const grantRoles = async (
       await sendMessage(
         {
           content: `Roles granted by ${interaction.member?.user.username}`,
+        },
+        interaction.channel.id
+      );
+      await updateChannel(
+        {
+          name: interaction.channel.name!.replace("\u{1F39F}", "\u{2705}"),
         },
         interaction.channel.id
       );
