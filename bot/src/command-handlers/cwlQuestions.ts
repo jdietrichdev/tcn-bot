@@ -16,6 +16,23 @@ export const handleCwlQuestions = async (
             "name"
         ).value;
 
+        try {
+            await dynamoDbClient.send(
+                new PutCommand({
+                    TableName: "BotTable",
+                    Item: {
+                        pk: interaction.guild_id!,
+                        sk: `questions#${questionName}`,
+                        questionName,
+                        accounts: [],
+                    },
+                    ConditionExpression: "attribute_not_exists(pk) and attribute_not_exists(sk)"
+                })
+            );
+        } catch (err) {
+            console.log(err);
+        }
+
         await sendMessage({
             embeds: [{
                 title: questionName,
@@ -27,18 +44,6 @@ export const handleCwlQuestions = async (
             }]
         },
             config.CWL_SIGNUP_CHANNEL
-        );
-
-        await dynamoDbClient.send(
-            new PutCommand({
-                TableName: "BotTable",
-                Item: {
-                    pk: interaction.guild_id!,
-                    sk: `questions#${questionName}`,
-                    questionName,
-                    accounts: [],
-                }
-            })
         );
 
         await updateResponse(interaction.application_id, interaction.token, {
