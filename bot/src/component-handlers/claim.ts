@@ -63,8 +63,11 @@ export const claimEvent = async (interaction: APIMessageComponentInteraction) =>
             ]
         }, guildId);
 
+        let message = `Congrats again on winning a ${prize} in our ${eventData.name} event <@${interaction.user!.id}>!`
+        if (eventData.sponsor) message += ` Please coordinate with <@${eventData.sponsor}> to claim your prize.`
+        message += `\n\nPlease share your Supercell friend link or any other information that would be helpful for sending you your prize.`
         await sendMessage({
-            content: `Congrats again on winning a ${prize} in our ${eventData.name} event <@${interaction.user!.id}>! Please coordinate with <@${eventData.sponsor}> to claim your prize.\n\nPlease share your Supercell friend link or any other information that would be helpful for sending you your prize.`
+            content: message
         }, channel.id);
 
         await updateMessage(interaction.channel.id, interaction.message.id, {
