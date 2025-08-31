@@ -58,7 +58,7 @@ export const claimEvent = async (interaction: APIMessageComponentInteraction) =>
                             PermissionFlagsBits.SendMessages
                         ).toString(),
                         deny: "0",
-                    }]
+                    }] || []
                 )
             ]
         }, guildId);
