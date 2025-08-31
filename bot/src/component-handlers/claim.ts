@@ -6,7 +6,7 @@ import { createChannel, sendMessage, updateMessage, updateResponse } from "../ad
 
 export const claimEvent = async (interaction: APIMessageComponentInteraction) => {
     try {
-        const [, guildId, eventId] = interaction.data.custom_id.split("_");
+        const [, guildId, eventId, prize] = interaction.data.custom_id.split("_");
         const config = getConfig(guildId);
         const eventData = (await dynamoDbClient.send(new GetCommand({
             TableName: "BotTable",
@@ -48,21 +48,23 @@ export const claimEvent = async (interaction: APIMessageComponentInteraction) =>
                     ).toString(),
                     deny: "0",
                 },
-                {
-                    id: eventData.sponsor,
-                    type: OverwriteType.Member,
-                    allow: (
-                        PermissionFlagsBits.ViewChannel |
-                        PermissionFlagsBits.AddReactions |
-                        PermissionFlagsBits.SendMessages
-                    ).toString(),
-                    deny: "0",
-                }
+                ...(eventData.sponsor && 
+                    {
+                        id: eventData.sponsor,
+                        type: OverwriteType.Member,
+                        allow: (
+                            PermissionFlagsBits.ViewChannel |
+                            PermissionFlagsBits.AddReactions |
+                            PermissionFlagsBits.SendMessages
+                        ).toString(),
+                        deny: "0",
+                    }
+                )
             ]
         }, guildId);
 
         await sendMessage({
-            content: `Congrats again on winning a prize in our ${eventData.name} event <@${interaction.user!.id}>! Please coordinate with <@${eventData.sponsor}> to claim your prize.\n\nPlease share your Supercell friend link or any other information that would be helpful for sending you your prize.`
+            content: `Congrats again on winning a ${prize} in our ${eventData.name} event <@${interaction.user!.id}>! Please coordinate with <@${eventData.sponsor}> to claim your prize.\n\nPlease share your Supercell friend link or any other information that would be helpful for sending you your prize.`
         }, channel.id);
 
         await updateMessage(interaction.channel.id, interaction.message.id, {

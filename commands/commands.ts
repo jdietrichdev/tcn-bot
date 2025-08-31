@@ -333,4 +333,28 @@ export const eventWinner = new SlashCommandBuilder()
       .setName("winner")
       .setDescription("Winner for event")
       .setRequired(true)
-  });
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("prize")
+      .setDescription("What was won?")
+      .setRequired(true)
+      .setChoices([
+        {
+          name: "Gold Pass",
+          value: "GOLD PASS",
+        },
+        {
+          name: "Event Pass",
+          value: "EVENT PASS",
+        },
+        {
+          name: "Legends Base Voucher",
+          value: "LEGENDS BASE VOUCHER",
+        },
+        {
+          name: "Cash",
+          value: "CASH",
+        }
+      ]);
+  })
