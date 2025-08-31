@@ -49,7 +49,7 @@ export const claimEvent = async (interaction: APIMessageComponentInteraction) =>
                     deny: "0",
                 },
                 ...(eventData.sponsor && 
-                    {
+                    [{
                         id: eventData.sponsor,
                         type: OverwriteType.Member,
                         allow: (
@@ -58,7 +58,7 @@ export const claimEvent = async (interaction: APIMessageComponentInteraction) =>
                             PermissionFlagsBits.SendMessages
                         ).toString(),
                         deny: "0",
-                    }
+                    }]
                 )
             ]
         }, guildId);
