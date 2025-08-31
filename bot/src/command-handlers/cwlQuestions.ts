@@ -30,7 +30,9 @@ export const handleCwlQuestions = async (
                 })
             );
         } catch (err) {
-            console.log(err);
+            if (!(err as Error).message.includes('conditional request')) {
+                throw err;
+            }
         }
 
         await sendMessage({
@@ -51,6 +53,8 @@ export const handleCwlQuestions = async (
         });
     } catch (err) {
         console.log(`Failed to initiate CWL questions: ${err}`);
-        throw err;
+        await updateResponse(interaction.application_id, interaction.token, {
+            content: "Failed initiating CWL questionnaire, try again or contact admins"
+        });
     }
 }
