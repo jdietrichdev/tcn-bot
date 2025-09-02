@@ -6,7 +6,7 @@ import { parse } from "csv-parse/sync";
 import { getServerMembers } from "../adapters/discord-adapter";
 import { APIGuildMember } from "discord-api-types/v10";
 import { dynamoDbClient } from "../clients/dynamodb-client";
-import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 
 interface Player {
   playerTag: string;
@@ -19,6 +19,8 @@ interface ClanRoster {
   clanTag: string;
   league: string;
   players: Player[];
+  channel?: string;
+  role?: string;
 }
 
 export const processCwlRoster = async (event: S3Event) => {
@@ -47,6 +49,16 @@ export const processCwlRoster = async (event: S3Event) => {
 
         const guildId = key.split("/")[0];
         const guildMembers = await getServerMembers(guildId);
+        
+        const existingRosterData = (await dynamoDbClient.send(
+          new GetCommand({
+            TableName: "BotTable",
+            Key: {
+              pk: guildId,
+              sk: `roster#${key}`,
+            },
+          })
+        )).Item;
 
         let clan = "";
         let clanTag = "";
@@ -87,24 +99,49 @@ export const processCwlRoster = async (event: S3Event) => {
           }
         }
 
-        console.log("Storing roster to table");
-        const tableResponse = await dynamoDbClient.send(
-          new UpdateCommand({
+        if (existingRosterData) {
+          console.log("Replacing existing roster data");
+          existingRosterData.roster.filter((roster: ClanRoster) => {
+            return null != clanMap.get(roster.clanTag);
+          }).forEach((roster: ClanRoster) => {
+            const updatedRoster = clanMap.get(roster.clanTag);
+            roster.players = updatedRoster!.players;
+          });
+          console.log("Updating roster in table");
+          await dynamoDbClient.send(new UpdateCommand({
             TableName: "BotTable",
             Key: {
-              pk: guildId,
+              guildId,
               sk: `roster#${key.split("/")[1].replace(".csv", "")}`,
             },
             ExpressionAttributeNames: {
               "#roster": "roster",
             },
             ExpressionAttributeValues: {
-              ":roster": Array.from(clanMap.values()),
+              ":roster": existingRosterData.roster
             },
             UpdateExpression: "set #roster = :roster",
-          })
-        );
-        console.log(`Stored roster to table: ${JSON.stringify(tableResponse)}`);
+          }));
+        } else {
+          console.log("Storing roster to table");
+          const tableResponse = await dynamoDbClient.send(
+            new UpdateCommand({
+              TableName: "BotTable",
+              Key: {
+                pk: guildId,
+                sk: `roster#${key.split("/")[1].replace(".csv", "")}`,
+              },
+              ExpressionAttributeNames: {
+                "#roster": "roster",
+              },
+              ExpressionAttributeValues: {
+                ":roster": Array.from(clanMap.values()),
+              },
+              UpdateExpression: "set #roster = :roster",
+            })
+          );
+          console.log(`Stored roster to table: ${JSON.stringify(tableResponse)}`);
+        }
       } else {
         console.log("Folder created, no processing required");
       }
