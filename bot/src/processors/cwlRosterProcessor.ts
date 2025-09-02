@@ -61,8 +61,6 @@ export const processCwlRoster = async (event: S3Event) => {
             })
           )
         ).Item;
-        console.log(key.split("/")[1].replace(".csv", ""));
-        console.log(JSON.stringify(existingRosterData));
 
         let clan = "";
         let clanTag = "";
@@ -122,7 +120,7 @@ export const processCwlRoster = async (event: S3Event) => {
             new UpdateCommand({
               TableName: "BotTable",
               Key: {
-                guildId,
+                pk: guildId,
                 sk: `roster#${key.split("/")[1].replace(".csv", "")}`,
               },
               ExpressionAttributeNames: {
