@@ -75,7 +75,6 @@ export const handleCwlRoster = async (
           { content: message.content?.split("\n")[0] },
           config.CWL_ROSTER_CHANNEL
         );
-        console.log(JSON.stringify(message));
         await updateMessage(config.CWL_ROSTER_CHANNEL, id, message);
         previousMessages.push(id);
         await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -214,7 +213,7 @@ const buildAnnouncement = async (roster: Record<string, any>[]) => {
       clan.clanTag
     }>)\n`;
     for (const player of clan.players) {
-      message += `<@${player.userId}> | ${player.playerName} | [${player.playerTag}](https://link.clashofclans.com/en?action=OpenPlayerProfile&tag=${player.playerTag.replace('#', '')})\n`;
+      message += `<@${player.userId}> | ${player.playerName} | ${player.playerTag}\n`;
     }
     messages.push({ content: message.replace(/_/g, "\\_"), flags: MessageFlags.SuppressEmbeds });
   }
@@ -262,7 +261,7 @@ const buildReminder = async (roster: Record<string, any>[]) => {
         message += "All players in clan, well done\n";
       else {
         for (const player of missingPlayers) {
-          message += `<@${player.userId}> | ${player.playerName} | [${player.playerTag}](https://link.clashofclans.com/en?action=OpenPlayerProfile&tag=${player.playerTag.replace('#', '')})\n`;
+          message += `<@${player.userId}> | ${player.playerName} | ${player.playerTag}\n`;
         }
       }
       messages.push({ content: message.replace(/_/g, "\\_"), flags: MessageFlags.SuppressEmbeds });
@@ -281,7 +280,7 @@ const buildReminder = async (roster: Record<string, any>[]) => {
         message +=
           "CWL has been spun. If your name is below, better reach out to some important people!\n";
         for (const missed of missedSpin) {
-          message += `<@${missed.userId}> | ${missed.playerName} | [${missed.playerTag}](https://link.clashofclans.com/en?action=OpenPlayerProfile&tag=${missed.playerTag.replace('#', '')})\n`;
+          message += `<@${missed.userId}> | ${missed.playerName} | ${missed.playerTag}\n`;
         }
       }
       messages.push({ content: message.replace(/_/g, "\\_"), flags: MessageFlags.SuppressEmbeds });
