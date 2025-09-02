@@ -56,7 +56,7 @@ export const processCwlRoster = async (event: S3Event) => {
               TableName: "BotTable",
               Key: {
                 pk: guildId,
-                sk: `roster#$${key.split("/")[1].replace(".csv", "")}`,
+                sk: `roster#${key.split("/")[1].replace(".csv", "")}`,
               },
             })
           )
