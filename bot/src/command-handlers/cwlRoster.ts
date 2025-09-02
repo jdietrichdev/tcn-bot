@@ -2,6 +2,7 @@ import {
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
   ChannelType,
+  MessageFlags,
   OverwriteType,
   PermissionFlagsBits,
   RESTPostAPIWebhookWithTokenJSONBody,
@@ -212,9 +213,9 @@ const buildAnnouncement = async (roster: Record<string, any>[]) => {
       clan.clanTag
     }>)\n`;
     for (const player of clan.players) {
-      message += `<@${player.userId}> ${player.playerName}\n`;
+      message += `<@${player.userId}> | ${player.playerName} | [${player.playerTag}](https://link.clashofclans.com/en?action=OpenPlayerProfile&tag=${player.playerTag.replace('#', '')})\n`;
     }
-    messages.push({ content: message.replace(/_/g, "\\_") });
+    messages.push({ content: message.replace(/_/g, "\\_"), flags: MessageFlags.SuppressEmbeds });
   }
   messages.push({
     content: `*Last updated: <t:${createDiscordTimestamp(
@@ -260,10 +261,10 @@ const buildReminder = async (roster: Record<string, any>[]) => {
         message += "All players in clan, well done\n";
       else {
         for (const player of missingPlayers) {
-          message += `<@${player.userId}> ${player.playerName}\n`;
+          message += `<@${player.userId}> | ${player.playerName} | [${player.playerTag}](https://link.clashofclans.com/en?action=OpenPlayerProfile&tag=${player.playerTag.replace('#', '')})\n`;
         }
       }
-      messages.push({ content: message.replace(/_/g, "\\_") });
+      messages.push({ content: message.replace(/_/g, "\\_"), flags: MessageFlags.SuppressEmbeds });
     } else {
       const clanCwlData = cwlStatus.clans.find(
         (cwlClan: Record<string, any>) => cwlClan.tag === `#${clan.clanTag}`
@@ -279,10 +280,10 @@ const buildReminder = async (roster: Record<string, any>[]) => {
         message +=
           "CWL has been spun. If your name is below, better reach out to some important people!\n";
         for (const missed of missedSpin) {
-          message += `<@${missed.userId}> ${missed.playerName}\n`;
+          message += `<@${missed.userId}> | ${missed.playerName} | [${missed.playerTag}](https://link.clashofclans.com/en?action=OpenPlayerProfile&tag=${missed.playerTag.replace('#', '')})\n`;
         }
       }
-      messages.push({ content: message.replace(/_/g, "\\_") });
+      messages.push({ content: message.replace(/_/g, "\\_"), flags: MessageFlags.SuppressEmbeds });
     }
   }
   return messages;
