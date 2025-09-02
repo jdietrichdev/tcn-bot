@@ -91,7 +91,7 @@ export const BUTTONS = {
   } as APIButtonComponentWithCustomId,
   CWL_QUESTIONS: {
     type: ComponentType.Button,
-    style: ButtonStyle.Success,
+    style: ButtonStyle.Primary,
     label: "Answer Questions",
     custom_id: "cwlQuestions",
   } as APIButtonComponentWithCustomId,
@@ -105,12 +105,12 @@ export const BUTTONS = {
     type: ComponentType.Button,
     style: ButtonStyle.Success,
     label: "Signup",
-    custom_id: "signupCwl"
+    custom_id: "signupCwl",
   } as APIButtonComponentWithCustomId,
   CLOSE_CWL_SIGNUP: {
     type: ComponentType.Button,
     style: ButtonStyle.Secondary,
     label: "Close Signup",
-    custom_id: "closeSignup"
+    custom_id: "closeSignup",
   } as APIButtonComponentWithCustomId,
 };
