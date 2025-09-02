@@ -27,9 +27,9 @@ export const processCwlRoster = async (event: S3Event) => {
   try {
     for (const record of event.Records) {
       const bucket = record.s3.bucket.name;
-      const key = record.s3.object.key.replace(/\+/g, ' ');
+      const key = record.s3.object.key.replace(/\+/g, " ");
       console.log(key);
-      
+
       if (record.s3.object.size !== 0) {
         const response = await s3Client.send(
           new GetObjectCommand({
@@ -49,16 +49,18 @@ export const processCwlRoster = async (event: S3Event) => {
 
         const guildId = key.split("/")[0];
         const guildMembers = await getServerMembers(guildId);
-        
-        const existingRosterData = (await dynamoDbClient.send(
-          new GetCommand({
-            TableName: "BotTable",
-            Key: {
-              pk: guildId,
-              sk: `roster#${key}`,
-            },
-          })
-        )).Item;
+
+        const existingRosterData = (
+          await dynamoDbClient.send(
+            new GetCommand({
+              TableName: "BotTable",
+              Key: {
+                pk: guildId,
+                sk: `roster#$${key.split("/")[1].replace(".csv", "")}`,
+              },
+            })
+          )
+        ).Item;
 
         let clan = "";
         let clanTag = "";
@@ -77,14 +79,18 @@ export const processCwlRoster = async (event: S3Event) => {
               clan = record[Object.keys(record)[0]];
               league = record["Player Name"];
               clanTag = record["Combined Heroes"].split("=")[2];
-              if (clanTag.startsWith("%23")) clanTag = clanTag.replace("%23", "");
+              if (clanTag.startsWith("%23"))
+                clanTag = clanTag.replace("%23", "");
               clanMap.set(clanTag, {
                 clan,
                 clanTag,
                 league,
                 players: [],
               });
-            } else if (record["Player Name"] !== "" && record["Discord"] !== "") {
+            } else if (
+              record["Player Name"] !== "" &&
+              record["Discord"] !== ""
+            ) {
               const clanRoster = clanMap.get(clanTag);
               clanRoster?.players.push({
                 playerTag: record["Player Tag"],
@@ -101,27 +107,31 @@ export const processCwlRoster = async (event: S3Event) => {
 
         if (existingRosterData) {
           console.log("Replacing existing roster data");
-          existingRosterData.roster.filter((roster: ClanRoster) => {
-            return null != clanMap.get(roster.clanTag);
-          }).forEach((roster: ClanRoster) => {
-            const updatedRoster = clanMap.get(roster.clanTag);
-            roster.players = updatedRoster!.players;
-          });
+          existingRosterData.roster
+            .filter((roster: ClanRoster) => {
+              return null != clanMap.get(roster.clanTag);
+            })
+            .forEach((roster: ClanRoster) => {
+              const updatedRoster = clanMap.get(roster.clanTag);
+              roster.players = updatedRoster!.players;
+            });
           console.log("Updating roster in table");
-          await dynamoDbClient.send(new UpdateCommand({
-            TableName: "BotTable",
-            Key: {
-              guildId,
-              sk: `roster#${key.split("/")[1].replace(".csv", "")}`,
-            },
-            ExpressionAttributeNames: {
-              "#roster": "roster",
-            },
-            ExpressionAttributeValues: {
-              ":roster": existingRosterData.roster
-            },
-            UpdateExpression: "set #roster = :roster",
-          }));
+          await dynamoDbClient.send(
+            new UpdateCommand({
+              TableName: "BotTable",
+              Key: {
+                guildId,
+                sk: `roster#${key.split("/")[1].replace(".csv", "")}`,
+              },
+              ExpressionAttributeNames: {
+                "#roster": "roster",
+              },
+              ExpressionAttributeValues: {
+                ":roster": existingRosterData.roster,
+              },
+              UpdateExpression: "set #roster = :roster",
+            })
+          );
         } else {
           console.log("Storing roster to table");
           const tableResponse = await dynamoDbClient.send(
@@ -140,7 +150,9 @@ export const processCwlRoster = async (event: S3Event) => {
               UpdateExpression: "set #roster = :roster",
             })
           );
-          console.log(`Stored roster to table: ${JSON.stringify(tableResponse)}`);
+          console.log(
+            `Stored roster to table: ${JSON.stringify(tableResponse)}`
+          );
         }
       } else {
         console.log("Folder created, no processing required");
