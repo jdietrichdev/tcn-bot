@@ -2,7 +2,6 @@ import {
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
   ChannelType,
-  MessageFlags,
   OverwriteType,
   PermissionFlagsBits,
   RESTPostAPIWebhookWithTokenJSONBody,
@@ -166,7 +165,7 @@ export const handleCwlRoster = async (
         })
       );
       await updateResponse(interaction.application_id, interaction.token, {
-        content: "Channels and roles have been created for CWL"
+        content: "Channels and roles have been created for CWL",
       });
     } else if (notificationType === "Cleanup") {
       console.log("Cleaning up roles and channels for CWL");
@@ -189,8 +188,8 @@ export const handleCwlRoster = async (
         })
       );
       await updateResponse(interaction.application_id, interaction.token, {
-        content: "Roles and channels have been cleaned up from CWL"
-      })
+        content: "Roles and channels have been cleaned up from CWL",
+      });
     }
   } catch (err) {
     console.error(`Failed to send roster message: ${err}`);
@@ -213,9 +212,9 @@ const buildAnnouncement = async (roster: Record<string, any>[]) => {
       clan.clanTag
     }>)\n`;
     for (const player of clan.players) {
-      message += `<@${player.userId}> | ${player.playerName} | ${player.playerTag}\n`;
+      message += `<@${player.userId}> | ${player.playerName} | \`${player.playerTag}\`\n`;
     }
-    messages.push({ content: message.replace(/_/g, "\\_"), flags: MessageFlags.SuppressEmbeds });
+    messages.push({ content: message.replace(/_/g, "\\_") });
   }
   messages.push({
     content: `*Last updated: <t:${createDiscordTimestamp(
@@ -261,10 +260,10 @@ const buildReminder = async (roster: Record<string, any>[]) => {
         message += "All players in clan, well done\n";
       else {
         for (const player of missingPlayers) {
-          message += `<@${player.userId}> | ${player.playerName} | ${player.playerTag}\n`;
+          message += `<@${player.userId}> | ${player.playerName} | \`${player.playerTag}\`\n`;
         }
       }
-      messages.push({ content: message.replace(/_/g, "\\_"), flags: MessageFlags.SuppressEmbeds });
+      messages.push({ content: message.replace(/_/g, "\\_") });
     } else {
       const clanCwlData = cwlStatus.clans.find(
         (cwlClan: Record<string, any>) => cwlClan.tag === `#${clan.clanTag}`
@@ -280,10 +279,10 @@ const buildReminder = async (roster: Record<string, any>[]) => {
         message +=
           "CWL has been spun. If your name is below, better reach out to some important people!\n";
         for (const missed of missedSpin) {
-          message += `<@${missed.userId}> | ${missed.playerName} | ${missed.playerTag}\n`;
+          message += `<@${missed.userId}> | ${missed.playerName} | \`${missed.playerTag}\`\n`;
         }
       }
-      messages.push({ content: message.replace(/_/g, "\\_"), flags: MessageFlags.SuppressEmbeds });
+      messages.push({ content: message.replace(/_/g, "\\_") });
     }
   }
   return messages;
