@@ -17,6 +17,7 @@ import {
   grantRole,
   deleteRole,
   deleteChannel,
+  updateChannelPermissions,
 } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
@@ -155,6 +156,16 @@ export const handleCwlRoster = async (
             interaction.guild_id!
           );
           clan.channel = channel.id;
+        } else {
+          await updateChannelPermissions(clan.channel, clan.role, {
+            type: OverwriteType.Role,
+            allow: (
+              PermissionFlagsBits.ViewChannel |
+              PermissionFlagsBits.AddReactions |
+              PermissionFlagsBits.SendMessages
+            ).toString(),
+            deny: "0",
+          });
         }
       }
       await dynamoDbClient.send(
