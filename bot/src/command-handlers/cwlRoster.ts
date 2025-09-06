@@ -103,13 +103,14 @@ export const handleCwlRoster = async (
     } else if (notificationType === "Setup") {
       console.log("Setting up roles and channels for CWL");
       for (const clan of rosterData.roster) {
-        if (!clan.role) {
-          const role = await createRole(
-            interaction.guild_id!,
-            `${clan.clan}_CWL`
-          );
-          clan.role = role.id;
+        if (clan.role) {
+          await deleteRole(interaction.guild_id!, clan.role);
         }
+        const role = await createRole(
+          interaction.guild_id!,
+          `${clan.clan}_CWL`
+        );
+        clan.role = role.id;
         for (const player of clan.players) {
           if (/^\d{17,19}$/.test(player.userId)) {
             await grantRole(interaction.guild_id!, player.userId, clan.role);
