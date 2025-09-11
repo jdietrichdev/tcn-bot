@@ -80,7 +80,7 @@ const createTranscript = (
 ): APIEmbed => {
   const applicationChannel =
     interaction.channel as APIGuildTextChannel<GuildTextChannelType>;
-  const applicantUsername = applicationChannel.name.split("-")[1];
+  const applicantUsername = applicationChannel.name.split("-")[2];
   const applicantId = applicationChannel.topic!.split(":")[1];
   const participantMap = new Map<string, number>();
   for (const message of messages) {
