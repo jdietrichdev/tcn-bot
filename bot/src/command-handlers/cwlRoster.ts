@@ -16,7 +16,6 @@ import {
   createChannel,
   grantRole,
   deleteRole,
-  deleteChannel,
   updateChannelPermissions,
 } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
@@ -186,10 +185,6 @@ export const handleCwlRoster = async (
           await deleteRole(interaction.guild_id!, clan.role);
           delete clan.role;
         }
-        if (clan.channel) {
-          await deleteChannel(clan.channel);
-          delete clan.channel;
-        }
       }
       await dynamoDbClient.send(
         new PutCommand({
@@ -200,7 +195,7 @@ export const handleCwlRoster = async (
         })
       );
       await updateResponse(interaction.application_id, interaction.token, {
-        content: "Roles and channels have been cleaned up from CWL",
+        content: "Roles have been cleaned up from CWL",
       });
     }
   } catch (err) {
