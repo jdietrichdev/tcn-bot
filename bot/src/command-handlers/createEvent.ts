@@ -103,7 +103,11 @@ export const handleCreateEvent = async (
         ...(eventData.type === "Text"
           ? { entity_metadata: { location: `<#${channel.id}>` } }
           : { channel_id: channel.id }),
-        description: `${eventData.description}${eventData.sponsor ? `\n\nThanks to our sponsor <@${eventData.sponsor}>!` : ''}`,
+        description: `${eventData.description}${
+          eventData.sponsor
+            ? `\n\nThanks to our sponsor <@${eventData.sponsor}>!`
+            : ""
+        }`,
         ...(thumbnail && { image: thumbnail }),
       },
       interaction.guild_id!
@@ -112,20 +116,22 @@ export const handleCreateEvent = async (
     const eventMessage = createEventMessage(eventData, attachment, config);
     await sendMessageWithAttachment(eventMessage, channel.id);
 
-    await dynamoDbClient.send(new PutCommand({
-      TableName: "BotTable",
-      Item: {
-        pk: interaction.guild_id!,
-        sk: `event#${eventId}`,
-        eventId,
-        name: eventData.name,
-        startTime: eventData.start.toISOString(),
-        endTime: eventData.end.toISOString(),
-        description: eventData.description,
-        sponsor: eventData.sponsor,
-        channel: channel.id,
-      }
-    }));
+    await dynamoDbClient.send(
+      new PutCommand({
+        TableName: "BotTable",
+        Item: {
+          pk: interaction.guild_id!,
+          sk: `event#${eventId}`,
+          eventId,
+          name: eventData.name,
+          startTime: eventData.start.toISOString(),
+          endTime: eventData.end.toISOString(),
+          description: eventData.description,
+          sponsor: eventData.sponsor,
+          channel: channel.id,
+        },
+      })
+    );
 
     await updateResponse(interaction.application_id, interaction.token, {
       content: `Your event has been created, go to <#${channel.id}> to add any additional details you'd like!`,
@@ -151,15 +157,18 @@ const getEventData = (
       interaction,
       "type"
     ).value,
-    start:
-      new Date(getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
+    start: new Date(
+      getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
         "start"
-      ).value),
-    end: new Date(getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
-      interaction,
-      "end"
-    )?.value),
+      ).value
+    ),
+    end: new Date(
+      getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
+        interaction,
+        "end"
+      )?.value
+    ),
     description:
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
@@ -178,17 +187,33 @@ const getEventData = (
   };
 };
 
-const createEventMessage = (eventData: Record<string, any>, thumbnail: any | null, config: ServerConfig) => {
+const createEventMessage = (
+  eventData: Record<string, any>,
+  thumbnail: any | null,
+  config: ServerConfig
+) => {
   const formData = new FormData();
 
   let message = `# ${eventData.name}`;
-  message = message.concat(`\n\nStart: <t:${createDiscordTimestamp(eventData.start.toUTCString())}:F>`);
-  message = message.concat(`\nEnd: <t:${createDiscordTimestamp(eventData.end.toUTCString())}:F>`);
-  if (eventData.description) message = message.concat(`\n\nDescription: ${eventData.description}`);
-  if (eventData.sponsor) message = message.concat(`\n\nThanks to our sponsor <@${eventData.sponsor}>`);
-  message = message.concat(`\n\n<@&${config.CLAN_ROLE}>`);
+  message = message.concat(
+    `\n\nStart: <t:${createDiscordTimestamp(eventData.start.toUTCString())}:F>`
+  );
+  message = message.concat(
+    `\nEnd: <t:${createDiscordTimestamp(eventData.end.toUTCString())}:F>`
+  );
+  if (eventData.description)
+    message = message.concat(`\n\nDescription: ${eventData.description}`);
+  if (eventData.sponsor)
+    message = message.concat(
+      `\n\nThanks to our sponsor <@${eventData.sponsor}>`
+    );
 
   formData.append("payload_json", JSON.stringify({ content: message }));
-  if (thumbnail) formData.append("files[0]", new Blob([thumbnail], { type: 'image/png' }), 'eventThumbnail.png')
+  if (thumbnail)
+    formData.append(
+      "files[0]",
+      new Blob([thumbnail], { type: "image/png" }),
+      "eventThumbnail.png"
+    );
   return formData;
-}
+};
