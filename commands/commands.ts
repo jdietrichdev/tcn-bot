@@ -363,6 +363,12 @@ export const nominate = new SlashCommandBuilder()
   .setName('nominate')
   .setDescription('Nominate a member for promotion/demotion')
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addUserOption((option) => {
+    return option
+      .setName('user')
+      .setDescription('Who we talkin about?')
+      .setRequired(true)
+  })
   .addStringOption((option) => {
     return option
       .setName('type')
