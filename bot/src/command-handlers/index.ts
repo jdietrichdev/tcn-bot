@@ -38,6 +38,8 @@ export const handleCommand = async (
         return await commands.handleCreateEvent(event.detail);
       case "event-winner":
         return await commands.handleEventWinner(event.detail);
+      case "nominate":
+        return await commands.handleNominate(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);

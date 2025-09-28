@@ -14,3 +14,4 @@ export * from "./closeTicket";
 export * from "./deleteTicket";
 export * from "./createEvent";
 export * from "./eventWinner";
+export * from "./nominate";
