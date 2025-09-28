@@ -23,6 +23,6 @@ export const handleNominate = async (interaction: APIChatInputApplicationCommand
 const createNominationEmbed = (interaction: APIChatInputApplicationCommandInteraction, user: string, type: string, rank: string) => {
     return {
         title: `${rank} ${type} for <@${user}>`,
-        description: `${interaction.user!.username}: Yes`
+        description: `${interaction.member!.user.username}: Yes`
     } as APIEmbed
 }
