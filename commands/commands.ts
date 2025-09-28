@@ -358,3 +358,40 @@ export const eventWinner = new SlashCommandBuilder()
         }
       ]);
   })
+
+export const nominate = new SlashCommandBuilder()
+  .setName('nominate')
+  .setDescription('Nominate a member for promotion/demotion')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName('type')
+      .setDescription('Promotion or demotion')
+      .setRequired(true)
+      .setChoices([
+        {
+          name: 'Promotion',
+          value: 'Promotion'
+        },
+        {
+          name: 'Demotion',
+          value: 'Demotion'
+        }
+      ])
+  })
+  .addStringOption((option) => {
+    return option
+      .setName('rank')
+      .setDescription('Rank for promotion/demotion')
+      .setRequired(true)
+      .setChoices([
+        {
+          name: 'Elder',
+          value: 'Elder'
+        },
+        {
+          name: 'Lead',
+          value: 'Lead'
+        }
+      ])
+  });
