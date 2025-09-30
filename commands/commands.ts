@@ -332,7 +332,7 @@ export const eventWinner = new SlashCommandBuilder()
     return option
       .setName("winner")
       .setDescription("Winner for event")
-      .setRequired(true)
+      .setRequired(true);
   })
   .addStringOption((option) => {
     return option
@@ -355,55 +355,89 @@ export const eventWinner = new SlashCommandBuilder()
         {
           name: "Cash",
           value: "CASH",
-        }
+        },
       ]);
-  })
+  });
 
 export const nominate = new SlashCommandBuilder()
-  .setName('nominate')
-  .setDescription('Nominate a member for promotion/demotion')
+  .setName("nominate")
+  .setDescription("Nominate a member for promotion/demotion")
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .addUserOption((option) => {
     return option
-      .setName('user')
-      .setDescription('Who we talkin about?')
-      .setRequired(true)
+      .setName("user")
+      .setDescription("Who we talkin about?")
+      .setRequired(true);
   })
   .addStringOption((option) => {
     return option
-      .setName('type')
-      .setDescription('Promotion or demotion')
-      .setRequired(true)
-      .setChoices([
-        {
-          name: 'Promotion',
-          value: 'Promotion'
-        },
-        {
-          name: 'Demotion',
-          value: 'Demotion'
-        }
-      ])
-  })
-  .addStringOption((option) => {
-    return option
-      .setName('rank')
-      .setDescription('Rank for promotion/demotion')
+      .setName("type")
+      .setDescription("Promotion or demotion")
       .setRequired(true)
       .setChoices([
         {
-          name: 'Elder',
-          value: 'Elder'
+          name: "Promotion",
+          value: "Promotion",
         },
         {
-          name: 'Lead',
-          value: 'Lead'
-        }
-      ])
+          name: "Demotion",
+          value: "Demotion",
+        },
+      ]);
   })
   .addStringOption((option) => {
     return option
-      .setName('reason')
-      .setDescription('Reason for proposal')
-      .setRequired(false)
+      .setName("rank")
+      .setDescription("Rank for promotion/demotion")
+      .setRequired(true)
+      .setChoices([
+        {
+          name: "Elder",
+          value: "Elder",
+        },
+        {
+          name: "Lead",
+          value: "Lead",
+        },
+      ]);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("reason")
+      .setDescription("Reason for proposal")
+      .setRequired(false);
+  });
+
+export const nominationResult = new SlashCommandBuilder()
+  .setName("nomination-result")
+  .setDescription("Set result of nomination")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("proposal")
+      .setDescription("Which proposal?")
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("result")
+      .setDescription("What is the result?")
+      .setRequired(true)
+      .setChoices([
+        {
+          name: "Approve",
+          value: "Approve",
+        },
+        {
+          name: "Deny",
+          value: "Deny",
+        },
+      ]);
+  })
+  .addRoleOption((option) => {
+    return option
+      .setName("role")
+      .setDescription("Role to add/remove")
+      .setRequired(true);
   });

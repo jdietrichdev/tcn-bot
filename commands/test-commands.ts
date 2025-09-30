@@ -17,6 +17,7 @@ import {
   createEvent,
   eventWinner,
   nominate,
+  nominationResult,
 } from "./commands";
 
 export const testCommands = [
@@ -37,5 +38,6 @@ export const testCommands = [
   deleteTicket,
   createEvent,
   eventWinner,
-  nominate
+  nominate,
+  nominationResult,
 ];
