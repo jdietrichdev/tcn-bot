@@ -26,6 +26,8 @@ import { WAR_LEAGUE } from "../constants/emojis/coc/cwlLeague";
 import { createDiscordTimestamp } from "../util/format-util";
 import { DiscordError } from "../util/errors";
 
+const ROSTER_DISCLAIMER = "🔴 To change leagues: **Ping a Lead/Admin**";
+
 export const handleCwlRoster = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
@@ -218,14 +220,14 @@ const buildAnnouncement = async (roster: Record<string, any>[]) => {
     }](<https://link.clashofclans.com/en/?action=OpenClanProfile&tag=${
       clan.clanTag
     }>)\n`;
+    message += `${ROSTER_DISCLAIMER}\n`;
     for (const player of clan.players) {
       message += `<@${player.userId}> | ${player.playerName} | \`${player.playerTag}\`\n`;
     }
     messages.push({ content: message.replace(/_/g, "\\_") });
   }
   messages.push({
-    content:
-      "Believe you should be in a higher/lower CWL? Please reach out to a lead/admin to schedule FCs ASAP. **Changes can be made as long as you don't ask last second!**",
+    content: ROSTER_DISCLAIMER,
   });
   messages.push({
     content: `*Last updated: <t:${createDiscordTimestamp(
