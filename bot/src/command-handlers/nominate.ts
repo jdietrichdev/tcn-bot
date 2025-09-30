@@ -1,4 +1,4 @@
-import { APIApplicationCommandInteractionDataStringOption, APIApplicationCommandInteractionDataUserOption, APIChatInputApplicationCommandInteraction, APIEmbed } from "discord-api-types/v10";
+import { APIApplicationCommandInteractionDataStringOption, APIApplicationCommandInteractionDataUserOption, APIChatInputApplicationCommandInteraction, APIEmbed, APIUser } from "discord-api-types/v10";
 import { getCommandOptionData } from "../util/interaction-util";
 import { getUser, sendMessage, updateResponse } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
@@ -29,12 +29,12 @@ export const handleNominate = async (interaction: APIChatInputApplicationCommand
             })
         }
 
-        const embed = createNominationEmbed(interaction, user, type, rank, reason);
+        const userData = await getUser(user);
+        const embed = createNominationEmbed(interaction, userData, type, rank, reason);
         const message = await sendMessage({
             embeds: [embed]
         }, config.RANK_PROPOSAL_CHANNEL);
 
-        const userData = await getUser(user);
         promotions.proposals.push({
             userId: user,
             username: userData.username,
@@ -51,9 +51,11 @@ export const handleNominate = async (interaction: APIChatInputApplicationCommand
     }
 }
 
-const createNominationEmbed = (interaction: APIChatInputApplicationCommandInteraction, user: string, type: string, rank: string, reason: string) => {
+const createNominationEmbed = (interaction: APIChatInputApplicationCommandInteraction, user: APIUser, type: string, rank: string, reason: string) => {
+    let description = `Proposal for ${user.username}\nProposed by: ${interaction.member!.user.username}`;
+    if (reason) description += `\nReasoning: ${reason}`;
     return {
         title: `${rank} ${type} Proposal`,
-        description: `Proposal for <@${user}>\nProposed by: ${interaction.member!.user.username}\nReasoning: ${reason}`
+        description
     } as APIEmbed
 }
