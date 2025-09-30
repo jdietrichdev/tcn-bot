@@ -30,6 +30,7 @@ import {
 import { handleRecruiterScore } from "./command-handlers/recruiterScore";
 import { processCwlRoster } from "./processors/cwlRosterProcessor";
 import { newAccountProcessor } from "./processors/newAccountProcessor";
+import { handleRankProposalReminder } from "./scheduled-handlers/rankProposalReminder";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -109,6 +110,8 @@ export const scheduled = async (
   console.log(JSON.stringify(event));
   if (event["detail-type"] === "Generate Recruiter Score") {
     await handleRecruiterScore(event.detail.guildId);
+  } else if (event["detail-type"] === "Rank Proposal Reminder") {
+    await handleRankProposalReminder(event.detail.guildId);
   }
 };
 
