@@ -1,16 +1,16 @@
 import { APIMessageComponentInteraction } from "discord-api-types/v10";
-import { updateMessage, updateResponse } from "../adapters/discord-adapter";
 import { getConfig } from "../util/serverConfig";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { updateMessage, updateResponse } from "../adapters/discord-adapter";
 
-export const vouchNomination = async (
+export const opposeNomination = async (
   interaction: APIMessageComponentInteraction
 ) => {
   try {
     const config = getConfig(interaction.guild_id!);
     const message = interaction.message.id;
-    const voucher = interaction.member!.user;
+    const opposer = interaction.member!.user;
 
     const proposalData = (
       await dynamoDbClient.send(
@@ -27,8 +27,8 @@ export const vouchNomination = async (
     proposalData.proposals.forEach((proposal: Record<string, any>) => {
       if (proposal.message === message) {
         proposal.votes.push({
-          user: voucher.username,
-          type: "VOUCH",
+          user: opposer.username,
+          type: "OPPOSE",
         });
       }
     });
@@ -36,19 +36,17 @@ export const vouchNomination = async (
     const updatedEmbed = interaction.message.embeds[0];
     if (updatedEmbed.fields) {
       updatedEmbed.fields.push({
-        name: voucher.username,
-        value: "VOUCH",
+        name: opposer.username,
+        value: "OPPOSE",
       });
     } else {
       updatedEmbed.fields = [
         {
-          name: voucher.username,
-          value: "VOUCH",
+          name: opposer.username,
+          value: "OPPOSE",
         },
       ];
     }
-
-    console.log(updatedEmbed);
 
     await updateMessage(config.RANK_PROPOSAL_CHANNEL, message, {
       embeds: [updatedEmbed],
@@ -66,7 +64,7 @@ export const vouchNomination = async (
     console.error(`Failure vouching for nomination: ${err}`);
     await updateResponse(interaction.application_id, interaction.token, {
       content:
-        "There was an issue vouching for this nomination, if you don't see an update, please try again",
+        "There was an issue opposing this nomination, if you don't see an update, please try again",
     });
   }
 };

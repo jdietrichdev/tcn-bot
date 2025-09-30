@@ -14,38 +14,41 @@ import { signupCwl } from "./signupCwl";
 import { exportCwlQuestions } from "./exportCwlQuestions";
 import { claimEvent } from "./claim";
 import { vouchNomination } from "./vouchNomination";
+import { opposeNomination } from "./opposeNomination";
 
 export const handleComponent = async (
   interaction: APIMessageComponentInteraction
 ) => {
   const customId = interaction.data.custom_id;
-  if (customId === 'approveApp') {
+  if (customId === "approveApp") {
     await approveApp(interaction, getConfig(interaction.guild_id!));
-  } else if (customId === 'messageRecruit') {
+  } else if (customId === "messageRecruit") {
     await messageRecruit(interaction);
-  } else if (customId === 'closeRecruit') {
+  } else if (customId === "closeRecruit") {
     await closeRecruit(interaction);
-  } else if (customId === 'closeTicket') {
+  } else if (customId === "closeTicket") {
     await closeTicket(interaction, getConfig(interaction.guild_id!));
   } else if (customId === "deleteTicket") {
     await deleteTicket(interaction, getConfig(interaction.guild_id!));
-  } else if (customId === 'reopenTicket') {
+  } else if (customId === "reopenTicket") {
     await reopenTicket(interaction, getConfig(interaction.guild_id!));
-  } else if (customId === 'grantRoles') {
+  } else if (customId === "grantRoles") {
     await grantRoles(interaction, getConfig(interaction.guild_id!));
-  } else if (customId === 'removeRoles') {
+  } else if (customId === "removeRoles") {
     await removeRoles(interaction, getConfig(interaction.guild_id!));
-  } else if (customId === 'confirmDelete') {
+  } else if (customId === "confirmDelete") {
     await confirmDelete(interaction);
-  } else if (customId === 'rejectDelete') {
+  } else if (customId === "rejectDelete") {
     await rejectDelete(interaction);
-  } else if (customId === 'signupCwl') {
+  } else if (customId === "signupCwl") {
     await signupCwl(interaction);
-  } else if (customId === 'exportCwlQuestions') {
+  } else if (customId === "exportCwlQuestions") {
     await exportCwlQuestions(interaction);
   } else if (customId.startsWith("claim")) {
     await claimEvent(interaction);
   } else if (customId === "vouch") {
-    await vouchNomination(interaction)
+    await vouchNomination(interaction);
+  } else if (customId === "oppose") {
+    await opposeNomination(interaction);
   }
 };
