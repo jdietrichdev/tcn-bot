@@ -27,6 +27,7 @@ export const handleNominate = async (interaction: APIChatInputApplicationCommand
             updateResponse(interaction.application_id, interaction.token, {
                 content: `<@${user}> has already been proposed for this, check proposal channel for details`
             })
+            return;
         }
 
         const userData = await getUser(user);
@@ -54,7 +55,7 @@ export const handleNominate = async (interaction: APIChatInputApplicationCommand
         await updateResponse(interaction.application_id, interaction.token, {
             content: 'Proposal received, thank you!'
         });
-        
+
     } catch (err) {
         console.log("Failure handling nominate command", err);
         throw err;
