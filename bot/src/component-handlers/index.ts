@@ -13,6 +13,7 @@ import { rejectDelete } from "./rejectDelete";
 import { signupCwl } from "./signupCwl";
 import { exportCwlQuestions } from "./exportCwlQuestions";
 import { claimEvent } from "./claim";
+import { vouchNomination } from "./vouchNomination";
 
 export const handleComponent = async (
   interaction: APIMessageComponentInteraction
@@ -44,5 +45,7 @@ export const handleComponent = async (
     await exportCwlQuestions(interaction);
   } else if (customId.startsWith("claim")) {
     await claimEvent(interaction);
+  } else if (customId === "vouch") {
+    await vouchNomination(interaction)
   }
 };

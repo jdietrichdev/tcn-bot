@@ -1,0 +1,49 @@
+import { APIMessageComponentInteraction } from "discord-api-types/v10";
+import { updateMessage, updateResponse } from "../adapters/discord-adapter";
+import { getConfig } from "../util/serverConfig";
+import { dynamoDbClient } from "../clients/dynamodb-client";
+import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+
+export const vouchNomination = async (interaction: APIMessageComponentInteraction) => {
+    try {
+        const config = getConfig(interaction.guild_id!);
+        const message = interaction.message.id;
+        const voucher = interaction.member!.user;
+
+        const proposalData = (await dynamoDbClient.send(new GetCommand({
+            TableName: 'BotTable',
+            Key: {
+                pk: interaction.guild_id!,
+                sk: 'rank-proposals'
+            }
+        }))).Item!;
+
+        const proposal = proposalData.proposals.find((proposal: Record<string, any>) => proposal.message = message)!;
+
+        proposal.votes.push({
+            user: voucher.username,
+            type: 'VOUCH'
+        })
+
+        interaction.message.embeds[0].fields?.push({
+            name: voucher.username,
+            value: 'VOUCH'
+        });
+
+        await updateMessage(config.RANK_PROPOSAL_CHANNEL, message, {
+            embeds: interaction.message.embeds
+        });
+        await dynamoDbClient.send(new PutCommand({
+            TableName: 'BotTable',
+            Item: proposalData
+        }));
+        await updateResponse(interaction.application_id, interaction.token, {
+            content: "Thank you for your vote!"
+        });
+    } catch (err) {
+        console.error(`Failure vouching for nomination: ${err}`);
+        await updateResponse(interaction.application_id, interaction.token, {
+            content: "There was an issue vouching for this nomination, if you don't see an update, please try again"
+        })
+    }
+}

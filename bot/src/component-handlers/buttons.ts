@@ -113,4 +113,16 @@ export const BUTTONS = {
     label: "Close Signup",
     custom_id: "closeSignup",
   } as APIButtonComponentWithCustomId,
+  VOUCH_NOMINATION: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Success,
+    label: "Vouch",
+    custom_id: "vouch"
+  } as APIButtonComponentWithCustomId,
+  OPPOSE_NOMINATION: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Danger,
+    label: "Opppose",
+    custom_id: "oppose"
+  } as APIButtonComponentWithCustomId
 };

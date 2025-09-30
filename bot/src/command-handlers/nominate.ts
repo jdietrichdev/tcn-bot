@@ -1,9 +1,10 @@
-import { APIApplicationCommandInteractionDataStringOption, APIApplicationCommandInteractionDataUserOption, APIChatInputApplicationCommandInteraction, APIEmbed, APIUser } from "discord-api-types/v10";
+import { APIApplicationCommandInteractionDataStringOption, APIApplicationCommandInteractionDataUserOption, APIChatInputApplicationCommandInteraction, APIEmbed, APIUser, ComponentType } from "discord-api-types/v10";
 import { getCommandOptionData } from "../util/interaction-util";
 import { getUser, sendMessage, updateResponse } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { getConfig } from "../util/serverConfig";
+import { BUTTONS } from "../component-handlers/buttons";
 
 export const handleNominate = async (interaction: APIChatInputApplicationCommandInteraction) => {
     try {
@@ -13,7 +14,7 @@ export const handleNominate = async (interaction: APIChatInputApplicationCommand
         const rank = getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(interaction, "rank").value;
         const reason = getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(interaction, "reason").value;
 
-        const promotions = (await dynamoDbClient.send(new GetCommand({
+        const proposalData = (await dynamoDbClient.send(new GetCommand({
             TableName: 'BotTable',
             Key: {
                 pk: interaction.guild_id!,
@@ -21,7 +22,7 @@ export const handleNominate = async (interaction: APIChatInputApplicationCommand
             }
         }))).Item ?? { pk: interaction.guild_id!, sk: 'rank-proposals', proposals: []};
 
-        if (promotions.proposals.some(
+        if (proposalData.proposals.some(
             (proposal: Record<string, any>) => proposal.userId === user && proposal.rank === rank && proposal.type === type
         )) {
             await updateResponse(interaction.application_id, interaction.token, {
@@ -33,10 +34,14 @@ export const handleNominate = async (interaction: APIChatInputApplicationCommand
         const userData = await getUser(user);
         const embed = createNominationEmbed(interaction, userData, type, rank, reason);
         const message = await sendMessage({
-            embeds: [embed]
+            embeds: [embed],
+            components: [{
+                type: ComponentType.ActionRow,
+                components: [BUTTONS.VOUCH_NOMINATION, BUTTONS.OPPOSE_NOMINATION]
+            }]
         }, config.RANK_PROPOSAL_CHANNEL);
 
-        promotions.proposals.push({
+        proposalData.proposals.push({
             userId: user,
             username: userData.username,
             rank,
@@ -49,7 +54,7 @@ export const handleNominate = async (interaction: APIChatInputApplicationCommand
 
         await dynamoDbClient.send(new PutCommand({
             TableName: 'BotTable',
-            Item: promotions
+            Item: proposalData
         }));
 
         await updateResponse(interaction.application_id, interaction.token, {
