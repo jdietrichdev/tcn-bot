@@ -18,12 +18,11 @@ export const vouchNomination = async (interaction: APIMessageComponentInteractio
             }
         }))).Item!;
 
-        const proposal = proposalData.proposals.find((proposal: Record<string, any>) => proposal.message = message)!;
         proposalData.proposals.forEach((proposal: Record<string, any>) => {
             if (proposal.message === message) {
                 proposal.votes.push({
                     user: voucher.username,
-                    type: 'VOUCH'
+                    type: 'VOUCH',
                 })
             }
         })
@@ -34,12 +33,14 @@ export const vouchNomination = async (interaction: APIMessageComponentInteractio
         if (updatedEmbed.fields) {
             updatedEmbed.fields.push({
                 name: voucher.username,
-                value: 'VOUCH'
+                value: 'VOUCH',
+                inline: true,
             });
         } else {
             updatedEmbed.fields = [{
                 name: voucher.username,
-                value: 'VOUCH'
+                value: 'VOUCH',
+                inline: true,
             }];
         }
 
