@@ -19,23 +19,34 @@ export const vouchNomination = async (interaction: APIMessageComponentInteractio
         }))).Item!;
 
         const proposal = proposalData.proposals.find((proposal: Record<string, any>) => proposal.message = message)!;
-
-        proposal.votes.push({
-            user: voucher.username,
-            type: 'VOUCH'
-        });
+        proposalData.proposals.forEach((proposal: Record<string, any>) => {
+            if (proposal.message === message) {
+                proposal.votes.push({
+                    user: voucher.username,
+                    type: 'VOUCH'
+                })
+            }
+        })
 
         console.log(proposalData);
 
-        interaction.message.embeds[0].fields?.push({
-            name: voucher.username,
-            value: 'VOUCH'
-        });
+        const updatedEmbed = interaction.message.embeds[0];
+        if (updatedEmbed.fields) {
+            updatedEmbed.fields.push({
+                name: voucher.username,
+                value: 'VOUCH'
+            });
+        } else {
+            updatedEmbed.fields = [{
+                name: voucher.username,
+                value: 'VOUCH'
+            }];
+        }
 
-        console.log(interaction.message.embeds);
+        console.log(updatedEmbed);
 
         await updateMessage(config.RANK_PROPOSAL_CHANNEL, message, {
-            embeds: interaction.message.embeds
+            embeds: [updatedEmbed]
         });
         await dynamoDbClient.send(new PutCommand({
             TableName: 'BotTable',
