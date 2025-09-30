@@ -224,6 +224,10 @@ const buildAnnouncement = async (roster: Record<string, any>[]) => {
     messages.push({ content: message.replace(/_/g, "\\_") });
   }
   messages.push({
+    content:
+      "Believe you should be in a higher/lower CWL? Please reach out to a lead/admin to schedule FCs ASAP. **Changes can be made as long as you don't ask last second!",
+  });
+  messages.push({
     content: `*Last updated: <t:${createDiscordTimestamp(
       new Date().toUTCString()
     )}:R>*`,
