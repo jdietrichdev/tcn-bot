@@ -23,12 +23,16 @@ export const vouchNomination = async (interaction: APIMessageComponentInteractio
         proposal.votes.push({
             user: voucher.username,
             type: 'VOUCH'
-        })
+        });
+
+        console.log(proposalData);
 
         interaction.message.embeds[0].fields?.push({
             name: voucher.username,
             value: 'VOUCH'
         });
+
+        console.log(interaction.message.embeds);
 
         await updateMessage(config.RANK_PROPOSAL_CHANNEL, message, {
             embeds: interaction.message.embeds
