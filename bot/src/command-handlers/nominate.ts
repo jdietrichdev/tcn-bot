@@ -2,7 +2,7 @@ import { APIApplicationCommandInteractionDataStringOption, APIApplicationCommand
 import { getCommandOptionData } from "../util/interaction-util";
 import { getUser, sendMessage, updateResponse } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
-import { GetCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { getConfig } from "../util/serverConfig";
 
 export const handleNominate = async (interaction: APIChatInputApplicationCommandInteraction) => {
@@ -44,7 +44,17 @@ export const handleNominate = async (interaction: APIChatInputApplicationCommand
             proposalTime: new Date().toISOString(),
             proposedBy: interaction.member!.user.username,
             message: message.id
-        })
+        });
+
+        await dynamoDbClient.send(new PutCommand({
+            TableName: 'BotTable',
+            Item: promotions
+        }));
+
+        await updateResponse(interaction.application_id, interaction.token, {
+            content: 'Proposal received, thank you!'
+        });
+        
     } catch (err) {
         console.log("Failure handling nominate command", err);
         throw err;
