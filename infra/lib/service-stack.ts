@@ -94,6 +94,7 @@ export class ServiceStack extends Stack {
       timeout: Duration.minutes(5),
       retryAttempts: 0,
     });
+    props.botTable.grantReadWriteData(this.scheduled);
 
     this.eventBus = new EventBus(this, "bot-events", {
       eventBusName: "tcn-bot-events",
