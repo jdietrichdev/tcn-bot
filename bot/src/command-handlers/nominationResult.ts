@@ -65,6 +65,7 @@ export const handleNominationResult = async (
     }
 
     await updateMessage(config.RANK_PROPOSAL_CHANNEL, proposalData.message, {
+      content: `Proposal ${result === "Approve" ? "Approved" : "Denied"}`,
       components: [],
     });
 
