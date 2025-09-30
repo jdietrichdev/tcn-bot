@@ -24,7 +24,7 @@ export const handleNominate = async (interaction: APIChatInputApplicationCommand
         if (promotions.proposals.some(
             (proposal: Record<string, any>) => proposal.userId === user && proposal.rank === rank && proposal.type === type
         )) {
-            updateResponse(interaction.application_id, interaction.token, {
+            await updateResponse(interaction.application_id, interaction.token, {
                 content: `<@${user}> has already been proposed for this, check proposal channel for details`
             })
             return;
