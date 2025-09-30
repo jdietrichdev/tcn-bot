@@ -9,8 +9,9 @@ export const handleNominate = async (interaction: APIChatInputApplicationCommand
         const user = getCommandOptionData<APIApplicationCommandInteractionDataUserOption>(interaction, "user").value;
         const type = getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(interaction, "type").value;
         const rank = getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(interaction, "rank").value;
+        const reason = getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(interaction, "reason").value;
 
-        const embed = createNominationEmbed(interaction, user, type, rank);
+        const embed = createNominationEmbed(interaction, user, type, rank, reason);
         await updateResponse(interaction.application_id, interaction.token, {
             embeds: [embed]
         })
@@ -20,9 +21,9 @@ export const handleNominate = async (interaction: APIChatInputApplicationCommand
     }
 }
 
-const createNominationEmbed = (interaction: APIChatInputApplicationCommandInteraction, user: string, type: string, rank: string) => {
+const createNominationEmbed = (interaction: APIChatInputApplicationCommandInteraction, user: string, type: string, rank: string, reason: string) => {
     return {
         title: `${rank} ${type} Proposal`,
-        description: `Proposal for <@${user}>\nProposed by: ${interaction.member!.user.username}`
+        description: `Proposal for <@${user}>\nProposed by: ${interaction.member!.user.username}\nReasoning: ${reason}`
     } as APIEmbed
 }

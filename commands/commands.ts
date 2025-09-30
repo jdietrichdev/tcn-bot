@@ -400,4 +400,10 @@ export const nominate = new SlashCommandBuilder()
           value: 'Lead'
         }
       ])
+  })
+  .addStringOption((option) => {
+    return option
+      .setName('reason')
+      .setDescription('Reason for proposal')
+      .setRequired(false)
   });
