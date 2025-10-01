@@ -26,7 +26,9 @@ import { WAR_LEAGUE } from "../constants/emojis/coc/cwlLeague";
 import { createDiscordTimestamp } from "../util/format-util";
 import { DiscordError } from "../util/errors";
 
-const ROSTER_DISCLAIMER = "🔴 To change leagues: **Ping a Lead/Admin**";
+const ANNOUNCEMENT_DISCLAIMER = "🔴 To change leagues: **Ping a Lead/Admin**";
+const REMINDER_DISCLAIMER =
+  "🔴 Move to your CWL Clan. Click the blue clan name. We spin soon ⌛";
 
 export const handleCwlRoster = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -220,14 +222,14 @@ const buildAnnouncement = async (roster: Record<string, any>[]) => {
     }](<https://link.clashofclans.com/en/?action=OpenClanProfile&tag=${
       clan.clanTag
     }>)\n`;
-    message += `${ROSTER_DISCLAIMER}\n`;
+    message += `${ANNOUNCEMENT_DISCLAIMER}\n`;
     for (const player of clan.players) {
       message += `<@${player.userId}> | ${player.playerName} | \`${player.playerTag}\`\n`;
     }
     messages.push({ content: message.replace(/_/g, "\\_") });
   }
   messages.push({
-    content: ROSTER_DISCLAIMER,
+    content: ANNOUNCEMENT_DISCLAIMER,
   });
   messages.push({
     content: `*Last updated: <t:${createDiscordTimestamp(
@@ -273,6 +275,7 @@ const buildReminder = async (roster: Record<string, any>[]) => {
         message += "All players in clan, well done\n";
       else {
         for (const player of missingPlayers) {
+          message += `${REMINDER_DISCLAIMER}\n`;
           message += `<@${player.userId}> | ${player.playerName} | \`${player.playerTag}\`\n`;
         }
       }
