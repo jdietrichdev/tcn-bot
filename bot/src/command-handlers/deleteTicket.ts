@@ -1,5 +1,5 @@
 import {
-    APIApplicationCommandInteraction,
+  APIApplicationCommandInteraction,
   ComponentType,
 } from "discord-api-types/v10";
 import {
@@ -17,32 +17,46 @@ export const deleteTicket = async (
   try {
     const config = getConfig(interaction.guild_id!);
     if (isTicketChannel(interaction.channel.name!)) {
-    if (await isActorAdmin(interaction.guild_id!, interaction.member!.user.id, config)
-      || await isActorRecruiter(interaction.guild_id!, interaction.member!.user.id, config)) {
-      await updateResponse(interaction.application_id, interaction.token, {
-        content: "Are you sure you want to delete this ticket?",
-        components: [
+      if (
+        (await isActorAdmin(
+          interaction.guild_id!,
+          interaction.member!.user.id,
+          config
+        )) ||
+        (await isActorRecruiter(
+          interaction.guild_id!,
+          interaction.member!.user.id,
+          config
+        ))
+      ) {
+        await updateResponse(interaction.application_id, interaction.token, {
+          content: "Are you sure you want to delete this ticket?",
+          components: [
+            {
+              type: ComponentType.ActionRow,
+              components: [BUTTONS.CONFIRM_DELETE, BUTTONS.REJECT_DELETE],
+            },
+          ],
+        });
+      } else {
+        await sendMessage(
           {
-            type: ComponentType.ActionRow,
-            components: [BUTTONS.CONFIRM_DELETE, BUTTONS.REJECT_DELETE],
+            content: `You do not have permissions to delete this ticket <@${interaction.member?.user.id}>`,
           },
-        ],
-      });
+          interaction.channel.id
+        );
+        await deleteResponse(interaction.application_id, interaction.token);
+      }
     } else {
       await sendMessage(
         {
-          content: `You do not have permissions to delete this ticket <@${interaction.member?.user.id}>`,
+          content: `This is not an application channel <@${
+            interaction.member!.user.id
+          }>`,
         },
         interaction.channel.id
       );
       await deleteResponse(interaction.application_id, interaction.token);
-    }
-    } else {
-        await sendMessage(
-            { content: `This is not an application channel <@${interaction.member!.user.id}>`}, 
-            interaction.channel.id
-        );
-        await deleteResponse(interaction.application_id, interaction.token);
     }
   } catch (err) {
     console.error(`Failed to delete ticket: ${err}`);
@@ -54,5 +68,5 @@ export const deleteTicket = async (
 };
 
 const isTicketChannel = (channelName: string) => {
-    return channelName.includes('\u{1F39F}');
-}
+  return channelName.includes("\u{1F39F}") || channelName.includes("\u{2705}");
+};
