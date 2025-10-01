@@ -274,8 +274,8 @@ const buildReminder = async (roster: Record<string, any>[]) => {
       if (missingPlayers.length === 0)
         message += "All players in clan, well done\n";
       else {
+        message += `${REMINDER_DISCLAIMER}\n`;
         for (const player of missingPlayers) {
-          message += `${REMINDER_DISCLAIMER}\n`;
           message += `<@${player.userId}> | ${player.playerName} | \`${player.playerTag}\`\n`;
         }
       }
