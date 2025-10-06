@@ -3,6 +3,7 @@ import { dynamoDbClient } from "../clients/dynamodb-client";
 import { getConfig } from "../util/serverConfig";
 import { APIEmbed } from "discord-api-types/v10";
 import { sendMessage } from "../adapters/discord-adapter";
+import { tallyVotes } from "../util/nomination-util";
 
 export const handleRankProposalReminder = async (guildId: string) => {
   try {
@@ -23,15 +24,7 @@ export const handleRankProposalReminder = async (guildId: string) => {
       title: "Rank Proposal Reminder",
       description: `Please make sure you are checking <#${config.RANK_PROPOSAL_CHANNEL}> and voting on proposals!`,
       fields: proposals.proposals.map((proposal: Record<string, any>) => {
-        let yes = 0,
-          no = 0;
-        proposal.votes.forEach((vote: Record<string, any>) => {
-          if (vote.type === "VOUCH") {
-            yes++;
-          } else if (vote.type === "OPPOSE") {
-            no++;
-          }
-        });
+        const [yes, no] = tallyVotes(proposal.votes);
         return {
           name: `${proposal.rank} ${proposal.type} - ${proposal.username}`,
           value: `Yes: ${yes}, No: ${no}`,

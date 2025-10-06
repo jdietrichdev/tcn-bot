@@ -5,6 +5,7 @@ import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { updateMessage, updateResponse } from "../adapters/discord-adapter";
 import { Proposal } from "../util/interfaces";
 import { VoteType } from "../util/enums";
+import { tallyVotes } from "../util/nomination-util";
 
 export const opposeNomination = async (
   interaction: APIMessageComponentInteraction
@@ -36,15 +37,7 @@ export const opposeNomination = async (
     });
 
     const updatedEmbed = interaction.message.embeds[0];
-    let yes = 0,
-      no = 0;
-    proposal.votes.forEach((vote: Record<string, any>) => {
-      if (vote.type === "VOUCH") {
-        yes++;
-      } else if (vote.type === "OPPOSE") {
-        no++;
-      }
-    });
+    const [yes, no] = tallyVotes(proposal.votes);
 
     updatedEmbed.fields = [
       {
