@@ -30,7 +30,7 @@ import {
 import { handleRecruiterScore } from "./command-handlers/recruiterScore";
 import { processCwlRoster } from "./processors/cwlRosterProcessor";
 import { newAccountProcessor } from "./processors/newAccountProcessor";
-import { handleRankProposalReminder } from "./scheduled-handlers/rankProposalReminder";
+import { handleRankProposalReminder } from "./command-handlers/rankProposalReminder";
 
 export const proxy = async (
   event: APIGatewayProxyEvent

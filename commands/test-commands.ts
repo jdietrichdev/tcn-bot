@@ -18,6 +18,7 @@ import {
   eventWinner,
   nominate,
   nominationResult,
+  rankProposalReminder,
 } from "./commands";
 
 export const testCommands = [
@@ -40,4 +41,5 @@ export const testCommands = [
   eventWinner,
   nominate,
   nominationResult,
+  rankProposalReminder,
 ];

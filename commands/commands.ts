@@ -441,3 +441,8 @@ export const nominationResult = new SlashCommandBuilder()
       .setDescription("Role to add/remove")
       .setRequired(false);
   });
+
+export const rankProposalReminder = new SlashCommandBuilder()
+  .setName("rank-proposal-reminder")
+  .setDescription("Reminder to check proposals")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
