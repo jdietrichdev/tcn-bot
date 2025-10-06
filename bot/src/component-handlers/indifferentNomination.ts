@@ -36,7 +36,7 @@ export const indifferentNomination = async (
     const [yes, no] = tallyVotes(proposal.votes);
 
     updatedEmbed.fields = [
-      ...((yes &&
+      ...((yes ||
         no && [
           {
             name: "Current Status",
