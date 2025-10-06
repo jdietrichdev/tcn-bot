@@ -5,7 +5,7 @@ import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { updateMessage, updateResponse } from "../adapters/discord-adapter";
 import { Proposal } from "../util/interfaces";
 import { VoteType } from "../util/enums";
-import { tallyVotes } from "../util/nomination-util";
+import { addVote, tallyVotes } from "../util/nomination-util";
 
 export const opposeNomination = async (
   interaction: APIMessageComponentInteraction
@@ -13,7 +13,6 @@ export const opposeNomination = async (
   try {
     const config = getConfig(interaction.guild_id!);
     const message = interaction.message.id;
-    const opposer = interaction.member!.user;
 
     const proposalData = (
       await dynamoDbClient.send(
@@ -31,10 +30,7 @@ export const opposeNomination = async (
       (proposal: Proposal) => proposal.message === message
     );
 
-    proposal.votes.push({
-      user: opposer.username,
-      type: VoteType.OPPOSE,
-    });
+    addVote(interaction, proposal.votes, VoteType.OPPOSE);
 
     const updatedEmbed = interaction.message.embeds[0];
     const [yes, no] = tallyVotes(proposal.votes);

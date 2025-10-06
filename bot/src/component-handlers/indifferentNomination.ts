@@ -4,13 +4,13 @@ import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { Proposal } from "../util/interfaces";
 import { VoteType } from "../util/enums";
+import { addVote } from "../util/nomination-util";
 
 export const indifferentNomination = async (
   interaction: APIMessageComponentInteraction
 ) => {
   try {
     const message = interaction.message.id;
-    const voucher = interaction.member!.user;
 
     const proposalData = (
       await dynamoDbClient.send(
@@ -28,10 +28,7 @@ export const indifferentNomination = async (
       (proposal: Proposal) => proposal.message === message
     );
 
-    proposal.votes.push({
-      user: voucher.username,
-      type: VoteType.NOT_SURE,
-    });
+    addVote(interaction, proposal.votes, VoteType.NOT_SURE);
 
     //Do not update embed
 
