@@ -145,6 +145,21 @@ export class ServiceStack extends Stack {
       ],
     });
 
+    new Rule(this, "bot-scheduled-rank-proposal-reminder", {
+      schedule: Schedule.rate(Duration.days(7)),
+      targets: [
+        new LambdaFunction(this.scheduled, {
+          event: RuleTargetInput.fromObject({
+            source: "tcn-bot-scheduled",
+            "detail-type": "Rank Proposal Reminder",
+            detail: {
+              guildId: "1111490767991615518",
+            },
+          }),
+        }),
+      ],
+    });
+
     this.proxy = new Lambda(this, "bot-proxy", {
       functionName: "bot-proxy",
       runtime: Runtime.NODEJS_22_X,
