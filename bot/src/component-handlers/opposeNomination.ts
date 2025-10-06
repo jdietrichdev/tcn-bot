@@ -39,7 +39,7 @@ export const opposeNomination = async (
     proposal.votes.forEach((vote: Record<string, any>) => {
       if (vote.type === "VOUCH") {
         yes++;
-      } else {
+      } else if (vote.type === "OPPOSE") {
         no++;
       }
     });
