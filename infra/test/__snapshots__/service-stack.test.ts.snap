@@ -684,6 +684,44 @@ exports[`Infrastructure created 1`] = `
         }
       }
     },
+    "botscheduledrankproposalreminder8EB2B479": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "ScheduleExpression": "rate(7 days)",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "botscheduledEB1B6758",
+                "Arn"
+              ]
+            },
+            "Id": "Target0",
+            "Input": "{\\"source\\":\\"tcn-bot-scheduled\\",\\"detail-type\\":\\"Rank Proposal Reminder\\",\\"detail\\":{\\"guildId\\":\\"1111490767991615518\\"}}"
+          }
+        ]
+      }
+    },
+    "botscheduledrankproposalreminderAllowEventRulestackbotscheduled64B1F1BE1805A0E7": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "botscheduledEB1B6758",
+            "Arn"
+          ]
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "botscheduledrankproposalreminder8EB2B479",
+            "Arn"
+          ]
+        }
+      }
+    },
     "botproxyServiceRole56AA3B02": {
       "Type": "AWS::IAM::Role",
       "Properties": {
