@@ -42,7 +42,7 @@ export const handleNominate = async (
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
         "reason"
-      ).value;
+      )?.value;
 
     const proposalData = (
       await dynamoDbClient.send(
@@ -136,7 +136,7 @@ const createNominationEmbed = (
   user: APIUser,
   type: string,
   rank: string,
-  reason: string
+  reason?: string
 ) => {
   let description = `Proposal for ${user.username}\nProposed by: ${
     interaction.member!.user.username
