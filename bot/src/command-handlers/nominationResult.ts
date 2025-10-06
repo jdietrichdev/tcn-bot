@@ -35,7 +35,7 @@ export const handleNominationResult = async (
       getCommandOptionData<APIApplicationCommandInteractionDataRoleOption>(
         interaction,
         "role"
-      ).value;
+      )?.value;
 
     const proposals = (
       await dynamoDbClient.send(
@@ -60,7 +60,7 @@ export const handleNominationResult = async (
     console.log(JSON.stringify(proposalData));
     console.log(JSON.stringify(proposals));
 
-    if (result === "Approve") {
+    if (result === "Approve" && role) {
       if (proposalData.type === "Promotion") {
         await grantRole(interaction.guild_id!, proposalData.userId, role);
       } else {
