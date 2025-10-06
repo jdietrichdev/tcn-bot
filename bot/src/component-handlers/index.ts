@@ -54,7 +54,7 @@ export const handleComponent = async (
     await opposeNomination(interaction);
   } else if (customId === "indifferent") {
     await indifferentNomination(interaction);
-  } else if (customId === "nominationResult") {
+  } else if (customId === "nominationResults") {
     await nominationResults(interaction);
   }
 };
