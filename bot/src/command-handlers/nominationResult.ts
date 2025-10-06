@@ -57,9 +57,6 @@ export const handleNominationResult = async (
       (proposal: Record<string, any>) => proposal.message !== id
     );
 
-    console.log(JSON.stringify(proposalData));
-    console.log(JSON.stringify(proposals));
-
     if (result === "Approve" && role) {
       if (proposalData.type === "Promotion") {
         await grantRole(interaction.guild_id!, proposalData.userId, role);
