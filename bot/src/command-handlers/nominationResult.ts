@@ -61,9 +61,11 @@ export const handleNominationResult = async (
     console.log(JSON.stringify(proposals));
 
     if (result === "Approve") {
-      await grantRole(interaction.guild_id!, proposalData.userId, role);
-    } else {
-      await removeRole(interaction.guild_id!, proposalData.userId, role);
+      if (proposalData.type === "Promotion") {
+        await grantRole(interaction.guild_id!, proposalData.userId, role);
+      } else {
+        await removeRole(interaction.guild_id!, proposalData.userId, role);
+      }
     }
 
     await updateMessage(config.RANK_PROPOSAL_CHANNEL, proposalData.message, {

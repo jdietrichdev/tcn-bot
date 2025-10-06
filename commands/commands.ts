@@ -439,5 +439,5 @@ export const nominationResult = new SlashCommandBuilder()
     return option
       .setName("role")
       .setDescription("Role to add/remove")
-      .setRequired(true);
+      .setRequired(false);
   });
