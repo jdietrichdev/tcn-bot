@@ -2,6 +2,7 @@ import {
   APIApplicationCommandInteractionDataRoleOption,
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
+  ComponentType,
 } from "discord-api-types/v10";
 import { getCommandOptionData } from "../util/interaction-util";
 import { dynamoDbClient } from "../clients/dynamodb-client";
@@ -13,6 +14,7 @@ import {
   updateMessage,
 } from "../adapters/discord-adapter";
 import { getConfig } from "../util/serverConfig";
+import { BUTTONS } from "../component-handlers/buttons";
 
 export const handleNominationResult = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -66,7 +68,12 @@ export const handleNominationResult = async (
 
     await updateMessage(config.RANK_PROPOSAL_CHANNEL, proposalData.message, {
       content: `Proposal ${result === "Approve" ? "Approved" : "Denied"}`,
-      components: [],
+      components: [
+        {
+          type: ComponentType.ActionRow,
+          components: [BUTTONS.NOMINATION_RESULTS],
+        },
+      ],
     });
 
     await dynamoDbClient.send(

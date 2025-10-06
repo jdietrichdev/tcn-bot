@@ -87,7 +87,15 @@ export const handleNominate = async (
         components: [
           {
             type: ComponentType.ActionRow,
-            components: [BUTTONS.VOUCH_NOMINATION, BUTTONS.OPPOSE_NOMINATION],
+            components: [
+              BUTTONS.VOUCH_NOMINATION,
+              BUTTONS.OPPOSE_NOMINATION,
+              BUTTONS.INDIFFERENT_NOMINATION,
+            ],
+          },
+          {
+            type: ComponentType.ActionRow,
+            components: [BUTTONS.NOMINATION_RESULTS],
           },
         ],
       },
@@ -99,6 +107,7 @@ export const handleNominate = async (
       username: userData.username,
       rank,
       type,
+      reason,
       votes: [],
       proposalTime: new Date().toISOString(),
       proposedBy: interaction.member!.user.username,

@@ -117,12 +117,24 @@ export const BUTTONS = {
     type: ComponentType.Button,
     style: ButtonStyle.Success,
     label: "Vouch",
-    custom_id: "vouch"
+    custom_id: "vouch",
   } as APIButtonComponentWithCustomId,
   OPPOSE_NOMINATION: {
     type: ComponentType.Button,
     style: ButtonStyle.Danger,
     label: "Opppose",
-    custom_id: "oppose"
-  } as APIButtonComponentWithCustomId
+    custom_id: "oppose",
+  } as APIButtonComponentWithCustomId,
+  INDIFFERENT_NOMINATION: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Primary,
+    label: "Not Sure",
+    custom_id: "indifferent",
+  } as APIButtonComponentWithCustomId,
+  NOMINATION_RESULTS: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Secondary,
+    label: "Detailed Results",
+    custom_id: "nominationResults",
+  } as APIButtonComponentWithCustomId,
 };

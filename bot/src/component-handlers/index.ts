@@ -15,6 +15,8 @@ import { exportCwlQuestions } from "./exportCwlQuestions";
 import { claimEvent } from "./claim";
 import { vouchNomination } from "./vouchNomination";
 import { opposeNomination } from "./opposeNomination";
+import { indifferentNomination } from "./indifferentNomination";
+import { nominationResults } from "./nominationResults";
 
 export const handleComponent = async (
   interaction: APIMessageComponentInteraction
@@ -50,5 +52,9 @@ export const handleComponent = async (
     await vouchNomination(interaction);
   } else if (customId === "oppose") {
     await opposeNomination(interaction);
+  } else if (customId === "indifferent") {
+    await indifferentNomination(interaction);
+  } else if (customId === "nominationResult") {
+    await nominationResults(interaction);
   }
 };
