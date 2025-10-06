@@ -42,6 +42,8 @@ export const handleCommand = async (
         return await commands.handleNominate(event.detail);
       case "nomination-result":
         return await commands.handleNominationResult(event.detail);
+      case "rank-proposal-reminder":
+        return await commands.handleRankProposalReminder(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);

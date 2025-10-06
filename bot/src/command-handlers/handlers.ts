@@ -16,3 +16,4 @@ export * from "./createEvent";
 export * from "./eventWinner";
 export * from "./nominate";
 export * from "./nominationResult";
+export * from "./rankProposalReminder";
