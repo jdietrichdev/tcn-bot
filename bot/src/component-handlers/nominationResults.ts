@@ -37,7 +37,6 @@ export const nominationResults = async (
       );
 
       const resultEmbed = createResultsEmbed(proposal);
-      console.log(JSON.stringify(resultEmbed));
 
       await updateResponse(interaction.application_id, interaction.token, {
         embeds: [resultEmbed],
@@ -60,7 +59,7 @@ const createResultsEmbed = (proposal: Record<string, any>) => {
     title: `Current Results for ${proposal.username}`,
     description: proposal.reason,
     fields: proposal.votes.map((vote: Record<string, any>) => {
-      return { name: vote.username, value: vote.type };
+      return { name: vote.user, value: vote.type };
     }),
   } as APIEmbed;
 };
