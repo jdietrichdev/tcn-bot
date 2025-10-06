@@ -15,6 +15,7 @@ import {
 } from "../adapters/discord-adapter";
 import { getConfig } from "../util/serverConfig";
 import { BUTTONS } from "../component-handlers/buttons";
+import { Proposal } from "../util/interfaces";
 
 export const handleNominationResult = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -49,12 +50,12 @@ export const handleNominationResult = async (
       )
     ).Item!;
 
-    const proposalData = proposals.proposals.find(
-      (proposal: Record<string, any>) => proposal.message === id
+    const proposalData: Proposal = proposals.proposals.find(
+      (proposal: Proposal) => proposal.message === id
     );
 
     proposals.proposals = proposals.proposals.filter(
-      (proposal: Record<string, any>) => proposal.message !== id
+      (proposal: Proposal) => proposal.message !== id
     );
 
     if (result === "Approve" && role) {

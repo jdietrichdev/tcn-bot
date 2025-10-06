@@ -7,6 +7,7 @@ import { GetCommand } from "@aws-sdk/lib-dynamodb";
 import { updateResponse } from "../adapters/discord-adapter";
 import { isActorAdmin } from "./utils";
 import { getConfig } from "../util/serverConfig";
+import { Proposal } from "../util/interfaces";
 
 export const nominationResults = async (
   interaction: APIMessageComponentInteraction
@@ -33,7 +34,7 @@ export const nominationResults = async (
       ).Item!;
 
       const proposal = proposalData.proposals.find(
-        (proposal: Record<string, any>) => proposal.message === message
+        (proposal: Proposal) => proposal.message === message
       );
 
       const resultEmbed = createResultsEmbed(proposal);
@@ -54,11 +55,11 @@ export const nominationResults = async (
   }
 };
 
-const createResultsEmbed = (proposal: Record<string, any>) => {
+const createResultsEmbed = (proposal: Proposal) => {
   return {
     title: `Current Results for ${proposal.username}`,
     description: proposal.reason,
-    fields: proposal.votes.map((vote: Record<string, any>) => {
+    fields: proposal.votes.map((vote) => {
       return { name: vote.user, value: vote.type };
     }),
   } as APIEmbed;

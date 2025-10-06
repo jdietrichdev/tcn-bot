@@ -3,6 +3,8 @@ import { updateMessage, updateResponse } from "../adapters/discord-adapter";
 import { getConfig } from "../util/serverConfig";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { Proposal } from "../util/interfaces";
+import { VoteType } from "../util/enums";
 
 export const vouchNomination = async (
   interaction: APIMessageComponentInteraction
@@ -24,13 +26,13 @@ export const vouchNomination = async (
       )
     ).Item!;
 
-    const proposal = proposalData.proposals.find(
-      (proposal: Record<string, any>) => proposal.message === message
+    const proposal: Proposal = proposalData.proposals.find(
+      (proposal: Proposal) => proposal.message === message
     );
 
     proposal.votes.push({
       user: voucher.username,
-      type: "VOUCH",
+      type: VoteType.VOUCH,
     });
 
     const updatedEmbed = interaction.message.embeds[0];

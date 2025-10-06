@@ -2,6 +2,8 @@ import { APIMessageComponentInteraction } from "discord-api-types/v10";
 import { updateResponse } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { Proposal } from "../util/interfaces";
+import { VoteType } from "../util/enums";
 
 export const indifferentNomination = async (
   interaction: APIMessageComponentInteraction
@@ -22,13 +24,13 @@ export const indifferentNomination = async (
       )
     ).Item!;
 
-    const proposal = proposalData.proposals.find(
-      (proposal: Record<string, any>) => proposal.message === message
+    const proposal: Proposal = proposalData.proposals.find(
+      (proposal: Proposal) => proposal.message === message
     );
 
     proposal.votes.push({
       user: voucher.username,
-      type: "NOT SURE",
+      type: VoteType.NOT_SURE,
     });
 
     //Do not update embed

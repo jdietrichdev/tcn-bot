@@ -16,6 +16,7 @@ import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { getConfig } from "../util/serverConfig";
 import { BUTTONS } from "../component-handlers/buttons";
+import { Proposal } from "../util/interfaces";
 
 export const handleNominate = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -112,7 +113,7 @@ export const handleNominate = async (
       proposalTime: new Date().toISOString(),
       proposedBy: interaction.member!.user.username,
       message: message.id,
-    });
+    } as Proposal);
 
     await dynamoDbClient.send(
       new PutCommand({
