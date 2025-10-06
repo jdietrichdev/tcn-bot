@@ -24,29 +24,33 @@ export const opposeNomination = async (
       )
     ).Item!;
 
-    proposalData.proposals.forEach((proposal: Record<string, any>) => {
-      if (proposal.message === message) {
-        proposal.votes.push({
-          user: opposer.username,
-          type: "OPPOSE",
-        });
-      }
+    const proposal = proposalData.proposals.find(
+      (proposal: Record<string, any>) => proposal.message === message
+    );
+
+    proposal.votes.push({
+      user: opposer.username,
+      type: "OPPOSE",
     });
 
     const updatedEmbed = interaction.message.embeds[0];
-    if (updatedEmbed.fields) {
-      updatedEmbed.fields.push({
-        name: opposer.username,
-        value: "OPPOSE",
-      });
-    } else {
-      updatedEmbed.fields = [
-        {
-          name: opposer.username,
-          value: "OPPOSE",
-        },
-      ];
-    }
+    let yes = 0,
+      no = 0;
+    proposal.votes.forEach((vote: Record<string, any>) => {
+      if (vote.type === "VOUCH") {
+        yes++;
+      } else {
+        no++;
+      }
+    });
+
+    updatedEmbed.fields = [
+      {
+        name: "Current Status",
+        value: `Yes: ${yes}, No: ${no}`,
+      },
+    ];
+    console.log(updatedEmbed);
 
     await updateMessage(config.RANK_PROPOSAL_CHANNEL, message, {
       embeds: [updatedEmbed],
