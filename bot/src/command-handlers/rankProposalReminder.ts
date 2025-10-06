@@ -64,7 +64,7 @@ export const handleRankProposalReminder = async (
     if (typeof input !== "string") {
       await updateResponse(input.application_id, input.token, {
         content:
-          "There was a failure generating the recruitment score, please try again or contact admins for assistance",
+          "There was a failure generating the rank proposal reminder, please try again or contact admins for assistance",
       });
     }
   }
