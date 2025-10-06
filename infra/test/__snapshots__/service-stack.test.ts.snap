@@ -687,7 +687,7 @@ exports[`Infrastructure created 1`] = `
     "botscheduledrankproposalreminder8EB2B479": {
       "Type": "AWS::Events::Rule",
       "Properties": {
-        "ScheduleExpression": "rate(7 days)",
+        "ScheduleExpression": "cron(0 12 ? * TUE *)",
         "State": "ENABLED",
         "Targets": [
           {

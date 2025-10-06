@@ -146,7 +146,11 @@ export class ServiceStack extends Stack {
     });
 
     new Rule(this, "bot-scheduled-rank-proposal-reminder", {
-      schedule: Schedule.rate(Duration.days(7)),
+      schedule: Schedule.cron({
+        minute: "0",
+        hour: "12",
+        weekDay: "TUE",
+      }),
       targets: [
         new LambdaFunction(this.scheduled, {
           event: RuleTargetInput.fromObject({
