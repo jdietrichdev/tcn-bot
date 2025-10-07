@@ -3,12 +3,12 @@ import {
   APIApplicationCommandInteractionDataUserOption,
   APIChatInputApplicationCommandInteraction,
   APIEmbed,
-  APIUser,
+  APIGuildMember,
   ComponentType,
 } from "discord-api-types/v10";
 import { getCommandOptionData } from "../util/interaction-util";
 import {
-  getUser,
+  getServerUser,
   grantRole,
   sendMessage,
   updateResponse,
@@ -75,7 +75,7 @@ export const handleNominate = async (
       return;
     }
 
-    const userData = await getUser(user);
+    const userData = await getServerUser(interaction.guild_id!, user);
     const embed = createNominationEmbed(
       interaction,
       userData,
@@ -106,7 +106,7 @@ export const handleNominate = async (
 
     proposalData.proposals.push({
       userId: user,
-      username: userData.username,
+      username: userData.user.username,
       rank,
       type,
       reason,
@@ -138,12 +138,12 @@ export const handleNominate = async (
 
 const createNominationEmbed = (
   interaction: APIChatInputApplicationCommandInteraction,
-  user: APIUser,
+  user: APIGuildMember,
   type: string,
   rank: string,
   reason: string
 ) => {
-  let description = `Proposal for ${user.username}/${user.global_name}\nProposed by: ${
+  let description = `Proposal for ${user.user.username}/${user.user.global_name}\nProposed by: ${
     interaction.member!.user.username
   }`;
   if (reason) description += `\nReasoning: ${reason}`;
