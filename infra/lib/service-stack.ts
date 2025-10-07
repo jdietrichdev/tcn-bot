@@ -83,6 +83,20 @@ export class ServiceStack extends Stack {
       retryAttempts: 0,
     });
     props.botTable.grantReadWriteData(this.scheduled);
+    this.scheduled.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["scheduler:DeleteSchedule"],
+        resources: [
+          `arn:aws:scheduler:${this.region}:${this.account}:schedule/*`,
+        ],
+      })
+    );
+    this.scheduled.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["iam:PassRole"],
+        resources: [schedulerRole.roleArn],
+      })
+    );
     schedulerRole.addToPolicy(
       new PolicyStatement({
         actions: ["lambda:InvokeFunction"],

@@ -182,6 +182,37 @@ exports[`Infrastructure created 1`] = `
         ]
       }
     },
+    "botscheduledServiceRoleDefaultPolicy89D62999": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "scheduler:DeleteSchedule",
+              "Effect": "Allow",
+              "Resource": "arn:aws:scheduler:us-east-1:12345:schedule/*"
+            },
+            {
+              "Action": "iam:PassRole",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "schedulerrole9B80A9F3",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "botscheduledServiceRoleDefaultPolicy89D62999",
+        "Roles": [
+          {
+            "Ref": "botscheduledServiceRoleDA932985"
+          }
+        ]
+      }
+    },
     "botscheduledEB1B6758": {
       "Type": "AWS::Lambda::Function",
       "Properties": {
@@ -208,6 +239,7 @@ exports[`Infrastructure created 1`] = `
         "Timeout": 300
       },
       "DependsOn": [
+        "botscheduledServiceRoleDefaultPolicy89D62999",
         "botscheduledServiceRoleDA932985"
       ]
     },
