@@ -143,7 +143,7 @@ const createNominationEmbed = (
   rank: string,
   reason: string
 ) => {
-  let description = `Proposal for ${user.user.username}/${user.nick ?? user.user.username}}\nProposed by: ${
+  let description = `Proposal for ${user.user.username}/${user.nick ?? user.user.username}\nProposed by: ${
     interaction.member!.user.username
   }`;
   if (reason) description += `\nReasoning: ${reason}`;
