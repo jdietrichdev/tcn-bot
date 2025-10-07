@@ -9,6 +9,7 @@ import {
 import { getCommandOptionData } from "../util/interaction-util";
 import {
   getUser,
+  grantRole,
   sendMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
@@ -91,7 +92,7 @@ export const handleNominate = async (
             components: [
               BUTTONS.VOUCH_NOMINATION,
               BUTTONS.OPPOSE_NOMINATION,
-              BUTTONS.NOT_SURE_NOMINATION,
+              BUTTONS.INDIFFERENT_NOMINATION,
             ],
           },
           {
@@ -122,6 +123,10 @@ export const handleNominate = async (
       })
     );
 
+    if (type === "Promotion") {
+      await grantRole(interaction.guild_id!, user, rank === "Elder" ? config.TRIAL_ELDER_ROLE : config.TRIAL_LEAD_ROLE);
+    }
+
     await updateResponse(interaction.application_id, interaction.token, {
       content: "Proposal received, thank you!",
     });
@@ -138,7 +143,7 @@ const createNominationEmbed = (
   rank: string,
   reason: string
 ) => {
-  let description = `Proposal for ${user.username}\nProposed by: ${
+  let description = `Proposal for ${user.username}/${user.global_name}\nProposed by: ${
     interaction.member!.user.username
   }`;
   if (reason) description += `\nReasoning: ${reason}`;

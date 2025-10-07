@@ -26,7 +26,7 @@ export const submitModal = async (interaction: APIModalSubmitInteraction) => {
       break;
     case "vouchModal":
     case "opposeModal":
-    case "not_sureModal":
+    case "indifferentModal":
       await submitVoteNominationModal(interaction);
   }
 };

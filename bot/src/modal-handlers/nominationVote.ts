@@ -76,6 +76,9 @@ export const submitVoteNominationModal = async (interaction: APIModalSubmitInter
 }
 
 const determineVoteType = (customId: string) => {
-    const vote = customId.substring(0, customId.length - 5).toUpperCase().replace("_", " ");
-    return VoteType[vote as keyof typeof VoteType];
+    const vote = customId.substring(0, customId.length - 5);
+    if (vote === "vouch") return VoteType.VOUCH;
+    if (vote === "oppose") return VoteType.OPPOSE;
+    if (vote === "indifferent") return VoteType.NOT_SURE;
+    throw new Error("Vote type not recognized");
 }

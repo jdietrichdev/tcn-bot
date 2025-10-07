@@ -31,7 +31,7 @@ export const createModal = (
       return createCwlQuestionsModal(interaction as APIMessageComponentInteraction);
     case "vouch":
     case "oppose":
-    case "not_sure":
+    case "indifferent":
       return createVoteNominationModal(interaction as APIMessageComponentInteraction);
     default:
       throw new Error("No handler defined for creating modal");

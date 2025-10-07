@@ -10,7 +10,7 @@ const BUTTON_MODAL_TRIGGERS = [
   "cwlQuestions",
   "vouch",
   "oppose",
-  "not_sure",
+  "indifferent",
 ];
 const COMMAND_MODAL_TRIGGERS = ["apply", "lead-apply"];
 

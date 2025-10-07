@@ -125,11 +125,11 @@ export const BUTTONS = {
     label: "Opppose",
     custom_id: "oppose",
   } as APIButtonComponentWithCustomId,
-  NOT_SURE_NOMINATION: {
+  INDIFFERENT_NOMINATION: {
     type: ComponentType.Button,
     style: ButtonStyle.Primary,
     label: "Not Sure",
-    custom_id: "not_sure",
+    custom_id: "indifferent",
   } as APIButtonComponentWithCustomId,
   NOMINATION_RESULTS: {
     type: ComponentType.Button,

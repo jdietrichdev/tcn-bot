@@ -16,6 +16,7 @@ import {
 import { getConfig } from "../util/serverConfig";
 import { BUTTONS } from "../component-handlers/buttons";
 import { Proposal } from "../util/interfaces";
+import { Rank } from "../util/enums";
 
 export const handleNominationResult = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -64,6 +65,8 @@ export const handleNominationResult = async (
       } else {
         await removeRole(interaction.guild_id!, proposalData.userId, role);
       }
+    } else {
+      await removeRole(interaction.guild_id!, proposalData.userId, proposalData.rank === Rank.ELDER ? config.TRIAL_ELDER_ROLE : config.TRIAL_LEAD_ROLE);
     }
 
     await updateMessage(config.RANK_PROPOSAL_CHANNEL, proposalData.message, {
