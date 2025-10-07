@@ -85,9 +85,11 @@ export const handleEventWinner = async (
     await schedulerClient.send(
       new CreateScheduleCommand({
         Name: `reward-expiration-${dmChannel.id}-${message.id}`,
-        ScheduleExpression: `at(${new Date(
-          Date.now() + expiration * 60 * 60 * 1000
-        ).toISOString()})`,
+        ScheduleExpression: `at(${
+          new Date(Date.now() + expiration * 60 * 60 * 1000)
+            .toISOString()
+            .split(".")[0]
+        })`,
         FlexibleTimeWindow: {
           Mode: FlexibleTimeWindowMode.OFF,
         },
