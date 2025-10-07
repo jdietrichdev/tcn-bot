@@ -757,6 +757,16 @@ exports[`Infrastructure created 1`] = `
               "Resource": "arn:aws:scheduler:us-east-1:12345:schedule/*"
             },
             {
+              "Action": "iam:PassRole",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "schedulerrole9B80A9F3",
+                  "Arn"
+                ]
+              }
+            },
+            {
               "Action": [
                 "s3:DeleteObject*",
                 "s3:PutObject",

@@ -186,6 +186,12 @@ export class ServiceStack extends Stack {
         ],
       })
     );
+    this.handler.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["iam:PassRole"],
+        resources: [schedulerRole.roleArn],
+      })
+    );
     props.table.grantReadWriteData(this.handler);
     props.botTable.grantReadWriteData(this.handler);
     this.transcriptBucket.grantWrite(this.handler);
