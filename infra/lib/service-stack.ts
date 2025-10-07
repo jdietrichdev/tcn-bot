@@ -178,6 +178,14 @@ export class ServiceStack extends Stack {
       timeout: Duration.minutes(5),
       retryAttempts: 0,
     });
+    this.handler.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["scheduler:CreateSchedule", "scheduler:DeleteSchedule"],
+        resources: [
+          `arn:aws:scheduler:${this.region}:${this.account}:schedule/*`,
+        ],
+      })
+    );
     props.table.grantReadWriteData(this.handler);
     props.botTable.grantReadWriteData(this.handler);
     this.transcriptBucket.grantWrite(this.handler);
