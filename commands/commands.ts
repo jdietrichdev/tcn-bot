@@ -357,6 +357,12 @@ export const eventWinner = new SlashCommandBuilder()
           value: "CASH",
         },
       ]);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("expiration")
+      .setDescription("Time until reward expires in hour (default 24)")
+      .setRequired(false);
   });
 
 export const nominate = new SlashCommandBuilder()

@@ -27,10 +27,9 @@ import {
   buttonTriggersModal,
   commandTriggersModal,
 } from "./component-handlers/utils";
-import { handleRecruiterScore } from "./command-handlers/recruiterScore";
 import { processCwlRoster } from "./processors/cwlRosterProcessor";
 import { newAccountProcessor } from "./processors/newAccountProcessor";
-import { handleRankProposalReminder } from "./command-handlers/rankProposalReminder";
+import { handleScheduled } from "./scheduled-handlers";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -108,11 +107,7 @@ export const scheduled = async (
   event: EventBridgeEvent<string, Record<string, string>>
 ) => {
   console.log(JSON.stringify(event));
-  if (event["detail-type"] === "Generate Recruiter Score") {
-    await handleRecruiterScore(event.detail.guildId);
-  } else if (event["detail-type"] === "Rank Proposal Reminder") {
-    await handleRankProposalReminder(event.detail.guildId);
-  }
+  await handleScheduled(event);
 };
 
 export const processor = async (event: S3Event | Record<string, string>[]) => {

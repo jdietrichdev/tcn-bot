@@ -30,7 +30,7 @@ import {
   EventType,
 } from "aws-cdk-lib/aws-s3";
 import { LambdaDestination } from "aws-cdk-lib/aws-s3-notifications";
-import { Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
+import { PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { CfnPipe } from "aws-cdk-lib/aws-pipes";
 
 interface ServiceStackProps extends StackProps {
@@ -62,23 +62,11 @@ export class ServiceStack extends Stack {
       encryption: BucketEncryption.S3_MANAGED,
     });
 
-    this.handler = new Lambda(this, "bot-handler", {
-      functionName: "bot-handler",
-      runtime: Runtime.NODEJS_22_X,
-      handler: "index.handler",
-      code: Code.fromAsset("../bot/dist"),
-      logRetention: RetentionDays.ONE_MONTH,
-      environment: {
-        REGION: props.env!.region!,
-        CLASH_API_TOKEN: process.env.CLASH_API_TOKEN!,
-        BOT_TOKEN: process.env.BOT_TOKEN!,
-      },
-      timeout: Duration.minutes(5),
-      retryAttempts: 0,
+    const schedulerRole = new Role(this, "scheduler-role", {
+      roleName: "SchedulerRole",
+      assumedBy: new ServicePrincipal("scheduler.amazonaws.com"),
+      description: "Allows EventBridge Scheduler to invoke lambda functions",
     });
-    props.table.grantReadWriteData(this.handler);
-    props.botTable.grantReadWriteData(this.handler);
-    this.transcriptBucket.grantWrite(this.handler);
 
     this.scheduled = new Lambda(this, "bot-scheduled", {
       functionName: "bot-scheduled",
@@ -95,6 +83,12 @@ export class ServiceStack extends Stack {
       retryAttempts: 0,
     });
     props.botTable.grantReadWriteData(this.scheduled);
+    schedulerRole.addToPolicy(
+      new PolicyStatement({
+        actions: ["lambda:InvokeFunction"],
+        resources: [this.scheduled.functionArn],
+      })
+    );
 
     this.eventBus = new EventBus(this, "bot-events", {
       eventBusName: "tcn-bot-events",
@@ -113,17 +107,6 @@ export class ServiceStack extends Stack {
         source: ["tcn-bot-event"],
       },
       targets: [new CloudWatchLogGroup(eventLog)],
-    });
-
-    new Rule(this, "bot-event-handler", {
-      ruleName: "BotEventHandler",
-      description: "Handler for incoming bot events",
-      eventBus: this.eventBus,
-      eventPattern: {
-        source: ["tcn-bot-event"],
-        detailType: ["Bot Event Received"],
-      },
-      targets: [new LambdaFunction(this.handler)],
     });
 
     new Rule(this, "bot-scheduled-recruiter-score", {
@@ -178,6 +161,37 @@ export class ServiceStack extends Stack {
     this.eventBus.grantPutEventsTo(this.proxy);
     this.rosterBucket.grantRead(this.proxy);
     props.botTable.grantReadData(this.proxy);
+
+    this.handler = new Lambda(this, "bot-handler", {
+      functionName: "bot-handler",
+      runtime: Runtime.NODEJS_22_X,
+      handler: "index.handler",
+      code: Code.fromAsset("../bot/dist"),
+      logRetention: RetentionDays.ONE_MONTH,
+      environment: {
+        REGION: props.env!.region!,
+        CLASH_API_TOKEN: process.env.CLASH_API_TOKEN!,
+        BOT_TOKEN: process.env.BOT_TOKEN!,
+        SCHEDULED_LAMBDA_ARN: this.scheduled.functionArn,
+        SCHEDULER_ROLE_ARN: schedulerRole.roleArn,
+      },
+      timeout: Duration.minutes(5),
+      retryAttempts: 0,
+    });
+    props.table.grantReadWriteData(this.handler);
+    props.botTable.grantReadWriteData(this.handler);
+    this.transcriptBucket.grantWrite(this.handler);
+
+    new Rule(this, "bot-event-handler", {
+      ruleName: "BotEventHandler",
+      description: "Handler for incoming bot events",
+      eventBus: this.eventBus,
+      eventPattern: {
+        source: ["tcn-bot-event"],
+        detailType: ["Bot Event Received"],
+      },
+      targets: [new LambdaFunction(this.handler)],
+    });
 
     const accessLogs = new LogGroup(this, "access-logs", {
       logGroupName: "BotAccessLogs",

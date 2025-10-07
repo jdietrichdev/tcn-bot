@@ -14,14 +14,14 @@
     "deploy": "cdk deploy --all"
   },
   "devDependencies": {
-    "aws-cdk": "^2.1013.0",
-    "ts-node": "^10.9.2",
-    "typescript": "~5.4.5"
+    "aws-cdk": "2.1029.4",
+    "ts-node": "10.9.2",
+    "typescript": "5.9.3"
   },
   "dependencies": {
-    "aws-cdk-lib": "^2.193.0",
+    "aws-cdk-lib": "2.219.0",
     "cdk-nextjs-standalone": "4.3.0",
-    "constructs": "^10.0.0",
-    "source-map-support": "^0.5.21"
+    "constructs": "10.4.2",
+    "source-map-support": "0.5.21"
   }
 }
