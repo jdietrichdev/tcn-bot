@@ -50,6 +50,8 @@ export const submitVoteNominationModal = async (interaction: APIModalSubmitInter
         const updatedEmbed = interaction.message!.embeds[0];
         const [yes, no] = tallyVotes(proposal.votes);
 
+        console.log(JSON.stringify(proposalData));
+
         updatedEmbed.fields = [
             {
                 name: "Current Status",

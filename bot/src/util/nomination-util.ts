@@ -23,6 +23,8 @@ export const addVote = (
 ) => {
   const user = interaction.member!.user.username;
   const index = votes.findIndex((vote) => vote.user === user);
+  console.log(vote);
+  console.log(reason);
 
   if (index !== -1) {
     votes[index].type = vote;
