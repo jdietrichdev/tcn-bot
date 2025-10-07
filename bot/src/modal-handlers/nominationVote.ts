@@ -76,6 +76,6 @@ export const submitVoteNominationModal = async (interaction: APIModalSubmitInter
 }
 
 const determineVoteType = (customId: string) => {
-    const vote = customId.substring(0, customId.length - 5).toUpperCase();
+    const vote = customId.substring(0, customId.length - 5).toUpperCase().replace("_", " ");
     return VoteType[vote as keyof typeof VoteType];
 }

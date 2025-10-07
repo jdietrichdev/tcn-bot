@@ -91,7 +91,7 @@ export const handleNominate = async (
             components: [
               BUTTONS.VOUCH_NOMINATION,
               BUTTONS.OPPOSE_NOMINATION,
-              BUTTONS.INDIFFERENT_NOMINATION,
+              BUTTONS.NOT_SURE_NOMINATION,
             ],
           },
           {
