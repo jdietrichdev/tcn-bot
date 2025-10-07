@@ -3,6 +3,7 @@ import { ProposalType, Rank, VoteType } from "./enums";
 export interface NominationVote {
   type: VoteType;
   user: string;
+  reason: string;
 }
 
 export interface Proposal {

@@ -1,4 +1,4 @@
-import { APIMessageComponentInteraction } from "discord-api-types/v10";
+import { APIModalSubmitInteraction } from "discord-api-types/v10";
 import { NominationVote } from "./interfaces";
 import { VoteType } from "./enums";
 
@@ -16,9 +16,10 @@ export const tallyVotes = (votes: NominationVote[]) => {
 };
 
 export const addVote = (
-  interaction: APIMessageComponentInteraction,
+  interaction: APIModalSubmitInteraction,
   votes: NominationVote[],
-  vote: VoteType
+  vote: VoteType,
+  reason: string,
 ) => {
   const user = interaction.member!.user.username;
   const index = votes.findIndex((vote) => vote.user === user);
@@ -26,6 +27,6 @@ export const addVote = (
   if (index !== -1) {
     votes[index].type = vote;
   } else {
-    votes.push({ type: vote, user });
+    votes.push({ type: vote, user, reason });
   }
 };

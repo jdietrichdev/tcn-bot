@@ -13,9 +13,9 @@ import { rejectDelete } from "./rejectDelete";
 import { signupCwl } from "./signupCwl";
 import { exportCwlQuestions } from "./exportCwlQuestions";
 import { claimEvent } from "./claim";
-import { vouchNomination } from "./vouchNomination";
-import { opposeNomination } from "./opposeNomination";
-import { indifferentNomination } from "./indifferentNomination";
+// import { vouchNomination } from "./vouchNomination";
+// import { opposeNomination } from "./opposeNomination";
+// import { indifferentNomination } from "./indifferentNomination";
 import { nominationResults } from "./nominationResults";
 
 export const handleComponent = async (
@@ -48,12 +48,12 @@ export const handleComponent = async (
     await exportCwlQuestions(interaction);
   } else if (customId.startsWith("claim")) {
     await claimEvent(interaction);
-  } else if (customId === "vouch") {
-    await vouchNomination(interaction);
-  } else if (customId === "oppose") {
-    await opposeNomination(interaction);
-  } else if (customId === "indifferent") {
-    await indifferentNomination(interaction);
+  // } else if (customId === "vouch") {
+  //   await vouchNomination(interaction);
+  // } else if (customId === "oppose") {
+  //   await opposeNomination(interaction);
+  // } else if (customId === "indifferent") {
+  //   await indifferentNomination(interaction);
   } else if (customId === "nominationResults") {
     await nominationResults(interaction);
   }

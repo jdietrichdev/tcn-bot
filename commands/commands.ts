@@ -405,7 +405,7 @@ export const nominate = new SlashCommandBuilder()
     return option
       .setName("reason")
       .setDescription("Reason for proposal")
-      .setRequired(false);
+      .setRequired(true);
   });
 
 export const nominationResult = new SlashCommandBuilder()

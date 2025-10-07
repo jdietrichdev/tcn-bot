@@ -60,7 +60,7 @@ const createResultsEmbed = (proposal: Proposal) => {
     title: `Current Results for ${proposal.username}`,
     description: proposal.reason,
     fields: proposal.votes.map((vote) => {
-      return { name: vote.user, value: vote.type };
+      return { name: vote.user, value: `${vote.type}: ${vote.reason}` };
     }),
   } as APIEmbed;
 };

@@ -7,6 +7,7 @@ import { createDenyAppModal } from "./denyApp";
 import { createLeadApplyModal } from "./leadApply";
 import { createCwlAccountSignupModal } from "./signupAccount";
 import { createCwlQuestionsModal } from "./cwlQuestions";
+import { createVoteNominationModal } from "./nominationVote";
 
 export const createModal = (
   interaction:
@@ -28,6 +29,10 @@ export const createModal = (
       );
     case "cwlQuestions":
       return createCwlQuestionsModal(interaction as APIMessageComponentInteraction);
+    case "vouch":
+    case "oppose":
+    case "indifferent":
+      return createVoteNominationModal(interaction as APIMessageComponentInteraction);
     default:
       throw new Error("No handler defined for creating modal");
   }
