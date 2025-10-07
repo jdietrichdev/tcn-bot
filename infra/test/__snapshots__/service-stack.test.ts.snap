@@ -810,6 +810,12 @@ exports[`Infrastructure created 1`] = `
                 "botscheduledEB1B6758",
                 "Arn"
               ]
+            },
+            "SCHEDULER_ROLE_ARN": {
+              "Fn::GetAtt": [
+                "schedulerrole9B80A9F3",
+                "Arn"
+              ]
             }
           }
         },
