@@ -50,8 +50,6 @@ export const submitVoteNominationModal = async (interaction: APIModalSubmitInter
         const updatedEmbed = interaction.message!.embeds[0];
         const [yes, no] = tallyVotes(proposal.votes);
 
-        console.log(JSON.stringify(proposalData));
-
         updatedEmbed.fields = [
             {
                 name: "Current Status",
@@ -78,7 +76,6 @@ export const submitVoteNominationModal = async (interaction: APIModalSubmitInter
 }
 
 const determineVoteType = (customId: string) => {
-    const vote = customId.substring(0, customId.length - 6).toUpperCase();
-    console.log(vote);
+    const vote = customId.substring(0, customId.length - 5).toUpperCase();
     return VoteType[vote as keyof typeof VoteType];
 }
