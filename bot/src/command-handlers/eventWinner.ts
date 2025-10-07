@@ -97,8 +97,11 @@ export const handleEventWinner = async (
           Arn: process.env.SCHEDULED_LAMBDA_ARN,
           RoleArn: process.env.SCHEDULER_ROLE_ARN,
           Input: JSON.stringify({
-            channelId: dmChannel.id,
-            messageId: message.id,
+            "detail-type": "Reward Expiration",
+            detail: {
+              channelId: dmChannel.id,
+              messageId: message.id,
+            },
           }),
         },
       })
