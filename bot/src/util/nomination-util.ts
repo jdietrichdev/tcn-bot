@@ -25,6 +25,8 @@ export const addVote = (
   const index = votes.findIndex((vote) => vote.user === user);
   console.log(vote);
   console.log(reason);
+  console.log(index);
+  console.log(user);
 
   if (index !== -1) {
     votes[index].type = vote;

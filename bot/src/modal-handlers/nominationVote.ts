@@ -79,5 +79,6 @@ export const submitVoteNominationModal = async (interaction: APIModalSubmitInter
 
 const determineVoteType = (customId: string) => {
     const vote = customId.substring(0, customId.length - 6).toUpperCase();
+    console.log(vote);
     return VoteType[vote as keyof typeof VoteType];
 }
