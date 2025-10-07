@@ -49,8 +49,12 @@ export const submitVoteNominationModal = async (interaction: APIModalSubmitInter
 
         addVote(interaction, proposal.votes, determineVoteType(interaction.data.custom_id), reason);
 
+        console.log("Vote added");
+
         const updatedEmbed = interaction.message!.embeds[0];
         const [yes, no] = tallyVotes(proposal.votes);
+
+        console.log("Votes tallied");
 
         updatedEmbed.fields = [
             {
