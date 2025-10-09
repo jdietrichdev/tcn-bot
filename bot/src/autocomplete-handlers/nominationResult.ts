@@ -6,6 +6,7 @@ import {
 } from "discord-api-types/v10";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
+import { Proposal } from "../util/interfaces";
 
 export const handleNominationResult = async (
   interaction: APIApplicationCommandAutocompleteInteraction
@@ -34,12 +35,16 @@ export const handleNominationResult = async (
 
     console.log(JSON.stringify(proposals));
 
-    options.choices = proposals.map((proposal: Record<string, any>) => {
-      return {
-        name: `${proposal.rank} ${proposal.type} - ${proposal.username}`,
-        value: proposal.message,
-      };
-    });
+    options.choices = proposals
+      .filter((proposal: Proposal) => {
+        return !proposal.result;
+      })
+      .map((proposal: Proposal) => {
+        return {
+          name: `${proposal.rank} ${proposal.type} - ${proposal.username}`,
+          value: proposal.message,
+        };
+      });
 
     console.log(options);
   }

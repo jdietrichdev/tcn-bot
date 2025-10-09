@@ -54,10 +54,7 @@ export const handleNominationResult = async (
     const proposalData: Proposal = proposals.proposals.find(
       (proposal: Proposal) => proposal.message === id
     );
-
-    proposals.proposals = proposals.proposals.filter(
-      (proposal: Proposal) => proposal.message !== id
-    );
+    proposalData.result = result;
 
     if (result === "Approve" && role) {
       if (proposalData.type === "Promotion") {
@@ -66,7 +63,13 @@ export const handleNominationResult = async (
         await removeRole(interaction.guild_id!, proposalData.userId, role);
       }
     }
-    await removeRole(interaction.guild_id!, proposalData.userId, proposalData.rank === Rank.ELDER ? config.TRIAL_ELDER_ROLE : config.TRIAL_LEAD_ROLE);
+    await removeRole(
+      interaction.guild_id!,
+      proposalData.userId,
+      proposalData.rank === Rank.ELDER
+        ? config.TRIAL_ELDER_ROLE
+        : config.TRIAL_LEAD_ROLE
+    );
 
     await updateMessage(config.RANK_PROPOSAL_CHANNEL, proposalData.message, {
       content: `Proposal ${result === "Approve" ? "Approved" : "Denied"}`,

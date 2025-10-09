@@ -15,5 +15,6 @@ export interface Proposal {
   reason?: string;
   userId: string;
   username: string;
+  result?: string;
   votes: NominationVote[];
 }
