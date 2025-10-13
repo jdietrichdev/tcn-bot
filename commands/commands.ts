@@ -452,3 +452,8 @@ export const rankProposalReminder = new SlashCommandBuilder()
   .setName("rank-proposal-reminder")
   .setDescription("Reminder to check proposals")
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+export const announceRoster = new SlashCommandBuilder()
+  .setName("announce-roster")
+  .setDescription("Pull roster data from sheet and send to announcement channel")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
