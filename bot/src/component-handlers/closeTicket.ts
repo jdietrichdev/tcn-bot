@@ -26,7 +26,7 @@ export const closeTicket = async (
         interaction.guild_id!,
         interaction.member!.user.id,
         config
-      ) || await isActorAdmin(interaction.guild_id!, interaction.member!.user.id)
+      ) || await isActorAdmin(interaction.guild_id!, interaction.member!.user.id, config)
     ) {
       const channelId = interaction.message.channel_id;
       const userId = (interaction.channel as APITextChannel).topic!.split(
