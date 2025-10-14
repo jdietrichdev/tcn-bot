@@ -48,9 +48,10 @@ export const handleAnnounceRoster = async (
             });
         }
     }
+    roster.push(clanRoster);
 
     const messages = buildRosterAnnouncement(roster);
-    await sendMessage({ content: `<&${config.CLAN_ROLE} below is the roster for the coming week, please get to where you need to be!` }, config.ANNOUNCEMENT_CHANNEL);
+    await sendMessage({ content: `<&${config.CLAN_ROLE}> below is the roster for the coming week, please get to where you need to be!` }, config.ANNOUNCEMENT_CHANNEL);
     for (const message of messages) {
         const { id } = await sendMessage({ content: message.content!.split("\n")[0]}, config.ANNOUNCEMENT_CHANNEL);
         await updateMessage(config.ANNOUNCEMENT_CHANNEL, id, message);
