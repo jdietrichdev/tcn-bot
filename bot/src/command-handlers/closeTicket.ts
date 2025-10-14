@@ -11,7 +11,7 @@ import {
   updateChannelPermissions,
   updateResponse,
 } from "../adapters/discord-adapter";
-import { isActorRecruiter } from "../component-handlers/utils";
+import { isActorAdmin, isActorRecruiter } from "../component-handlers/utils";
 
 export const closeTicket = async (
   interaction: APIApplicationCommandInteraction
@@ -24,7 +24,7 @@ export const closeTicket = async (
           interaction.guild_id!,
           interaction.member!.user.id,
           config
-        )
+        ) || await isActorAdmin(interaction.guild_id!, interaction.member!.user.id, config)
       ) {
         const channelId = interaction.channel.id;
         const userId = (interaction.channel as APITextChannel).topic!.split(

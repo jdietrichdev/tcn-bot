@@ -13,7 +13,7 @@ import {
   updateMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
-import { determineRolesButton, isActorRecruiter } from "./utils";
+import { determineRolesButton, isActorAdmin, isActorRecruiter } from "./utils";
 import { BUTTONS } from "./buttons";
 
 export const closeTicket = async (
@@ -26,7 +26,7 @@ export const closeTicket = async (
         interaction.guild_id!,
         interaction.member!.user.id,
         config
-      )
+      ) || await isActorAdmin(interaction.guild_id!, interaction.member!.user.id)
     ) {
       const channelId = interaction.message.channel_id;
       const userId = (interaction.channel as APITextChannel).topic!.split(

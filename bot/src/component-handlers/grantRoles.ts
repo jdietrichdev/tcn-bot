@@ -13,7 +13,7 @@ import {
   updateMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
-import { determineRolesButton, isActorRecruiter } from "./utils";
+import { determineRolesButton, isActorAdmin, isActorRecruiter } from "./utils";
 
 export const grantRoles = async (
   interaction: APIMessageComponentInteraction,
@@ -25,7 +25,7 @@ export const grantRoles = async (
         interaction.guild_id!,
         interaction.member!.user.id,
         config
-      )
+      ) || await isActorAdmin(interaction.guild_id!, interaction.member!.user.id, config)
     ) {
       const userId = (interaction.channel as APITextChannel).topic!.split(
         ":"
