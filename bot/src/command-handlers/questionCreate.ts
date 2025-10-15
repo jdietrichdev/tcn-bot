@@ -125,13 +125,13 @@ const createQuestion = (
         type: ComponentType.Button,
         style: ButtonStyle.Primary,
         label: question.optionOne,
-        custom_id: `answer:optionOne:${eventId}:${questionId}`,
+        custom_id: `answer_optionOne_${eventId}_${questionId}`,
       },
       {
         type: ComponentType.Button,
         style: ButtonStyle.Primary,
         label: question.optionTwo,
-        custom_id: `answer:optionTwo:${eventId}:${questionId}`,
+        custom_id: `answer_optionTwo_${eventId}_${questionId}`,
       },
     ],
   });
@@ -141,7 +141,7 @@ const createQuestion = (
       type: ComponentType.Button,
       style: ButtonStyle.Primary,
       label: question.optionThree,
-      custom_id: `answer:optionThree:${eventId}:${questionId}`,
+      custom_id: `answer_optionThree_${eventId}_${questionId}`,
     });
   }
   if (question.optionFour) {
@@ -149,7 +149,7 @@ const createQuestion = (
       type: ComponentType.Button,
       style: ButtonStyle.Primary,
       label: question.optionFour,
-      custom_id: `answer:optionFour:${eventId}:${questionId}`,
+      custom_id: `answer_optionFour_${eventId}_${questionId}`,
     });
   }
   components.push({

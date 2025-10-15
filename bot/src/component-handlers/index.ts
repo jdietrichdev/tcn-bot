@@ -17,6 +17,7 @@ import { claimEvent } from "./claim";
 // import { opposeNomination } from "./opposeNomination";
 // import { indifferentNomination } from "./indifferentNomination";
 import { nominationResults } from "./nominationResults";
+import { answerQuestion } from "./answerQuestion";
 
 export const handleComponent = async (
   interaction: APIMessageComponentInteraction
@@ -50,5 +51,7 @@ export const handleComponent = async (
     await claimEvent(interaction);
   } else if (customId === "nominationResults") {
     await nominationResults(interaction);
+  } else if (customId.startsWith("answer")) {
+    await answerQuestion(interaction);
   }
 };
