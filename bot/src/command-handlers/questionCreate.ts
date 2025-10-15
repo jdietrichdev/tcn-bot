@@ -17,6 +17,8 @@ import {
 } from "../adapters/discord-adapter";
 import { Question } from "../util/interfaces";
 import { v4 as uuidv4 } from "uuid";
+import { dynamoDbClient } from "../clients/dynamodb-client";
+import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 
 export const handleQuestionCreate = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -51,17 +53,17 @@ export const handleQuestionCreate = async (
     const eventId = (interaction.channel as APITextChannel).topic;
     const questionId = uuidv4();
 
-    // const eventData = (
-    //   await dynamoDbClient.send(
-    //     new GetCommand({
-    //       TableName: "BotTable",
-    //       Key: {
-    //         pk: interaction.guild_id!,
-    //         sk: `event#${eventId}`,
-    //       },
-    //     })
-    //   )
-    // ).Item;
+    const eventData = (
+      await dynamoDbClient.send(
+        new GetCommand({
+          TableName: "BotTable",
+          Key: {
+            pk: interaction.guild_id!,
+            sk: `event#${eventId}`,
+          },
+        })
+      )
+    ).Item!;
 
     const questionMessage = createQuestion(
       {
@@ -75,7 +77,28 @@ export const handleQuestionCreate = async (
       questionId
     );
 
-    await sendMessage(questionMessage, interaction.channel.id);
+    const message = await sendMessage(questionMessage, interaction.channel.id);
+
+    const questions = eventData.questions ?? [];
+    questions.push({
+      id: questionId,
+      message: message.id,
+      question,
+      optionOne,
+      optionTwo,
+      optionThree,
+      optionFour,
+      responses: [],
+    });
+    eventData.questions = questions;
+
+    await dynamoDbClient.send(
+      new PutCommand({
+        TableName: "BotTable",
+        Item: eventData,
+      })
+    );
+
     await deleteResponse(interaction.application_id, interaction.token);
   } catch (err) {
     console.log("Failure creating question", err);
@@ -90,7 +113,10 @@ const createQuestion = (
   eventId: string,
   questionId: string
 ): RESTPostAPIWebhookWithTokenJSONBody => {
-  const embed = { title: question.question } as APIEmbed;
+  const embed = {
+    title: question.question,
+    description: "Total Responses: 0",
+  } as APIEmbed;
   const components: APIActionRowComponent<APIButtonComponent>[] = [];
   components.push({
     type: ComponentType.ActionRow,
@@ -104,7 +130,7 @@ const createQuestion = (
       {
         type: ComponentType.Button,
         style: ButtonStyle.Primary,
-        label: question.optionOne,
+        label: question.optionTwo,
         custom_id: `answer:optionTwo:${eventId}:${questionId}`,
       },
     ],
