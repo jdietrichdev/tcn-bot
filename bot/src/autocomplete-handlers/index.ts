@@ -14,6 +14,8 @@ export const handleAutocomplete = async (
         return await autocomplete.handleLink(interaction);
       case "nomination-result":
         return await autocomplete.handleNominationResult(interaction);
+      case "question-close":
+        return await autocomplete.handleQuestionClose(interaction);
       default:
         console.log("Autocomplete not found, no response needed");
         throw new Error("No autocomplete process defined");
