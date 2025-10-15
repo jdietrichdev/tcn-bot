@@ -18,3 +18,11 @@ export interface Proposal {
   result?: string;
   votes: NominationVote[];
 }
+
+export interface Question {
+  question: string;
+  optionOne: string;
+  optionTwo: string;
+  optionThree?: string;
+  optionFour?: string;
+}

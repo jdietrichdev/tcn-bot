@@ -9,7 +9,7 @@ import {
   OverwriteType,
   PermissionFlagsBits,
 } from "discord-api-types/v10";
-import { getConfig, ServerConfig } from "../util/serverConfig";
+import { getConfig } from "../util/serverConfig";
 import { getCommandOptionData } from "../util/interaction-util";
 import {
   createChannel,
@@ -113,7 +113,7 @@ export const handleCreateEvent = async (
       interaction.guild_id!
     );
 
-    const eventMessage = createEventMessage(eventData, attachment, config);
+    const eventMessage = createEventMessage(eventData, attachment);
     await sendMessageWithAttachment(eventMessage, channel.id);
 
     await dynamoDbClient.send(
@@ -189,8 +189,7 @@ const getEventData = (
 
 const createEventMessage = (
   eventData: Record<string, any>,
-  thumbnail: any | null,
-  config: ServerConfig
+  thumbnail: any | null
 ) => {
   const formData = new FormData();
 
