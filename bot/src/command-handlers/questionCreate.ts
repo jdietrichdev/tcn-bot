@@ -10,7 +10,11 @@ import {
   RESTPostAPIWebhookWithTokenJSONBody,
 } from "discord-api-types/v10";
 import { getCommandOptionData } from "../util/interaction-util";
-import { sendMessage, updateResponse } from "../adapters/discord-adapter";
+import {
+  deleteResponse,
+  sendMessage,
+  updateResponse,
+} from "../adapters/discord-adapter";
 import { Question } from "../util/interfaces";
 import { v4 as uuidv4 } from "uuid";
 
@@ -72,6 +76,7 @@ export const handleQuestionCreate = async (
     );
 
     await sendMessage(questionMessage, interaction.channel.id);
+    await deleteResponse(interaction.application_id, interaction.token);
   } catch (err) {
     console.log("Failure creating question", err);
     await updateResponse(interaction.application_id, interaction.token, {
