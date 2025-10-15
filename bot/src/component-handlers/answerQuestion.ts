@@ -2,6 +2,7 @@ import { APIMessageComponentInteraction } from "discord-api-types/v10";
 import { updateMessage, updateResponse } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { Question } from "../util/interfaces";
 
 export const answerQuestion = async (
   interaction: APIMessageComponentInteraction
@@ -22,11 +23,9 @@ export const answerQuestion = async (
       )
     ).Item!;
 
-    const question = eventData.questions.find(
-      (question: Record<string, any>) => {
-        return question.id === questionId;
-      }
-    );
+    const question = eventData.questions.find((question: Question) => {
+      return question.id === questionId;
+    });
 
     console.log(question + " " + option);
     console.log(question[option]);

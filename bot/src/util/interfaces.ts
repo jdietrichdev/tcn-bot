@@ -19,10 +19,21 @@ export interface Proposal {
   votes: NominationVote[];
 }
 
+export interface QuestionResponse {
+  userId: string;
+  username: string;
+  response: string;
+}
+
 export interface Question {
+  id?: string;
+  message?: string;
   question: string;
   optionOne: string;
   optionTwo: string;
   optionThree?: string;
   optionFour?: string;
+  responses?: QuestionResponse[];
+  closed?: boolean;
+  answer?: string;
 }

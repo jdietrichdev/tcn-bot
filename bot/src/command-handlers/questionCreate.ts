@@ -65,6 +65,10 @@ export const handleQuestionCreate = async (
       )
     ).Item!;
 
+    if (!eventData) {
+      throw new Error("No event found for this channel");
+    }
+
     const questionMessage = createQuestion(
       {
         question,
