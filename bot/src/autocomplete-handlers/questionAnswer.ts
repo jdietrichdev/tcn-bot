@@ -1,5 +1,6 @@
 import {
   APIApplicationCommandAutocompleteInteraction,
+  APIApplicationCommandInteractionDataOption,
   APIApplicationCommandInteractionDataStringOption,
   APICommandAutocompleteInteractionResponseCallbackData,
   APITextChannel,
@@ -47,7 +48,24 @@ export const handleQuestionAnswer = async (
 
       console.log(options);
     } else if (focused.name === "answer") {
-      console.log(interaction);
+      const questionId = interaction.data.options.find(
+        (option: APIApplicationCommandInteractionDataOption) =>
+          option.name === "question"
+      ) as APIApplicationCommandInteractionDataStringOption;
+      if (questionId) {
+        const question = questions.find(
+          (question: Question) => question.id === questionId.value
+        );
+        const optionKeys = Object.keys(question).filter((key: string) =>
+          key.startsWith("option")
+        );
+        options.choices = optionKeys.map((key: string) => {
+          return {
+            name: question[key],
+            value: question[key],
+          };
+        });
+      }
     }
   }
 
