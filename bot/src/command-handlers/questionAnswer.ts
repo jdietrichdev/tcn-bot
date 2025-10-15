@@ -27,6 +27,11 @@ export const handleQuestionAnswer = async (
         interaction,
         "answer"
       ).value;
+    const points =
+      getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
+        interaction,
+        "points"
+      )?.value ?? 1;
 
     const eventId = (interaction.channel as APITextChannel).topic;
 
@@ -47,6 +52,7 @@ export const handleQuestionAnswer = async (
       (question: Question) => question.id === questionId
     );
     question.answer = answer;
+    question.points = points;
 
     await updateMessage(interaction.channel.id, question.message, {
       content: `Correct answer: ${answer}`,
