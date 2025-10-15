@@ -40,6 +40,8 @@ export const handleCommand = async (
         return await commands.handleQuestionCreate(event.detail);
       case "question-close":
         return await commands.handleQuestionClose(event.detail);
+      case "question-answer":
+        return await commands.handleQuestionAnswer(event.detail);
       case "event-winner":
         return await commands.handleEventWinner(event.detail);
       case "nominate":
