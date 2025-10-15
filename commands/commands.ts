@@ -324,6 +324,83 @@ export const createEvent = new SlashCommandBuilder()
       .setRequired(false);
   });
 
+export const questionCreate = new SlashCommandBuilder()
+  .setName("question-create")
+  .setDescription("Create question for event participation")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("question")
+      .setDescription("Question to be asked")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("option1")
+      .setDescription("First response option")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("option2")
+      .setDescription("Second response option")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("option3")
+      .setDescription("Third response option")
+      .setRequired(false);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("option4")
+      .setDescription("Fourth response option")
+      .setRequired(false);
+  });
+
+export const questionClose = new SlashCommandBuilder()
+  .setName("question-close")
+  .setDescription("Close question to prevent further responses")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("question")
+      .setDescription("Which question should be closed")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const questionAnswer = new SlashCommandBuilder()
+  .setName("question-answer")
+  .setDescription("Set answer for question")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("question")
+      .setDescription("Which question should be closed")
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("answer")
+      .setDescription("What is the correct answer")
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("points")
+      .setDescription("How many points should gained for the correct answer")
+      .setRequired(false);
+  });
+
+export const eventLeaderboard = new SlashCommandBuilder()
+  .setName("event-leaderboard")
+  .setDescription("Display leaderboard for current event")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 export const eventWinner = new SlashCommandBuilder()
   .setName("event-winner")
   .setDescription("Create winner for current event")
@@ -455,5 +532,7 @@ export const rankProposalReminder = new SlashCommandBuilder()
 
 export const announceRoster = new SlashCommandBuilder()
   .setName("announce-roster")
-  .setDescription("Pull roster data from sheet and send to announcement channel")
+  .setDescription(
+    "Pull roster data from sheet and send to announcement channel"
+  )
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
