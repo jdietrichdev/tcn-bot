@@ -156,10 +156,12 @@ const createQuestion = (
       custom_id: `answer_optionFour_${eventId}_${questionId}`,
     });
   }
-  components.push({
-    type: ComponentType.ActionRow,
-    components: optionalComponent,
-  });
+  if (components.length !== 0) {
+    components.push({
+      type: ComponentType.ActionRow,
+      components: optionalComponent,
+    });
+  }
   return {
     embeds: [embed],
     components,
