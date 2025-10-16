@@ -81,6 +81,8 @@ export const handleQuestionCreate = async (
       questionId
     );
 
+    console.log(JSON.stringify(questionMessage));
+
     const message = await sendMessage(questionMessage, interaction.channel.id);
 
     const questions = eventData.questions ?? [];
