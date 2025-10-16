@@ -24,9 +24,9 @@ export const handleEventLeaderboard = async (interaction: APIChatInputApplicatio
         }
 
         if (eventData.scoreboard) {
-            const scoreboard = eventData.scoreboard as Map<string, number>;
+            const scoreboard = eventData.scoreboard;
             console.log(JSON.stringify(scoreboard));
-            const scores = Object.keys(scoreboard).map((id: string) => `**<@${id}>**: ${scoreboard.get(id)}`);
+            const scores = Object.keys(scoreboard).map((id: string) => `**<@${id}>**: ${scoreboard[id]}`);
             console.log(JSON.stringify(scores));
             const embed = {
                 title: `${eventData.name} Leaderboard`,
