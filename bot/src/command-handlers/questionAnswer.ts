@@ -28,10 +28,10 @@ export const handleQuestionAnswer = async (
         "answer"
       ).value;
     const points =
-      Number(getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
+      getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
         "points"
-      )?.value) ?? 1;
+      )?.value ?? 1;
 
     const eventId = (interaction.channel as APITextChannel).topic;
 
@@ -56,8 +56,8 @@ export const handleQuestionAnswer = async (
 
     const scoreboard = eventData.scoreBoard ?? new Map<string, number>();
     for (const response of question.responses) {
-      let score = Number(scoreboard.get(response.userId)) ?? 0;
-      if (response.answer === answer) score += points;
+      let score = scoreboard.get(response.userId) ?? 0;
+      if (response.answer === answer) score += Number(points);
       scoreboard.set(response.userId, score);
     }
     eventData.scoreboard = scoreboard;
