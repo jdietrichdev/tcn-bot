@@ -81,8 +81,6 @@ export const handleQuestionCreate = async (
       questionId
     );
 
-    console.log(JSON.stringify(questionMessage));
-
     const message = await sendMessage(questionMessage, interaction.channel.id);
 
     const questions = eventData.questions ?? [];
@@ -158,7 +156,7 @@ const createQuestion = (
       custom_id: `answer_optionFour_${eventId}_${questionId}`,
     });
   }
-  if (components.length !== 0) {
+  if (optionalComponent.length !== 0) {
     components.push({
       type: ComponentType.ActionRow,
       components: optionalComponent,
