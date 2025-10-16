@@ -54,7 +54,7 @@ export const handleQuestionAnswer = async (
     question.answer = answer;
     question.points = points;
 
-    const scoreboard = eventData.scoreBoard ?? new Map<string, number>();
+    const scoreboard: Map<string, number> = eventData.scoreBoard ?? new Map<string, number>();
     for (const response of question.responses) {
       let score = scoreboard.get(response.userId) ?? 0;
       if (response.answer === answer) score += Number(points);
