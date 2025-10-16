@@ -54,6 +54,14 @@ export const handleQuestionAnswer = async (
     question.answer = answer;
     question.points = points;
 
+    const scoreboard = eventData.scoreBoard ?? new Map<string, number>();
+    for (const response of questions.responses) {
+      let score = scoreboard.get(response.userId) ?? 0;
+      if (response.answer === answer) score += points;
+      scoreboard.set(response.userId, score);
+    }
+    eventData.scoreboard = scoreboard;
+
     await updateMessage(interaction.channel.id, question.message, {
       content: `Correct answer: ${answer}`,
     });

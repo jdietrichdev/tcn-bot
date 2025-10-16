@@ -16,6 +16,7 @@ export * from "./createEvent";
 export * from "./questionCreate";
 export * from "./questionClose";
 export * from "./questionAnswer";
+export * from "./eventLeaderboard";
 export * from "./eventWinner";
 export * from "./nominate";
 export * from "./nominationResult";
