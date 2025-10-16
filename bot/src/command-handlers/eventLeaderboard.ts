@@ -25,11 +25,14 @@ export const handleEventLeaderboard = async (interaction: APIChatInputApplicatio
 
         if (eventData.scoreboard) {
             const scoreboard = eventData.scoreboard as Map<string, number>;
+            console.log(JSON.stringify(scoreboard));
+            const scores = Array.from(scoreboard, ([id, score]) => {
+                return `**<@${id}>**: ${score}`
+            });
+            console.log(JSON.stringify(scores));
             const embed = {
                 title: `${eventData.name} Leaderboard`,
-                description: Array.from(scoreboard, ([id, score]) => {
-                    return `**<@${id}>**: ${score}`
-                }).join("\n"),
+                description: scores.join("\n"),
             } as APIEmbed;
             await sendMessage({ embeds: [embed]}, interaction.channel.id );
             await deleteResponse(interaction.application_id, interaction.token);
