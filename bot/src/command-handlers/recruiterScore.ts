@@ -71,13 +71,15 @@ const getCandidatesMessages = async (
     new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000)
   );
   for (const message of messages) {
-    if (
-      message.type === MessageType.Default &&
-      message.content.startsWith(
-        "https://discord.com/channels/236523452230533121/1058589660798013440"
-      )
-    ) {
+    if (message.type === MessageType.Default && message.message_reference) {
       totals.candidateForwards++;
+      const forwarderStats = scoreMap.get(message.author.username) || {
+        messages: 0,
+        clanPosts: 0,
+      };
+      forwarderStats.messages++;
+      scoreMap.set(message.author.username, forwarderStats);
+      totals.messages++;
       if (message.reactions?.some((reaction) => reaction.emoji.name === `✉️`)) {
         const userReactions = await getMessageReaction(
           message.channel_id,
