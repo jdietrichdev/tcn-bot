@@ -57,9 +57,11 @@ export const handleQuestionAnswer = async (
     const scoreboard: Record<string, any>[] = eventData.scoreboard ?? [];
     console.log(scoreboard);
     for (const response of question.responses) {
-      const index = scoreboard.findIndex((score) => score.id === response.userId);
-      if (index !== -1) scoreboard[index].points += Number(points);
-      else scoreboard.push({ id: response.userId, points: Number(points) });
+      if (response.answer === answer) {
+        const index = scoreboard.findIndex((score) => score.id === response.userId);
+        if (index !== -1) scoreboard[index].points += Number(points);
+        else scoreboard.push({ id: response.userId, points: Number(points) });
+      }
     }
     eventData.scoreboard = scoreboard;
 
