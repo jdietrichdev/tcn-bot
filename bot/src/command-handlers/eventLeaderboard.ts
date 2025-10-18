@@ -29,7 +29,7 @@ export const handleEventLeaderboard = async (interaction: APIChatInputApplicatio
             const embed = {
                 title: `${eventData.name} Leaderboard`,
                 description: scoreboard.sort(
-                    (a: Record<string, any>, b: Record<string, any>) => a.points - b.points
+                    (a: Record<string, any>, b: Record<string, any>) => b.points - a.points
                 ).map((score: Record<string, any>) => {
                     return `**<@${score.id}>**: ${score.points}`
                 }).join("\n"),
