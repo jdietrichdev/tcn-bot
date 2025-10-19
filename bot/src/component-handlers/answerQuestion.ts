@@ -2,7 +2,7 @@ import { APIMessageComponentInteraction } from "discord-api-types/v10";
 import { updateMessage, updateResponse } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
-import { Question } from "../util/interfaces";
+import { Question, QuestionResponse } from "../util/interfaces";
 
 export const answerQuestion = async (
   interaction: APIMessageComponentInteraction
@@ -30,9 +30,11 @@ export const answerQuestion = async (
     console.log(question + " " + option);
     console.log(question[option]);
 
-    question.responses.push({
+    const index = question.responses.findIndex((response: QuestionResponse) => response.userId === interaction.member!.user.id);
+    if (index !== -1) question.responses[index].answer = question[option];
+    else question.responses.push({ 
       userId: interaction.member!.user.id,
-      userName: interaction.member!.user.username,
+      username: interaction.member!.user.username,
       answer: question[option],
     });
 
