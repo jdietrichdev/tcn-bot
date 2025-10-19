@@ -66,7 +66,7 @@ export const handleQuestionAnswer = async (
     eventData.scoreboard = scoreboard;
 
     await updateMessage(interaction.channel.id, question.message, {
-      content: `Correct answer: ${answer}`,
+      content: `Correct answer: ${answer}\nPoints Rewarded: ${points}`,
     });
 
     await dynamoDbClient.send(
