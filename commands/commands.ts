@@ -38,7 +38,8 @@ export const link = new SlashCommandBuilder()
         return option
           .setName("tag")
           .setDescription("Player tag")
-          .setRequired(true);
+          .setRequired(true)
+          .setAutocomplete(true);
       });
   });
 
@@ -215,4 +216,323 @@ export const leadApply = new SlashCommandBuilder()
 export const recruiterScore = new SlashCommandBuilder()
   .setName("recruiter-score")
   .setDescription("Score recruiters based on activity in channels")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+export const cwlRoster = new SlashCommandBuilder()
+  .setName("cwl-roster")
+  .setDescription("Send reminder for people not in correct clans for CWL")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("roster")
+      .setDescription("Roster version to use")
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("type")
+      .setDescription("What type of notification do you want to send out?")
+      .setRequired(true)
+      .setChoices([
+        { name: "Setup", value: "Setup" },
+        { name: "Announcement", value: "Announcement" },
+        { name: "Reminder", value: "Reminder" },
+        { name: "Cleanup", value: "Cleanup" },
+      ]);
+  });
+
+export const initiateCwlSignup = new SlashCommandBuilder()
+  .setName("initiate-cwl-signup")
+  .setDescription("Create new signup for CWL")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("name")
+      .setDescription("Signup name")
+      .setRequired(true);
+  });
+
+export const cwlQuestions = new SlashCommandBuilder()
+  .setName("cwl-questions")
+  .setDescription("Ask questions for CWL")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("name")
+      .setDescription("Questionnaire name")
+      .setRequired(true);
+  });
+
+export const closeTicket = new SlashCommandBuilder()
+  .setName("close-ticket")
+  .setDescription("Close current application ticket");
+
+export const deleteTicket = new SlashCommandBuilder()
+  .setName("delete-ticket")
+  .setDescription("Delete current application ticket");
+
+export const createEvent = new SlashCommandBuilder()
+  .setName("create-event")
+  .setDescription("Create a new event")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("name")
+      .setDescription("Name of the event")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("type")
+      .setDescription("Type of channel for event")
+      .setRequired(true)
+      .setChoices([
+        { name: "Text", value: "Text" },
+        { name: "Voice", value: "Voice" },
+        { name: "Stage", value: "Stage" },
+      ]);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("start")
+      .setDescription("Start time in UTC (yyyy-mm-ddThh:mm")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("end")
+      .setDescription("End time in UTC (yyyy-mm-ddThh:mm")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("description")
+      .setDescription("Description for the event")
+      .setRequired(false);
+  })
+  .addAttachmentOption((option) => {
+    return option
+      .setName("thumbnail")
+      .setDescription("Thumbnail for the event")
+      .setRequired(false);
+  })
+  .addUserOption((option) => {
+    return option
+      .setName("sponsor")
+      .setDescription("Sponsor for the event")
+      .setRequired(false);
+  });
+
+export const questionCreate = new SlashCommandBuilder()
+  .setName("question-create")
+  .setDescription("Create question for event participation")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("question")
+      .setDescription("Question to be asked")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("option1")
+      .setDescription("First response option")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("option2")
+      .setDescription("Second response option")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("option3")
+      .setDescription("Third response option")
+      .setRequired(false);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("option4")
+      .setDescription("Fourth response option")
+      .setRequired(false);
+  });
+
+export const questionClose = new SlashCommandBuilder()
+  .setName("question-close")
+  .setDescription("Close question to prevent further responses")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("question")
+      .setDescription("Which question should be closed")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const questionAnswer = new SlashCommandBuilder()
+  .setName("question-answer")
+  .setDescription("Set answer for question")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("question")
+      .setDescription("Which question should be closed")
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("answer")
+      .setDescription("What is the correct answer")
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("points")
+      .setDescription("How many points should gained for the correct answer")
+      .setRequired(false);
+  });
+
+export const eventLeaderboard = new SlashCommandBuilder()
+  .setName("event-leaderboard")
+  .setDescription("Display leaderboard for current event")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+export const eventWinner = new SlashCommandBuilder()
+  .setName("event-winner")
+  .setDescription("Create winner for current event")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addUserOption((option) => {
+    return option
+      .setName("winner")
+      .setDescription("Winner for event")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("prize")
+      .setDescription("What was won?")
+      .setRequired(true)
+      .setChoices([
+        {
+          name: "Gold Pass",
+          value: "GOLD PASS",
+        },
+        {
+          name: "Event Pass",
+          value: "EVENT PASS",
+        },
+        {
+          name: "Legends Base Voucher",
+          value: "LEGENDS BASE VOUCHER",
+        },
+        {
+          name: "Cash",
+          value: "CASH",
+        },
+      ]);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("expiration")
+      .setDescription("Time until reward expires in hour (default 24)")
+      .setRequired(false);
+  });
+
+export const nominate = new SlashCommandBuilder()
+  .setName("nominate")
+  .setDescription("Nominate a member for promotion/demotion")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addUserOption((option) => {
+    return option
+      .setName("user")
+      .setDescription("Who we talkin about?")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("type")
+      .setDescription("Promotion or demotion")
+      .setRequired(true)
+      .setChoices([
+        {
+          name: "Promotion",
+          value: "Promotion",
+        },
+        {
+          name: "Demotion",
+          value: "Demotion",
+        },
+      ]);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("rank")
+      .setDescription("Rank for promotion/demotion")
+      .setRequired(true)
+      .setChoices([
+        {
+          name: "Elder",
+          value: "Elder",
+        },
+        {
+          name: "Lead",
+          value: "Lead",
+        },
+      ]);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("reason")
+      .setDescription("Reason for proposal")
+      .setRequired(true);
+  });
+
+export const nominationResult = new SlashCommandBuilder()
+  .setName("nomination-result")
+  .setDescription("Set result of nomination")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("proposal")
+      .setDescription("Which proposal?")
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("result")
+      .setDescription("What is the result?")
+      .setRequired(true)
+      .setChoices([
+        {
+          name: "Approve",
+          value: "Approve",
+        },
+        {
+          name: "Deny",
+          value: "Deny",
+        },
+      ]);
+  })
+  .addRoleOption((option) => {
+    return option
+      .setName("role")
+      .setDescription("Role to add/remove")
+      .setRequired(false);
+  });
+
+export const rankProposalReminder = new SlashCommandBuilder()
+  .setName("rank-proposal-reminder")
+  .setDescription("Reminder to check proposals")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+export const announceRoster = new SlashCommandBuilder()
+  .setName("announce-roster")
+  .setDescription(
+    "Pull roster data from sheet and send to announcement channel"
+  )
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);

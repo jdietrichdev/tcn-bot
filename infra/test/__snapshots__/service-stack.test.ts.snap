@@ -3,7 +3,155 @@
 exports[`Infrastructure created 1`] = `
 "{
   "Resources": {
-    "bothandlerServiceRole712D848A": {
+    "rosterbucket1B948C06": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "BucketName": "bot-roster-bucket",
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        }
+      },
+      "UpdateReplacePolicy": "Retain",
+      "DeletionPolicy": "Retain"
+    },
+    "rosterbucketNotifications11317640": {
+      "Type": "Custom::S3BucketNotifications",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "BucketNotificationsHandler050a0587b7544547bf325f094a3db8347ECC3691",
+            "Arn"
+          ]
+        },
+        "BucketName": {
+          "Ref": "rosterbucket1B948C06"
+        },
+        "NotificationConfiguration": {
+          "LambdaFunctionConfigurations": [
+            {
+              "Events": [
+                "s3:ObjectCreated:*"
+              ],
+              "LambdaFunctionArn": {
+                "Fn::GetAtt": [
+                  "botprocessor20605CB5",
+                  "Arn"
+                ]
+              }
+            }
+          ]
+        },
+        "Managed": true,
+        "SkipDestinationValidation": false
+      },
+      "DependsOn": [
+        "rosterbucketAllowBucketNotificationsTostackbotprocessorE42C06EDE864D6DB"
+      ]
+    },
+    "rosterbucketAllowBucketNotificationsTostackbotprocessorE42C06EDE864D6DB": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "botprocessor20605CB5",
+            "Arn"
+          ]
+        },
+        "Principal": "s3.amazonaws.com",
+        "SourceAccount": "12345",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "rosterbucket1B948C06",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "transcriptbucketF971F7C1": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "BucketName": "bot-transcript-bucket",
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        }
+      },
+      "UpdateReplacePolicy": "Retain",
+      "DeletionPolicy": "Retain"
+    },
+    "schedulerrole9B80A9F3": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "scheduler.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "Description": "Allows EventBridge Scheduler to invoke lambda functions",
+        "RoleName": "SchedulerRole"
+      }
+    },
+    "schedulerroleDefaultPolicyA459C234": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "botscheduledEB1B6758",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "schedulerroleDefaultPolicyA459C234",
+        "Roles": [
+          {
+            "Ref": "schedulerrole9B80A9F3"
+          }
+        ]
+      }
+    },
+    "botscheduledServiceRoleDA932985": {
       "Type": "AWS::IAM::Role",
       "Properties": {
         "AssumeRolePolicyDocument": {
@@ -34,7 +182,38 @@ exports[`Infrastructure created 1`] = `
         ]
       }
     },
-    "bothandler4BEF77A4": {
+    "botscheduledServiceRoleDefaultPolicy89D62999": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "scheduler:DeleteSchedule",
+              "Effect": "Allow",
+              "Resource": "arn:aws:scheduler:us-east-1:12345:schedule/*"
+            },
+            {
+              "Action": "iam:PassRole",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "schedulerrole9B80A9F3",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "botscheduledServiceRoleDefaultPolicy89D62999",
+        "Roles": [
+          {
+            "Ref": "botscheduledServiceRoleDA932985"
+          }
+        ]
+      }
+    },
+    "botscheduledEB1B6758": {
       "Type": "AWS::Lambda::Function",
       "Properties": {
         "Code": {
@@ -48,10 +227,11 @@ exports[`Infrastructure created 1`] = `
             "BOT_TOKEN": "BOT_TOKEN"
           }
         },
-        "Handler": "index.handler",
+        "FunctionName": "bot-scheduled",
+        "Handler": "index.scheduled",
         "Role": {
           "Fn::GetAtt": [
-            "bothandlerServiceRole712D848A",
+            "botscheduledServiceRoleDA932985",
             "Arn"
           ]
         },
@@ -59,10 +239,11 @@ exports[`Infrastructure created 1`] = `
         "Timeout": 300
       },
       "DependsOn": [
-        "bothandlerServiceRole712D848A"
+        "botscheduledServiceRoleDefaultPolicy89D62999",
+        "botscheduledServiceRoleDA932985"
       ]
     },
-    "bothandlerLogRetention19A358E3": {
+    "botscheduledLogRetention7046A295": {
       "Type": "Custom::LogRetention",
       "Properties": {
         "ServiceToken": {
@@ -77,7 +258,7 @@ exports[`Infrastructure created 1`] = `
             [
               "/aws/lambda/",
               {
-                "Ref": "bothandler4BEF77A4"
+                "Ref": "botscheduledEB1B6758"
               }
             ]
           ]
@@ -85,11 +266,11 @@ exports[`Infrastructure created 1`] = `
         "RetentionInDays": 30
       }
     },
-    "bothandlerEventInvokeConfig8545F23A": {
+    "botscheduledEventInvokeConfigFC70385D": {
       "Type": "AWS::Lambda::EventInvokeConfig",
       "Properties": {
         "FunctionName": {
-          "Ref": "bothandler4BEF77A4"
+          "Ref": "botscheduledEB1B6758"
         },
         "MaximumRetryAttempts": 0,
         "Qualifier": "$LATEST"
@@ -154,7 +335,7 @@ exports[`Infrastructure created 1`] = `
       "Type": "AWS::Lambda::Function",
       "Properties": {
         "Handler": "index.handler",
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-12345-us-east-1",
@@ -171,98 +352,6 @@ exports[`Infrastructure created 1`] = `
         "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
         "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
       ]
-    },
-    "botscheduledServiceRoleDA932985": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "lambda.amazonaws.com"
-              }
-            }
-          ],
-          "Version": "2012-10-17"
-        },
-        "ManagedPolicyArns": [
-          {
-            "Fn::Join": [
-              "",
-              [
-                "arn:",
-                {
-                  "Ref": "AWS::Partition"
-                },
-                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-              ]
-            ]
-          }
-        ]
-      }
-    },
-    "botscheduledEB1B6758": {
-      "Type": "AWS::Lambda::Function",
-      "Properties": {
-        "Code": {
-          "S3Bucket": "cdk-hnb659fds-assets-12345-us-east-1",
-          "S3Key": "files.zip"
-        },
-        "Environment": {
-          "Variables": {
-            "REGION": "us-east-1",
-            "CLASH_API_TOKEN": "TEST_API_TOKEN",
-            "BOT_TOKEN": "BOT_TOKEN"
-          }
-        },
-        "Handler": "index.scheduled",
-        "Role": {
-          "Fn::GetAtt": [
-            "botscheduledServiceRoleDA932985",
-            "Arn"
-          ]
-        },
-        "Runtime": "nodejs22.x",
-        "Timeout": 300
-      },
-      "DependsOn": [
-        "botscheduledServiceRoleDA932985"
-      ]
-    },
-    "botscheduledLogRetention7046A295": {
-      "Type": "Custom::LogRetention",
-      "Properties": {
-        "ServiceToken": {
-          "Fn::GetAtt": [
-            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
-            "Arn"
-          ]
-        },
-        "LogGroupName": {
-          "Fn::Join": [
-            "",
-            [
-              "/aws/lambda/",
-              {
-                "Ref": "botscheduledEB1B6758"
-              }
-            ]
-          ]
-        },
-        "RetentionInDays": 30
-      }
-    },
-    "botscheduledEventInvokeConfigFC70385D": {
-      "Type": "AWS::Lambda::EventInvokeConfig",
-      "Properties": {
-        "FunctionName": {
-          "Ref": "botscheduledEB1B6758"
-        },
-        "MaximumRetryAttempts": 0,
-        "Qualifier": "$LATEST"
-      }
     },
     "botevents976D647F": {
       "Type": "AWS::Events::EventBus",
@@ -434,61 +523,12 @@ exports[`Infrastructure created 1`] = `
             "Arn"
           ]
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 120
       },
       "DependsOn": [
         "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2"
       ]
-    },
-    "boteventhandler45F508F9": {
-      "Type": "AWS::Events::Rule",
-      "Properties": {
-        "Description": "Handler for incoming bot events",
-        "EventBusName": {
-          "Ref": "botevents976D647F"
-        },
-        "EventPattern": {
-          "source": [
-            "tcn-bot-event"
-          ],
-          "detail-type": [
-            "Bot Event Received"
-          ]
-        },
-        "Name": "BotEventHandler",
-        "State": "ENABLED",
-        "Targets": [
-          {
-            "Arn": {
-              "Fn::GetAtt": [
-                "bothandler4BEF77A4",
-                "Arn"
-              ]
-            },
-            "Id": "Target0"
-          }
-        ]
-      }
-    },
-    "boteventhandlerAllowEventRulestackbothandlerBCA3B7E1B904B0BE": {
-      "Type": "AWS::Lambda::Permission",
-      "Properties": {
-        "Action": "lambda:InvokeFunction",
-        "FunctionName": {
-          "Fn::GetAtt": [
-            "bothandler4BEF77A4",
-            "Arn"
-          ]
-        },
-        "Principal": "events.amazonaws.com",
-        "SourceArn": {
-          "Fn::GetAtt": [
-            "boteventhandler45F508F9",
-            "Arn"
-          ]
-        }
-      }
     },
     "botscheduledrecruiterscoreA8E78EBE": {
       "Type": "AWS::Events::Rule",
@@ -523,6 +563,82 @@ exports[`Infrastructure created 1`] = `
         "SourceArn": {
           "Fn::GetAtt": [
             "botscheduledrecruiterscoreA8E78EBE",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "botscheduledrankproposalreminder8EB2B479": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "ScheduleExpression": "cron(0 12 ? * TUE *)",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "botscheduledEB1B6758",
+                "Arn"
+              ]
+            },
+            "Id": "Target0",
+            "Input": "{\\"source\\":\\"tcn-bot-scheduled\\",\\"detail-type\\":\\"Rank Proposal Reminder\\",\\"detail\\":{\\"guildId\\":\\"1111490767991615518\\"}}"
+          }
+        ]
+      }
+    },
+    "botscheduledrankproposalreminderAllowEventRulestackbotscheduled64B1F1BE1805A0E7": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "botscheduledEB1B6758",
+            "Arn"
+          ]
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "botscheduledrankproposalreminder8EB2B479",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "applicantleavecheckF64E57B9": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "ScheduleExpression": "rate(2 hours)",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "botscheduledEB1B6758",
+                "Arn"
+              ]
+            },
+            "Id": "Target0",
+            "Input": "{\\"source\\":\\"tcn-bot-scheduled\\",\\"detail-type\\":\\"Applicant Leave Check\\",\\"detail\\":{\\"guildId\\":\\"1111490767991615518\\"}}"
+          }
+        ]
+      }
+    },
+    "applicantleavecheckAllowEventRulestackbotscheduled64B1F1BE04AC6F1C": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "botscheduledEB1B6758",
+            "Arn"
+          ]
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "applicantleavecheckF64E57B9",
             "Arn"
           ]
         }
@@ -573,6 +689,36 @@ exports[`Infrastructure created 1`] = `
                   "Arn"
                 ]
               }
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "rosterbucket1B948C06",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "rosterbucket1B948C06",
+                          "Arn"
+                        ]
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
             }
           ],
           "Version": "2012-10-17"
@@ -598,6 +744,7 @@ exports[`Infrastructure created 1`] = `
             "DISCORD_PUBLIC_KEY": "TEST_KEY"
           }
         },
+        "FunctionName": "bot-proxy",
         "Handler": "index.proxy",
         "Role": {
           "Fn::GetAtt": [
@@ -633,6 +780,229 @@ exports[`Infrastructure created 1`] = `
           ]
         },
         "RetentionInDays": 30
+      }
+    },
+    "bothandlerServiceRole712D848A": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "bothandlerServiceRoleDefaultPolicy2A35E39A": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "scheduler:CreateSchedule",
+                "scheduler:DeleteSchedule"
+              ],
+              "Effect": "Allow",
+              "Resource": "arn:aws:scheduler:us-east-1:12345:schedule/*"
+            },
+            {
+              "Action": "iam:PassRole",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "schedulerrole9B80A9F3",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "transcriptbucketF971F7C1",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "transcriptbucketF971F7C1",
+                          "Arn"
+                        ]
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "bothandlerServiceRoleDefaultPolicy2A35E39A",
+        "Roles": [
+          {
+            "Ref": "bothandlerServiceRole712D848A"
+          }
+        ]
+      }
+    },
+    "bothandler4BEF77A4": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-12345-us-east-1",
+          "S3Key": "files.zip"
+        },
+        "Environment": {
+          "Variables": {
+            "REGION": "us-east-1",
+            "CLASH_API_TOKEN": "TEST_API_TOKEN",
+            "BOT_TOKEN": "BOT_TOKEN",
+            "SCHEDULED_LAMBDA_ARN": {
+              "Fn::GetAtt": [
+                "botscheduledEB1B6758",
+                "Arn"
+              ]
+            },
+            "SCHEDULER_ROLE_ARN": {
+              "Fn::GetAtt": [
+                "schedulerrole9B80A9F3",
+                "Arn"
+              ]
+            }
+          }
+        },
+        "FunctionName": "bot-handler",
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "bothandlerServiceRole712D848A",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 300
+      },
+      "DependsOn": [
+        "bothandlerServiceRoleDefaultPolicy2A35E39A",
+        "bothandlerServiceRole712D848A"
+      ]
+    },
+    "bothandlerLogRetention19A358E3": {
+      "Type": "Custom::LogRetention",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+            "Arn"
+          ]
+        },
+        "LogGroupName": {
+          "Fn::Join": [
+            "",
+            [
+              "/aws/lambda/",
+              {
+                "Ref": "bothandler4BEF77A4"
+              }
+            ]
+          ]
+        },
+        "RetentionInDays": 30
+      }
+    },
+    "bothandlerEventInvokeConfig8545F23A": {
+      "Type": "AWS::Lambda::EventInvokeConfig",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "bothandler4BEF77A4"
+        },
+        "MaximumRetryAttempts": 0,
+        "Qualifier": "$LATEST"
+      }
+    },
+    "boteventhandler45F508F9": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "Handler for incoming bot events",
+        "EventBusName": {
+          "Ref": "botevents976D647F"
+        },
+        "EventPattern": {
+          "source": [
+            "tcn-bot-event"
+          ],
+          "detail-type": [
+            "Bot Event Received"
+          ]
+        },
+        "Name": "BotEventHandler",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "bothandler4BEF77A4",
+                "Arn"
+              ]
+            },
+            "Id": "Target0"
+          }
+        ]
+      }
+    },
+    "boteventhandlerAllowEventRulestackbothandlerBCA3B7E1B904B0BE": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "bothandler4BEF77A4",
+            "Arn"
+          ]
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "boteventhandler45F508F9",
+            "Arn"
+          ]
+        }
       }
     },
     "accesslogsDE09D170": {
@@ -699,7 +1069,7 @@ exports[`Infrastructure created 1`] = `
       "UpdateReplacePolicy": "Retain",
       "DeletionPolicy": "Retain"
     },
-    "discordbotapiDeploymentFB90C3EC30cfe8b73deb19370aa5042b5397b3fb": {
+    "discordbotapiDeploymentFB90C3EC1b779d7b52de8cc2a86b5f567f789bf6": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "Description": "Automatically created by the RestApi construct",
@@ -711,7 +1081,10 @@ exports[`Infrastructure created 1`] = `
         "discordbotapiproxyANY85622115",
         "discordbotapiproxy69482EF4",
         "discordbotapiANY151EB533"
-      ]
+      ],
+      "Metadata": {
+        "aws:cdk:do-not-refactor": true
+      }
     },
     "discordbotapiDeploymentStageprodE3B8CBF8": {
       "Type": "AWS::ApiGateway::Stage",
@@ -726,7 +1099,7 @@ exports[`Infrastructure created 1`] = `
           "Format": "{\\"requestId\\":\\"$context.requestId\\",\\"ip\\":\\"$context.identity.sourceIp\\",\\"user\\":\\"$context.identity.user\\",\\"caller\\":\\"$context.identity.caller\\",\\"requestTime\\":\\"$context.requestTime\\",\\"httpMethod\\":\\"$context.httpMethod\\",\\"resourcePath\\":\\"$context.resourcePath\\",\\"status\\":\\"$context.status\\",\\"protocol\\":\\"$context.protocol\\",\\"responseLength\\":\\"$context.responseLength\\"}"
         },
         "DeploymentId": {
-          "Ref": "discordbotapiDeploymentFB90C3EC30cfe8b73deb19370aa5042b5397b3fb"
+          "Ref": "discordbotapiDeploymentFB90C3EC1b779d7b52de8cc2a86b5f567f789bf6"
         },
         "RestApiId": {
           "Ref": "discordbotapi5484B478"
@@ -948,6 +1321,312 @@ exports[`Infrastructure created 1`] = `
         },
         "RestApiId": {
           "Ref": "discordbotapi5484B478"
+        }
+      }
+    },
+    "botprocessorServiceRole3BEBD0E9": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "botprocessorServiceRoleDefaultPolicy478BA4B9": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "rosterbucket1B948C06",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "rosterbucket1B948C06",
+                          "Arn"
+                        ]
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "botprocessorServiceRoleDefaultPolicy478BA4B9",
+        "Roles": [
+          {
+            "Ref": "botprocessorServiceRole3BEBD0E9"
+          }
+        ]
+      }
+    },
+    "botprocessor20605CB5": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-12345-us-east-1",
+          "S3Key": "files.zip"
+        },
+        "Environment": {
+          "Variables": {
+            "REGION": "us-east-1",
+            "CLASH_API_TOKEN": "TEST_API_TOKEN",
+            "BOT_TOKEN": "BOT_TOKEN"
+          }
+        },
+        "FunctionName": "bot-processor",
+        "Handler": "index.processor",
+        "Role": {
+          "Fn::GetAtt": [
+            "botprocessorServiceRole3BEBD0E9",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 180
+      },
+      "DependsOn": [
+        "botprocessorServiceRoleDefaultPolicy478BA4B9",
+        "botprocessorServiceRole3BEBD0E9"
+      ]
+    },
+    "botprocessorLogRetentionA9264A34": {
+      "Type": "Custom::LogRetention",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+            "Arn"
+          ]
+        },
+        "LogGroupName": {
+          "Fn::Join": [
+            "",
+            [
+              "/aws/lambda/",
+              {
+                "Ref": "botprocessor20605CB5"
+              }
+            ]
+          ]
+        },
+        "RetentionInDays": 30
+      }
+    },
+    "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleDefaultPolicy2CF63D36": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:PutBucketNotification",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "rosterbucket1B948C06",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleDefaultPolicy2CF63D36",
+        "Roles": [
+          {
+            "Ref": "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC"
+          }
+        ]
+      }
+    },
+    "BucketNotificationsHandler050a0587b7544547bf325f094a3db8347ECC3691": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Description": "AWS CloudFormation handler for \\"Custom::S3BucketNotifications\\" resources (@aws-cdk/aws-s3)",
+        "Code": {
+          "ZipFile": "import boto3  # type: ignore\\nimport json\\nimport logging\\nimport urllib.request\\n\\ns3 = boto3.client(\\"s3\\")\\n\\nEVENTBRIDGE_CONFIGURATION = 'EventBridgeConfiguration'\\nCONFIGURATION_TYPES = [\\"TopicConfigurations\\", \\"QueueConfigurations\\", \\"LambdaFunctionConfigurations\\"]\\n\\ndef handler(event: dict, context):\\n  response_status = \\"SUCCESS\\"\\n  error_message = \\"\\"\\n  try:\\n    props = event[\\"ResourceProperties\\"]\\n    notification_configuration = props[\\"NotificationConfiguration\\"]\\n    managed = props.get('Managed', 'true').lower() == 'true'\\n    skipDestinationValidation = props.get('SkipDestinationValidation', 'false').lower() == 'true'\\n    stack_id = event['StackId']\\n    old = event.get(\\"OldResourceProperties\\", {}).get(\\"NotificationConfiguration\\", {})\\n    if managed:\\n      config = handle_managed(event[\\"RequestType\\"], notification_configuration)\\n    else:\\n      config = handle_unmanaged(props[\\"BucketName\\"], stack_id, event[\\"RequestType\\"], notification_configuration, old)\\n    s3.put_bucket_notification_configuration(Bucket=props[\\"BucketName\\"], NotificationConfiguration=config, SkipDestinationValidation=skipDestinationValidation)\\n  except Exception as e:\\n    logging.exception(\\"Failed to put bucket notification configuration\\")\\n    response_status = \\"FAILED\\"\\n    error_message = f\\"Error: {str(e)}. \\"\\n  finally:\\n    submit_response(event, context, response_status, error_message)\\n\\ndef handle_managed(request_type, notification_configuration):\\n  if request_type == 'Delete':\\n    return {}\\n  return notification_configuration\\n\\ndef handle_unmanaged(bucket, stack_id, request_type, notification_configuration, old):\\n  def get_id(n):\\n    n['Id'] = ''\\n    sorted_notifications = sort_filter_rules(n)\\n    strToHash=json.dumps(sorted_notifications, sort_keys=True).replace('\\"Name\\": \\"prefix\\"', '\\"Name\\": \\"Prefix\\"').replace('\\"Name\\": \\"suffix\\"', '\\"Name\\": \\"Suffix\\"')\\n    return f\\"{stack_id}-{hash(strToHash)}\\"\\n  def with_id(n):\\n    n['Id'] = get_id(n)\\n    return n\\n\\n  external_notifications = {}\\n  existing_notifications = s3.get_bucket_notification_configuration(Bucket=bucket)\\n  for t in CONFIGURATION_TYPES:\\n    if request_type == 'Update':\\n        old_incoming_ids = [get_id(n) for n in old.get(t, [])]\\n        external_notifications[t] = [n for n in existing_notifications.get(t, []) if not get_id(n) in old_incoming_ids]      \\n    elif request_type == 'Delete':\\n        external_notifications[t] = [n for n in existing_notifications.get(t, []) if not n['Id'].startswith(f\\"{stack_id}-\\")]\\n    elif request_type == 'Create':\\n        external_notifications[t] = [n for n in existing_notifications.get(t, [])]\\n  if EVENTBRIDGE_CONFIGURATION in existing_notifications:\\n    external_notifications[EVENTBRIDGE_CONFIGURATION] = existing_notifications[EVENTBRIDGE_CONFIGURATION]\\n\\n  if request_type == 'Delete':\\n    return external_notifications\\n\\n  notifications = {}\\n  for t in CONFIGURATION_TYPES:\\n    external = external_notifications.get(t, [])\\n    incoming = [with_id(n) for n in notification_configuration.get(t, [])]\\n    notifications[t] = external + incoming\\n\\n  if EVENTBRIDGE_CONFIGURATION in notification_configuration:\\n    notifications[EVENTBRIDGE_CONFIGURATION] = notification_configuration[EVENTBRIDGE_CONFIGURATION]\\n  elif EVENTBRIDGE_CONFIGURATION in external_notifications:\\n    notifications[EVENTBRIDGE_CONFIGURATION] = external_notifications[EVENTBRIDGE_CONFIGURATION]\\n\\n  return notifications\\n\\ndef submit_response(event: dict, context, response_status: str, error_message: str):\\n  response_body = json.dumps(\\n    {\\n      \\"Status\\": response_status,\\n      \\"Reason\\": f\\"{error_message}See the details in CloudWatch Log Stream: {context.log_stream_name}\\",\\n      \\"PhysicalResourceId\\": event.get(\\"PhysicalResourceId\\") or event[\\"LogicalResourceId\\"],\\n      \\"StackId\\": event[\\"StackId\\"],\\n      \\"RequestId\\": event[\\"RequestId\\"],\\n      \\"LogicalResourceId\\": event[\\"LogicalResourceId\\"],\\n      \\"NoEcho\\": False,\\n    }\\n  ).encode(\\"utf-8\\")\\n  headers = {\\"content-type\\": \\"\\", \\"content-length\\": str(len(response_body))}\\n  try:\\n    req = urllib.request.Request(url=event[\\"ResponseURL\\"], headers=headers, data=response_body, method=\\"PUT\\")\\n    with urllib.request.urlopen(req) as response:\\n      print(response.read().decode(\\"utf-8\\"))\\n    print(\\"Status code: \\" + response.reason)\\n  except Exception as e:\\n      print(\\"send(..) failed executing request.urlopen(..): \\" + str(e))\\n\\ndef sort_filter_rules(json_obj):\\n  if not isinstance(json_obj, dict):\\n      return json_obj\\n  for key, value in json_obj.items():\\n      if isinstance(value, dict):\\n          json_obj[key] = sort_filter_rules(value)\\n      elif isinstance(value, list):\\n          json_obj[key] = [sort_filter_rules(item) for item in value]\\n  if \\"Filter\\" in json_obj and \\"Key\\" in json_obj[\\"Filter\\"] and \\"FilterRules\\" in json_obj[\\"Filter\\"][\\"Key\\"]:\\n      filter_rules = json_obj[\\"Filter\\"][\\"Key\\"][\\"FilterRules\\"]\\n      sorted_filter_rules = sorted(filter_rules, key=lambda x: x[\\"Name\\"])\\n      json_obj[\\"Filter\\"][\\"Key\\"][\\"FilterRules\\"] = sorted_filter_rules\\n  return json_obj"
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC",
+            "Arn"
+          ]
+        },
+        "Runtime": "python3.13",
+        "Timeout": 300
+      },
+      "DependsOn": [
+        "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleDefaultPolicy2CF63D36",
+        "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC"
+      ]
+    },
+    "botpiperole72E17CAA": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "pipes.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "RoleName": "BotPipeRole"
+      }
+    },
+    "botpiperoleDefaultPolicy7B2CDA9D": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "botprocessor20605CB5",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "botprocessor20605CB5",
+                          "Arn"
+                        ]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "botpiperoleDefaultPolicy7B2CDA9D",
+        "Roles": [
+          {
+            "Ref": "botpiperole72E17CAA"
+          }
+        ]
+      }
+    },
+    "userdatapipe": {
+      "Type": "AWS::Pipes::Pipe",
+      "Properties": {
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "botpiperole72E17CAA",
+            "Arn"
+          ]
+        },
+        "Source": "streamArm",
+        "SourceParameters": {
+          "DynamoDBStreamParameters": {
+            "BatchSize": 1,
+            "StartingPosition": "LATEST"
+          },
+          "FilterCriteria": {
+            "Filters": [
+              {
+                "Pattern": "{\\"eventName\\":[\\"INSERT\\"],\\"dynamodb\\":{\\"Keys\\":{\\"sk\\":{\\"S\\":[{\\"prefix\\":\\"player\\"}]}}}}"
+              }
+            ]
+          }
+        },
+        "Target": {
+          "Fn::GetAtt": [
+            "botprocessor20605CB5",
+            "Arn"
+          ]
+        },
+        "TargetParameters": {
+          "InputTemplate": "{\\"id\\":\\"<$.dynamodb.NewImage.id.S>\\",\\"tag\\":\\"<$.dynamodb.NewImage.tag.S>\\"}",
+          "LambdaFunctionParameters": {
+            "InvocationType": "FIRE_AND_FORGET"
+          }
         }
       }
     }

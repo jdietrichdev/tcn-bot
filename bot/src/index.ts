@@ -2,6 +2,7 @@ import {
   APIGatewayProxyEvent,
   APIGatewayProxyResult,
   EventBridgeEvent,
+  S3Event,
 } from "aws-lambda";
 import { authorizeRequest } from "./authorizer/authorizer";
 import { eventClient } from "./clients/eventbridge-client";
@@ -22,8 +23,13 @@ import { handleAutocomplete } from "./autocomplete-handlers";
 import { handleComponent } from "./component-handlers";
 import { submitModal } from "./modal-handlers/submit";
 import { createModal } from "./modal-handlers/create";
-import { buttonTriggersModal, commandTriggersModal } from "./component-handlers/utils";
-import { handleRecruiterScore } from "./command-handlers/recruiterScore";
+import {
+  buttonTriggersModal,
+  commandTriggersModal,
+} from "./component-handlers/utils";
+import { processCwlRoster } from "./processors/cwlRosterProcessor";
+import { newAccountProcessor } from "./processors/newAccountProcessor";
+import { handleScheduled } from "./scheduled-handlers";
 
 export const proxy = async (
   event: APIGatewayProxyEvent
@@ -45,11 +51,13 @@ export const proxy = async (
     body.type === InteractionType.ApplicationCommand &&
     commandTriggersModal(body.data.name)
   ) {
+    console.log("Command modal triggered");
     response = createModal(body, body.data.name);
   } else if (
     body.type === InteractionType.MessageComponent &&
     buttonTriggersModal(body.data.custom_id)
   ) {
+    console.log("Button modal triggered");
     response = createModal(body, body.data.custom_id);
   } else {
     await eventClient.send(
@@ -99,7 +107,14 @@ export const scheduled = async (
   event: EventBridgeEvent<string, Record<string, string>>
 ) => {
   console.log(JSON.stringify(event));
-  if (event["detail-type"] === 'Generate Recruiter Score') {
-    await handleRecruiterScore(event.detail.guildId);
+  await handleScheduled(event);
+};
+
+export const processor = async (event: S3Event | Record<string, string>[]) => {
+  console.log(JSON.stringify(event));
+  if ((event as S3Event).Records) {
+    await processCwlRoster(event as S3Event);
+  } else {
+    await newAccountProcessor((event as Record<string, string>[])[0]);
   }
-}
+};

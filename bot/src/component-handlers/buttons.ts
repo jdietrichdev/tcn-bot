@@ -89,4 +89,52 @@ export const BUTTONS = {
     label: "Never mind",
     custom_id: "rejectDelete",
   } as APIButtonComponentWithCustomId,
+  CWL_QUESTIONS: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Primary,
+    label: "Answer Questions",
+    custom_id: "cwlQuestions",
+  } as APIButtonComponentWithCustomId,
+  EXPORT_CWL_QUESTIONS: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Secondary,
+    label: "Export Responses",
+    custom_id: "exportCwlQuestions",
+  } as APIButtonComponentWithCustomId,
+  SIGNUP_CWL: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Success,
+    label: "Signup",
+    custom_id: "signupCwl",
+  } as APIButtonComponentWithCustomId,
+  CLOSE_CWL_SIGNUP: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Secondary,
+    label: "Close Signup",
+    custom_id: "closeSignup",
+  } as APIButtonComponentWithCustomId,
+  VOUCH_NOMINATION: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Success,
+    label: "Vouch",
+    custom_id: "vouch",
+  } as APIButtonComponentWithCustomId,
+  OPPOSE_NOMINATION: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Danger,
+    label: "Opppose",
+    custom_id: "oppose",
+  } as APIButtonComponentWithCustomId,
+  INDIFFERENT_NOMINATION: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Primary,
+    label: "Not Sure",
+    custom_id: "indifferent",
+  } as APIButtonComponentWithCustomId,
+  NOMINATION_RESULTS: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Secondary,
+    label: "Detailed Results",
+    custom_id: "nominationResults",
+  } as APIButtonComponentWithCustomId,
 };

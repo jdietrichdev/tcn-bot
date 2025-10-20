@@ -1,21 +1,41 @@
 import { Construct } from "constructs";
 import { Duration, RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
-import { Code, Function as Lambda, Runtime } from "aws-cdk-lib/aws-lambda";
+import {
+  Code,
+  Function as Lambda,
+  Runtime,
+  StartingPosition,
+} from "aws-cdk-lib/aws-lambda";
 import {
   AccessLogFormat,
   LambdaRestApi,
   LogGroupLogDestination,
 } from "aws-cdk-lib/aws-apigateway";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
-import { EventBus, Rule, RuleTargetInput, Schedule } from "aws-cdk-lib/aws-events";
+import {
+  EventBus,
+  Rule,
+  RuleTargetInput,
+  Schedule,
+} from "aws-cdk-lib/aws-events";
 import {
   CloudWatchLogGroup,
   LambdaFunction,
 } from "aws-cdk-lib/aws-events-targets";
 import { Table } from "aws-cdk-lib/aws-dynamodb";
+import {
+  BlockPublicAccess,
+  Bucket,
+  BucketEncryption,
+  EventType,
+} from "aws-cdk-lib/aws-s3";
+import { LambdaDestination } from "aws-cdk-lib/aws-s3-notifications";
+import { PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
+import { CfnPipe } from "aws-cdk-lib/aws-pipes";
 
 interface ServiceStackProps extends StackProps {
   table: Table;
+  botTable: Table;
 }
 
 export class ServiceStack extends Stack {
@@ -23,26 +43,33 @@ export class ServiceStack extends Stack {
   private proxy: Lambda;
   private handler: Lambda;
   private scheduled: Lambda;
+  readonly rosterBucket: Bucket;
+  readonly transcriptBucket: Bucket;
 
   constructor(scope: Construct, id: string, props: ServiceStackProps) {
     super(scope, id, props);
 
-    this.handler = new Lambda(this, "bot-handler", {
-      runtime: Runtime.NODEJS_22_X,
-      handler: "index.handler",
-      code: Code.fromAsset("../bot/dist"),
-      logRetention: RetentionDays.ONE_MONTH,
-      environment: {
-        REGION: props.env!.region!,
-        CLASH_API_TOKEN: process.env.CLASH_API_TOKEN!,
-        BOT_TOKEN: process.env.BOT_TOKEN!,
-      },
-      timeout: Duration.minutes(5),
-      retryAttempts: 0,
+    this.rosterBucket = new Bucket(this, "roster-bucket", {
+      bucketName: "bot-roster-bucket",
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      encryption: BucketEncryption.S3_MANAGED,
+      versioned: true,
     });
-    props.table.grantReadWriteData(this.handler);
+
+    this.transcriptBucket = new Bucket(this, "transcript-bucket", {
+      bucketName: "bot-transcript-bucket",
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      encryption: BucketEncryption.S3_MANAGED,
+    });
+
+    const schedulerRole = new Role(this, "scheduler-role", {
+      roleName: "SchedulerRole",
+      assumedBy: new ServicePrincipal("scheduler.amazonaws.com"),
+      description: "Allows EventBridge Scheduler to invoke lambda functions",
+    });
 
     this.scheduled = new Lambda(this, "bot-scheduled", {
+      functionName: "bot-scheduled",
       runtime: Runtime.NODEJS_22_X,
       handler: "index.scheduled",
       code: Code.fromAsset("../bot/dist"),
@@ -53,8 +80,29 @@ export class ServiceStack extends Stack {
         BOT_TOKEN: process.env.BOT_TOKEN!,
       },
       timeout: Duration.minutes(5),
-      retryAttempts: 0
+      retryAttempts: 0,
     });
+    props.botTable.grantReadWriteData(this.scheduled);
+    this.scheduled.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["scheduler:DeleteSchedule"],
+        resources: [
+          `arn:aws:scheduler:${this.region}:${this.account}:schedule/*`,
+        ],
+      })
+    );
+    this.scheduled.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["iam:PassRole"],
+        resources: [schedulerRole.roleArn],
+      })
+    );
+    schedulerRole.addToPolicy(
+      new PolicyStatement({
+        actions: ["lambda:InvokeFunction"],
+        resources: [this.scheduled.functionArn],
+      })
+    );
 
     this.eventBus = new EventBus(this, "bot-events", {
       eventBusName: "tcn-bot-events",
@@ -75,35 +123,61 @@ export class ServiceStack extends Stack {
       targets: [new CloudWatchLogGroup(eventLog)],
     });
 
-    new Rule(this, "bot-event-handler", {
-      ruleName: "BotEventHandler",
-      description: "Handler for incoming bot events",
-      eventBus: this.eventBus,
-      eventPattern: {
-        source: ["tcn-bot-event"],
-        detailType: ["Bot Event Received"],
-      },
-      targets: [new LambdaFunction(this.handler)],
-    });
-
     new Rule(this, "bot-scheduled-recruiter-score", {
       schedule: Schedule.cron({
-        minute: '0',
-        hour: '12',
-        weekDay: 'SUN'
+        minute: "0",
+        hour: "12",
+        weekDay: "SUN",
       }),
-      targets: [new LambdaFunction(this.scheduled, {
-        event: RuleTargetInput.fromObject({
-          source: "tcn-bot-scheduled",
-          "detail-type": "Generate Recruiter Score",
-          detail: {
-            guildId: "1111490767991615518"
-          }
-        })
-      })]
+      targets: [
+        new LambdaFunction(this.scheduled, {
+          event: RuleTargetInput.fromObject({
+            source: "tcn-bot-scheduled",
+            "detail-type": "Generate Recruiter Score",
+            detail: {
+              guildId: "1111490767991615518",
+            },
+          }),
+        }),
+      ],
     });
 
+    new Rule(this, "bot-scheduled-rank-proposal-reminder", {
+      schedule: Schedule.cron({
+        minute: "0",
+        hour: "12",
+        weekDay: "TUE",
+      }),
+      targets: [
+        new LambdaFunction(this.scheduled, {
+          event: RuleTargetInput.fromObject({
+            source: "tcn-bot-scheduled",
+            "detail-type": "Rank Proposal Reminder",
+            detail: {
+              guildId: "1111490767991615518",
+            },
+          }),
+        }),
+      ],
+    });
+
+    new Rule(this, 'applicant-leave-check', {
+      schedule: Schedule.rate(Duration.hours(2)),
+      targets: [
+        new LambdaFunction(this.scheduled, {
+          event: RuleTargetInput.fromObject({
+            source: "tcn-bot-scheduled",
+            "detail-type": "Applicant Leave Check",
+            detail: {
+              guildId: "1111490767991615518"
+            }
+          })
+        })
+      ]
+    })
+
     this.proxy = new Lambda(this, "bot-proxy", {
+      functionName: "bot-proxy",
       runtime: Runtime.NODEJS_22_X,
       handler: "index.proxy",
       code: Code.fromAsset("../bot/dist"),
@@ -114,6 +188,53 @@ export class ServiceStack extends Stack {
       },
     });
     this.eventBus.grantPutEventsTo(this.proxy);
+    this.rosterBucket.grantRead(this.proxy);
+    props.botTable.grantReadData(this.proxy);
+
+    this.handler = new Lambda(this, "bot-handler", {
+      functionName: "bot-handler",
+      runtime: Runtime.NODEJS_22_X,
+      handler: "index.handler",
+      code: Code.fromAsset("../bot/dist"),
+      logRetention: RetentionDays.ONE_MONTH,
+      environment: {
+        REGION: props.env!.region!,
+        CLASH_API_TOKEN: process.env.CLASH_API_TOKEN!,
+        BOT_TOKEN: process.env.BOT_TOKEN!,
+        SCHEDULED_LAMBDA_ARN: this.scheduled.functionArn,
+        SCHEDULER_ROLE_ARN: schedulerRole.roleArn,
+      },
+      timeout: Duration.minutes(5),
+      retryAttempts: 0,
+    });
+    this.handler.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["scheduler:CreateSchedule", "scheduler:DeleteSchedule"],
+        resources: [
+          `arn:aws:scheduler:${this.region}:${this.account}:schedule/*`,
+        ],
+      })
+    );
+    this.handler.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["iam:PassRole"],
+        resources: [schedulerRole.roleArn],
+      })
+    );
+    props.table.grantReadWriteData(this.handler);
+    props.botTable.grantReadWriteData(this.handler);
+    this.transcriptBucket.grantWrite(this.handler);
+
+    new Rule(this, "bot-event-handler", {
+      ruleName: "BotEventHandler",
+      description: "Handler for incoming bot events",
+      eventBus: this.eventBus,
+      eventPattern: {
+        source: ["tcn-bot-event"],
+        detailType: ["Bot Event Received"],
+      },
+      targets: [new LambdaFunction(this.handler)],
+    });
 
     const accessLogs = new LogGroup(this, "access-logs", {
       logGroupName: "BotAccessLogs",
@@ -129,5 +250,72 @@ export class ServiceStack extends Stack {
         accessLogFormat: AccessLogFormat.jsonWithStandardFields(),
       },
     });
+
+    const botProcessor = new Lambda(this, "bot-processor", {
+      functionName: "bot-processor",
+      runtime: Runtime.NODEJS_22_X,
+      handler: "index.processor",
+      code: Code.fromAsset("../bot/dist"),
+      logRetention: RetentionDays.ONE_MONTH,
+      environment: {
+        REGION: props.env!.region!,
+        CLASH_API_TOKEN: process.env.CLASH_API_TOKEN!,
+        BOT_TOKEN: process.env.BOT_TOKEN!,
+      },
+      timeout: Duration.minutes(3),
+    });
+
+    this.rosterBucket.addEventNotification(
+      EventType.OBJECT_CREATED,
+      new LambdaDestination(botProcessor)
+    );
+
+    const pipeRole = new Role(this, "bot-pipe-role", {
+      roleName: "BotPipeRole",
+      assumedBy: new ServicePrincipal("pipes.amazonaws.com"),
+    });
+
+    props.botTable.grantStreamRead(pipeRole);
+    botProcessor.grantInvoke(pipeRole);
+
+    new CfnPipe(this, "user-data-pipe", {
+      source: props.botTable.tableStreamArn!,
+      target: botProcessor.functionArn,
+      roleArn: pipeRole.roleArn,
+      sourceParameters: {
+        dynamoDbStreamParameters: {
+          startingPosition: StartingPosition.LATEST,
+          batchSize: 1,
+        },
+        filterCriteria: {
+          filters: [
+            {
+              pattern: JSON.stringify({
+                eventName: ["INSERT"],
+                dynamodb: {
+                  Keys: {
+                    sk: {
+                      S: [{ prefix: "player" }],
+                    },
+                  },
+                },
+              }),
+            },
+          ],
+        },
+      },
+      targetParameters: {
+        lambdaFunctionParameters: {
+          invocationType: "FIRE_AND_FORGET",
+        },
+        inputTemplate: JSON.stringify({
+          id: "<$.dynamodb.NewImage.id.S>",
+          tag: "<$.dynamodb.NewImage.tag.S>",
+        }),
+      },
+    });
+
+    this.rosterBucket.grantRead(botProcessor);
+    props.botTable.grantReadWriteData(botProcessor);
   }
 }

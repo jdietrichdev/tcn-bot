@@ -23,6 +23,36 @@ export const handleCommand = async (
         return await commands.handleRecruit(event.detail);
       case "recruiter-score":
         return await commands.handleRecruiterScore(event.detail);
+      case "cwl-roster":
+        return await commands.handleCwlRoster(event.detail);
+      case "initiate-cwl-signup":
+        return await commands.handleInitiateCwlSignup(event.detail);
+      case "cwl-questions":
+        return await commands.handleCwlQuestions(event.detail);
+      case "close-ticket":
+        return await commands.closeTicket(event.detail);
+      case "delete-ticket":
+        return await commands.deleteTicket(event.detail);
+      case "create-event":
+        return await commands.handleCreateEvent(event.detail);
+      case "question-create":
+        return await commands.handleQuestionCreate(event.detail);
+      case "question-close":
+        return await commands.handleQuestionClose(event.detail);
+      case "question-answer":
+        return await commands.handleQuestionAnswer(event.detail);
+      case "event-leaderboard":
+        return await commands.handleEventLeaderboard(event.detail);
+      case "event-winner":
+        return await commands.handleEventWinner(event.detail);
+      case "nominate":
+        return await commands.handleNominate(event.detail);
+      case "nomination-result":
+        return await commands.handleNominationResult(event.detail);
+      case "rank-proposal-reminder":
+        return await commands.handleRankProposalReminder(event.detail);
+      case "announce-roster":
+        return await commands.handleAnnounceRoster(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);

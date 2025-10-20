@@ -10,41 +10,48 @@ import { removeRoles } from "./removeRoles";
 import { APIMessageComponentInteraction } from "discord-api-types/v10";
 import { confirmDelete } from "./confirmDelete";
 import { rejectDelete } from "./rejectDelete";
+import { signupCwl } from "./signupCwl";
+import { exportCwlQuestions } from "./exportCwlQuestions";
+import { claimEvent } from "./claim";
+// import { vouchNomination } from "./vouchNomination";
+// import { opposeNomination } from "./opposeNomination";
+// import { indifferentNomination } from "./indifferentNomination";
+import { nominationResults } from "./nominationResults";
+import { answerQuestion } from "./answerQuestion";
 
 export const handleComponent = async (
   interaction: APIMessageComponentInteraction
 ) => {
-  const config = getConfig(interaction.guild_id!);
-  switch (interaction.data.custom_id) {
-    case "approveApp":
-      await approveApp(interaction, config);
-      break;
-    case "messageRecruit":
-      await messageRecruit(interaction);
-      break;
-    case "closeRecruit":
-      await closeRecruit(interaction);
-      break;
-    case "closeTicket":
-      await closeTicket(interaction, config);
-      break;
-    case "deleteTicket":
-      await deleteTicket(interaction, config);
-      break;
-    case "reopenTicket":
-      await reopenTicket(interaction, config);
-      break;
-    case "grantRoles":
-      await grantRoles(interaction, config);
-      break;
-    case "removeRoles":
-      await removeRoles(interaction, config);
-      break;
-    case "confirmDelete":
-      await confirmDelete(interaction);
-      break;
-    case "rejectDelete":
-      await rejectDelete(interaction);
-      break;
+  const customId = interaction.data.custom_id;
+  if (customId === "approveApp") {
+    await approveApp(interaction, getConfig(interaction.guild_id!));
+  } else if (customId === "messageRecruit") {
+    await messageRecruit(interaction);
+  } else if (customId === "closeRecruit") {
+    await closeRecruit(interaction);
+  } else if (customId === "closeTicket") {
+    await closeTicket(interaction, getConfig(interaction.guild_id!));
+  } else if (customId === "deleteTicket") {
+    await deleteTicket(interaction, getConfig(interaction.guild_id!));
+  } else if (customId === "reopenTicket") {
+    await reopenTicket(interaction, getConfig(interaction.guild_id!));
+  } else if (customId === "grantRoles") {
+    await grantRoles(interaction, getConfig(interaction.guild_id!));
+  } else if (customId === "removeRoles") {
+    await removeRoles(interaction, getConfig(interaction.guild_id!));
+  } else if (customId === "confirmDelete") {
+    await confirmDelete(interaction);
+  } else if (customId === "rejectDelete") {
+    await rejectDelete(interaction);
+  } else if (customId === "signupCwl") {
+    await signupCwl(interaction);
+  } else if (customId === "exportCwlQuestions") {
+    await exportCwlQuestions(interaction);
+  } else if (customId.startsWith("claim")) {
+    await claimEvent(interaction);
+  } else if (customId === "nominationResults") {
+    await nominationResults(interaction);
+  } else if (customId.startsWith("answer")) {
+    await answerQuestion(interaction);
   }
 };

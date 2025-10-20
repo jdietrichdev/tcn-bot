@@ -3,7 +3,7 @@ import {
   APIApplicationCommandInteractionDataUserOption,
   APIChatInputApplicationCommandInteraction,
 } from "discord-api-types/v10";
-import { dbClient } from "../clients/dynamodb-client";
+import { dynamoDbClient } from "../clients/dynamodb-client";
 import { ReturnValue, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import { updateResponse } from "../adapters/discord-adapter";
 import {
@@ -51,7 +51,7 @@ const addPlayer = async (
     const username = user
       ? interaction.data.resolved!.users![id].global_name!
       : interaction.member!.user.global_name!;
-    const response = await dbClient.send(
+    const response = await dynamoDbClient.send(
       new UpdateItemCommand({
         TableName: "SchedulingTable",
         Key: {

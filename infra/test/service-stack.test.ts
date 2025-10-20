@@ -16,6 +16,12 @@ test("Infrastructure created", () => {
   stack = new ServiceStack(app, "stack", {
     env: { account: "12345", region: "us-east-1" },
     table: { grantReadWriteData: jest.fn() } as unknown as Table,
+    botTable: {
+      grantReadWriteData: jest.fn(),
+      grantReadData: jest.fn(),
+      grantStreamRead: jest.fn(),
+      tableStreamArn: 'streamArm',
+    } as unknown as Table,
   });
   template = JSON.stringify(Template.fromStack(stack).toJSON(), null, 2);
   template = template.replace(/("S3Key": )".*\.zip"/g, '$1"files.zip"');

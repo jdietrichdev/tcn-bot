@@ -1,9 +1,15 @@
 import { Construct } from "constructs";
-import { Stack, StackProps } from "aws-cdk-lib";
-import { AttributeType, Table } from "aws-cdk-lib/aws-dynamodb";
+import { RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
+import {
+  AttributeType,
+  StreamViewType,
+  Table,
+  TableEncryption,
+} from "aws-cdk-lib/aws-dynamodb";
 
 export class PersistenceStack extends Stack {
   readonly table: Table;
+  readonly botTable: Table;
 
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
@@ -19,6 +25,22 @@ export class PersistenceStack extends Stack {
         type: AttributeType.STRING,
       },
       timeToLiveAttribute: "expiration",
+    });
+
+    this.botTable = new Table(this, "bot-table", {
+      tableName: "BotTable",
+      encryption: TableEncryption.AWS_MANAGED,
+      partitionKey: {
+        name: "pk",
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: "sk",
+        type: AttributeType.STRING,
+      },
+      stream: StreamViewType.NEW_AND_OLD_IMAGES,
+      timeToLiveAttribute: "expires",
+      removalPolicy: RemovalPolicy.RETAIN,
     });
   }
 }

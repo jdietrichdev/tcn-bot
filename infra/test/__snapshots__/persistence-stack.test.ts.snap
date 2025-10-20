@@ -38,6 +38,48 @@ exports[`Infrastructure created 1`] = `
       },
       "UpdateReplacePolicy": "Retain",
       "DeletionPolicy": "Retain"
+    },
+    "bottableD8ACD17D": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "pk",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "sk",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "pk",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "sk",
+            "KeyType": "RANGE"
+          }
+        ],
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        },
+        "SSESpecification": {
+          "SSEEnabled": true
+        },
+        "StreamSpecification": {
+          "StreamViewType": "NEW_AND_OLD_IMAGES"
+        },
+        "TableName": "BotTable",
+        "TimeToLiveSpecification": {
+          "AttributeName": "expires",
+          "Enabled": true
+        }
+      },
+      "UpdateReplacePolicy": "Retain",
+      "DeletionPolicy": "Retain"
     }
   },
   "Parameters": {

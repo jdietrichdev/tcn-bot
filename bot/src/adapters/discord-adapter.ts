@@ -4,15 +4,18 @@ import {
   APIGuildMember,
   APIGuildTextChannel,
   APIMessage,
+  APIRole,
   APIUser,
   GuildTextChannelType,
   RESTAPIGuildCreatePartialChannel,
   RESTGetAPIChannelMessageReactionUsersResult,
+  RESTPatchAPIChannelJSONBody,
   RESTPostAPIChannelMessageResult,
   RESTPostAPIChannelMessagesThreadsJSONBody,
   RESTPostAPIChannelMessagesThreadsResult,
   RESTPostAPICurrentUserCreateDMChannelJSONBody,
   RESTPostAPICurrentUserCreateDMChannelResult,
+  RESTPostAPIGuildScheduledEventJSONBody,
   RESTPostAPIWebhookWithTokenJSONBody,
   RESTPutAPIChannelPermissionJSONBody,
 } from "discord-api-types/v10";
@@ -26,6 +29,27 @@ export const updateResponse = async (
   applicationId: string,
   interactionToken: string,
   response: RESTPostAPIWebhookWithTokenJSONBody
+) => {
+  const url = `${BASE_URL}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
+  try {
+    await axios.patch(url, response);
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to update response",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
+export const updateResponseWithAttachment = async (
+  applicationId: string,
+  interactionToken: string,
+  response: FormData
 ) => {
   const url = `${BASE_URL}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
   try {
@@ -127,6 +151,30 @@ export const sendMessage = async (
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
         "Failed to send message",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
+export const sendMessageWithAttachment = async (
+  message: FormData,
+  channelId: string
+) => {
+  const url = `${BASE_URL}/channels/${channelId}/messages`;
+  try {
+    await axios.post(url, message, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+      },
+    });
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to update response",
         err.response?.data.message,
         err.response?.status ?? 500
       );
@@ -292,6 +340,31 @@ export const createChannel = async (
   }
 };
 
+export const updateChannel = async (
+  channelUpdate: RESTPatchAPIChannelJSONBody,
+  channelId: string
+) => {
+  const url = `${BASE_URL}/channels/${channelId}`;
+  try {
+    await axios.patch(url, channelUpdate, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to update channel",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
 export const moveChannel = async (channelId: string, categoryId: string) => {
   const url = `${BASE_URL}/channels/${channelId}`;
   try {
@@ -333,11 +406,15 @@ export const updateChannelPermissions = async (
     });
   } catch (err) {
     if (axios.isAxiosError(err)) {
-      throw new DiscordError(
-        "Failed to update permissions",
-        err.response?.data.message,
-        err.response?.status ?? 500
-      );
+      if (err.response?.status === 404) {
+        console.log("User/role no longer in server");
+      } else {
+        throw new DiscordError(
+          "Failed to update permissions",
+          err.response?.data.message,
+          err.response?.status ?? 500
+        );
+      }
     } else {
       throw new Error(`Unexpected error: ${err}`);
     }
@@ -437,6 +514,84 @@ export const getServerUser = async (
   }
 };
 
+export const getServerMembers = async (
+  guildId: string
+): Promise<APIGuildMember[]> => {
+  const url = `${BASE_URL}/guilds/${guildId}/members?limit=1000`;
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+      },
+    });
+    return response.data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to fetch server members",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
+export const createRole = async (
+  guildId: string,
+  roleName: string
+): Promise<APIRole> => {
+  const url = `${BASE_URL}/guilds/${guildId}/roles`;
+  try {
+    const response = await axios.post(
+      url,
+      {
+        name: roleName,
+        mentionable: true,
+        color: Math.floor(Math.random() * 0xffffff),
+      },
+      {
+        headers: {
+          Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to create new role",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
+export const deleteRole = async (guildId: string, roleId: string) => {
+  const url = `${BASE_URL}/guilds/${guildId}/roles/${roleId}`;
+  try {
+    await axios.delete(url, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+      },
+    });
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to delete role",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
 export const grantRole = async (
   guildId: string,
   userId: string,
@@ -483,6 +638,52 @@ export const removeRole = async (
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
         "Failed to remove role",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
+export const getAttachment = async (attachmentUrl: string) => {
+  try {
+    const response = await axios.get(attachmentUrl, {
+      responseType: "arraybuffer",
+    });
+    return response.data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to retrieve attachment data",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
+export const createEvent = async (
+  event: RESTPostAPIGuildScheduledEventJSONBody,
+  guildId: string
+) => {
+  const url = `${BASE_URL}/guilds/${guildId}/scheduled-events`;
+  console.log(JSON.stringify(event));
+  try {
+    const response = await axios.post(url, event, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to create event",
         err.response?.data.message,
         err.response?.status ?? 500
       );

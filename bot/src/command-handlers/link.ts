@@ -4,17 +4,16 @@ import {
 } from "discord-api-types/payloads/v10";
 import { verify } from "../adapters/coc-api-adapter";
 import { updateResponse } from "../adapters/discord-adapter";
-import { dbClient } from "../clients/dynamodb-client";
+import { dynamoDbClient } from "../clients/dynamodb-client";
 import {
   DeleteItemCommand,
   ReturnValue,
-  UpdateItemCommand,
 } from "@aws-sdk/client-dynamodb";
 import {
-  getGuildId,
   getMessageSender,
   getSubCommandOptionData,
 } from "../util/interaction-util";
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
 
 export const handleLink = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -49,22 +48,18 @@ const linkPlayer = async (
       "create",
       "token"
     ).value;
-  const guildId = getGuildId(interaction);
   const user = getMessageSender(interaction).id;
 
   try {
     await verify(playerTag, apiToken);
-    const response = await dbClient.send(
-      new UpdateItemCommand({
-        TableName: "SchedulingTable",
-        Key: {
-          pk: { S: guildId },
-          sk: { S: `player#${user}#${playerTag.substring(1)}` },
-        },
-        UpdateExpression: "SET id=:id, tag=:tag",
-        ExpressionAttributeValues: {
-          ":id": { S: user },
-          ":tag": { S: playerTag },
+    const response = await dynamoDbClient.send(
+      new PutCommand({
+        TableName: "BotTable",
+        Item: {
+          pk: user,
+          sk: `player#${playerTag.substring(1)}`,
+          id: user,
+          tag: playerTag
         },
         ReturnValues: ReturnValue.NONE,
       })
@@ -75,7 +70,9 @@ const linkPlayer = async (
     });
   } catch (err) {
     console.log("Failure linking account", err);
-    throw err;
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: "Failed to link user, please try again",
+    });
   }
 };
 
@@ -89,14 +86,13 @@ const unlinkPlayer = async (
         "remove",
         "tag"
       ).value;
-    const guildId = getGuildId(interaction);
     const user = getMessageSender(interaction).id;
-    const response = await dbClient.send(
+    const response = await dynamoDbClient.send(
       new DeleteItemCommand({
-        TableName: "SchedulingTable",
+        TableName: "BotTable",
         Key: {
-          pk: { S: guildId },
-          sk: { S: `player#${user}#${playerTag.substring(1)}` },
+          pk: { S: user },
+          sk: { S: `player#${playerTag.substring(1)}` },
         },
       })
     );
@@ -105,7 +101,9 @@ const unlinkPlayer = async (
       content: "User successfully unlinked",
     });
   } catch (err) {
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: "Failure removing account link, please try again"
+    })
     console.log("Failure unlinking account", err);
-    throw err;
   }
 };
