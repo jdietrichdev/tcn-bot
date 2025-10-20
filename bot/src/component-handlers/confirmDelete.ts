@@ -161,7 +161,7 @@ const removeTicket = async (guildId: string, channelId: string) => {
   )).Item!;
   console.log(ticketData);
   ticketData.tickets = ticketData.tickets.filter(
-    (ticket: Record<string, any>) => ticket.ticketChannel === channelId
+    (ticket: Record<string, any>) => ticket.ticketChannel !== channelId
   );
   console.log(ticketData);
   await dynamoDbClient.send(
