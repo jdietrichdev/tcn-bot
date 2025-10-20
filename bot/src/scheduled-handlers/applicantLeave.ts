@@ -8,7 +8,7 @@ import { BUTTONS } from "../component-handlers/buttons";
 export const handleApplicantLeave = async (eventDetail: Record<string, string>) => {
     try {
         const { guildId } = eventDetail;
-        const tickets = (await dynamoDbClient.send(
+        const ticketData = (await dynamoDbClient.send(
             new GetCommand({
                 TableName: "BotTable",
                 Key: {
@@ -16,11 +16,14 @@ export const handleApplicantLeave = async (eventDetail: Record<string, string>) 
                     sk: 'tickets'
                 }
             })
-        )).Item!.tickets;
+        )).Item!;
+        const tickets = ticketData.tickets;
 
         for (const ticket of tickets) {
             try {
-                await getServerUser(guildId, ticket.userId);
+                if (!ticket.applicantLeft) {
+                    await getServerUser(guildId, ticket.userId);
+                }
             } catch (err) {
                 if ((err as DiscordError).statusCode === 404) {
                     await sendMessage({
@@ -29,7 +32,8 @@ export const handleApplicantLeave = async (eventDetail: Record<string, string>) 
                             type: ComponentType.ActionRow,
                             components: [BUTTONS.CLOSE_TICKET, BUTTONS.DELETE_TICKET]
                         }]
-                    }, ticket.ticketChannel)
+                    }, ticket.ticketChannel);
+                    ticket.applicantLeft = true;
                 }
             }
         }
