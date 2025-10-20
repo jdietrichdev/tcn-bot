@@ -2,6 +2,7 @@ import { EventBridgeEvent } from "aws-lambda";
 import { handleRecruiterScore } from "../command-handlers/recruiterScore";
 import { handleRankProposalReminder } from "../command-handlers/rankProposalReminder";
 import { handleRewardExpiration } from "./rewardExpiration";
+import { handleApplicantLeave } from "./applicantLeave";
 
 export const handleScheduled = async (
   event: EventBridgeEvent<string, Record<string, string>>
@@ -14,6 +15,8 @@ export const handleScheduled = async (
         return await handleRankProposalReminder(event.detail.guildId);
       case "Reward Expiration":
         return await handleRewardExpiration(event.detail);
+      case "Applicant Leave Check":
+        return await handleApplicantLeave(event.detail);
     }
   } catch (err) {
     console.error(`Failed handling scheduled event: ${err}`);

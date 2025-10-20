@@ -10,13 +10,15 @@ import {
 import { isActorAdmin, isActorRecruiter } from "../component-handlers/utils";
 import { BUTTONS } from "../component-handlers/buttons";
 import { getConfig } from "../util/serverConfig";
+import { dynamoDbClient } from "../clients/dynamodb-client";
+import { GetCommand } from "@aws-sdk/lib-dynamodb";
 
 export const deleteTicket = async (
   interaction: APIApplicationCommandInteraction
 ) => {
   try {
     const config = getConfig(interaction.guild_id!);
-    if (isTicketChannel(interaction.channel.name!)) {
+    if (await isTicketChannel(interaction)) {
       if (
         (await isActorAdmin(
           interaction.guild_id!,
@@ -67,6 +69,21 @@ export const deleteTicket = async (
   }
 };
 
-const isTicketChannel = (channelName: string) => {
-  return channelName.includes("\u{1F39F}") || channelName.includes("\u{2705}");
+const isTicketChannel = async (interaction: APIApplicationCommandInteraction) => {
+  const ticketData = (await dynamoDbClient.send(
+    new GetCommand({
+      TableName: "BotTable",
+      Key: {
+        pk: interaction.guild_id!,
+        sk: 'tickets'
+      }
+    })
+  )).Item!;
+
+  if (ticketData.tickets.find((ticket: Record<string, any>) => ticket.ticketChannel === interaction.channel.id)) {
+    return true;
+  } else {  
+    return interaction.channel.name!.includes("\u{1F39F}") 
+    || interaction.channel.name!.includes("\u{2705}");
+  }
 };

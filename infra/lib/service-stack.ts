@@ -161,6 +161,21 @@ export class ServiceStack extends Stack {
       ],
     });
 
+    new Rule(this, 'applicant-leave-check', {
+      schedule: Schedule.rate(Duration.hours(2)),
+      targets: [
+        new LambdaFunction(this.scheduled, {
+          event: RuleTargetInput.fromObject({
+            source: "tcn-bot-scheduled",
+            "detail-type": "Applicant Leave Check",
+            detail: {
+              guildId: "1111490767991615518"
+            }
+          })
+        })
+      ]
+    })
+
     this.proxy = new Lambda(this, "bot-proxy", {
       functionName: "bot-proxy",
       runtime: Runtime.NODEJS_22_X,
