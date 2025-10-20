@@ -57,6 +57,7 @@ export const approveApp = async (
       applicationChannel.id
     );
     await pinMessage(message.channel_id, message.id);
+    await addTicket(interaction.guild_id!, applicationChannel.id, userId!);
     await updateMessage(interaction.channel.id, interaction.message.id, {
       content: `Accepted by ${interaction.member?.user.username}\n<#${applicationChannel.id}>`,
       components: [],
@@ -108,6 +109,28 @@ const getTicketNumber = async (guildId: string) => {
     throw new Error(`Failure fetching next ticket number: ${err}`);
   }
 };
+
+const addTicket = async (guildId: string, ticketChannel: string, userId: string) => {
+  const ticketData = (await dynamoDbClient.send(
+    new GetCommand({
+      TableName: "BotTable",
+      Key: {
+        pk: guildId,
+        sk: 'tickets'
+      }
+    })
+  )).Item!;
+
+
+  ticketData.tickets.push({ ticketChannel, userId });
+
+  await dynamoDbClient.send(
+    new PutCommand({
+      TableName: "BotTable",
+      Item: ticketData
+    })
+  );
+}
 
 const createApplicationChannel = async (
   interaction: APIMessageComponentInteraction,
