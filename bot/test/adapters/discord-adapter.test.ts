@@ -33,6 +33,28 @@ test("updateResponse should throw DiscordError when request fails", async () => 
   );
 });
 
+test("updateResponseWithAttachment should call patch with correct parameters", async () => {
+  const mockResponse = new FormData();
+  mockResponse.append("content", "Content");
+  mockResponse.append("files[0]", new Blob(), "file.csv");
+  await adapter.updateResponseWithAttachment("appId", "token", mockResponse);
+  expect(axios.patch).toHaveBeenCalledWith(
+    `${BASE_URL}/webhooks/appId/token/messages/@original`,
+    mockResponse
+  );
+});
+
+test("updateResponseWithAttachment should throw DiscordError when request fails", async () => {
+  jest
+    .mocked(axios.patch)
+    .mockRejectedValue(buildMockAxiosError("Permissions", 403));
+  await expect(
+    adapter.updateResponseWithAttachment("appId", "token", new FormData())
+  ).rejects.toThrow(
+    new DiscordError("Failed to update response", "Permissions", 403)
+  );
+});
+
 test("updateMessage should call patch with correct parameters", async () => {
   await adapter.updateMessage("channelId", "messageId", { content: "test" });
   expect(axios.patch).toHaveBeenCalledWith(
@@ -126,6 +148,29 @@ test("sendMessage should throw DiscordError when request fails", async () => {
     adapter.sendMessage({ content: "test" }, "channelId")
   ).rejects.toThrow(
     new DiscordError("Failed to send message", "Sporadic Error", 500)
+  );
+});
+
+test("sendMessageWithAttachment should call patch with correct parameters", async () => {
+  const mockMessage = new FormData();
+  mockMessage.append("content", "Content");
+  mockMessage.append("files[0]", new Blob(), "file.csv");
+  await adapter.sendMessageWithAttachment(mockMessage, "channelId");
+  expect(axios.post).toHaveBeenCalledWith(
+    `${BASE_URL}/channels/channelId/messages`,
+    mockMessage,
+    { headers: { Authorization: "Bot BOT_TOKEN" } }
+  );
+});
+
+test("sendMessageWithAttachment should throw DiscordError when request fails", async () => {
+  jest
+    .mocked(axios.post)
+    .mockRejectedValue(buildMockAxiosError("Permissions", 403));
+  await expect(
+    adapter.sendMessageWithAttachment(new FormData(), "channelId")
+  ).rejects.toThrow(
+    new DiscordError("Failed to update response", "Permissions", 403)
   );
 });
 
@@ -252,6 +297,33 @@ test("createChannel should throw DiscordError when request fails", async () => {
     adapter.createChannel({ name: "channel" }, "guildId")
   ).rejects.toThrow(
     new DiscordError("Failed to create channel", "Permissions", 403)
+  );
+});
+
+test("updateChannel should call patch with correct parameters", async () => {
+  await adapter.updateChannel({ name: "Updated channel name" }, "channelId");
+  expect(axios.patch).toHaveBeenCalledWith(
+    `${BASE_URL}/channels/channelId`,
+    {
+      name: "Updated channel name",
+    },
+    {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+});
+
+test("updateChannel should throw DiscordError when request fails", async () => {
+  jest
+    .mocked(axios.patch)
+    .mockRejectedValue(buildMockAxiosError("Permissions", 403));
+  await expect(
+    adapter.updateChannel({ name: "Updated channel name " }, "channelId")
+  ).rejects.toThrow(
+    new DiscordError("Failed to update channel", "Permissions", 403)
   );
 });
 

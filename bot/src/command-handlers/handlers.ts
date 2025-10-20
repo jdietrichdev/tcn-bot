@@ -1,3 +1,4 @@
+export * from "./test";
 export * from "./hello";
 export * from "./link";
 export * from "./player";

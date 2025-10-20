@@ -6,14 +6,10 @@ import { verify } from "../adapters/coc-api-adapter";
 import { updateResponse } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import {
-  DeleteItemCommand,
-  ReturnValue,
-} from "@aws-sdk/client-dynamodb";
-import {
   getMessageSender,
   getSubCommandOptionData,
 } from "../util/interaction-util";
-import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import { DeleteCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 
 export const handleLink = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -59,9 +55,9 @@ const linkPlayer = async (
           pk: user,
           sk: `player#${playerTag.substring(1)}`,
           id: user,
-          tag: playerTag
+          tag: playerTag,
         },
-        ReturnValues: ReturnValue.NONE,
+        ReturnValues: "NONE",
       })
     );
     console.log(response);
@@ -88,11 +84,11 @@ const unlinkPlayer = async (
       ).value;
     const user = getMessageSender(interaction).id;
     const response = await dynamoDbClient.send(
-      new DeleteItemCommand({
+      new DeleteCommand({
         TableName: "BotTable",
         Key: {
-          pk: { S: user },
-          sk: { S: `player#${playerTag.substring(1)}` },
+          pk: user,
+          sk: `player#${playerTag.substring(1)}`,
         },
       })
     );
@@ -102,8 +98,8 @@ const unlinkPlayer = async (
     });
   } catch (err) {
     await updateResponse(interaction.application_id, interaction.token, {
-      content: "Failure removing account link, please try again"
-    })
+      content: "Failure removing account link, please try again",
+    });
     console.log("Failure unlinking account", err);
   }
 };
