@@ -1,4 +1,4 @@
-import { GetCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { getServerUser, sendMessage } from "../adapters/discord-adapter";
 import { DiscordError } from "../util/errors";
@@ -34,6 +34,12 @@ export const handleApplicantLeave = async (eventDetail: Record<string, string>) 
                         }]
                     }, ticket.ticketChannel);
                     ticket.applicantLeft = true;
+                    await dynamoDbClient.send(
+                        new PutCommand({
+                            TableName: "BotTable",
+                            Item: ticketData
+                        })
+                    );
                 }
             }
         }
