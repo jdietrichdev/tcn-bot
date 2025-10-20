@@ -89,7 +89,7 @@ const getCandidatesMessages = async (
         for (const user of userReactions) {
           if (
             user.username !== message.author.username &&
-            user.username !== "O.T.T.O"
+            !user.bot
           ) {
             const stats = scoreMap.get(user.username) || {
               messages: 0,
