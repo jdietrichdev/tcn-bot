@@ -18,6 +18,8 @@ import { createDiscordTimestamp } from "../util/format-util";
 import { v4 as uuidv4 } from "uuid";
 import { s3Client } from "../clients/s3-client";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { dynamoDbClient } from "../clients/dynamodb-client";
+import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 
 export const confirmDelete = async (
   interaction: APIMessageComponentInteraction
@@ -64,6 +66,7 @@ export const confirmDelete = async (
       config.TRANSCRIPT_CHANNEL
     );
     await deleteChannel(interaction.channel.id);
+    await removeTicket(interaction.guild_id!, interaction.channel.id);
   } catch (err) {
     console.error(`Failed to delete channel: ${err}`);
     await updateResponse(interaction.application_id, interaction.token, {
@@ -145,3 +148,24 @@ const createTranscript = (
     ],
   };
 };
+
+const removeTicket = async (guildId: string, channelId: string) => {
+  const ticketData = (await dynamoDbClient.send(
+    new GetCommand({
+      TableName: "BotTable",
+      Key: {
+        pk: guildId,
+        sk: "tickets"
+      }
+    })
+  )).Item!;
+  ticketData.tickets = ticketData.tickets.filter(
+    (ticket: Record<string, any>) => ticket.ticketChannel === channelId
+  );
+  await dynamoDbClient.send(
+    new PutCommand({
+      TableName: "BotTable",
+      Item: ticketData
+    })
+  );
+}
