@@ -132,7 +132,7 @@ const createQuestion = (
   const embed = {
     title: question.question,
     description: "Total Responses: 0",
-    ...(question.thumbnailUrl && { thumbnail: { url: question.thumbnailUrl } }),
+    ...(question.thumbnailUrl && { image: { url: question.thumbnailUrl } }),
   } as APIEmbed;
   const components: APIActionRowComponent<APIButtonComponent>[] = [];
   components.push({
