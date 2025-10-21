@@ -1,5 +1,6 @@
 import {
   APIActionRowComponent,
+  APIApplicationCommandInteractionDataAttachmentOption,
   APIApplicationCommandInteractionDataStringOption,
   APIButtonComponent,
   APIChatInputApplicationCommandInteraction,
@@ -69,6 +70,13 @@ export const handleQuestionCreate = async (
       throw new Error("No event found for this channel");
     }
 
+    // Get thumbnail if provided
+    const thumbnail = getCommandOptionData<APIApplicationCommandInteractionDataAttachmentOption>(
+      interaction,
+      "thumbnail"
+    )?.value;
+    const thumbnailUrl = thumbnail ? interaction.data.resolved?.attachments?.[thumbnail]?.url : undefined;
+
     const questionMessage = createQuestion(
       {
         question,
@@ -76,6 +84,7 @@ export const handleQuestionCreate = async (
         optionTwo,
         optionThree,
         optionFour,
+        thumbnailUrl,
       },
       eventId ?? "",
       questionId
@@ -93,6 +102,7 @@ export const handleQuestionCreate = async (
       optionThree,
       optionFour,
       responses: [],
+      ...(thumbnailUrl && { thumbnailUrl }),
     });
     eventData.questions = questions;
 

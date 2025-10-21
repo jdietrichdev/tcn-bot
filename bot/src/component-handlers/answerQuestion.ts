@@ -71,6 +71,7 @@ export const answerQuestion = async (
     const updatedMessageEmbed = {
       ...interaction.message.embeds[0],
       description,
+      image: interaction.message.embeds[0].image // Preserve the image from the original embed
     };
     await updateMessage(interaction.channel.id, interaction.message.id, {
       embeds: [updatedMessageEmbed],
