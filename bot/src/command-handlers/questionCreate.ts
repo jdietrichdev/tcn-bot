@@ -104,7 +104,7 @@ export const handleQuestionCreate = async (
       optionThree,
       optionFour,
       responses: [],
-      ...(thumbnailUrl && { thumbnail: thumbnailUrl }),
+      thumbnail: thumbnailUrl,
     });
     eventData.questions = questions;
 
