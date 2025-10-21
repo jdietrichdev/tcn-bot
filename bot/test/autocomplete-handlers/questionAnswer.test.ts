@@ -23,6 +23,8 @@ beforeEach(() => {
   });
 });
 
+afterEach(jest.resetAllMocks);
+
 describe("focused option is question", () => {
   test("should call dynamodb with correct parameters", async () => {
     await handleQuestionAnswer(buildInteraction("question", ""));

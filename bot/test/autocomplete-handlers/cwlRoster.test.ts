@@ -16,6 +16,8 @@ beforeEach(() => {
   });
 });
 
+afterEach(jest.resetAllMocks);
+
 test("should call s3Client with correct parameters when focused option is roster", async () => {
   await handleCwlRoster(buildInteraction("roster", ""));
   expect(s3Client.send).toHaveBeenCalledWith(

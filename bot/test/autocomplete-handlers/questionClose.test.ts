@@ -23,6 +23,8 @@ beforeEach(() => {
   });
 });
 
+afterEach(jest.resetAllMocks);
+
 test("should call dynamoDb with correct parameters when focused option is question", async () => {
   await handleQuestionClose(buildInteraction("question", ""));
   expect(dynamoDbClient.send).toHaveBeenCalledWith(

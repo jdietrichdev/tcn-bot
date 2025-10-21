@@ -21,6 +21,8 @@ beforeEach(() => {
   });
 });
 
+afterEach(jest.resetAllMocks);
+
 test("should call dynamoDbClient with correct params when focused option is proposal", async () => {
   await handleNominationResult(buildInteraction("proposal", ""));
   expect(dynamoDbClient.send).toHaveBeenCalledWith(
