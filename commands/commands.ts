@@ -357,6 +357,12 @@ export const questionCreate = new SlashCommandBuilder()
       .setName("option4")
       .setDescription("Fourth response option")
       .setRequired(false);
+  })
+  .addAttachmentOption((option) => {
+    return option
+      .setName("thumbnail")
+      .setDescription("Thumbnail for question")
+      .setRequired(false);
   });
 
 export const questionClose = new SlashCommandBuilder()

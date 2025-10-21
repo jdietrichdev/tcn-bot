@@ -3,6 +3,7 @@ import {
   APIApplicationCommandInteractionDataStringOption,
   APIButtonComponent,
   APIChatInputApplicationCommandInteraction,
+  APIApplicationCommandInteractionDataAttachmentOption,
   APIEmbed,
   APITextChannel,
   ButtonStyle,
@@ -49,6 +50,15 @@ export const handleQuestionCreate = async (
         interaction,
         "option4"
       )?.value;
+      const thumbnail =
+      getCommandOptionData<APIApplicationCommandInteractionDataAttachmentOption>(
+        interaction,
+        "thumbnail"
+      )?.value;
+    
+      const thumbnailUrl = thumbnail 
+      ? interaction.data.resolved?.attachments?.[thumbnail]?.url : undefined;
+
 
     const eventId = (interaction.channel as APITextChannel).topic;
     const questionId = uuidv4();
@@ -76,9 +86,10 @@ export const handleQuestionCreate = async (
         optionTwo,
         optionThree,
         optionFour,
+        thumbnailUrl,
       },
       eventId ?? "",
-      questionId
+      questionId,
     );
 
     const message = await sendMessage(questionMessage, interaction.channel.id);
@@ -93,6 +104,7 @@ export const handleQuestionCreate = async (
       optionThree,
       optionFour,
       responses: [],
+      thumbnail: thumbnailUrl,
     });
     eventData.questions = questions;
 
@@ -120,6 +132,7 @@ const createQuestion = (
   const embed = {
     title: question.question,
     description: "Total Responses: 0",
+    ...(question.thumbnailUrl && { image: { url: question.thumbnailUrl } }),
   } as APIEmbed;
   const components: APIActionRowComponent<APIButtonComponent>[] = [];
   components.push({

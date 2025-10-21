@@ -36,4 +36,5 @@ export interface Question {
   responses?: QuestionResponse[];
   closed?: boolean;
   answer?: string;
+  thumbnailUrl?: string;
 }
