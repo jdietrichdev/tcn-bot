@@ -118,8 +118,12 @@ const createQuestion = (
   questionId: string
 ): RESTPostAPIWebhookWithTokenJSONBody => {
   const embed = {
-    title: question.question,
-    description: "Total Responses: 0",
+    title: "📊 " + question.question,
+    description: "**Participation Stats**\n━━━━━━━━━━━━━━━\n🎯 Total Responses: 0\n⏳ Status: Open for answers",
+    color: 0x5865F2, // Discord Blurple color
+    footer: {
+      text: "Click a button below to submit your answer • You can change your answer at any time"
+    }
   } as APIEmbed;
   const components: APIActionRowComponent<APIButtonComponent>[] = [];
   components.push({
@@ -127,14 +131,14 @@ const createQuestion = (
     components: [
       {
         type: ComponentType.Button,
-        style: ButtonStyle.Primary,
-        label: question.optionOne,
+        style: ButtonStyle.Success,
+        label: "🅰️ " + question.optionOne,
         custom_id: `answer_optionOne_${eventId}_${questionId}`,
       },
       {
         type: ComponentType.Button,
         style: ButtonStyle.Primary,
-        label: question.optionTwo,
+        label: "🅱️ " + question.optionTwo,
         custom_id: `answer_optionTwo_${eventId}_${questionId}`,
       },
     ],
@@ -143,16 +147,16 @@ const createQuestion = (
   if (question.optionThree) {
     optionalComponent.push({
       type: ComponentType.Button,
-      style: ButtonStyle.Primary,
-      label: question.optionThree,
+      style: ButtonStyle.Secondary,
+      label: "🅲️ " + question.optionThree,
       custom_id: `answer_optionThree_${eventId}_${questionId}`,
     });
   }
   if (question.optionFour) {
     optionalComponent.push({
       type: ComponentType.Button,
-      style: ButtonStyle.Primary,
-      label: question.optionFour,
+      style: ButtonStyle.Danger,
+      label: "🅳️ " + question.optionFour,
       custom_id: `answer_optionFour_${eventId}_${questionId}`,
     });
   }
