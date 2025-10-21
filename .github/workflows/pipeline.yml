@@ -47,9 +47,6 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run Unit Tests
-        run: npm test
-
       - name: Build Bot Code
         run: npm run build --workspace bot
 
@@ -58,6 +55,9 @@ jobs:
         with:
           name: bot-build
           path: bot/dist
+
+      - name: Run Unit Tests
+        run: npm test
 
   deploy:
     name: Deploy
