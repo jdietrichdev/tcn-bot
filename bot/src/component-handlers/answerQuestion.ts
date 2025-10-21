@@ -71,9 +71,18 @@ export const answerQuestion = async (
     const updatedMessageEmbed = {
       ...interaction.message.embeds[0],
       description,
-      image: interaction.message.embeds[0].image // Preserve the image from the original embed
+      color: 0x5865F2,
+      ...(question.thumbnailUrl && {
+        image: {
+          url: question.thumbnailUrl
+        }
+      }),
+      footer: {
+        text: "Click a button below to submit your answer • You can change your answer at any time"
+      }
     };
     await updateMessage(interaction.channel.id, interaction.message.id, {
+      ...interaction.message,
       embeds: [updatedMessageEmbed],
     });
     await updateResponse(interaction.application_id, interaction.token, {
