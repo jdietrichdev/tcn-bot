@@ -1,0 +1,103 @@
+name: Pipeline
+
+on:
+  push:
+    paths:
+      - infra/**
+      - bot/**
+      - ui/**
+      - .github/workflows/deploy.yml
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+    DISCORD_PUBLIC_KEY: ${{ secrets.DISCORD_PUBLIC_KEY }}
+    CLASH_API_TOKEN: ${{ secrets.CLASH_API_TOKEN }}
+    BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+
+jobs:
+  quality-check:
+    name: Quality Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - uses: actions/checkout@v5
+
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Unit Tests
+        run: npm test
+
+      - name: Build Bot Code
+        run: npm run build --workspace bot
+
+      - name: Upload Bot Code
+        uses: actions/upload-artifact@v4
+        with:
+          name: bot-build
+          path: bot/dist
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: quality-check
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    env:
+      AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}
+
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - uses: actions/checkout@v5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.OIDC_ROLE }}
+          aws-region: us-east-1
+
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-
+
+      - name: Install Dependencies
+        run: npm ci
+        
+      - name: Download Bot Code
+        uses: actions/download-artifact@v4
+        with:
+          name: bot-build
+          path: bot/dist
+
+      - run: npm run bootstrap --workspace infra
+      - run: npm run deploy --workspace infra -- --require-approval never
