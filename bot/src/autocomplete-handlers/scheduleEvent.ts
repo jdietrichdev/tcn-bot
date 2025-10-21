@@ -1,4 +1,4 @@
-import { APIApplicationCommandAutocompleteInteraction, APIApplicationCommandInteractionDataStringOption } from "discord-api-types/v10";
+import { APIApplicationCommandAutocompleteInteraction, APIApplicationCommandInteractionDataStringOption, APICommandAutocompleteInteractionResponseCallbackData, InteractionResponseType } from "discord-api-types/v10";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 
@@ -11,7 +11,12 @@ export const handleScheduleEventAutocomplete = async (
         option.name === 'event' && 'focused' in option
     );
     
-    if (!focused) return { choices: [] };
+    if (!focused) {
+      return {
+        type: InteractionResponseType.ApplicationCommandAutocompleteResult,
+        data: { choices: [] },
+      };
+    }
 
     // Query for events in DynamoDB
     const response = await dynamoDbClient.send(
@@ -31,14 +36,22 @@ export const handleScheduleEventAutocomplete = async (
     ) || [];
 
     // Return up to 25 choices (Discord limit)
-    return {
+    const options: APICommandAutocompleteInteractionResponseCallbackData = {
       choices: events.slice(0, 25).map((event) => ({
         name: event.name,
         value: event.eventId,
       })),
     };
+
+    return {
+      type: InteractionResponseType.ApplicationCommandAutocompleteResult,
+      data: options,
+    };
   } catch (err) {
     console.error("Failed to get events for autocomplete", err);
-    return { choices: [] };
+    return {
+      type: InteractionResponseType.ApplicationCommandAutocompleteResult,
+      data: { choices: [] },
+    };
   }
 };

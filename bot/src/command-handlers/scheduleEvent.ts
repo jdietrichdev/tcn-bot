@@ -63,7 +63,6 @@ export const handleScheduleEvent = async (
       throw new Error("Channel not found");
     }
 
-    // Use stored event type (Text/Voice/Stage) to determine scheduled event entity type
     const storedType: string = eventData.type || channel.type;
 
     const entityType = channelTypeMap.get(storedType)?.[1] ?? GuildScheduledEventEntityType.External;
@@ -78,10 +77,8 @@ export const handleScheduleEvent = async (
     } as RESTPostAPIGuildScheduledEventJSONBody;
 
     if (entityType === GuildScheduledEventEntityType.External) {
-      // For external events, provide location metadata (for text channels) if available
       createPayload.entity_metadata = { location: `<#${channel.id}>` };
     } else {
-      // For voice/stage event types, require channel_id
       createPayload.channel_id = channel.id;
     }
 
