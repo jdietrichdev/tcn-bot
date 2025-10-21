@@ -135,7 +135,7 @@ const createQuestion = (
       (question.optionThree ? `\n3️⃣ ${question.optionThree}\n░░░░░░░░░░ 0%` : '') +
       (question.optionFour ? `\n4️⃣ ${question.optionFour}\n░░░░░░░░░░ 0%` : '') +
       `\n\n📊 **Total Responses:** 0`,
-    color: 0x5865F2, 
+    color: 0x6B65F2, // More purple variant of Discord blurple
     ...(question.thumbnailUrl && {
       image: {
         url: question.thumbnailUrl

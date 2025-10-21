@@ -71,7 +71,7 @@ export const answerQuestion = async (
     const updatedMessageEmbed = {
       ...interaction.message.embeds[0],
       description,
-      color: 0x5865F2,
+      color: 0x6B65F2, // More purple variant of Discord blurple
       ...(question.thumbnailUrl && {
         image: {
           url: question.thumbnailUrl
