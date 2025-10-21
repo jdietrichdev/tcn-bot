@@ -90,15 +90,15 @@ export const handleQuestionAnswer = async (
     const embed = {
       title: "📊 " + question.question,
       description: `**Final Results**\n━━━━━━━━━━━━━━━\n\n` +
-        `${question.optionOne === answer ? '✅' : '❌'} 🅰️ ${question.optionOne}\n${createBar(optionCounts.optionOne, question.optionOne === answer)} (${optionCounts.optionOne})\n\n` +
-        `${question.optionTwo === answer ? '✅' : '❌'} 🅱️ ${question.optionTwo}\n${createBar(optionCounts.optionTwo, question.optionTwo === answer)} (${optionCounts.optionTwo})` +
-        (question.optionThree ? `\n\n${question.optionThree === answer ? '✅' : '❌'} 🅲️ ${question.optionThree}\n${createBar(optionCounts.optionThree, question.optionThree === answer)} (${optionCounts.optionThree})` : '') +
-        (question.optionFour ? `\n\n${question.optionFour === answer ? '✅' : '❌'} 🅳️ ${question.optionFour}\n${createBar(optionCounts.optionFour, question.optionFour === answer)} (${optionCounts.optionFour})` : '') +
+        `${question.optionOne === answer ? '✅' : '❌'} 1️⃣ ${question.optionOne}\n${createBar(optionCounts.optionOne, question.optionOne === answer)} (${optionCounts.optionOne})\n\n` +
+        `${question.optionTwo === answer ? '✅' : '❌'} 2️⃣ ${question.optionTwo}\n${createBar(optionCounts.optionTwo, question.optionTwo === answer)} (${optionCounts.optionTwo})` +
+        (question.optionThree ? `\n\n${question.optionThree === answer ? '✅' : '❌'} 3️⃣ ${question.optionThree}\n${createBar(optionCounts.optionThree, question.optionThree === answer)} (${optionCounts.optionThree})` : '') +
+        (question.optionFour ? `\n\n${question.optionFour === answer ? '✅' : '❌'} 4️⃣ ${question.optionFour}\n${createBar(optionCounts.optionFour, question.optionFour === answer)} (${optionCounts.optionFour})` : '') +
         `\n\n📈 **Statistics**\n` +
         `Total Responses: ${totalResponses}\n` +
         `Correct Answers: ${correctResponses} (${correctPercentage}%)\n` +
         `Points Awarded: ${points} 🏆`,
-      color: 0x57F287, // Discord Green color for success
+      color: 0x57F287, 
       ...(question.thumbnailUrl && {
         image: {
           url: question.thumbnailUrl
@@ -109,10 +109,10 @@ export const handleQuestionAnswer = async (
       }
     } as APIEmbed;
 
-    // Update the message with the results
+    
     await updateMessage(interaction.channel.id, question.message, {
       embeds: [embed],
-      components: [] // Remove the buttons since the question is closed
+      components: [] 
     });
 
     await dynamoDbClient.send(
