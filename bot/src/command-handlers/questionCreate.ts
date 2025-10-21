@@ -130,10 +130,10 @@ const createQuestion = (
   const embed = {
     title: "📊 " + question.question,
     description: `**Response Distribution**\n━━━━━━━━━━━━━━━\n\n` +
-      `🅰️ ${question.optionOne}\n░░░░░░░░░░ 0%\n\n` +
-      `🅱️ ${question.optionTwo}\n░░░░░░░░░░ 0%\n` +
-      (question.optionThree ? `\n🅲️ ${question.optionThree}\n░░░░░░░░░░ 0%` : '') +
-      (question.optionFour ? `\n🅳️ ${question.optionFour}\n░░░░░░░░░░ 0%` : '') +
+      `1️⃣ ${question.optionOne}\n░░░░░░░░░░ 0%\n\n` +
+      `2️⃣ ${question.optionTwo}\n░░░░░░░░░░ 0%\n` +
+      (question.optionThree ? `\n3️⃣ ${question.optionThree}\n░░░░░░░░░░ 0%` : '') +
+      (question.optionFour ? `\n4️⃣ ${question.optionFour}\n░░░░░░░░░░ 0%` : '') +
       `\n\n📊 **Total Responses:** 0`,
     color: 0x5865F2, 
     ...(question.thumbnailUrl && {
@@ -151,14 +151,14 @@ const createQuestion = (
     components: [
       {
         type: ComponentType.Button,
-        style: ButtonStyle.Success,
-        label: "🅰️ " + question.optionOne,
+        style: ButtonStyle.Primary,
+        label: "1️⃣ " + question.optionOne,
         custom_id: `answer_optionOne_${eventId}_${questionId}`,
       },
       {
         type: ComponentType.Button,
         style: ButtonStyle.Primary,
-        label: "🅱️ " + question.optionTwo,
+        label: "2️⃣ " + question.optionTwo,
         custom_id: `answer_optionTwo_${eventId}_${questionId}`,
       },
     ],
@@ -167,16 +167,16 @@ const createQuestion = (
   if (question.optionThree) {
     optionalComponent.push({
       type: ComponentType.Button,
-      style: ButtonStyle.Secondary,
-      label: "🅲️ " + question.optionThree,
+      style: ButtonStyle.Primary,
+      label: "3️⃣ " + question.optionThree,
       custom_id: `answer_optionThree_${eventId}_${questionId}`,
     });
   }
   if (question.optionFour) {
     optionalComponent.push({
       type: ComponentType.Button,
-      style: ButtonStyle.Danger,
-      label: "🅳️ " + question.optionFour,
+      style: ButtonStyle.Primary,
+      label: "4️⃣ " + question.optionFour,
       custom_id: `answer_optionFour_${eventId}_${questionId}`,
     });
   }
