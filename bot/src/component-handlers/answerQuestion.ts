@@ -31,11 +31,11 @@ export const answerQuestion = async (
     console.log(question[option]);
 
     const index = question.responses.findIndex((response: QuestionResponse) => response.userId === interaction.member!.user.id);
-    if (index !== -1) question.responses[index].answer = question[option];
+    if (index !== -1) question.responses[index].response = question[option];
     else question.responses.push({ 
       userId: interaction.member!.user.id,
       username: interaction.member!.user.username,
-      answer: question[option],
+      response: question[option],
     });
 
     await dynamoDbClient.send(
@@ -45,11 +45,44 @@ export const answerQuestion = async (
       })
     );
 
+    // Calculate percentages and create visual bars
+    const totalResponses = question.responses.length;
+    const optionCounts = {
+      optionOne: question.responses.filter((r: QuestionResponse) => r.response === question.optionOne).length,
+      optionTwo: question.responses.filter((r: QuestionResponse) => r.response === question.optionTwo).length,
+      optionThree: question.optionThree ? question.responses.filter((r: QuestionResponse) => r.response === question.optionThree).length : 0,
+      optionFour: question.optionFour ? question.responses.filter((r: QuestionResponse) => r.response === question.optionFour).length : 0
+    };
+
+    const createBar = (count: number) => {
+      const percentage = Math.round((count / totalResponses) * 100) || 0;
+      const filledBlocks = Math.round(percentage / 10);
+      const emptyBlocks = 10 - filledBlocks;
+      return `${'█'.repeat(filledBlocks)}${'░'.repeat(emptyBlocks)} ${percentage}%`;
+    };
+
+    const description = `**Response Distribution**\n━━━━━━━━━━━━━━━\n\n` +
+      `1️⃣ ${question.optionOne}\n${createBar(optionCounts.optionOne)} (${optionCounts.optionOne})\n\n` +
+      `2️⃣ ${question.optionTwo}\n${createBar(optionCounts.optionTwo)} (${optionCounts.optionTwo})` +
+      (question.optionThree ? `\n\n3️⃣ ${question.optionThree}\n${createBar(optionCounts.optionThree)} (${optionCounts.optionThree})` : '') +
+      (question.optionFour ? `\n\n4️⃣ ${question.optionFour}\n${createBar(optionCounts.optionFour)} (${optionCounts.optionFour})` : '') +
+      `\n\n📊 **Total Responses:** ${totalResponses}`;
+
     const updatedMessageEmbed = {
       ...interaction.message.embeds[0],
-      description: `Total Responses: ${question.responses.length}`,
+      description,
+      color: 0x6B65F2, // More purple variant of Discord blurple
+      ...(question.thumbnailUrl && {
+        image: {
+          url: question.thumbnailUrl
+        }
+      }),
+      footer: {
+        text: "Click a button below to submit your answer • You can change your answer at any time"
+      }
     };
     await updateMessage(interaction.channel.id, interaction.message.id, {
+      ...interaction.message,
       embeds: [updatedMessageEmbed],
     });
     await updateResponse(interaction.application_id, interaction.token, {

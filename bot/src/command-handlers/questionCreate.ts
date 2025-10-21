@@ -50,15 +50,15 @@ export const handleQuestionCreate = async (
         interaction,
         "option4"
       )?.value;
-      const thumbnail =
+    const thumbnail =
       getCommandOptionData<APIApplicationCommandInteractionDataAttachmentOption>(
         interaction,
         "thumbnail"
       )?.value;
-    
-      const thumbnailUrl = thumbnail 
-      ? interaction.data.resolved?.attachments?.[thumbnail]?.url : undefined;
 
+    const thumbnailUrl = thumbnail
+      ? interaction.data.resolved?.attachments?.[thumbnail]?.url
+      : undefined;
 
     const eventId = (interaction.channel as APITextChannel).topic;
     const questionId = uuidv4();
@@ -89,7 +89,7 @@ export const handleQuestionCreate = async (
         thumbnailUrl,
       },
       eventId ?? "",
-      questionId,
+      questionId
     );
 
     const message = await sendMessage(questionMessage, interaction.channel.id);
@@ -130,9 +130,27 @@ const createQuestion = (
   questionId: string
 ): RESTPostAPIWebhookWithTokenJSONBody => {
   const embed = {
-    title: question.question,
-    description: "Total Responses: 0",
-    ...(question.thumbnailUrl && { image: { url: question.thumbnailUrl } }),
+    title: "📊 " + question.question,
+    description:
+      `**Response Distribution**\n━━━━━━━━━━━━━━━\n\n` +
+      `1️⃣ ${question.optionOne}\n░░░░░░░░░░ 0%\n\n` +
+      `2️⃣ ${question.optionTwo}\n░░░░░░░░░░ 0%\n` +
+      (question.optionThree
+        ? `\n3️⃣ ${question.optionThree}\n░░░░░░░░░░ 0%`
+        : "") +
+      (question.optionFour
+        ? `\n4️⃣ ${question.optionFour}\n░░░░░░░░░░ 0%`
+        : "") +
+      `\n\n📊 **Total Responses:** 0`,
+    color: 0x6b65f2, // More purple variant of Discord blurple
+    ...(question.thumbnailUrl && {
+      image: {
+        url: question.thumbnailUrl,
+      },
+    }),
+    footer: {
+      text: "Click a button below to submit your answer • You can change your answer at any time",
+    },
   } as APIEmbed;
   const components: APIActionRowComponent<APIButtonComponent>[] = [];
   components.push({
@@ -141,13 +159,13 @@ const createQuestion = (
       {
         type: ComponentType.Button,
         style: ButtonStyle.Primary,
-        label: question.optionOne,
+        label: "1️⃣ " + question.optionOne,
         custom_id: `answer_optionOne_${eventId}_${questionId}`,
       },
       {
         type: ComponentType.Button,
         style: ButtonStyle.Primary,
-        label: question.optionTwo,
+        label: "2️⃣ " + question.optionTwo,
         custom_id: `answer_optionTwo_${eventId}_${questionId}`,
       },
     ],
@@ -157,7 +175,7 @@ const createQuestion = (
     optionalComponent.push({
       type: ComponentType.Button,
       style: ButtonStyle.Primary,
-      label: question.optionThree,
+      label: "3️⃣ " + question.optionThree,
       custom_id: `answer_optionThree_${eventId}_${questionId}`,
     });
   }
@@ -165,7 +183,7 @@ const createQuestion = (
     optionalComponent.push({
       type: ComponentType.Button,
       style: ButtonStyle.Primary,
-      label: question.optionFour,
+      label: "4️⃣ " + question.optionFour,
       custom_id: `answer_optionFour_${eventId}_${questionId}`,
     });
   }
