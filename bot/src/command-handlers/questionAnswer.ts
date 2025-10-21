@@ -2,7 +2,7 @@ import {
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
   APITextChannel,
-  APIEmbed
+  APIEmbed,
 } from "discord-api-types/v10";
 import {
   deleteResponse,
@@ -59,7 +59,9 @@ export const handleQuestionAnswer = async (
     console.log(scoreboard);
     for (const response of question.responses) {
       if (response.answer === answer) {
-        const index = scoreboard.findIndex((score) => score.id === response.userId);
+        const index = scoreboard.findIndex(
+          (score) => score.id === response.userId
+        );
         if (index !== -1) scoreboard[index].points += Number(points);
         else scoreboard.push({ id: response.userId, points: Number(points) });
       }
@@ -68,51 +70,90 @@ export const handleQuestionAnswer = async (
 
     // Calculate response statistics
     const totalResponses = question.responses?.length || 0;
-    const correctResponses = question.responses?.filter((r: QuestionResponse) => r.response === answer).length || 0;
-    const correctPercentage = Math.round((correctResponses / totalResponses) * 100) || 0;
+    const correctResponses =
+      question.responses?.filter((r: QuestionResponse) => r.response === answer)
+        .length || 0;
+    const correctPercentage =
+      Math.round((correctResponses / totalResponses) * 100) || 0;
 
     const optionCounts = {
-      optionOne: question.responses?.filter((r: QuestionResponse) => r.response === question.optionOne).length || 0,
-      optionTwo: question.responses?.filter((r: QuestionResponse) => r.response === question.optionTwo).length || 0,
-      optionThree: question.optionThree ? question.responses?.filter((r: QuestionResponse) => r.response === question.optionThree).length || 0 : 0,
-      optionFour: question.optionFour ? question.responses?.filter((r: QuestionResponse) => r.response === question.optionFour).length || 0 : 0
-    };
-
-    const createBar = (count: number, isCorrect: boolean) => {
-      const percentage = Math.round((count / totalResponses) * 100) || 0;
-      const filledBlocks = Math.round(percentage / 10);
-      const emptyBlocks = 10 - filledBlocks;
-      const blocks = isCorrect ? '█'.repeat(filledBlocks) + '░'.repeat(emptyBlocks) : '▒'.repeat(filledBlocks) + '░'.repeat(emptyBlocks);
-      return `${blocks} ${percentage}%`;
+      optionOne:
+        question.responses?.filter(
+          (r: QuestionResponse) => r.response === question.optionOne
+        ).length || 0,
+      optionTwo:
+        question.responses?.filter(
+          (r: QuestionResponse) => r.response === question.optionTwo
+        ).length || 0,
+      optionThree: question.optionThree
+        ? question.responses?.filter(
+            (r: QuestionResponse) => r.response === question.optionThree
+          ).length || 0
+        : 0,
+      optionFour: question.optionFour
+        ? question.responses?.filter(
+            (r: QuestionResponse) => r.response === question.optionFour
+          ).length || 0
+        : 0,
     };
 
     // Create the results embed
     const embed = {
       title: "📊 " + question.question,
-      description: `**Final Results**\n━━━━━━━━━━━━━━━\n\n` +
-        `${question.optionOne === answer ? '✅' : '❌'} 1️⃣ ${question.optionOne}\n${createBar(optionCounts.optionOne, question.optionOne === answer)} (${optionCounts.optionOne})\n\n` +
-        `${question.optionTwo === answer ? '✅' : '❌'} 2️⃣ ${question.optionTwo}\n${createBar(optionCounts.optionTwo, question.optionTwo === answer)} (${optionCounts.optionTwo})` +
-        (question.optionThree ? `\n\n${question.optionThree === answer ? '✅' : '❌'} 3️⃣ ${question.optionThree}\n${createBar(optionCounts.optionThree, question.optionThree === answer)} (${optionCounts.optionThree})` : '') +
-        (question.optionFour ? `\n\n${question.optionFour === answer ? '✅' : '❌'} 4️⃣ ${question.optionFour}\n${createBar(optionCounts.optionFour, question.optionFour === answer)} (${optionCounts.optionFour})` : '') +
+      description:
+        `**Final Results**\n━━━━━━━━━━━━━━━\n\n` +
+        `${question.optionOne === answer ? "✅" : "❌"} 1️⃣ ${
+          question.optionOne
+        }\n${createBar(
+          optionCounts.optionOne,
+          totalResponses,
+          question.optionOne === answer
+        )} (${optionCounts.optionOne})\n\n` +
+        `${question.optionTwo === answer ? "✅" : "❌"} 2️⃣ ${
+          question.optionTwo
+        }\n${createBar(
+          optionCounts.optionTwo,
+          totalResponses,
+          question.optionTwo === answer
+        )} (${optionCounts.optionTwo})` +
+        (question.optionThree
+          ? `\n\n${question.optionThree === answer ? "✅" : "❌"} 3️⃣ ${
+              question.optionThree
+            }\n${createBar(
+              optionCounts.optionThree,
+              totalResponses,
+              question.optionThree === answer
+            )} (${optionCounts.optionThree})`
+          : "") +
+        (question.optionFour
+          ? `\n\n${question.optionFour === answer ? "✅" : "❌"} 4️⃣ ${
+              question.optionFour
+            }\n${createBar(
+              optionCounts.optionFour,
+              totalResponses,
+              question.optionFour === answer
+            )} (${optionCounts.optionFour})`
+          : "") +
         `\n\n📈 **Statistics**\n` +
         `Total Responses: ${totalResponses}\n` +
         `Correct Answers: ${correctResponses} (${correctPercentage}%)\n` +
         `Points Awarded: ${points} 🏆`,
-      color: 0x57F287, 
+      color: 0x57f287,
       ...(question.thumbnailUrl && {
         image: {
-          url: question.thumbnailUrl
-        }
+          url: question.thumbnailUrl,
+        },
       }),
       footer: {
-        text: `Question closed • ${correctResponses} participant${correctResponses !== 1 ? 's' : ''} earned ${points} points`
-      }
+        text: `Question closed • ${correctResponses} participant${
+          correctResponses !== 1 ? "s" : ""
+        } earned ${points} points`,
+      },
     } as APIEmbed;
 
-    
     await updateMessage(interaction.channel.id, question.message, {
       embeds: [embed],
-      components: [] 
+      components: [],
     });
 
     await dynamoDbClient.send(
@@ -129,4 +170,18 @@ export const handleQuestionAnswer = async (
       content: "Failed to set answer for question, please try again",
     });
   }
+};
+
+const createBar = (
+  count: number,
+  totalResponses: number,
+  isCorrect: boolean
+) => {
+  const percentage = Math.round((count / totalResponses) * 100) || 0;
+  const filledBlocks = Math.round(percentage / 10);
+  const emptyBlocks = 10 - filledBlocks;
+  const blocks = isCorrect
+    ? "█".repeat(filledBlocks) + "░".repeat(emptyBlocks)
+    : "▒".repeat(filledBlocks) + "░".repeat(emptyBlocks);
+  return `${blocks} ${percentage}%`;
 };

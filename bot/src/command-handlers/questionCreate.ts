@@ -1,6 +1,5 @@
 import {
   APIActionRowComponent,
-  APIApplicationCommandInteractionDataAttachmentOption,
   APIApplicationCommandInteractionDataStringOption,
   APIButtonComponent,
   APIChatInputApplicationCommandInteraction,
@@ -51,15 +50,15 @@ export const handleQuestionCreate = async (
         interaction,
         "option4"
       )?.value;
-      const thumbnail =
+    const thumbnail =
       getCommandOptionData<APIApplicationCommandInteractionDataAttachmentOption>(
         interaction,
         "thumbnail"
       )?.value;
-    
-      const thumbnailUrl = thumbnail 
-      ? interaction.data.resolved?.attachments?.[thumbnail]?.url : undefined;
 
+    const thumbnailUrl = thumbnail
+      ? interaction.data.resolved?.attachments?.[thumbnail]?.url
+      : undefined;
 
     const eventId = (interaction.channel as APITextChannel).topic;
     const questionId = uuidv4();
@@ -80,13 +79,6 @@ export const handleQuestionCreate = async (
       throw new Error("No event found for this channel");
     }
 
-    // Get thumbnail if provided
-    const thumbnail = getCommandOptionData<APIApplicationCommandInteractionDataAttachmentOption>(
-      interaction,
-      "thumbnail"
-    )?.value;
-    const thumbnailUrl = thumbnail ? interaction.data.resolved?.attachments?.[thumbnail]?.url : undefined;
-
     const questionMessage = createQuestion(
       {
         question,
@@ -97,7 +89,7 @@ export const handleQuestionCreate = async (
         thumbnailUrl,
       },
       eventId ?? "",
-      questionId,
+      questionId
     );
 
     const message = await sendMessage(questionMessage, interaction.channel.id);
@@ -139,21 +131,26 @@ const createQuestion = (
 ): RESTPostAPIWebhookWithTokenJSONBody => {
   const embed = {
     title: "📊 " + question.question,
-    description: `**Response Distribution**\n━━━━━━━━━━━━━━━\n\n` +
+    description:
+      `**Response Distribution**\n━━━━━━━━━━━━━━━\n\n` +
       `1️⃣ ${question.optionOne}\n░░░░░░░░░░ 0%\n\n` +
       `2️⃣ ${question.optionTwo}\n░░░░░░░░░░ 0%\n` +
-      (question.optionThree ? `\n3️⃣ ${question.optionThree}\n░░░░░░░░░░ 0%` : '') +
-      (question.optionFour ? `\n4️⃣ ${question.optionFour}\n░░░░░░░░░░ 0%` : '') +
+      (question.optionThree
+        ? `\n3️⃣ ${question.optionThree}\n░░░░░░░░░░ 0%`
+        : "") +
+      (question.optionFour
+        ? `\n4️⃣ ${question.optionFour}\n░░░░░░░░░░ 0%`
+        : "") +
       `\n\n📊 **Total Responses:** 0`,
-    color: 0x6B65F2, // More purple variant of Discord blurple
+    color: 0x6b65f2, // More purple variant of Discord blurple
     ...(question.thumbnailUrl && {
       image: {
-        url: question.thumbnailUrl
-      }
+        url: question.thumbnailUrl,
+      },
     }),
     footer: {
-      text: "Click a button below to submit your answer • You can change your answer at any time"
-    }
+      text: "Click a button below to submit your answer • You can change your answer at any time",
+    },
   } as APIEmbed;
   const components: APIActionRowComponent<APIButtonComponent>[] = [];
   components.push({
