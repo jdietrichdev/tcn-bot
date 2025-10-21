@@ -119,7 +119,12 @@ const createQuestion = (
 ): RESTPostAPIWebhookWithTokenJSONBody => {
   const embed = {
     title: "📊 " + question.question,
-    description: "**Participation Stats**\n━━━━━━━━━━━━━━━\n🎯 Total Responses: 0\n⏳ Status: Open for answers",
+    description: `**Response Distribution**\n━━━━━━━━━━━━━━━\n\n` +
+      `�️ ${question.optionOne}\n░░░░░░░░░░ 0%\n\n` +
+      `🅱️ ${question.optionTwo}\n░░░░░░░░░░ 0%\n` +
+      (question.optionThree ? `\n🅲️ ${question.optionThree}\n░░░░░░░░░░ 0%` : '') +
+      (question.optionFour ? `\n🅳️ ${question.optionFour}\n░░░░░░░░░░ 0%` : '') +
+      `\n\n📊 **Total Responses:** 0`,
     color: 0x5865F2, // Discord Blurple color
     footer: {
       text: "Click a button below to submit your answer • You can change your answer at any time"
