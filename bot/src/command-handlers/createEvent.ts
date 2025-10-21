@@ -43,98 +43,161 @@ export const handleCreateEvent = async (
     const eventData = getEventData(interaction);
     console.log(eventData);
 
-    const channel = await createChannel(
-      {
-        name: eventData.name.toLowerCase().trim().replace(/\s+/g, "-"),
-        type: channelTypeMap.get(eventData.type)![0],
-        topic: eventId,
-        parent_id: config.EVENTS_CATEGORY,
-        permission_overwrites: [
-          {
-            id: interaction.guild_id!,
-            type: OverwriteType.Role,
-            allow: "0",
-            deny: PermissionFlagsBits.ViewChannel.toString(),
-          },
-          {
-            id: config.CLAN_ROLE,
-            type: OverwriteType.Role,
-            allow: (
-              PermissionFlagsBits.ViewChannel |
-              PermissionFlagsBits.AddReactions |
-              PermissionFlagsBits.SendMessages |
-              PermissionFlagsBits.Connect
-            ).toString(),
-            deny: "0",
-          },
-          {
-            id: config.BOT_ID,
-            type: OverwriteType.Member,
-            allow: (
-              PermissionFlagsBits.ViewChannel |
-              PermissionFlagsBits.AddReactions |
-              PermissionFlagsBits.SendMessages
-            ).toString(),
-            deny: "0",
-          },
-        ],
-      },
-      interaction.guild_id!
-    );
-
-    if (eventData.thumbnail) {
-      const thumbnailUrl =
-        interaction.data.resolved!.attachments![eventData.thumbnail].url;
-
-      attachment = await getAttachment(thumbnailUrl);
-      thumbnail = `data:image/png;base64,${Buffer.from(
-        attachment,
-        "binary"
-      ).toString("base64")}`;
+    if (eventData.start && isNaN(eventData.start.getTime())) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: "Invalid start time provided. Use format YYYY-MM-DDThh:mm in UTC.",
+      });
+      return;
+    }
+    if (eventData.end && isNaN(eventData.end.getTime())) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: "Invalid end time provided. Use format YYYY-MM-DDThh:mm in UTC.",
+      });
+      return;
+    }
+    if (eventData.start && eventData.end && eventData.start >= eventData.end) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: "Start time must be before end time.",
+      });
+      return;
     }
 
-    // Only create Discord scheduled event if times are provided
-    if (eventData.start && eventData.end) {
-      await createEvent(
+    let channel;
+    try {
+      channel = await createChannel(
         {
-          name: eventData.name,
-          scheduled_start_time: eventData.start.toISOString(),
-          scheduled_end_time: eventData.end.toISOString(),
-          privacy_level: GuildScheduledEventPrivacyLevel.GuildOnly,
-          entity_type: channelTypeMap.get(eventData.type)![1],
-          ...(eventData.type === "Text"
-            ? { entity_metadata: { location: `<#${channel.id}>` } }
-            : { channel_id: channel.id }),
-          description: `${eventData.description}${
-            eventData.sponsor
-              ? `\n\nThanks to our sponsor <@${eventData.sponsor}>!`
-              : ""
-          }`,
-          ...(thumbnail && { image: thumbnail }),
+          name: eventData.name.toLowerCase().trim().replace(/\s+/g, "-"),
+          type: channelTypeMap.get(eventData.type)![0],
+          topic: eventId,
+          parent_id: config.EVENTS_CATEGORY,
+          permission_overwrites: [
+            {
+              id: interaction.guild_id!,
+              type: OverwriteType.Role,
+              allow: "0",
+              deny: PermissionFlagsBits.ViewChannel.toString(),
+            },
+            {
+              id: config.CLAN_ROLE,
+              type: OverwriteType.Role,
+              allow: (
+                PermissionFlagsBits.ViewChannel |
+                PermissionFlagsBits.AddReactions |
+                PermissionFlagsBits.SendMessages |
+                PermissionFlagsBits.Connect
+              ).toString(),
+              deny: "0",
+            },
+            {
+              id: config.BOT_ID,
+              type: OverwriteType.Member,
+              allow: (
+                PermissionFlagsBits.ViewChannel |
+                PermissionFlagsBits.AddReactions |
+                PermissionFlagsBits.SendMessages
+              ).toString(),
+              deny: "0",
+            },
+          ],
         },
         interaction.guild_id!
       );
+    } catch (err) {
+      console.error("Failed to create channel", err);
+      await updateResponse(interaction.application_id, interaction.token, {
+        content:
+          "Failed to create the event channel. Please check server configuration (category, bot permissions) and try again.",
+      });
+      return;
+    }
+
+    if (eventData.thumbnail) {
+      try {
+        const thumbnailUrl =
+          interaction.data.resolved!.attachments![eventData.thumbnail].url;
+
+        attachment = await getAttachment(thumbnailUrl);
+        thumbnail = `data:image/png;base64,${Buffer.from(
+          attachment,
+          "binary"
+        ).toString("base64")}`;
+      } catch (err) {
+        console.error("Failed to fetch/attach thumbnail", err);
+        attachment = null;
+        thumbnail = null;
+      }
+    }
+
+    if (eventData.start && eventData.end) {
+      try {
+        await createEvent(
+          {
+            name: eventData.name,
+            scheduled_start_time: eventData.start.toISOString(),
+            scheduled_end_time: eventData.end.toISOString(),
+            privacy_level: GuildScheduledEventPrivacyLevel.GuildOnly,
+            entity_type: channelTypeMap.get(eventData.type)![1],
+            ...(eventData.type === "Text"
+              ? { entity_metadata: { location: `<#${channel.id}>` } }
+              : { channel_id: channel.id }),
+            description: `${eventData.description}${
+              eventData.sponsor
+                ? `\n\nThanks to our sponsor <@${eventData.sponsor}>!`
+                : ""
+            }`,
+            ...(thumbnail && { image: thumbnail }),
+          },
+          interaction.guild_id!
+        );
+      } catch (err) {
+        console.error("Failed to create scheduled Discord event", err);
+        await updateResponse(interaction.application_id, interaction.token, {
+          content:
+            "Failed to create the Discord scheduled event. Check bot permissions and event details (times, type).",
+        });
+        return;
+      }
     }
 
     const eventMessage = createEventMessage(eventData, attachment);
-    await sendMessageWithAttachment(eventMessage, channel.id);
+    try {
+      await sendMessageWithAttachment(eventMessage, channel.id);
+    } catch (err) {
+      console.error("Failed to post event message", err);
+      await updateResponse(interaction.application_id, interaction.token, {
+        content:
+          "Event channel was created but the bot couldn't post the event message. Check bot permissions in the channel.",
+      });
+      return;
+    }
 
-    await dynamoDbClient.send(
-      new PutCommand({
-        TableName: "BotTable",
-        Item: {
-          pk: interaction.guild_id!,
-          sk: `event#${eventId}`,
-          eventId,
-          name: eventData.name,
-          startTime: eventData.start.toISOString(),
-          endTime: eventData.end.toISOString(),
-          description: eventData.description,
-          sponsor: eventData.sponsor,
-          channel: channel.id,
-        },
-      })
-    );
+    const item: Record<string, any> = {
+      pk: interaction.guild_id!,
+      sk: `event#${eventId}`,
+      eventId,
+      name: eventData.name,
+      description: eventData.description,
+      sponsor: eventData.sponsor,
+      channel: channel.id,
+    };
+    if (eventData.start) item.startTime = eventData.start.toISOString();
+    if (eventData.end) item.endTime = eventData.end.toISOString();
+
+    try {
+      await dynamoDbClient.send(
+        new PutCommand({
+          TableName: "BotTable",
+          Item: item,
+        })
+      );
+    } catch (err) {
+      console.error("Failed to write event to DB", err);
+      await updateResponse(interaction.application_id, interaction.token, {
+        content:
+          "Event channel created and message posted, but failed to save event to the database. Contact an admin.",
+      });
+      return;
+    }
 
     await updateResponse(interaction.application_id, interaction.token, {
       content: `Your event has been created, go to <#${channel.id}> to add any additional details you'd like!`,
@@ -160,18 +223,20 @@ const getEventData = (
       interaction,
       "type"
     ).value,
-    start: new Date(
-      getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
+    start: ((): Date | null => {
+      const s = getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
         "start"
-      ).value
-    ),
-    end: new Date(
-      getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
+      )?.value;
+      return s ? new Date(s) : null;
+    })(),
+    end: ((): Date | null => {
+      const e = getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
         "end"
-      )?.value
-    ),
+      )?.value;
+      return e ? new Date(e) : null;
+    })(),
     description:
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
