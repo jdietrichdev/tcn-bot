@@ -42,6 +42,7 @@ export const handleCreateEvent = async (
     let thumbnail: string | null = null;
     const eventData = getEventData(interaction);
     console.log(eventData);
+  let scheduledCreated = false;
 
     if (eventData.start && isNaN(eventData.start.getTime())) {
       await updateResponse(interaction.application_id, interaction.token, {
@@ -149,6 +150,7 @@ export const handleCreateEvent = async (
           },
           interaction.guild_id!
         );
+        scheduledCreated = true;
       } catch (err) {
         console.error("Failed to create scheduled Discord event", err);
         await updateResponse(interaction.application_id, interaction.token, {
@@ -179,9 +181,12 @@ export const handleCreateEvent = async (
       description: eventData.description,
       sponsor: eventData.sponsor,
       channel: channel.id,
+      type: eventData.type,
     };
     if (eventData.start) item.startTime = eventData.start.toISOString();
     if (eventData.end) item.endTime = eventData.end.toISOString();
+    if (eventData.thumbnail) item.thumbnail = eventData.thumbnail;
+    if (scheduledCreated) item.scheduled = true;
 
     try {
       await dynamoDbClient.send(

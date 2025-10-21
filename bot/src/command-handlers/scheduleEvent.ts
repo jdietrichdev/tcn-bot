@@ -3,6 +3,7 @@ import {
   APIChatInputApplicationCommandInteraction,
   GuildScheduledEventEntityType,
   GuildScheduledEventPrivacyLevel,
+  RESTPostAPIGuildScheduledEventJSONBody,
 } from "discord-api-types/v10";
 import { getCommandOptionData } from "../util/interaction-util";
 import {
@@ -62,21 +63,29 @@ export const handleScheduleEvent = async (
       throw new Error("Channel not found");
     }
 
-    await createEvent(
-      {
-        name: eventData.name,
-        scheduled_start_time: start.toISOString(),
-        scheduled_end_time: end.toISOString(),
-        privacy_level: GuildScheduledEventPrivacyLevel.GuildOnly,
-        entity_type: channelTypeMap.get(channel.type)![1],
-        ...(channel.type === "GUILD_TEXT"
-          ? { entity_metadata: { location: `<#${channel.id}>` } }
-          : { channel_id: channel.id }),
-        description: eventData.description,
-        ...(eventData.thumbnail && { image: eventData.thumbnail }),
-      },
-      interaction.guild_id!
-    );
+    // Use stored event type (Text/Voice/Stage) to determine scheduled event entity type
+    const storedType: string = eventData.type || channel.type;
+
+    const entityType = channelTypeMap.get(storedType)?.[1] ?? GuildScheduledEventEntityType.External;
+    const createPayload: RESTPostAPIGuildScheduledEventJSONBody = {
+      name: eventData.name,
+      scheduled_start_time: start.toISOString(),
+      scheduled_end_time: end.toISOString(),
+      privacy_level: GuildScheduledEventPrivacyLevel.GuildOnly,
+      entity_type: entityType as GuildScheduledEventEntityType,
+      description: eventData.description,
+      ...(eventData.thumbnail && { image: eventData.thumbnail }),
+    } as RESTPostAPIGuildScheduledEventJSONBody;
+
+    if (entityType === GuildScheduledEventEntityType.External) {
+      // For external events, provide location metadata (for text channels) if available
+      createPayload.entity_metadata = { location: `<#${channel.id}>` };
+    } else {
+      // For voice/stage event types, require channel_id
+      createPayload.channel_id = channel.id;
+    }
+
+    await createEvent(createPayload, interaction.guild_id!);
 
     const updatedMessage = `# ${eventData.name}\n\n` +
       `Start: <t:${createDiscordTimestamp(start.toUTCString())}:F>\n` +
