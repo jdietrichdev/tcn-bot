@@ -37,14 +37,20 @@ export const handleCwlRoster = async (
     );
     console.log(rosters);
 
-    options.choices = rosters?.map((object) => {
-      return {
-        name: object.Key!.split("/")[1].replace(".csv", ""),
-        value: object.Key!.split("/")[1].replace(".csv", ""),
-      };
-    });
+    options.choices = rosters
+      ?.filter((object) => {
+        return object.Key!.toLowerCase().includes(focused.value.toLowerCase());
+      })
+      .map((object) => {
+        return {
+          name: object.Key!.split("/")[1].replace(".csv", ""),
+          value: object.Key!.split("/")[1].replace(".csv", ""),
+        };
+      });
 
     console.log(options);
+  } else {
+    throw new Error("No handler defined for autocomplete interaction");
   }
 
   return {

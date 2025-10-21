@@ -36,7 +36,12 @@ export const handleQuestionClose = async (
     ).Item!.questions;
 
     options.choices = questions
-      .filter((question: Question) => !question.answer && !question.closed)
+      .filter(
+        (question: Question) =>
+          !question.answer &&
+          !question.closed &&
+          question.question.toLowerCase().includes(focused.value.toLowerCase())
+      )
       .map((question: Question) => {
         return {
           name: question.question,
@@ -45,6 +50,8 @@ export const handleQuestionClose = async (
       });
 
     console.log(options);
+  } else {
+    throw new Error("No handler defined for autocomplete interaction");
   }
 
   return {

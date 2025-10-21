@@ -38,7 +38,13 @@ export const handleQuestionAnswer = async (
 
     if (focused.name === "question") {
       options.choices = questions
-        .filter((question: Question) => !question.answer)
+        .filter(
+          (question: Question) =>
+            !question.answer &&
+            question.question
+              .toLowerCase()
+              .includes(focused.value.toLowerCase())
+        )
         .map((question: Question) => {
           return {
             name: question.question,
@@ -50,14 +56,16 @@ export const handleQuestionAnswer = async (
     } else if (focused.name === "answer") {
       const questionId = interaction.data.options.find(
         (option: APIApplicationCommandInteractionDataOption) =>
-          option.name === "question"
+          option?.name === "question"
       ) as APIApplicationCommandInteractionDataStringOption;
       if (questionId) {
         const question = questions.find(
           (question: Question) => question.id === questionId.value
         );
-        const optionKeys = Object.keys(question).filter((key: string) =>
-          key.startsWith("option")
+        const optionKeys = Object.keys(question).filter(
+          (key: string) =>
+            key.startsWith("option") &&
+            question[key].toLowerCase().includes(focused.value.toLowerCase())
         );
         options.choices = optionKeys.map((key: string) => {
           return {
@@ -65,8 +73,8 @@ export const handleQuestionAnswer = async (
             value: question[key],
           };
         });
-      }
-    }
+      } else throw new Error("No response found for question parameter");
+    } else throw new Error("No handler defined for autocomplete interaction");
   }
 
   return {

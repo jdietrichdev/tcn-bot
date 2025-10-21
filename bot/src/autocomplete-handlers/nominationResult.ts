@@ -37,7 +37,12 @@ export const handleNominationResult = async (
 
     options.choices = proposals
       .filter((proposal: Proposal) => {
-        return !proposal.result;
+        return (
+          !proposal.result &&
+          `${proposal.rank} ${proposal.type} - ${proposal.username}`
+            .toLowerCase()
+            .includes(focused.value.toLowerCase())
+        );
       })
       .map((proposal: Proposal) => {
         return {
@@ -47,6 +52,8 @@ export const handleNominationResult = async (
       });
 
     console.log(options);
+  } else {
+    throw new Error("No handler defined for autocomplete interaction");
   }
 
   return {
