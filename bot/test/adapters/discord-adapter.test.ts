@@ -1,6 +1,7 @@
 import * as adapter from "../../src/adapters/discord-adapter";
 import axios from "axios";
 import { DiscordError } from "../../src/util/errors";
+import { RESTPostAPIGuildScheduledEventJSONBody } from "discord-api-types/v10";
 
 jest.mock("axios");
 
@@ -223,7 +224,7 @@ test("createThread should return thread data", async () => {
 
 test("createThread should throw DiscordError when request fails", async () => {
   jest
-    .mocked(axios.put)
+    .mocked(axios.post)
     .mockRejectedValue(buildMockAxiosError("Permissions", 403));
   await expect(
     adapter.createThread({ name: "test" }, "channelId", "messageId")
@@ -472,6 +473,74 @@ test("getServerUser should throw DiscordError when request fails", async () => {
   );
 });
 
+test("getServerMembers should call get with correct parameters", async () => {
+  jest.mocked(axios.get).mockResolvedValue({ data: {} });
+  await adapter.getServerMembers("guildId");
+  expect(axios.get).toHaveBeenCalledWith(`${BASE_URL}/guilds/guildId/members?limit=1000`, {
+    headers: {
+      Authorization: "Bot BOT_TOKEN"
+    }
+  });
+});
+
+test("getServerMembers should return server members", async () => {
+  jest.mocked(axios.get).mockResolvedValue({ data: [{ user: { id: "12345" } }] });
+  const response = await adapter.getServerMembers("guildId");
+  expect(response).toEqual([{ user: { id: "12345" } }]);
+});
+
+test("getServerMembers should throw DiscordError when request fails", async () => {
+  jest.mocked(axios.get).mockRejectedValue(buildMockAxiosError("Invalid permissions", 403));
+  await expect(adapter.getServerMembers("guildId")).rejects.toThrow(
+    new DiscordError("Failed to fetch server members", "Invalid permissions", 403)
+  );
+});
+
+test("createRole should call post with correct parameters", async () => {
+  jest.mocked(axios.post).mockResolvedValue({ data: {} });
+  await adapter.createRole("guildId", "role");
+  expect(axios.post).toHaveBeenCalledWith(`${BASE_URL}/guilds/guildId/roles`,
+    expect.objectContaining({
+      name: "role",
+      mentionable: true
+    }),
+    {
+      headers: {
+        Authorization: "Bot BOT_TOKEN"
+      }
+    }
+  )
+});
+
+test("createRole should return role data", async () => {
+  jest.mocked(axios.post).mockResolvedValue({ data: { id: "roleId", name: "role" }});
+  const response = await adapter.createRole("guildId", "role");
+  expect(response).toEqual({ id: "roleId", name: "role" });
+});
+
+test("createRole should throw DiscordError when request fails", async () => {
+  jest.mocked(axios.post).mockRejectedValue(buildMockAxiosError("Invalid permissions", 403));
+  await expect(adapter.createRole("guildId", "role")).rejects.toThrow(
+    new DiscordError("Failed to create new role", "Invalid permissions", 403)
+  );
+});
+
+test("deleteRole should call delete with correct parameters", async () => {
+  await adapter.deleteRole("guildId", "roleId");
+  expect(axios.delete).toHaveBeenCalledWith(`${BASE_URL}/guilds/guildId/roles/roleId`, {
+    headers: {
+      Authorization: "Bot BOT_TOKEN"
+    }
+  });
+});
+
+test("deleteRole should throw DiscordError when request fails", async () => {
+  jest.mocked(axios.delete).mockRejectedValue(buildMockAxiosError("Invalid permissions", 403));
+  await expect(adapter.deleteRole("guildId", "roleId")).rejects.toThrow(
+    new DiscordError("Failed to delete role", "Invalid permissions", 403)
+  );
+})
+
 test("grantRole should call put with correct parameters", async () => {
   await adapter.grantRole("guildId", "userId", "roleId");
   expect(axios.put).toHaveBeenCalledWith(
@@ -517,6 +586,53 @@ test("removeRole should throw DiscordError when request fails", async () => {
     adapter.removeRole("guildId", "userId", "roleId")
   ).rejects.toThrow(
     new DiscordError("Failed to remove role", "Permissions", 403)
+  );
+});
+
+test("getAttachment should call get with the correct parameters", async () => {
+  jest.mocked(axios.get).mockResolvedValue({ data: {} });
+  await adapter.getAttachment("url");
+  expect(axios.get).toHaveBeenCalledWith("url", {
+    responseType: "arraybuffer"
+  });
+});
+
+test("getAttachment should return attachment data", async () => {
+  jest.mocked(axios.get).mockResolvedValue({ data: 'abcdef' });
+  const response = await adapter.getAttachment("url");
+  expect(response).toEqual("abcdef");
+});
+
+test("getAttachment should throw DiscordError when request fails", async () => {
+  jest.mocked(axios.get).mockRejectedValue(buildMockAxiosError("Not found", 404));
+  await expect(adapter.getAttachment("url")).rejects.toThrow(
+    new DiscordError("Failed to retrieve attachment data", "Not found", 404)
+  );
+});
+
+test("createEvent should call post with correct parameters", async () => {
+  jest.mocked(axios.post).mockResolvedValue({ data: {} });
+  await adapter.createEvent({ name: "event" } as RESTPostAPIGuildScheduledEventJSONBody, "guildId");
+  expect(axios.post).toHaveBeenCalledWith(`${BASE_URL}/guilds/guildId/scheduled-events`, {
+    name: "event"
+  }, {
+    headers: {
+      Authorization: "Bot BOT_TOKEN",
+      "Content-Type": "application/json"
+    }
+  })
+});
+
+test("createEvent should return event data", async () => {
+  jest.mocked(axios.post).mockResolvedValue({ data: { name: "event" } });
+  const response = await adapter.createEvent({ name: "event" } as RESTPostAPIGuildScheduledEventJSONBody, "guildId");
+  expect(response).toEqual({ name: "event" });
+});
+
+test("createEvent should throw DiscordError when request fails", async () => {
+  jest.mocked(axios.post).mockRejectedValue(buildMockAxiosError("Invalid permissions", 403));
+  await expect(adapter.createEvent({ name: "event" } as RESTPostAPIGuildScheduledEventJSONBody, "guildId")).rejects.toThrow(
+    new DiscordError("Failed to create event", "Invalid permissions", 403)
   );
 });
 
