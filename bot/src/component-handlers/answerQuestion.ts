@@ -62,10 +62,10 @@ export const answerQuestion = async (
     };
 
     const description = `**Response Distribution**\n━━━━━━━━━━━━━━━\n\n` +
-      `🅰️ ${question.optionOne}\n${createBar(optionCounts.optionOne)} (${optionCounts.optionOne})\n\n` +
-      `🅱️ ${question.optionTwo}\n${createBar(optionCounts.optionTwo)} (${optionCounts.optionTwo})` +
-      (question.optionThree ? `\n\n🅲️ ${question.optionThree}\n${createBar(optionCounts.optionThree)} (${optionCounts.optionThree})` : '') +
-      (question.optionFour ? `\n\n🅳️ ${question.optionFour}\n${createBar(optionCounts.optionFour)} (${optionCounts.optionFour})` : '') +
+      `1️⃣ ${question.optionOne}\n${createBar(optionCounts.optionOne)} (${optionCounts.optionOne})\n\n` +
+      `2️⃣ ${question.optionTwo}\n${createBar(optionCounts.optionTwo)} (${optionCounts.optionTwo})` +
+      (question.optionThree ? `\n\n3️⃣ ${question.optionThree}\n${createBar(optionCounts.optionThree)} (${optionCounts.optionThree})` : '') +
+      (question.optionFour ? `\n\n4️⃣ ${question.optionFour}\n${createBar(optionCounts.optionFour)} (${optionCounts.optionFour})` : '') +
       `\n\n📊 **Total Responses:** ${totalResponses}`;
 
     const updatedMessageEmbed = {
