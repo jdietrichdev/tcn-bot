@@ -6,7 +6,7 @@ on:
       - infra/**
       - bot/**
       - ui/**
-      - .github/workflows/deploy.yml
+      - .github/workflows/pipeline.yml
   workflow_dispatch:
   pull_request:
     branches:
