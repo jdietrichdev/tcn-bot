@@ -1,5 +1,10 @@
 import axios from "axios";
-import { getClan, getCwl, getPlayer, verify } from "../../src/adapters/coc-api-adapter";
+import {
+  getClan,
+  getCwl,
+  getPlayer,
+  verify,
+} from "../../src/adapters/coc-api-adapter";
 
 jest.mock("axios");
 
@@ -30,9 +35,9 @@ test("getPlayer should call get with correct parameters", async () => {
   await getPlayer("tag");
   expect(axios.get).toHaveBeenCalledWith(`${BASE_URL}/players/tag`, {
     headers: {
-      Authorization: "Bearer API_TOKEN"
-    }
-  })
+      Authorization: "Bearer API_TOKEN",
+    },
+  });
 });
 
 test("getPlayer should return player data", async () => {
@@ -41,7 +46,7 @@ test("getPlayer should return player data", async () => {
   expect(response).toEqual({ playertag: "tag" });
 });
 
-test('getPlayer should throw error when request fails', async () => {
+test("getPlayer should throw error when request fails", async () => {
   jest.mocked(axios.get).mockRejectedValue(new Error("Failed"));
   await expect(getPlayer("tag")).rejects.toThrow("Failed");
 });
@@ -51,9 +56,9 @@ test("getClan should call get with correct parameters", async () => {
   await getClan("tag");
   expect(axios.get).toHaveBeenCalledWith(`${BASE_URL}/clans/tag`, {
     headers: {
-      Authorization: "Bearer API_TOKEN"
-    }
-  })
+      Authorization: "Bearer API_TOKEN",
+    },
+  });
 });
 
 test("getClan should return clan data", async () => {
@@ -62,7 +67,7 @@ test("getClan should return clan data", async () => {
   expect(response).toEqual({ clantag: "tag" });
 });
 
-test('getClan should throw error when request fails', async () => {
+test("getClan should throw error when request fails", async () => {
   jest.mocked(axios.get).mockRejectedValue(new Error("Failed"));
   await expect(getClan("tag")).rejects.toThrow("Failed");
 });
@@ -72,9 +77,9 @@ test("getCwl should call get with correct parameters", async () => {
   await getCwl("tag");
   expect(axios.get).toHaveBeenCalledWith(`${BASE_URL}/players/tag`, {
     headers: {
-      Authorization: "Bearer API_TOKEN"
-    }
-  })
+      Authorization: "Bearer API_TOKEN",
+    },
+  });
 });
 
 test("getCwl should return player data", async () => {
@@ -83,7 +88,7 @@ test("getCwl should return player data", async () => {
   expect(response).toEqual({ clantag: "tag" });
 });
 
-test('getCwl should throw error when request fails', async () => {
+test("getCwl should throw error when request fails", async () => {
   jest.mocked(axios.get).mockRejectedValue(new Error("Failed"));
   await expect(getCwl("tag")).rejects.toThrow("Failed");
 });
