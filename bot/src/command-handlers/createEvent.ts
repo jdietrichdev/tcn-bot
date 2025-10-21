@@ -23,7 +23,7 @@ import { v4 as uuidv4 } from "uuid";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
 
-const channelTypeMap = new Map<string, Record<string, any>>([
+export const channelTypeMap = new Map<string, Record<string, any>>([
   ["Text", [ChannelType.GuildText, GuildScheduledEventEntityType.External]],
   ["Voice", [ChannelType.GuildVoice, GuildScheduledEventEntityType.Voice]],
   [
@@ -93,25 +93,28 @@ export const handleCreateEvent = async (
       ).toString("base64")}`;
     }
 
-    await createEvent(
-      {
-        name: eventData.name,
-        scheduled_start_time: eventData.start.toISOString(),
-        scheduled_end_time: eventData.end.toISOString(),
-        privacy_level: GuildScheduledEventPrivacyLevel.GuildOnly,
-        entity_type: channelTypeMap.get(eventData.type)![1],
-        ...(eventData.type === "Text"
-          ? { entity_metadata: { location: `<#${channel.id}>` } }
-          : { channel_id: channel.id }),
-        description: `${eventData.description}${
-          eventData.sponsor
-            ? `\n\nThanks to our sponsor <@${eventData.sponsor}>!`
-            : ""
-        }`,
-        ...(thumbnail && { image: thumbnail }),
-      },
-      interaction.guild_id!
-    );
+    // Only create Discord scheduled event if times are provided
+    if (eventData.start && eventData.end) {
+      await createEvent(
+        {
+          name: eventData.name,
+          scheduled_start_time: eventData.start.toISOString(),
+          scheduled_end_time: eventData.end.toISOString(),
+          privacy_level: GuildScheduledEventPrivacyLevel.GuildOnly,
+          entity_type: channelTypeMap.get(eventData.type)![1],
+          ...(eventData.type === "Text"
+            ? { entity_metadata: { location: `<#${channel.id}>` } }
+            : { channel_id: channel.id }),
+          description: `${eventData.description}${
+            eventData.sponsor
+              ? `\n\nThanks to our sponsor <@${eventData.sponsor}>!`
+              : ""
+          }`,
+          ...(thumbnail && { image: thumbnail }),
+        },
+        interaction.guild_id!
+      );
+    }
 
     const eventMessage = createEventMessage(eventData, attachment);
     await sendMessageWithAttachment(eventMessage, channel.id);
@@ -194,12 +197,18 @@ const createEventMessage = (
   const formData = new FormData();
 
   let message = `# ${eventData.name}`;
-  message = message.concat(
-    `\n\nStart: <t:${createDiscordTimestamp(eventData.start.toUTCString())}:F>`
-  );
-  message = message.concat(
-    `\nEnd: <t:${createDiscordTimestamp(eventData.end.toUTCString())}:F>`
-  );
+  
+  if (eventData.start && eventData.end) {
+    message = message.concat(
+      `\n\nStart: <t:${createDiscordTimestamp(eventData.start.toUTCString())}:F>`
+    );
+    message = message.concat(
+      `\nEnd: <t:${createDiscordTimestamp(eventData.end.toUTCString())}:F>`
+    );
+  } else {
+    message = message.concat("\n\n⏰ *Times to be announced*");
+  }
+
   if (eventData.description)
     message = message.concat(`\n\nDescription: ${eventData.description}`);
   if (eventData.sponsor)
