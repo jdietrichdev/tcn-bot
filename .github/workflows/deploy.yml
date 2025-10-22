@@ -14,9 +14,9 @@ permissions:
   contents: read
 
 env:
-    DISCORD_PUBLIC_KEY: ${{ secrets.DISCORD_PUBLIC_KEY }}
-    CLASH_API_TOKEN: ${{ secrets.CLASH_API_TOKEN }}
-    BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+  DISCORD_PUBLIC_KEY: ${{ secrets.DISCORD_PUBLIC_KEY }}
+  CLASH_API_TOKEN: ${{ secrets.CLASH_API_TOKEN }}
+  BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
 
 jobs:
   quality-check:
@@ -27,7 +27,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: '20'
 
       - uses: actions/checkout@v5
 
@@ -42,6 +42,9 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Lint packages
+        run: npm run lint
+
       - name: Build Bot Code
         run: npm run build --workspace bot
 
@@ -50,6 +53,9 @@ jobs:
         with:
           name: bot-build
           path: bot/dist
+
+      - name: Build UI
+        run: npm run build --workspace ui
 
       - name: Run Unit Tests
         run: npm test
@@ -66,7 +72,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: '20'
 
       - uses: actions/checkout@v5
 
@@ -86,12 +92,15 @@ jobs:
 
       - name: Install Dependencies
         run: npm ci
-        
+
       - name: Download Bot Code
         uses: actions/download-artifact@v4
         with:
           name: bot-build
           path: bot/dist
 
-      - run: npm run bootstrap --workspace infra
-      - run: npm run deploy --workspace infra -- --require-approval never
+      - name: Bootstrap
+        run: npm run bootstrap --workspace infra
+
+      - name: Deploy
+        run: npm run deploy --workspace infra -- --require-approval never

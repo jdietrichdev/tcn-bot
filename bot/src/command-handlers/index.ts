@@ -7,7 +7,7 @@ export const handleCommand = async (
   event: EventBridgeEvent<string, APIChatInputApplicationCommandInteraction>
 ) => {
   try {
-    switch (event.detail.data!.name) {
+    switch (event.detail.data.name) {
       case "hello":
         return await commands.handleHello(event.detail);
       case "player":

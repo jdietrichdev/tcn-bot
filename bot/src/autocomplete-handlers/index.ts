@@ -5,7 +5,7 @@ export const handleAutocomplete = async (
   interaction: APIApplicationCommandAutocompleteInteraction
 ) => {
   try {
-    switch (interaction.data!.name) {
+    switch (interaction.data.name) {
       case "upgrade":
         return await autocomplete.handleUpgrade(interaction);
       case "cwl-roster":
