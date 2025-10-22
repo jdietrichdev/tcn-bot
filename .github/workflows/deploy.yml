@@ -6,7 +6,7 @@ on:
       - infra/**
       - bot/**
       - ui/**
-      - .github/workflows/pipeline.yml
+      - .github/workflows/deploy.yml
   workflow_dispatch:
 
 permissions:
