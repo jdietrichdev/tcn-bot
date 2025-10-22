@@ -25,6 +25,7 @@ export interface ServerConfig {
   TRIAL_ELDER_ROLE: string;
   TRIAL_LEAD_ROLE: string;
   BOT_ID: string;
+  ROSTER_URL?: string;
 }
 
 const configMap = new Map<string, ServerConfig>();
@@ -57,6 +58,8 @@ configMap.set("1021786969077973022", {
   TRIAL_ELDER_ROLE: "1424943970810593360",
   TRIAL_LEAD_ROLE: "1424943896743645184",
   BOT_ID: "1257342457868451920",
+  ROSTER_URL:
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vRckzbRnsega-kND3dWkpaeMe78An7gD6Z3YM-vkaxTyXf1KMXDIgNB917_sJ5zyhNT7LKwK6fWstnJ/pub?gid=1984635118&single=true&output=csv",
 });
 
 // TCN Server
@@ -87,6 +90,8 @@ configMap.set("1111490767991615518", {
   TRIAL_ELDER_ROLE: "1358235739824979978",
   TRIAL_LEAD_ROLE: "1358287688343621882",
   BOT_ID: "1257342457868451920",
+  ROSTER_URL:
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vRckzbRnsega-kND3dWkpaeMe78An7gD6Z3YM-vkaxTyXf1KMXDIgNB917_sJ5zyhNT7LKwK6fWstnJ/pub?gid=1984635118&single=true&output=csv",
 });
 
 export const getConfig = (guidId: string): ServerConfig => {

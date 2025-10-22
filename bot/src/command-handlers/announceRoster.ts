@@ -5,15 +5,16 @@ import { getServerMembers, sendMessage, updateMessage, updateResponse } from "..
 import { getClan } from "../adapters/coc-api-adapter";
 import { getConfig } from "../util/serverConfig";
 
-const ROSTER_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRckzbRnsega-kND3dWkpaeMe78An7gD6Z3YM-vkaxTyXf1KMXDIgNB917_sJ5zyhNT7LKwK6fWstnJ/pub?gid=914552917&single=true&output=csv";
+const DEFAULT_ROSTER_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRckzbRnsega-kND3dWkpaeMe78An7gD6Z3YM-vkaxTyXf1KMXDIgNB917_sJ5zyhNT7LKwK6fWstnJ/pub?gid=1984635118&single=true&output=csv";
 
 export const handleAnnounceRoster = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
   try {
     const config = getConfig(interaction.guild_id!);
-    const response = await axios.get(ROSTER_URL);
+    const rosterUrl = process.env.ROSTER_URL || config.ROSTER_URL || DEFAULT_ROSTER_URL;
+    const response = await axios.get(rosterUrl);
     const rosterData = parse(response.data, {
       columns: true,
       skip_empty_lines: true,
