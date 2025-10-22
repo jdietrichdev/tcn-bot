@@ -5,23 +5,22 @@ import { getServerMembers, sendMessage, updateMessage, updateResponse } from "..
 import { getClan } from "../adapters/coc-api-adapter";
 import { getConfig } from "../util/serverConfig";
 
-const DEFAULT_ROSTER_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRckzbRnsega-kND3dWkpaeMe78An7gD6Z3YM-vkaxTyXf1KMXDIgNB917_sJ5zyhNT7LKwK6fWstnJ/pub?gid=1984635118&single=true&output=csv";
+
+const ROSTER_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRckzbRnsega-kND3dWkpaeMe78An7gD6Z3YM-vkaxTyXf1KMXDIgNB917_sJ5zyhNT7LKwK6fWstnJ/pub?gid=1984635118&single=true&output=csv";
 
 export const handleAnnounceRoster = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
   try {
-    const config = getConfig(interaction.guild_id!);
-    const rosterUrl = process.env.ROSTER_URL || config.ROSTER_URL || DEFAULT_ROSTER_URL;
-    const response = await axios.get(rosterUrl);
-    const rosterData = parse(response.data, {
-      columns: true,
-      skip_empty_lines: true,
-    });
+  const config = getConfig(interaction.guild_id!);
+  const response = await axios.get(ROSTER_URL);
+  const rosterData = parse(response.data, {
+    columns: true,
+    skip_empty_lines: true,
+  });
 
     if (!Array.isArray(rosterData) || rosterData.length === 0) {
-      console.error("Roster CSV parsed to empty data", { url: rosterUrl });
+      console.error("Roster CSV parsed to empty data", { url: ROSTER_URL });
       throw new Error("Parsed roster CSV was empty");
     }
     console.log("Roster CSV headers:", Object.keys(rosterData[0]));
@@ -76,14 +75,17 @@ export const handleAnnounceRoster = async (
           members: []
         };
       } else if (String(tag).startsWith("#")) {
-        const discordValue = (row["Discord"] || row["discord"] || "").toString().trim();
-        const normalized = discordValue.toLowerCase();
-        const member = guildMembers.find((member: APIGuildMember) => {
-          const uname = (member.user.username || "").toLowerCase().trim();
-          return uname === normalized || uname.startsWith(normalized) || normalized === member.user.id;
-        });
-
-        const userId = member?.user.id ?? discordValue;
+        const discordValueRaw = row["Discord"] || row["discord"] || "";
+        const discordValue = discordValueRaw.toString().trim();
+        let userId: string | undefined = undefined;
+        if (discordValue) {
+          const normalized = discordValue.toLowerCase();
+          const member = guildMembers.find((member: APIGuildMember) => {
+            const uname = (member.user.username || "").toLowerCase().trim();
+            return uname === normalized || uname.startsWith(normalized) || normalized === member.user.id;
+          });
+          userId = member?.user.id ?? discordValue;
+        }
         const playerTag = String(tag).startsWith('#') ? String(tag) : `#${String(tag)}`;
         clanRoster.members.push({
           playerTag,
