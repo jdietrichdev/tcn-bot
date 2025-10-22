@@ -52,8 +52,18 @@ export const handleAnnounceRoster = async (
         if (clanRoster.members.length !== 0) {
           roster.push(clanRoster);
         }
-        const parts = String(tag).split("=");
-        const clanTag = parts[2] || parts[parts.length - 1];
+        let clanTagRaw: string | null = null;
+        try {
+          const urlStr = String(tag);
+          const parsed = new URL(urlStr);
+          clanTagRaw = parsed.searchParams.get('tag');
+        } catch (urlErr) {
+          const parts = String(tag).split("=");
+          clanTagRaw = parts[2] || parts[parts.length - 1];
+        }
+        if (!clanTagRaw) clanTagRaw = String(tag);
+        let clanTag = decodeURIComponent(String(clanTagRaw)).replace(/"/g, "").trim();
+        if (!clanTag.startsWith('#')) clanTag = `#${clanTag}`;
         try {
           clanData = await getClan(clanTag);
         } catch (err) {
@@ -74,8 +84,9 @@ export const handleAnnounceRoster = async (
         });
 
         const userId = member?.user.id ?? discordValue;
+        const playerTag = String(tag).startsWith('#') ? String(tag) : `#${String(tag)}`;
         clanRoster.members.push({
-          playerTag: tag,
+          playerTag,
           playerName: row["Account"] || row["account"] || "",
           userId: userId,
         });
