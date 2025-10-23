@@ -54,6 +54,8 @@ export const handleCommand = async (
         return await commands.handleRankProposalReminder(event.detail);
       case "announce-roster":
         return await commands.handleAnnounceRoster(event.detail);
+      case "schedule-event":
+        return await commands.handleScheduleEvent(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);
