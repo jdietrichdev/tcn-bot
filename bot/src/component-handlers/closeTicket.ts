@@ -53,7 +53,7 @@ export const closeTicket = async (
               BUTTONS.DELETE_TICKET,
               await determineRolesButton(
                 interaction.guild_id!,
-                userId!,
+                userId,
                 config
               ),
             ],

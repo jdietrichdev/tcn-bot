@@ -22,7 +22,7 @@ export const createDenyAppModal = (
     data: {
       custom_id: `denyAppModal_${interaction.channel.id}_${
         interaction.message.id
-      }_${interaction.message.embeds![0].fields![5].value}`,
+      }_${interaction.message.embeds[0].fields![5].value}`,
       title: `Denying application for ${
         interaction.message.embeds[0].title?.split(" ")[2]
       }`,

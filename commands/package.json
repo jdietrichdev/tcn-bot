@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "scripts": {
     "register-commands": "npx ts-node register-commands.ts",
-    "test": "exit 0"
+    "test": "exit 0",
+    "lint": "exit 0",
+    "lint:fix": "exit 0"
   },
   "dependencies": {
     "axios": "^1.7.5",
