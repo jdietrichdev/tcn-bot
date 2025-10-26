@@ -22,18 +22,18 @@ export const handleScheduleEvent = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
   try {
-    const eventId = getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
-      interaction,
-      "event"
-    ).value;
-    
+    const eventId = (interaction.channel as any)?.topic;
+    if (!eventId) {
+      throw new Error("This command must be used in an event channel.");
+    }
+
     const start = new Date(
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
         "start"
       ).value
     );
-    
+
     const end = new Date(
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
@@ -54,17 +54,11 @@ export const handleScheduleEvent = async (
     ).Item;
 
     if (!eventData) {
-      throw new Error("Event not found");
+      throw new Error("Event not found for this channel.");
     }
 
-    const channel = await getChannel(eventData.channel, interaction.guild_id!);
-    
-    if (!channel) {
-      throw new Error("Channel not found");
-    }
-
-    const storedType: string = eventData.type || channel.type;
-
+    const channelId = eventData.channel;
+    const storedType: string = eventData.type;
     const entityType = channelTypeMap.get(storedType)?.[1] ?? GuildScheduledEventEntityType.External;
     const createPayload: RESTPostAPIGuildScheduledEventJSONBody = {
       name: eventData.name,
@@ -77,9 +71,9 @@ export const handleScheduleEvent = async (
     } as RESTPostAPIGuildScheduledEventJSONBody;
 
     if (entityType === GuildScheduledEventEntityType.External) {
-      createPayload.entity_metadata = { location: `<#${channel.id}>` };
+      createPayload.entity_metadata = { location: `<#${channelId}>` };
     } else {
-      createPayload.channel_id = channel.id;
+      createPayload.channel_id = channelId;
     }
 
     await createEvent(createPayload, interaction.guild_id!);
@@ -95,8 +89,7 @@ export const handleScheduleEvent = async (
     eventData.scheduled = true;
 
     await Promise.all([
-      sendMessage({ content: updatedMessage }, eventData.channel),
-      
+      sendMessage({ content: updatedMessage }, channelId),
       dynamoDbClient.send(
         new PutCommand({
           TableName: "BotTable",
@@ -106,7 +99,7 @@ export const handleScheduleEvent = async (
     ]);
 
     await updateResponse(interaction.application_id, interaction.token, {
-      content: `Event "${eventData.name}" has been scheduled! Check <#${eventData.channel}> for details.`,
+      content: `Event "${eventData.name}" has been scheduled! Check <#${channelId}> for details.`,
     });
   } catch (err) {
     console.error(`Failed to schedule event: ${err}`);

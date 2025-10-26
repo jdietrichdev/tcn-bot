@@ -107,7 +107,7 @@ export const handleCreateEvent = async (
       console.error("Failed to create channel", err);
       await updateResponse(interaction.application_id, interaction.token, {
         content:
-          "Failed to create the event channel. Please check server configuration (category, bot permissions) and try again.",
+          "Failed to create the event channel. Please try again or contact an admin.",
       });
       return;
     }
@@ -182,11 +182,11 @@ export const handleCreateEvent = async (
       sponsor: eventData.sponsor,
       channel: channel.id,
       type: eventData.type,
+      startTime: eventData.start?.toISOString(),
+      endTime: eventData.end?.toISOString(),
+      thumbnail: eventData.thumbnail,
+      scheduled: scheduledCreated,
     };
-    if (eventData.start) item.startTime = eventData.start.toISOString();
-    if (eventData.end) item.endTime = eventData.end.toISOString();
-    if (eventData.thumbnail) item.thumbnail = eventData.thumbnail;
-    if (scheduledCreated) item.scheduled = true;
 
     try {
       await dynamoDbClient.send(
