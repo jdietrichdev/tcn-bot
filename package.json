@@ -2,7 +2,9 @@
   "name": "tcn-bot",
   "version": "1.0.0",
   "scripts": {
-    "test": "npm test --workspaces"
+    "test": "npm test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "lint:fix": "npm run lint:fix --workspaces"
   },
   "author": "Josh Dietrich",
   "license": "ISC",
@@ -31,19 +33,9 @@
     "@typescript-eslint/eslint-plugin": "^7.14.1",
     "@typescript-eslint/parser": "^7.14.1",
     "eslint": "^8.56.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-only-warn": "1.1.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.4"
-  },
-  "eslintConfig": {
-    "parser": "@typescript-eslint/parser",
-    "plugins": [
-      "@typescript-eslint"
-    ],
-    "extends": [
-      "plugin:@typescript-eslint/recommended"
-    ],
-    "rules": {
-      "@typescript-eslint/no-explicit-any": "off"
-    }
   }
 }

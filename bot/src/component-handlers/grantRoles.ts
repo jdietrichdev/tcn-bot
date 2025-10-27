@@ -53,7 +53,7 @@ export const grantRoles = async (
               ...interaction.message.components![0].components.splice(0, 2),
               await determineRolesButton(
                 interaction.guild_id!,
-                userId!,
+                userId,
                 config
               ),
             ],

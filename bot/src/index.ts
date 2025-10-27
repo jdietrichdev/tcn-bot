@@ -45,7 +45,7 @@ export const proxy = async (
     response = { type: 1 };
   } else if (body.type === InteractionType.ApplicationCommandAutocomplete) {
     response = await handleAutocomplete(
-      body as APIApplicationCommandAutocompleteInteraction
+      body
     );
   } else if (
     body.type === InteractionType.ApplicationCommand &&
@@ -90,9 +90,9 @@ export const handler = async (
 ) => {
   console.log(JSON.stringify(event));
   if (event.detail.type === InteractionType.MessageComponent) {
-    await handleComponent(event.detail as APIMessageComponentInteraction);
+    await handleComponent(event.detail);
   } else if (event.detail.type === InteractionType.ModalSubmit) {
-    await submitModal(event.detail as APIModalSubmitInteraction);
+    await submitModal(event.detail);
   } else {
     await handleCommand(
       event as EventBridgeEvent<
