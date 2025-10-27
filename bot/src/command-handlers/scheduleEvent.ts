@@ -21,9 +21,6 @@ export const handleScheduleEvent = async (
 ) => {
   try {
     const eventId = (interaction.channel as any)?.topic;
-    if (!eventId) {
-      throw new Error('This command must be used in an event channel.');
-    }
 
     const start = new Date(
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
