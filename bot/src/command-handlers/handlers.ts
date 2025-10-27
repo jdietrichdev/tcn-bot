@@ -22,3 +22,4 @@ export * from "./nominate";
 export * from "./nominationResult";
 export * from "./rankProposalReminder";
 export * from "./announceRoster";
+export * from "./scheduleEvent";
