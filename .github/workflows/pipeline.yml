@@ -8,6 +8,8 @@ on:
       - ui/**
       - .github/workflows/deploy.yml
   workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 permissions:
   id-token: write
