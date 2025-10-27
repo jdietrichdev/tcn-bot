@@ -80,7 +80,7 @@ export const handleScheduleEvent = async (
       `Start: <t:${createDiscordTimestamp(start.toUTCString())}:F>\n` +
       `End: <t:${createDiscordTimestamp(end.toUTCString())}:F>` +
       (eventData.description ? `\n\nDescription: ${eventData.description}` : '') +
-      (eventData.sponsor ? `\n\nThanks to our sponsor <@${eventData.sponsor}>` : '');
+      "\n\nThanks again to all our amazing sponsors!";
 
     eventData.startTime = start.toISOString();
     eventData.endTime = end.toISOString();
