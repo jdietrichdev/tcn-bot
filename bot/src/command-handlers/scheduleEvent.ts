@@ -8,9 +8,7 @@ import {
 import { getCommandOptionData } from "../util/interaction-util";
 import {
   createEvent,
-  getChannel,
   sendMessage,
-  updateMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
