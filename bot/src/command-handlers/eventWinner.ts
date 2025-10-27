@@ -34,6 +34,11 @@ export const handleEventWinner = async (
         interaction,
         "prize"
       ).value;
+    const sponsor =
+      getCommandOptionData<APIApplicationCommandInteractionDataUserOption>(
+        interaction,
+        "sponsor"
+      ).value;
     const expiration = Number(
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
@@ -72,7 +77,7 @@ export const handleEventWinner = async (
               {
                 type: ComponentType.Button,
                 style: ButtonStyle.Primary,
-                custom_id: `claim_${interaction.guild_id!}_${eventId}_${prize}`,
+                custom_id: `claim_${interaction.guild_id!}_${eventId}_${prize}_${sponsor}`,
                 label: "Claim",
               },
             ],

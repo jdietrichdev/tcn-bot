@@ -141,11 +141,7 @@ export const handleCreateEvent = async (
             ...(eventData.type === "Text"
               ? { entity_metadata: { location: `<#${channel.id}>` } }
               : { channel_id: channel.id }),
-            description: `${eventData.description}${
-              eventData.sponsor
-                ? `\n\nThanks to our sponsor <@${eventData.sponsor}>!`
-                : ""
-            }`,
+            description: `${eventData.description}\n\nThanks to all our wonderful sponsors!`,
             ...(thumbnail && { image: thumbnail }),
           },
           interaction.guild_id!
@@ -179,7 +175,6 @@ export const handleCreateEvent = async (
       eventId,
       name: eventData.name,
       description: eventData.description,
-      sponsor: eventData.sponsor,
       channel: channel.id,
       type: eventData.type,
       startTime: eventData.start?.toISOString(),
@@ -252,11 +247,6 @@ const getEventData = (
         interaction,
         "thumbnail"
       )?.value,
-    sponsor:
-      getCommandOptionData<APIApplicationCommandInteractionDataUserOption>(
-        interaction,
-        "sponsor"
-      )?.value,
   };
 };
 
@@ -281,10 +271,9 @@ const createEventMessage = (
 
   if (eventData.description)
     message = message.concat(`\n\nDescription: ${eventData.description}`);
-  if (eventData.sponsor)
-    message = message.concat(
-      `\n\nThanks to our sponsor <@${eventData.sponsor}>`
-    );
+  message = message.concat(
+    `\n\nThanks to all our wonderful sponsors!`
+  );
 
   formData.append("payload_json", JSON.stringify({ content: message }));
   if (thumbnail)
