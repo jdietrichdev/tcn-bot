@@ -19,7 +19,7 @@ env:
   TCN_GUILD_ID: ${{ secrets.TCN_GUILD_ID}}
 
 jobs:
-  register-commands:
+  register-test-commands:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Node
@@ -31,5 +31,25 @@ jobs:
 
       - run: npm install
 
-      - name: Register Commands
+      - name: Register Test Commands
+        env:
+          GUILD: 'TEST'
+        run: npm run register-commands --workspace commands
+
+  register-tcn-commands:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20.x'
+
+      - uses: actions/checkout@v5
+
+      - run: npm install
+
+      - name: Register Test Commands
+        env:
+          GUILD: 'TCN'
         run: npm run register-commands --workspace commands

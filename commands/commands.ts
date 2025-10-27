@@ -549,13 +549,6 @@ export const scheduleEvent = new SlashCommandBuilder()
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .addStringOption((option) => {
     return option
-      .setName("event")
-      .setDescription("Event to schedule")
-      .setRequired(true)
-      .setAutocomplete(true);
-  })
-  .addStringOption((option) => {
-    return option
       .setName("start")
       .setDescription("Start time in UTC (yyyy-mm-ddThh:mm)")
       .setRequired(true);
