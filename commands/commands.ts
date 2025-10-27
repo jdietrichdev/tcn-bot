@@ -296,14 +296,14 @@ export const createEvent = new SlashCommandBuilder()
   .addStringOption((option) => {
     return option
       .setName("start")
-      .setDescription("Start time in UTC (yyyy-mm-ddThh:mm")
-      .setRequired(true);
+      .setDescription("Start time in UTC (yyyy-mm-ddThh:mm) - Optional for unscheduled events")
+      .setRequired(false);
   })
   .addStringOption((option) => {
     return option
       .setName("end")
-      .setDescription("End time in UTC (yyyy-mm-ddThh:mm")
-      .setRequired(true);
+      .setDescription("End time in UTC (yyyy-mm-ddThh:mm) - Optional for unscheduled events")
+      .setRequired(false);
   })
   .addStringOption((option) => {
     return option
@@ -542,3 +542,27 @@ export const announceRoster = new SlashCommandBuilder()
     "Pull roster data from sheet and send to announcement channel"
   )
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+export const scheduleEvent = new SlashCommandBuilder()
+  .setName("schedule-event")
+  .setDescription("Schedule or update times for an existing event")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("event")
+      .setDescription("Event to schedule")
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("start")
+      .setDescription("Start time in UTC (yyyy-mm-ddThh:mm)")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("end")
+      .setDescription("End time in UTC (yyyy-mm-ddThh:mm)")
+      .setRequired(true);
+  });
