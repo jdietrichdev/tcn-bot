@@ -67,7 +67,7 @@ export const handleUnrosteredCommand = async (
             const playerData = await getPlayer(player.playerTag);
             return {
               ...player,
-              cwlLeague: playerData.league?.name || 'Unranked',
+              cwlLeague: playerData.warLeague?.name || 'Unranked',
             };
           } catch (error) {
             console.error(`Failed to fetch league for ${player.name}:`, error);
