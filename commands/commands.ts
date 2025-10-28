@@ -317,12 +317,6 @@ export const createEvent = new SlashCommandBuilder()
       .setDescription("Thumbnail for the event")
       .setRequired(false);
   })
-  .addUserOption((option) => {
-    return option
-      .setName("sponsor")
-      .setDescription("Sponsor for the event")
-      .setRequired(false);
-  });
 
 export const questionCreate = new SlashCommandBuilder()
   .setName("question-create")
@@ -440,6 +434,12 @@ export const eventWinner = new SlashCommandBuilder()
           value: "CASH",
         },
       ]);
+  })
+  .addUserOption((option) => {
+    return option
+      .setName("sponsor")
+      .setDescription("Sponsor for the award being given")
+      .setRequired(true)
   })
   .addStringOption((option) => {
     return option

@@ -20,7 +20,7 @@ export const claimEvent = async (
   interaction: APIMessageComponentInteraction
 ) => {
   try {
-    const [, guildId, eventId, prize] = interaction.data.custom_id.split("_");
+    const [, guildId, eventId, prize, sponsor] = interaction.data.custom_id.split("_");
     const config = getConfig(guildId);
     const eventData = (
       await dynamoDbClient.send(
@@ -67,19 +67,16 @@ export const claimEvent = async (
             ).toString(),
             deny: "0",
           },
-          ...((eventData.sponsor && [
-            {
-              id: eventData.sponsor,
-              type: OverwriteType.Member,
-              allow: (
-                PermissionFlagsBits.ViewChannel |
-                PermissionFlagsBits.AddReactions |
-                PermissionFlagsBits.SendMessages
-              ).toString(),
-              deny: "0",
-            },
-          ]) ||
-            []),
+          {
+            id: sponsor,
+            type: OverwriteType.Member,
+            allow: (
+              PermissionFlagsBits.ViewChannel |
+              PermissionFlagsBits.AddReactions |
+              PermissionFlagsBits.SendMessages
+            ).toString(),
+            deny: "0",
+          },
         ],
       },
       guildId
@@ -88,8 +85,7 @@ export const claimEvent = async (
     let message = `Congrats again on winning a ${prize} in our ${
       eventData.name
     } event <@${interaction.user!.id}>!`;
-    if (eventData.sponsor)
-      message += ` Please coordinate with <@${eventData.sponsor}> to claim your prize.`;
+    message += ` Please coordinate with <@${sponsor}> to claim your prize.`;
     message += `\n\nPlease share your Supercell friend link or any other information that would be helpful for sending you your prize.`;
     await sendMessage(
       {
