@@ -8,22 +8,25 @@ import {
 } from "discord-api-types/v10";
 import {
   createDM,
+  getMessage,
   sendMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
 import { getCommandOptionData } from "../util/interaction-util";
 import { dynamoDbClient } from "../clients/dynamodb-client";
-import { GetCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { schedulerClient } from "../clients/scheduler-client";
 import {
   CreateScheduleCommand,
   FlexibleTimeWindowMode,
 } from "@aws-sdk/client-scheduler";
+import { getConfig } from "../util/serverConfig";
 
 export const handleEventWinner = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
   try {
+    const config = getConfig(interaction.guild_id!);
     const winner =
       getCommandOptionData<APIApplicationCommandInteractionDataUserOption>(
         interaction,
@@ -86,6 +89,25 @@ export const handleEventWinner = async (
       },
       dmChannel.id
     );
+
+    const statusMessage = await sendMessage({
+      content: `Winner: ${winner}\nSponsor: ${sponsor}\nPrize: ${prize}\nStatus: Initiated`
+    }, config.REWARD_TRACKING_CHANNEL);
+
+    const rewards = (await dynamoDbClient.send(new GetCommand({
+      TableName: "BotTable",
+      Key: {
+        pk: interaction.guild_id,
+        sk: 'event-rewards'
+      }
+    }))).Item!;
+
+    rewards.rewards.push({ winner, prize, sponsor, status: "Initiated", message: statusMessage.id });
+
+    await dynamoDbClient.send(new PutCommand({
+      TableName: "BotTable",
+      Item: rewards
+    }));
 
     await schedulerClient.send(
       new CreateScheduleCommand({

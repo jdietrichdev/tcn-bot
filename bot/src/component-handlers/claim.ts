@@ -6,7 +6,7 @@ import {
 } from "discord-api-types/v10";
 import { getConfig } from "../util/serverConfig";
 import { dynamoDbClient } from "../clients/dynamodb-client";
-import { GetCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import {
   createChannel,
   sendMessage,
@@ -97,6 +97,26 @@ export const claimEvent = async (
     await updateMessage(interaction.channel.id, interaction.message.id, {
       components: [],
     });
+
+    const rewards = (await dynamoDbClient.send(new GetCommand({
+      TableName: "BotTable",
+      Key: {
+        pk: interaction.guild_id,
+        sk: 'event-rewards'
+      }
+    }))).Item!;
+
+    const reward = rewards.find((reward) => reward.winner === interaction.user?.id && reward.prize === prize && reward.sponsor === sponsor)
+    reward.status = 'Pending';
+
+    await updateMessage(config.REWARD_TRACKING_CHANNEL, reward.message, {
+      content: `Winner: ${interaction.user?.id}\nSponsor: ${sponsor}\nPrize: ${prize}\nStatus: Pending`
+    });
+
+    await dynamoDbClient.send(new PutCommand({
+      TableName: "BotTable",
+      Item: rewards
+    }));
 
     await schedulerClient.send(
       new DeleteScheduleCommand({

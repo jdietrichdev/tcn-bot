@@ -134,6 +134,28 @@ export const deleteMessage = async (channelId: string, messageId: string) => {
   }
 };
 
+export const getMessage = async (channelId: string, messageId: string): Promise<RESTPostAPIWebhookWithTokenJSONBody> => {
+  const url = `${BASE_URL}/channels/${channelId}/messages/${messageId}`;
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`
+      }
+    });
+    return response.data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to get message",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+}
+
 export const sendMessage = async (
   message: RESTPostAPIWebhookWithTokenJSONBody,
   channelId: string
