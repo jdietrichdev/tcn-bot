@@ -6,9 +6,11 @@ const CSV_URL =
 
 export interface PlayerData {
   name: string;
+  playerTag: string;
   discord: string;
   avgStars: string;
   defenseAvgStars: string;
+  cwlLeague?: string;
 }
 
 export async function fetchUnrosteredPlayersFromCSV(): Promise<string[]> {
@@ -48,7 +50,7 @@ export async function fetchUnrosteredPlayersFromCSV(): Promise<string[]> {
     skip_empty_lines: true,
   });
   return records
-    .slice(2) // Skip first 2 rows (headers are in row 2, so skip rows 1 and 2)
+    .slice(2)
     .map((row: string[]) => row[0])
     .filter((name: string) => {
       if (!name || name.trim() === '') return false;
@@ -94,14 +96,14 @@ export async function fetchPlayersWithDetailsFromCSV(): Promise<PlayerData[]> {
     skip_empty_lines: true,
   });
   
-  // Skip first 2 rows (headers are in row 2)
   return records
     .slice(2)
     .map((row: string[]) => ({
-      name: row[0] || '',           // Column A (index 0)
-      discord: row[5] || '',         // Column F (index 5)
-      avgStars: row[12] || '',       // Column M (index 12)
-      defenseAvgStars: row[21] || '', // Column V (index 21)
+      name: row[0] || '',
+      playerTag: row[1] || '',
+      discord: row[5] || '',
+      avgStars: row[12] || '',
+      defenseAvgStars: row[21] || '',
     }))
     .filter((player: PlayerData) => {
       if (!player.name || player.name.trim() === '') return false;

@@ -1,8 +1,13 @@
 import { APIChatInputApplicationCommandInteraction } from 'discord-api-types/v10';
-import { fetchPlayersWithDetailsFromCSV } from '../util/fetchUnrosteredPlayersCSV';
+import { fetchPlayersWithDetailsFromCSV, PlayerData } from '../util/fetchUnrosteredPlayersCSV';
 import { updateResponse, sendFollowupMessage } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { getPlayer } from '../adapters/coc-api-adapter';
+
+interface PlayerWithLeague extends PlayerData {
+  cwlLeague: string;
+}
 
 export const handleUnrosteredCommand = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -54,21 +59,47 @@ export const handleUnrosteredCommand = async (
       return;
     }
 
-    const formatPlayer = (p: typeof unrosteredPlayers[0]) => {
+    // Fetch CWL league data for each player
+    const playersWithLeague: PlayerWithLeague[] = await Promise.all(
+      unrosteredPlayers.map(async (player): Promise<PlayerWithLeague> => {
+        if (player.playerTag && player.playerTag.trim()) {
+          try {
+            const playerData = await getPlayer(player.playerTag);
+            return {
+              ...player,
+              cwlLeague: playerData.league?.name || 'Unranked',
+            };
+          } catch (error) {
+            console.error(`Failed to fetch league for ${player.name}:`, error);
+            return {
+              ...player,
+              cwlLeague: 'Unknown',
+            };
+          }
+        }
+        return {
+          ...player,
+          cwlLeague: 'No Tag',
+        };
+      })
+    );
+
+    const formatPlayer = (p: PlayerWithLeague) => {
       const name = p.name.replace(/_/g, "\\_");
       const discord = p.discord ? p.discord.replace(/_/g, "\\_") : 'N/A';
       const stars = p.avgStars || 'N/A';
       const defStars = p.defenseAvgStars || 'N/A';
-      return `**${name}**\n└ 👤 Discord: \`${discord}\` • ⭐ Avg: \`${stars}\` • 🛡️ Def: \`${defStars}\``;
+      const league = p.cwlLeague || 'Unknown';
+      return `**${name}**\n└ 👤 Discord: \`${discord}\` • ⭐ Avg: \`${stars}\` • 🛡️ Def: \`${defStars}\` • 🏆 League: \`${league}\``;
     };
 
-    const header = `**Unrostered Players (${unrosteredPlayers.length} of ${allPlayers.length} total):**\n`;
+    const header = `**Unrostered Players (${playersWithLeague.length} of ${allPlayers.length} total):**\n`;
     const maxChunkSize = 1800; 
-    const chunks: typeof unrosteredPlayers[] = [];
-    let currentChunk: typeof unrosteredPlayers = [];
+    const chunks: PlayerWithLeague[][] = [];
+    let currentChunk: PlayerWithLeague[] = [];
     let currentLength = 0;
 
-    for (const player of unrosteredPlayers) {
+    for (const player of playersWithLeague) {
       const line = formatPlayer(player) + '\n\n';
       if (currentLength + line.length > maxChunkSize && currentChunk.length > 0) {
         chunks.push(currentChunk);
