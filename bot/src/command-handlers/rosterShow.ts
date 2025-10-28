@@ -18,8 +18,13 @@ export const handleRosterShow = async (
     });
   }
 
+  if (!rosterName) {
+    return updateResponse(interaction.application_id, interaction.token, {
+      content: "❌ Roster name is required.",
+    });
+  }
+
   try {
-    // Query all rosters for this guild
     const queryResult = await dynamoDbClient.send(
       new QueryCommand({
         TableName: process.env.TABLE_NAME,
@@ -37,9 +42,8 @@ export const handleRosterShow = async (
       });
     }
 
-    // Find the roster with the matching clan name (case-insensitive)
     const roster = queryResult.Items.find(
-      (item) => item.clanName.toLowerCase() === rosterName.toLowerCase()
+      (item) => item.clanName?.toLowerCase() === rosterName.toLowerCase()
     );
 
     if (!roster) {
@@ -48,7 +52,6 @@ export const handleRosterShow = async (
       });
     }
 
-    // Format the roster details
     const playerList =
       roster.players && roster.players.length > 0
         ? roster.players
@@ -73,6 +76,7 @@ ${playerList}
     });
   } catch (error) {
     console.error("Error showing roster:", error);
+    console.error("RosterName:", rosterName, "GuildId:", guildId);
     return updateResponse(interaction.application_id, interaction.token, {
       content: "❌ An error occurred while retrieving the roster.",
     });

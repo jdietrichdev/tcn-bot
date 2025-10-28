@@ -22,6 +22,12 @@ export const handleRosterRemove = async (
     });
   }
 
+  if (!playerName || !rosterName) {
+    return updateResponse(interaction.application_id, interaction.token, {
+      content: "❌ Player name and roster name are required.",
+    });
+  }
+
   try {
     const queryResult = await dynamoDbClient.send(
       new QueryCommand({
@@ -41,7 +47,7 @@ export const handleRosterRemove = async (
     }
 
     const roster = queryResult.Items.find(
-      (item) => item.clanName.toLowerCase() === rosterName.toLowerCase()
+      (item) => item.clanName?.toLowerCase() === rosterName.toLowerCase()
     );
 
     if (!roster) {
@@ -86,6 +92,7 @@ export const handleRosterRemove = async (
     });
   } catch (error) {
     console.error("Error removing player from roster:", error);
+    console.error("PlayerName:", playerName, "RosterName:", rosterName, "GuildId:", guildId);
     return updateResponse(interaction.application_id, interaction.token, {
       content: "❌ An error occurred while removing the player from the roster.",
     });
