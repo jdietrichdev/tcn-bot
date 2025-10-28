@@ -26,3 +26,5 @@ export * from "./scheduleEvent";
 export * from "./unrostered";
 export * from "./createRoster";
 export * from "./rosterAdd";
+export * from "./rosterShow";
+export * from "./rosterRemove";

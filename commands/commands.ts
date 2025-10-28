@@ -597,3 +597,32 @@ export const rosterAdd = new SlashCommandBuilder()
       .setRequired(true)
       .setAutocomplete(true);
   });
+
+export const rosterShow = new SlashCommandBuilder()
+  .setName("roster-show")
+  .setDescription("Show the details of a roster")
+  .addStringOption((option) => {
+    return option
+      .setName("roster-name")
+      .setDescription("Name of the roster to show")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const rosterRemove = new SlashCommandBuilder()
+  .setName("roster-remove")
+  .setDescription("Remove a player from a roster")
+  .addStringOption((option) => {
+    return option
+      .setName("player-name")
+      .setDescription("Name of the player to remove")
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("roster-name")
+      .setDescription("Name of the roster to remove from")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });

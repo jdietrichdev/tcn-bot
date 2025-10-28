@@ -73,7 +73,7 @@ export const proxy = async (
       })
     );
     
-    const publicCommands = ['unrostered', 'announceRoster', 'create-roster', 'roster-add'];
+    const publicCommands = ['unrostered', 'announceRoster', 'create-roster', 'roster-add', 'roster-show', 'roster-remove'];
     const isPublicCommand = body.type === InteractionType.ApplicationCommand && 
                            publicCommands.includes((body as APIChatInputApplicationCommandInteraction).data.name);
     

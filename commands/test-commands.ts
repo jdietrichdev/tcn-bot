@@ -27,7 +27,9 @@ import {
   eventLeaderboard,
   unrostered,
   createRoster,
-  rosterAdd
+  rosterAdd,
+  rosterShow,
+  rosterRemove
 } from "./commands";
 
 export const testCommands = [
@@ -59,5 +61,7 @@ export const testCommands = [
   announceRoster,
   unrostered,
   createRoster,
-  rosterAdd
+  rosterAdd,
+  rosterShow,
+  rosterRemove
 ];

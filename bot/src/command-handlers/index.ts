@@ -62,6 +62,10 @@ export const handleCommand = async (
         return await commands.handleCreateRoster(event.detail);
       case "roster-add":
         return await commands.handleRosterAdd(event.detail);
+      case "roster-show":
+        return await commands.handleRosterShow(event.detail);
+      case "roster-remove":
+        return await commands.handleRosterRemove(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);

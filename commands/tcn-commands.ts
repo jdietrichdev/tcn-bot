@@ -19,6 +19,8 @@ import {
   unrostered,
   createRoster,
   rosterAdd,
+  rosterShow,
+  rosterRemove,
 } from "./commands";
 
 export const tcnCommands = [
@@ -42,4 +44,6 @@ export const tcnCommands = [
   unrostered,
   createRoster,
   rosterAdd,
+  rosterShow,
+  rosterRemove,
 ];
