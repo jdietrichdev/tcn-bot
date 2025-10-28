@@ -114,7 +114,7 @@ export const claimEvent = async (
     const reward = rewardData.rewards.find(
       (reward: Record<string, any>) =>
         reward.eventId === eventId &&
-        reward.winnerId === interaction.user!.username &&
+        reward.winnerId === interaction.user!.id &&
         reward.prize === prize &&
         reward.sponsorId === sponsor,
     );
