@@ -1,5 +1,5 @@
 import { APIChatInputApplicationCommandInteraction } from 'discord-api-types/v10';
-import { fetchUnrosteredPlayersFromCSV } from '../util/fetchUnrosteredPlayersCSV';
+import { fetchPlayersWithDetailsFromCSV } from '../util/fetchUnrosteredPlayersCSV';
 import { updateResponse, sendFollowupMessage } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
@@ -10,7 +10,7 @@ export const handleUnrosteredCommand = async (
   try {
     const guildId = interaction.guild_id!;
     
-    const allPlayers = await fetchUnrosteredPlayersFromCSV();
+    const allPlayers = await fetchPlayersWithDetailsFromCSV();
     
     if (!allPlayers || allPlayers.length === 0) {
       await updateResponse(interaction.application_id, interaction.token, {
@@ -44,7 +44,7 @@ export const handleUnrosteredCommand = async (
     }
 
     const unrosteredPlayers = allPlayers.filter(
-      player => !rosteredPlayers.has(player.trim())
+      player => !rosteredPlayers.has(player.name.trim())
     );
     
     if (unrosteredPlayers.length === 0) {
@@ -54,16 +54,22 @@ export const handleUnrosteredCommand = async (
       return;
     }
 
-    const escapedPlayers = unrosteredPlayers.map(p => p.replace(/_/g, "\\_"));
+    const formatPlayer = (p: typeof unrosteredPlayers[0]) => {
+      const name = p.name.replace(/_/g, "\\_");
+      const discord = p.discord ? p.discord.replace(/_/g, "\\_") : 'N/A';
+      const stars = p.avgStars || 'N/A';
+      const defStars = p.defenseAvgStars || 'N/A';
+      return `**${name}** | Discord: ${discord} | Avg Stars: ${stars} | Def Avg: ${defStars}`;
+    };
 
-    const header = `**Unrostered Players (${unrosteredPlayers.length} of ${allPlayers.length} total):**\n`;
-    const maxChunkSize = 1900; 
-    const chunks: string[][] = [];
-    let currentChunk: string[] = [];
+    const header = `**Unrostered Players (${unrosteredPlayers.length} of ${allPlayers.length} total):**\n\n`;
+    const maxChunkSize = 1800; 
+    const chunks: typeof unrosteredPlayers[] = [];
+    let currentChunk: typeof unrosteredPlayers = [];
     let currentLength = 0;
 
-    for (const player of escapedPlayers) {
-      const line = `- ${player}\n`;
+    for (const player of unrosteredPlayers) {
+      const line = formatPlayer(player) + '\n';
       if (currentLength + line.length > maxChunkSize && currentChunk.length > 0) {
         chunks.push(currentChunk);
         currentChunk = [];
@@ -76,14 +82,14 @@ export const handleUnrosteredCommand = async (
       chunks.push(currentChunk);
     }
 
-    const firstContent = header + chunks[0].map(p => `- ${p}`).join('\n');
+    const firstContent = header + chunks[0].map(formatPlayer).join('\n');
     await updateResponse(interaction.application_id, interaction.token, { 
       content: firstContent
     });
 
     for (let i = 1; i < chunks.length; i++) {
-      const content = `**Continued (${i + 1}/${chunks.length}):**\n` + 
-                     chunks[i].map(p => `- ${p}`).join('\n');
+      const content = `**Continued (${i + 1}/${chunks.length}):**\n\n` + 
+                     chunks[i].map(formatPlayer).join('\n');
       await sendFollowupMessage(interaction.application_id, interaction.token, { 
         content
       });
