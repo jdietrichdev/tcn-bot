@@ -563,3 +563,39 @@ export const scheduleEvent = new SlashCommandBuilder()
 export const unrostered = new SlashCommandBuilder()
   .setName("unrostered")
   .setDescription("List all unrostered players");
+
+export const createRoster = new SlashCommandBuilder()
+  .setName("create-roster")
+  .setDescription("Create a new roster for CWL")
+  .addStringOption((option) => {
+    return option
+      .setName("clan-name")
+      .setDescription("Name of the clan")
+      .setRequired(true);
+  })
+  .addIntegerOption((option) => {
+    return option
+      .setName("clan-rank")
+      .setDescription("Clan rank (1-15)")
+      .setRequired(true)
+      .setMinValue(1)
+      .setMaxValue(15);
+  });
+
+export const rosterAdd = new SlashCommandBuilder()
+  .setName("roster-add")
+  .setDescription("Add a player to a roster")
+  .addStringOption((option) => {
+    return option
+      .setName("player-name")
+      .setDescription("Name of the player to add")
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("roster-name")
+      .setDescription("Name of the roster to add to")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });

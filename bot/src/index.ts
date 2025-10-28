@@ -73,8 +73,7 @@ export const proxy = async (
       })
     );
     
-    // Commands that should be visible to everyone (not ephemeral)
-    const publicCommands = ['unrostered', 'announceRoster'];
+    const publicCommands = ['unrostered', 'announceRoster', 'create-roster', 'roster-add'];
     const isPublicCommand = body.type === InteractionType.ApplicationCommand && 
                            publicCommands.includes((body as APIChatInputApplicationCommandInteraction).data.name);
     
