@@ -37,7 +37,7 @@ export const handleRewardClaimed = async (
       .map((reward: Record<string, any>) => {
         return {
           name: `${reward.eventName}: ${reward.winner} | ${reward.prize}`,
-          value: `${reward.eventId}_${reward.winner}_${reward.prize}`,
+          value: `${reward.eventId}_${reward.winnerId}_${reward.prize}`,
         };
       });
 

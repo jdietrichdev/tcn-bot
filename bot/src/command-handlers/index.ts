@@ -1,65 +1,67 @@
-import { EventBridgeEvent } from "aws-lambda";
-import { APIChatInputApplicationCommandInteraction } from "discord-api-types/v10";
-import * as commands from "./handlers";
-import { handleTest } from "./test";
+import { EventBridgeEvent } from 'aws-lambda';
+import { APIChatInputApplicationCommandInteraction } from 'discord-api-types/v10';
+import * as commands from './handlers';
+import { handleTest } from './test';
 
 export const handleCommand = async (
-  event: EventBridgeEvent<string, APIChatInputApplicationCommandInteraction>
+  event: EventBridgeEvent<string, APIChatInputApplicationCommandInteraction>,
 ) => {
   try {
     switch (event.detail.data.name) {
-      case "hello":
+      case 'hello':
         return await commands.handleHello(event.detail);
-      case "player":
+      case 'player':
         return await commands.handlePlayer(event.detail);
-      case "event":
+      case 'event':
         return await commands.handleEvent(event.detail);
-      case "link":
+      case 'link':
         return await commands.handleLink(event.detail);
-      case "test":
+      case 'test':
         return await handleTest(event.detail);
-      case "upgrade":
+      case 'upgrade':
         return await commands.handleUpgrade(event.detail);
-      case "ro":
+      case 'ro':
         return await commands.handleRecruit(event.detail);
-      case "recruiter-score":
+      case 'recruiter-score':
         return await commands.handleRecruiterScore(event.detail);
-      case "cwl-roster":
+      case 'cwl-roster':
         return await commands.handleCwlRoster(event.detail);
-      case "initiate-cwl-signup":
+      case 'initiate-cwl-signup':
         return await commands.handleInitiateCwlSignup(event.detail);
-      case "cwl-questions":
+      case 'cwl-questions':
         return await commands.handleCwlQuestions(event.detail);
-      case "close-ticket":
+      case 'close-ticket':
         return await commands.closeTicket(event.detail);
-      case "delete-ticket":
+      case 'delete-ticket':
         return await commands.deleteTicket(event.detail);
-      case "create-event":
+      case 'create-event':
         return await commands.handleCreateEvent(event.detail);
-      case "question-create":
+      case 'question-create':
         return await commands.handleQuestionCreate(event.detail);
-      case "question-close":
+      case 'question-close':
         return await commands.handleQuestionClose(event.detail);
-      case "question-answer":
+      case 'question-answer':
         return await commands.handleQuestionAnswer(event.detail);
-      case "event-leaderboard":
+      case 'event-leaderboard':
         return await commands.handleEventLeaderboard(event.detail);
-      case "event-winner":
+      case 'event-winner':
         return await commands.handleEventWinner(event.detail);
-      case "delete-event":
+      case 'reward-claimed':
+        return await commands.handleRewardClaimed(event.detail);
+      case 'delete-event':
         return await commands.handleDeleteEvent(event.detail);
-      case "nominate":
+      case 'nominate':
         return await commands.handleNominate(event.detail);
-      case "nomination-result":
+      case 'nomination-result':
         return await commands.handleNominationResult(event.detail);
-      case "rank-proposal-reminder":
+      case 'rank-proposal-reminder':
         return await commands.handleRankProposalReminder(event.detail);
-      case "announce-roster":
+      case 'announce-roster':
         return await commands.handleAnnounceRoster(event.detail);
-      case "schedule-event":
+      case 'schedule-event':
         return await commands.handleScheduleEvent(event.detail);
       default:
-        console.log("Command not found, responding to command");
+        console.log('Command not found, responding to command');
         return await commands.handleCommandNotFound(event.detail);
     }
   } catch (err) {
