@@ -23,7 +23,7 @@ export const handleRewardExpiration = async (
       }),
     );
 
-    const rewards = (
+    const rewardData = (
       await dynamoDbClient.send(
         new GetCommand({
           TableName: 'BotTable',
@@ -35,7 +35,7 @@ export const handleRewardExpiration = async (
       )
     ).Item!;
 
-    const reward = rewards.find(
+    const reward = rewardData.rewards.find(
       (reward: Record<string, any>) => reward.eventId === eventId,
     );
     reward.status = 'Expired';
@@ -47,7 +47,7 @@ export const handleRewardExpiration = async (
     await dynamoDbClient.send(
       new PutCommand({
         TableName: 'BotTable',
-        Item: rewards,
+        Item: rewardData,
       }),
     );
   } catch (err) {

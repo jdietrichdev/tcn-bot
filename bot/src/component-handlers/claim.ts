@@ -99,7 +99,7 @@ export const claimEvent = async (
       components: [],
     });
 
-    const rewards = (
+    const rewardData = (
       await dynamoDbClient.send(
         new GetCommand({
           TableName: 'BotTable',
@@ -111,7 +111,7 @@ export const claimEvent = async (
       )
     ).Item!;
 
-    const reward = rewards.find(
+    const reward = rewardData.rewards.find(
       (reward: Record<string, any>) => reward.eventId === eventId,
     );
     reward.status = 'Pending';
@@ -123,7 +123,7 @@ export const claimEvent = async (
     await dynamoDbClient.send(
       new PutCommand({
         TableName: 'BotTable',
-        Item: rewards,
+        Item: rewardData,
       }),
     );
 
