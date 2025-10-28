@@ -9,6 +9,8 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
     "cdk": "cdk",
     "bootstrap": "cdk bootstrap",
     "deploy": "cdk deploy --all"

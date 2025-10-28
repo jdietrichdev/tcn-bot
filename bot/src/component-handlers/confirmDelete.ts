@@ -10,6 +10,7 @@ import {
 import {
   deleteChannel,
   getChannelMessages,
+  getUser,
   sendMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
@@ -45,7 +46,11 @@ export const confirmDelete = async (
         message.type !== 6
       );
     });
-    const transcript = createTranscript(interaction, messages, eventMessages);
+    const transcript = await createTranscript(
+      interaction,
+      messages,
+      eventMessages
+    );
     await sendMessage(
       {
         embeds: [transcript],
@@ -76,18 +81,15 @@ export const confirmDelete = async (
   }
 };
 
-const createTranscript = (
+const createTranscript = async (
   interaction: APIMessageComponentInteraction,
   messages: APIMessage[],
   eventMessages: APIMessage[]
-): APIEmbed => {
+): Promise<APIEmbed> => {
   const applicationChannel =
     interaction.channel as APIGuildTextChannel<GuildTextChannelType>;
-  const applicantUsername =
-    applicationChannel.name.split("-")[
-      applicationChannel.name.split("-").length - 1
-    ];
   const applicantId = applicationChannel.topic!.split(":")[1];
+  const applicant = await getUser(applicantId);
   const participantMap = new Map<string, number>();
   for (const message of messages) {
     const author = message.author.id;
@@ -97,7 +99,7 @@ const createTranscript = (
     }
   }
   return {
-    title: `Clan application for ${applicantUsername}`,
+    title: `Clan application for ${applicant.username}`,
     fields: [
       {
         name: "Created by",
@@ -150,22 +152,24 @@ const createTranscript = (
 };
 
 const removeTicket = async (guildId: string, channelId: string) => {
-  const ticketData = (await dynamoDbClient.send(
-    new GetCommand({
-      TableName: "BotTable",
-      Key: {
-        pk: guildId,
-        sk: "tickets"
-      }
-    })
-  )).Item!;
+  const ticketData = (
+    await dynamoDbClient.send(
+      new GetCommand({
+        TableName: "BotTable",
+        Key: {
+          pk: guildId,
+          sk: "tickets",
+        },
+      })
+    )
+  ).Item!;
   ticketData.tickets = ticketData.tickets.filter(
     (ticket: Record<string, any>) => ticket.ticketChannel !== channelId
   );
   await dynamoDbClient.send(
     new PutCommand({
       TableName: "BotTable",
-      Item: ticketData
+      Item: ticketData,
     })
   );
-}
+};

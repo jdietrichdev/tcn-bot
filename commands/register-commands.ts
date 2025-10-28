@@ -8,28 +8,32 @@ const headers = {
   "Content-Type": "application/json",
 };
 
-axios
-  .put(
-    `${BASE_URL}/guilds/${process.env.TEST_GUILD_ID}/commands`,
-    JSON.stringify(testCommands),
-    { headers }
-  )
-  .then(() => console.log("Test commands updated"))
-  .catch((e) => {
-    console.log("Failed to update test commands", e);
-    throw e;
-  });
-console.log("Successfully update commands for test server");
+if (process.env.GUILD === 'TEST') {
+  axios
+    .put(
+      `${BASE_URL}/guilds/${process.env.TEST_GUILD_ID}/commands`,
+      JSON.stringify(testCommands),
+      { headers }
+    )
+    .then(() => console.log("Test commands updated"))
+    .catch((e) => {
+      console.log("Failed to update test commands", e);
+      throw e;
+    });
+  console.log("Successfully update commands for test server");
+}
 
-axios
-  .put(
-    `${BASE_URL}/guilds/${process.env.TCN_GUILD_ID}/commands`,
-    JSON.stringify(tcnCommands),
-    { headers }
-  )
-  .then(() => console.log("TCN commands updated"))
-  .catch((e) => {
-    console.log("Failed to update test commands", e);
-    throw e;
-  });
-console.log("Successfully updated commands for TCN server");
+if (process.env.GUILD === 'TCN') {
+  axios
+    .put(
+      `${BASE_URL}/guilds/${process.env.TCN_GUILD_ID}/commands`,
+      JSON.stringify(tcnCommands),
+      { headers }
+    )
+    .then(() => console.log("TCN commands updated"))
+    .catch((e) => {
+      console.log("Failed to update test commands", e);
+      throw e;
+    });
+  console.log("Successfully updated commands for TCN server");
+}

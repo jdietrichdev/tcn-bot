@@ -469,29 +469,6 @@ export const createDM = async (
   }
 };
 
-export const getChannel = async (channelId: string, guildId: string) => {
-  const url = `${BASE_URL}/channels/${channelId}`;
-  try {
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bot ${process.env.BOT_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-    });
-    return response.data;
-  } catch (err) {
-    if (axios.isAxiosError(err)) {
-      throw new DiscordError(
-        "Failed to fetch channel",
-        err.response?.data.message,
-        err.response?.status ?? 500
-      );
-    } else {
-      throw new Error(`Unexpected error: ${err}`);
-    }
-  }
-};
-
 export const getUser = async (userId: string): Promise<APIUser> => {
   const url = `${BASE_URL}/users/${userId}`;
   try {
@@ -638,11 +615,15 @@ export const grantRole = async (
     );
   } catch (err) {
     if (axios.isAxiosError(err)) {
-      throw new DiscordError(
-        "Failed to grant role",
-        err.response?.data.message,
-        err.response?.status ?? 500
-      );
+      if (err.response?.status === 404) {
+        console.log("User/role no longer in server");
+      } else {
+        throw new DiscordError(
+          "Failed to grant role",
+          err.response?.data.message,
+          err.response?.status ?? 500
+        );
+      }
     } else {
       throw new Error(`Unexpected error: ${err}`);
     }
@@ -663,11 +644,15 @@ export const removeRole = async (
     });
   } catch (err) {
     if (axios.isAxiosError(err)) {
-      throw new DiscordError(
-        "Failed to remove role",
-        err.response?.data.message,
-        err.response?.status ?? 500
-      );
+      if (err.response?.status === 404) {
+        console.log("User/role no longer in server");
+      } else {
+        throw new DiscordError(
+          "Failed to remove role",
+          err.response?.data.message,
+          err.response?.status ?? 500
+        );
+      }
     } else {
       throw new Error(`Unexpected error: ${err}`);
     }
