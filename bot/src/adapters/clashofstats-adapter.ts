@@ -2,29 +2,27 @@ import axios from "axios";
 
 const BASE_URL = "https://api.clashofstats.com";
 
-/**
- * Get player's CWL league history from Clash of Stats
- * Returns the most recent CWL league the player participated in
- */
+
 export const getPlayerCWLLeague = async (playerTag: string): Promise<string> => {
   try {
     const formattedTag = playerTag.replace("#", "");
     const url = `${BASE_URL}/players/${formattedTag}/warsleagues`;
     
+    console.log(`Fetching CWL data for ${playerTag} from ${url}`);
+    
     const response = await axios.get(url, {
       headers: {
-        // Clash of Stats is a free API but has rate limits
-        // No API key needed for basic usage
+        
         "Accept": "application/json",
       },
-      timeout: 5000, // 5 second timeout
+      timeout: 5000, 
     });
 
-    // The API returns an array of CWL participations
-    // We want the most recent one
+    console.log(`CWL response for ${playerTag}:`, JSON.stringify(response.data).substring(0, 500));
+   
     if (response.data && Array.isArray(response.data) && response.data.length > 0) {
       const mostRecent = response.data[0];
-      // CWL league is typically in format like "Crystal League I"
+      console.log(`Most recent CWL data:`, JSON.stringify(mostRecent));
       if (mostRecent.league) {
         return mostRecent.league;
       }
@@ -41,7 +39,7 @@ export const getPlayerCWLLeague = async (playerTag: string): Promise<string> => 
         console.log("Rate limited by Clash of Stats API");
         return "Rate Limited";
       }
-      console.error(`Clash of Stats API error for ${playerTag}:`, err.response?.status);
+      console.error(`Clash of Stats API error for ${playerTag}:`, err.response?.status, err.response?.data);
     } else {
       console.error(`Failed to get CWL league for ${playerTag}:`, err);
     }
@@ -49,9 +47,7 @@ export const getPlayerCWLLeague = async (playerTag: string): Promise<string> => 
   }
 };
 
-/**
- * Alternative: Get player stats which may include CWL info
- */
+
 export const getPlayerStats = async (playerTag: string) => {
   try {
     const formattedTag = playerTag.replace("#", "");
