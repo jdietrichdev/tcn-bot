@@ -559,3 +559,7 @@ export const scheduleEvent = new SlashCommandBuilder()
       .setDescription("End time in UTC (yyyy-mm-ddThh:mm)")
       .setRequired(true);
   });
+
+export const unrostered = new SlashCommandBuilder()
+  .setName("unrostered")
+  .setDescription("List all unrostered players");

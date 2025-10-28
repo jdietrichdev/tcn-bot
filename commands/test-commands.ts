@@ -25,6 +25,7 @@ import {
   questionClose,
   questionAnswer,
   eventLeaderboard,
+  unrostered
 } from "./commands";
 
 export const testCommands = [
@@ -54,4 +55,5 @@ export const testCommands = [
   nominationResult,
   rankProposalReminder,
   announceRoster,
+  unrostered
 ];
