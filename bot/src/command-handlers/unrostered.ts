@@ -3,7 +3,7 @@ import { fetchPlayersWithDetailsFromCSV, PlayerData } from '../util/fetchUnroste
 import { updateResponse, sendFollowupMessage } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
-import { getPlayer } from '../adapters/coc-api-adapter';
+import { getPlayerCWLLeague } from '../adapters/clashofstats-adapter';
 
 interface PlayerWithLeague extends PlayerData {
   cwlLeague: string;
@@ -59,18 +59,17 @@ export const handleUnrosteredCommand = async (
       return;
     }
 
-    // Fetch CWL league data for each player
     const playersWithLeague: PlayerWithLeague[] = await Promise.all(
       unrosteredPlayers.map(async (player): Promise<PlayerWithLeague> => {
         if (player.playerTag && player.playerTag.trim()) {
           try {
-            const playerData = await getPlayer(player.playerTag);
+            const cwlLeague = await getPlayerCWLLeague(player.playerTag);
             return {
               ...player,
-              cwlLeague: playerData.warLeague?.name || 'Unranked',
+              cwlLeague,
             };
           } catch (error) {
-            console.error(`Failed to fetch league for ${player.name}:`, error);
+            console.error(`Failed to fetch CWL league for ${player.name}:`, error);
             return {
               ...player,
               cwlLeague: 'Unknown',
@@ -90,7 +89,7 @@ export const handleUnrosteredCommand = async (
       const stars = p.avgStars || 'N/A';
       const defStars = p.defenseAvgStars || 'N/A';
       const league = p.cwlLeague || 'Unknown';
-      return `**${name}**\n└ 👤 Discord: \`${discord}\` • ⭐ Avg: \`${stars}\` • 🛡️ Def: \`${defStars}\` • 🏆 League: \`${league}\``;
+      return `**${name}**\n└ 👤 Discord: \`${discord}\` • ⭐ Avg: \`${stars}\` • 🛡️ Def: \`${defStars}\` • 🏆 CWL: \`${league}\``;
     };
 
     const header = `**Unrostered Players (${playersWithLeague.length} of ${allPlayers.length} total):**\n`;
