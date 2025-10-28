@@ -13,5 +13,5 @@ export async function fetchUnrosteredPlayersFromCSV(): Promise<string[]> {
     }).on('error', reject);
   });
   const records = parse(fileContent, { columns: false, skip_empty_lines: true });
-  return records.slice(2).map((row: string[]) => row[0]).filter((name: string) => name && name.trim() !== '');
+  return records.map((row: string[]) => row[0]).filter((name: string) => name && name.trim() !== '');
 }
