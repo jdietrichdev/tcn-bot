@@ -122,7 +122,7 @@ export const claimEvent = async (
     reward.channel = channel.id;
 
     await updateMessage(config.REWARD_TRACKING_CHANNEL, reward.message, {
-      content: `Winner: ${interaction.user?.id}\nSponsor: ${sponsor}\nPrize: ${prize}\nStatus: Pending`,
+      content: `Winner: ${reward.winner}\nSponsor: ${reward.sponsor}\nPrize: ${prize}\nStatus: Pending`,
     });
 
     await dynamoDbClient.send(

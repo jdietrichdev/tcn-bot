@@ -26,7 +26,8 @@ import {
   questionAnswer,
   eventLeaderboard,
   deleteEvent,
-} from "./commands";
+  rewardClaimed,
+} from './commands';
 
 export const testCommands = [
   apply,
@@ -51,6 +52,7 @@ export const testCommands = [
   questionAnswer,
   eventLeaderboard,
   eventWinner,
+  rewardClaimed,
   deleteEvent,
   nominate,
   nominationResult,

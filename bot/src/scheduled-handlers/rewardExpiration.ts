@@ -45,7 +45,7 @@ export const handleRewardExpiration = async (
     reward.status = 'Expired';
 
     await updateMessage(config.REWARD_TRACKING_CHANNEL, reward.message, {
-      content: `Winner: ${winner}\nSponsor: ${sponsor}\nPrize: ${prize}\nStatus: Pending`,
+      content: `Winner: ${winner}\nSponsor: ${sponsor}\nPrize: ${prize}\nStatus: Expired`,
     });
 
     await dynamoDbClient.send(
