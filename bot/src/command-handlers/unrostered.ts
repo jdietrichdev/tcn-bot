@@ -59,17 +59,17 @@ export const handleUnrosteredCommand = async (
       const discord = p.discord ? p.discord.replace(/_/g, "\\_") : 'N/A';
       const stars = p.avgStars || 'N/A';
       const defStars = p.defenseAvgStars || 'N/A';
-      return `**${name}** | Discord: ${discord} | Avg Stars: ${stars} | Def Avg: ${defStars}`;
+      return `**${name}**\n└ 👤 Discord: \`${discord}\` • ⭐ Avg: \`${stars}\` • 🛡️ Def: \`${defStars}\``;
     };
 
-    const header = `**Unrostered Players (${unrosteredPlayers.length} of ${allPlayers.length} total):**\n\n`;
+    const header = `**Unrostered Players (${unrosteredPlayers.length} of ${allPlayers.length} total):**\n`;
     const maxChunkSize = 1800; 
     const chunks: typeof unrosteredPlayers[] = [];
     let currentChunk: typeof unrosteredPlayers = [];
     let currentLength = 0;
 
     for (const player of unrosteredPlayers) {
-      const line = formatPlayer(player) + '\n';
+      const line = formatPlayer(player) + '\n\n';
       if (currentLength + line.length > maxChunkSize && currentChunk.length > 0) {
         chunks.push(currentChunk);
         currentChunk = [];
@@ -82,14 +82,14 @@ export const handleUnrosteredCommand = async (
       chunks.push(currentChunk);
     }
 
-    const firstContent = header + chunks[0].map(formatPlayer).join('\n');
+    const firstContent = header + chunks[0].map(formatPlayer).join('\n\n');
     await updateResponse(interaction.application_id, interaction.token, { 
       content: firstContent
     });
 
     for (let i = 1; i < chunks.length; i++) {
-      const content = `**Continued (${i + 1}/${chunks.length}):**\n\n` + 
-                     chunks[i].map(formatPlayer).join('\n');
+      const content = `**Continued (${i + 1}/${chunks.length}):**\n` + 
+                     chunks[i].map(formatPlayer).join('\n\n');
       await sendFollowupMessage(interaction.application_id, interaction.token, { 
         content
       });
