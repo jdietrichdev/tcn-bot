@@ -1,23 +1,62 @@
 import { APIChatInputApplicationCommandInteraction } from 'discord-api-types/v10';
 import { fetchUnrosteredPlayersFromCSV } from '../util/fetchUnrosteredPlayersCSV';
 import { updateResponse, sendFollowupMessage } from '../adapters/discord-adapter';
+import { dynamoDbClient } from '../clients/dynamodb-client';
+import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 
 export const handleUnrosteredCommand = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
   try {
-    const players = await fetchUnrosteredPlayersFromCSV();
+    const guildId = interaction.guild_id!;
     
-    if (!players || players.length === 0) {
+    const allPlayers = await fetchUnrosteredPlayersFromCSV();
+    
+    if (!allPlayers || allPlayers.length === 0) {
       await updateResponse(interaction.application_id, interaction.token, {
-        content: 'No unrostered players found.',
+        content: 'No players found in the signup list.',
       });
       return;
     }
 
-    const escapedPlayers = players.map(p => p.replace(/_/g, "\\_"));
+    const rostersResult = await dynamoDbClient.send(
+      new QueryCommand({
+        TableName: 'BotTable',
+        KeyConditionExpression: 'pk = :pk AND begins_with(sk, :sk)',
+        ExpressionAttributeValues: {
+          ':pk': guildId,
+          ':sk': 'roster#',
+        },
+      })
+    );
 
-    const header = `**Unrostered Players (${players.length} total):**\n`;
+    const rosteredPlayers = new Set<string>();
+    if (rostersResult.Items) {
+      for (const roster of rostersResult.Items) {
+        if (roster.players && Array.isArray(roster.players)) {
+          for (const player of roster.players) {
+            if (player.playerName) {
+              rosteredPlayers.add(player.playerName.trim());
+            }
+          }
+        }
+      }
+    }
+
+    const unrosteredPlayers = allPlayers.filter(
+      player => !rosteredPlayers.has(player.trim())
+    );
+    
+    if (unrosteredPlayers.length === 0) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: '✅ All players have been rostered!',
+      });
+      return;
+    }
+
+    const escapedPlayers = unrosteredPlayers.map(p => p.replace(/_/g, "\\_"));
+
+    const header = `**Unrostered Players (${unrosteredPlayers.length} of ${allPlayers.length} total):**\n`;
     const maxChunkSize = 1900; 
     const chunks: string[][] = [];
     let currentChunk: string[] = [];
