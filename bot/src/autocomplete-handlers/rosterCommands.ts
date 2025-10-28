@@ -21,7 +21,10 @@ export const handleRosterAdd = async (
 
   const guildId = interaction.guild_id;
 
+  console.log("RosterAdd autocomplete - focused:", focused?.name, "value:", focused?.value);
+
   if (!focused || !guildId) {
+    console.log("RosterAdd autocomplete - missing focused or guildId");
     return {
       type: InteractionResponseType.ApplicationCommandAutocompleteResult,
       data: options,
@@ -32,9 +35,11 @@ export const handleRosterAdd = async (
     if (focused.name === "player-name") {
       const allPlayers = await fetchUnrosteredPlayersFromCSV();
       
-      const filteredPlayers = allPlayers.filter((player) =>
-        player.toLowerCase().includes(focused.value.toLowerCase())
-      );
+      const filteredPlayers = focused.value 
+        ? allPlayers.filter((player) =>
+            player.toLowerCase().includes(focused.value.toLowerCase())
+          )
+        : allPlayers;
 
       options.choices = filteredPlayers.slice(0, 25).map((player) => ({
         name: player,
@@ -45,7 +50,7 @@ export const handleRosterAdd = async (
     if (focused.name === "roster-name") {
       const queryResult = await dynamoDbClient.send(
         new QueryCommand({
-          TableName: process.env.TABLE_NAME,
+          TableName: "BotTable",
           KeyConditionExpression: "pk = :pk AND begins_with(sk, :sk)",
           ExpressionAttributeValues: {
             ":pk": guildId,
@@ -55,10 +60,13 @@ export const handleRosterAdd = async (
       );
 
       const rosters = queryResult.Items || [];
+      console.log("Found rosters:", rosters.length);
       
-      const filteredRosters = rosters.filter((roster) =>
-        roster.clanName?.toLowerCase().includes(focused.value.toLowerCase())
-      );
+      const filteredRosters = focused.value
+        ? rosters.filter((roster) =>
+            roster.clanName?.toLowerCase().includes(focused.value.toLowerCase())
+          )
+        : rosters;
 
       options.choices = filteredRosters.slice(0, 25).map((roster) => ({
         name: `${roster.clanName} (Rank: ${roster.clanRank})`,
@@ -69,6 +77,7 @@ export const handleRosterAdd = async (
     console.error("Error in roster-add autocomplete:", error);
   }
 
+  console.log("RosterAdd autocomplete - returning choices:", options.choices?.length || 0);
   return {
     type: InteractionResponseType.ApplicationCommandAutocompleteResult,
     data: options,
@@ -88,7 +97,10 @@ export const handleRosterShow = async (
 
   const guildId = interaction.guild_id;
 
+  console.log("RosterShow autocomplete - focused:", focused?.name, "value:", focused?.value);
+
   if (!focused || !guildId || focused.name !== "roster-name") {
+    console.log("RosterShow autocomplete - missing focused or guildId or not roster-name");
     return {
       type: InteractionResponseType.ApplicationCommandAutocompleteResult,
       data: options,
@@ -98,7 +110,7 @@ export const handleRosterShow = async (
   try {
     const queryResult = await dynamoDbClient.send(
       new QueryCommand({
-        TableName: process.env.TABLE_NAME,
+        TableName: "BotTable",
         KeyConditionExpression: "pk = :pk AND begins_with(sk, :sk)",
         ExpressionAttributeValues: {
           ":pk": guildId,
@@ -108,10 +120,13 @@ export const handleRosterShow = async (
     );
 
     const rosters = queryResult.Items || [];
+    console.log("Found rosters:", rosters.length);
     
-    const filteredRosters = rosters.filter((roster) =>
-      roster.clanName?.toLowerCase().includes(focused.value.toLowerCase())
-    );
+    const filteredRosters = focused.value
+      ? rosters.filter((roster) =>
+          roster.clanName?.toLowerCase().includes(focused.value.toLowerCase())
+        )
+      : rosters;
 
     options.choices = filteredRosters.slice(0, 25).map((roster) => ({
       name: `${roster.clanName} (Rank: ${roster.clanRank})`,
@@ -121,6 +136,7 @@ export const handleRosterShow = async (
     console.error("Error in roster-show autocomplete:", error);
   }
 
+  console.log("RosterShow autocomplete - returning choices:", options.choices?.length || 0);
   return {
     type: InteractionResponseType.ApplicationCommandAutocompleteResult,
     data: options,
@@ -140,7 +156,10 @@ export const handleRosterRemove = async (
 
   const guildId = interaction.guild_id;
 
+  console.log("RosterRemove autocomplete - focused:", focused?.name, "value:", focused?.value);
+
   if (!focused || !guildId) {
+    console.log("RosterRemove autocomplete - missing focused or guildId");
     return {
       type: InteractionResponseType.ApplicationCommandAutocompleteResult,
       data: options,
@@ -150,7 +169,7 @@ export const handleRosterRemove = async (
   try {
     const queryResult = await dynamoDbClient.send(
       new QueryCommand({
-        TableName: process.env.TABLE_NAME,
+        TableName: "BotTable",
         KeyConditionExpression: "pk = :pk AND begins_with(sk, :sk)",
         ExpressionAttributeValues: {
           ":pk": guildId,
@@ -160,11 +179,14 @@ export const handleRosterRemove = async (
     );
 
     const rosters = queryResult.Items || [];
+    console.log("Found rosters:", rosters.length);
 
     if (focused.name === "roster-name") {
-      const filteredRosters = rosters.filter((roster) =>
-        roster.clanName?.toLowerCase().includes(focused.value.toLowerCase())
-      );
+      const filteredRosters = focused.value
+        ? rosters.filter((roster) =>
+            roster.clanName?.toLowerCase().includes(focused.value.toLowerCase())
+          )
+        : rosters;
 
       options.choices = filteredRosters.slice(0, 25).map((roster) => ({
         name: `${roster.clanName} (Rank: ${roster.clanRank})`,
@@ -177,16 +199,22 @@ export const handleRosterRemove = async (
         (opt) => opt.name === "roster-name"
       );
 
+      console.log("RosterRemove autocomplete - roster-name option:", rosterNameOption?.value);
+
       if (rosterNameOption?.value) {
         const roster = rosters.find(
           (r) => r.clanName?.toLowerCase() === rosterNameOption.value.toLowerCase()
         );
 
+        console.log("RosterRemove autocomplete - found roster:", roster?.clanName, "players:", roster?.players?.length);
+
         if (roster?.players && Array.isArray(roster.players)) {
-          const filteredPlayers = roster.players.filter(
-            (p: { playerName: string }) =>
-              p.playerName.toLowerCase().includes(focused.value.toLowerCase())
-          );
+          const filteredPlayers = focused.value
+            ? roster.players.filter(
+                (p: { playerName: string }) =>
+                  p.playerName.toLowerCase().includes(focused.value.toLowerCase())
+              )
+            : roster.players;
 
           options.choices = filteredPlayers.slice(0, 25).map((p: { playerName: string }) => ({
             name: p.playerName,
@@ -199,6 +227,7 @@ export const handleRosterRemove = async (
     console.error("Error in roster-remove autocomplete:", error);
   }
 
+  console.log("RosterRemove autocomplete - returning choices:", options.choices?.length || 0);
   return {
     type: InteractionResponseType.ApplicationCommandAutocompleteResult,
     data: options,
