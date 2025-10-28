@@ -36,7 +36,11 @@ export const handleRewardExpiration = async (
     ).Item!;
 
     const reward = rewardData.rewards.find(
-      (reward: Record<string, any>) => reward.eventId === eventId,
+      (reward: Record<string, any>) =>
+        reward.eventId === eventId &&
+        reward.winner === winner &&
+        reward.sponsor === sponsor &&
+        reward.prize === prize,
     );
     reward.status = 'Expired';
 

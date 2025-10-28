@@ -27,21 +27,23 @@ export const handleEventWinner = async (
 ) => {
   try {
     const config = getConfig(interaction.guild_id!);
-    const winner =
+    const winnerId =
       getCommandOptionData<APIApplicationCommandInteractionDataUserOption>(
         interaction,
         'winner',
       ).value;
+    const winner = interaction.data.resolved!.users![winnerId].username;
     const prize =
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
         'prize',
       ).value;
-    const sponsor =
+    const sponsorId =
       getCommandOptionData<APIApplicationCommandInteractionDataUserOption>(
         interaction,
         'sponsor',
       ).value;
+    const sponsor = interaction.data.resolved!.users![sponsorId].username;
     const expiration = Number(
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
@@ -67,7 +69,7 @@ export const handleEventWinner = async (
     }
 
     const dmChannel = await createDM({
-      recipient_id: winner,
+      recipient_id: winnerId,
     });
 
     const message = await sendMessage(
@@ -80,7 +82,7 @@ export const handleEventWinner = async (
               {
                 type: ComponentType.Button,
                 style: ButtonStyle.Primary,
-                custom_id: `claim_${interaction.guild_id!}_${eventId}_${prize}_${sponsor}`,
+                custom_id: `claim_${interaction.guild_id!}_${eventId}_${prize}_${sponsorId}`,
                 label: 'Claim',
               },
             ],
@@ -111,8 +113,11 @@ export const handleEventWinner = async (
 
     rewards.rewards.push({
       eventId,
+      eventName: eventData.name,
+      winnerId,
       winner,
       prize,
+      sponsorId,
       sponsor,
       status: 'Initiated',
       message: statusMessage.id,
@@ -157,7 +162,7 @@ export const handleEventWinner = async (
 
     await sendMessage(
       {
-        content: `Congratulations to <@${winner}> for winning a ${prize} this event! Check your DMs for further instructions.`,
+        content: `Congratulations to <@${winnerId}> for winning a ${prize} this event! Check your DMs for further instructions.`,
       },
       interaction.channel.id,
     );

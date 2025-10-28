@@ -456,6 +456,18 @@ export const eventWinner = new SlashCommandBuilder()
       .setRequired(false);
   });
 
+export const rewardClaimed = new SlashCommandBuilder()
+  .setName('reward-claimed')
+  .setDescription('Mark reward as claimed')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName('reward')
+      .setDescription('Reward that has been claimed')
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
 export const deleteEvent = new SlashCommandBuilder()
   .setName('delete-event')
   .setDescription('Delete the current event channel')

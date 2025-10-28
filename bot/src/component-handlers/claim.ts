@@ -112,9 +112,14 @@ export const claimEvent = async (
     ).Item!;
 
     const reward = rewardData.rewards.find(
-      (reward: Record<string, any>) => reward.eventId === eventId,
+      (reward: Record<string, any>) =>
+        reward.eventId === eventId &&
+        reward.winnerId === interaction.user!.username &&
+        reward.prize === prize &&
+        reward.sponsorId === sponsor,
     );
     reward.status = 'Pending';
+    reward.channel = channel.id;
 
     await updateMessage(config.REWARD_TRACKING_CHANNEL, reward.message, {
       content: `Winner: ${interaction.user?.id}\nSponsor: ${sponsor}\nPrize: ${prize}\nStatus: Pending`,
