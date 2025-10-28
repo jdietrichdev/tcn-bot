@@ -5,65 +5,65 @@ import {
   APITextChannel,
   ButtonStyle,
   ComponentType,
-} from "discord-api-types/v10";
+} from 'discord-api-types/v10';
 import {
   createDM,
   getMessage,
   sendMessage,
   updateResponse,
-} from "../adapters/discord-adapter";
-import { getCommandOptionData } from "../util/interaction-util";
-import { dynamoDbClient } from "../clients/dynamodb-client";
-import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
-import { schedulerClient } from "../clients/scheduler-client";
+} from '../adapters/discord-adapter';
+import { getCommandOptionData } from '../util/interaction-util';
+import { dynamoDbClient } from '../clients/dynamodb-client';
+import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { schedulerClient } from '../clients/scheduler-client';
 import {
   CreateScheduleCommand,
   FlexibleTimeWindowMode,
-} from "@aws-sdk/client-scheduler";
-import { getConfig } from "../util/serverConfig";
+} from '@aws-sdk/client-scheduler';
+import { getConfig } from '../util/serverConfig';
 
 export const handleEventWinner = async (
-  interaction: APIChatInputApplicationCommandInteraction
+  interaction: APIChatInputApplicationCommandInteraction,
 ) => {
   try {
     const config = getConfig(interaction.guild_id!);
     const winner =
       getCommandOptionData<APIApplicationCommandInteractionDataUserOption>(
         interaction,
-        "winner"
+        'winner',
       ).value;
     const prize =
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
-        "prize"
+        'prize',
       ).value;
     const sponsor =
       getCommandOptionData<APIApplicationCommandInteractionDataUserOption>(
         interaction,
-        "sponsor"
+        'sponsor',
       ).value;
     const expiration = Number(
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
-        "expiration"
-      )?.value ?? 24
+        'expiration',
+      )?.value ?? 24,
     );
     const eventId = (interaction.channel as APITextChannel).topic;
 
     const eventData = (
       await dynamoDbClient.send(
         new GetCommand({
-          TableName: "BotTable",
+          TableName: 'BotTable',
           Key: {
             pk: interaction.guild_id!,
             sk: `event#${eventId}`,
           },
-        })
+        }),
       )
     ).Item;
 
     if (!eventData) {
-      throw new Error("No event found for this channel");
+      throw new Error('No event found for this channel');
     }
 
     const dmChannel = await createDM({
@@ -81,33 +81,49 @@ export const handleEventWinner = async (
                 type: ComponentType.Button,
                 style: ButtonStyle.Primary,
                 custom_id: `claim_${interaction.guild_id!}_${eventId}_${prize}_${sponsor}`,
-                label: "Claim",
+                label: 'Claim',
               },
             ],
           },
         ],
       },
-      dmChannel.id
+      dmChannel.id,
     );
 
-    const statusMessage = await sendMessage({
-      content: `Winner: ${winner}\nSponsor: ${sponsor}\nPrize: ${prize}\nStatus: Initiated`
-    }, config.REWARD_TRACKING_CHANNEL);
+    const statusMessage = await sendMessage(
+      {
+        content: `Winner: ${winner}\nSponsor: ${sponsor}\nPrize: ${prize}\nStatus: Initiated`,
+      },
+      config.REWARD_TRACKING_CHANNEL,
+    );
 
-    const rewards = (await dynamoDbClient.send(new GetCommand({
-      TableName: "BotTable",
-      Key: {
-        pk: interaction.guild_id,
-        sk: 'event-rewards'
-      }
-    }))).Item!;
+    const rewards = (
+      await dynamoDbClient.send(
+        new GetCommand({
+          TableName: 'BotTable',
+          Key: {
+            pk: interaction.guild_id,
+            sk: 'event-rewards',
+          },
+        }),
+      )
+    ).Item!;
 
-    rewards.rewards.push({ winner, prize, sponsor, status: "Initiated", message: statusMessage.id });
+    rewards.rewards.push({
+      eventId,
+      winner,
+      prize,
+      sponsor,
+      status: 'Initiated',
+      message: statusMessage.id,
+    });
 
-    await dynamoDbClient.send(new PutCommand({
-      TableName: "BotTable",
-      Item: rewards
-    }));
+    await dynamoDbClient.send(
+      new PutCommand({
+        TableName: 'BotTable',
+        Item: rewards,
+      }),
+    );
 
     await schedulerClient.send(
       new CreateScheduleCommand({
@@ -115,7 +131,7 @@ export const handleEventWinner = async (
         ScheduleExpression: `at(${
           new Date(Date.now() + expiration * 60 * 60 * 1000)
             .toISOString()
-            .split(".")[0]
+            .split('.')[0]
         })`,
         FlexibleTimeWindow: {
           Mode: FlexibleTimeWindowMode.OFF,
@@ -124,31 +140,36 @@ export const handleEventWinner = async (
           Arn: process.env.SCHEDULED_LAMBDA_ARN,
           RoleArn: process.env.SCHEDULER_ROLE_ARN,
           Input: JSON.stringify({
-            "detail-type": "Reward Expiration",
+            'detail-type': 'Reward Expiration',
             detail: {
               channelId: dmChannel.id,
               messageId: message.id,
+              eventId: eventId,
+              guildId: interaction.guild_id,
+              winner,
+              sponsor,
+              prize,
             },
           }),
         },
-      })
+      }),
     );
 
     await sendMessage(
       {
         content: `Congratulations to <@${winner}> for winning a ${prize} this event! Check your DMs for further instructions.`,
       },
-      interaction.channel.id
+      interaction.channel.id,
     );
 
     await updateResponse(interaction.application_id, interaction.token, {
-      content: "Thanks for registering this winner!",
+      content: 'Thanks for registering this winner!',
     });
   } catch (err) {
     console.error(`Failed to create winner for event: ${err}`);
     await updateResponse(interaction.application_id, interaction.token, {
       content:
-        "There was a failure adding winner for event, verify you are in a valid event channel and try again or contact admins",
+        'There was a failure adding winner for event, verify you are in a valid event channel and try again or contact admins',
     });
   }
 };
