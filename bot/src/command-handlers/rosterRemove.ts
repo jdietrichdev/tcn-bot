@@ -31,7 +31,7 @@ export const handleRosterRemove = async (
   try {
     const queryResult = await dynamoDbClient.send(
       new QueryCommand({
-        TableName: process.env.TABLE_NAME,
+        TableName: "BotTable",
         KeyConditionExpression: "pk = :pk AND begins_with(sk, :sk)",
         ExpressionAttributeValues: {
           ":pk": guildId,
@@ -72,7 +72,7 @@ export const handleRosterRemove = async (
 
     await dynamoDbClient.send(
       new UpdateCommand({
-        TableName: process.env.TABLE_NAME,
+        TableName: "BotTable",
         Key: {
           pk: roster.pk,
           sk: roster.sk,

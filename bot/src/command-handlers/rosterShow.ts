@@ -27,7 +27,7 @@ export const handleRosterShow = async (
   try {
     const queryResult = await dynamoDbClient.send(
       new QueryCommand({
-        TableName: process.env.TABLE_NAME,
+        TableName: "BotTable",
         KeyConditionExpression: "pk = :pk AND begins_with(sk, :sk)",
         ExpressionAttributeValues: {
           ":pk": guildId,
