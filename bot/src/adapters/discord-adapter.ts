@@ -46,6 +46,27 @@ export const updateResponse = async (
   }
 };
 
+export const sendFollowupMessage = async (
+  applicationId: string,
+  interactionToken: string,
+  response: RESTPostAPIWebhookWithTokenJSONBody
+) => {
+  const url = `${BASE_URL}/webhooks/${applicationId}/${interactionToken}`;
+  try {
+    await axios.post(url, response);
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to send followup message",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
 export const updateResponseWithAttachment = async (
   applicationId: string,
   interactionToken: string,
