@@ -104,7 +104,7 @@ export const claimEvent = async (
         new GetCommand({
           TableName: 'BotTable',
           Key: {
-            pk: interaction.guild_id,
+            pk: guildId,
             sk: 'event-rewards',
           },
         }),
