@@ -1,4 +1,4 @@
-import { APIChatInputApplicationCommandInteraction, APIApplicationCommandInteractionDataStringOption, APIApplicationCommandInteractionDataIntegerOption } from 'discord-api-types/v10';
+import { APIChatInputApplicationCommandInteraction, APIApplicationCommandInteractionDataStringOption } from 'discord-api-types/v10';
 import { updateResponse } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { PutCommand } from '@aws-sdk/lib-dynamodb';
@@ -12,7 +12,7 @@ export const handleCreateRoster = async (
     ) as APIApplicationCommandInteractionDataStringOption;
     const clanRankOption = interaction.data.options?.find(
       (opt) => opt.name === 'clan-rank'
-    ) as APIApplicationCommandInteractionDataIntegerOption;
+    ) as APIApplicationCommandInteractionDataStringOption;
 
     if (!clanNameOption || !clanRankOption) {
       await updateResponse(interaction.application_id, interaction.token, {

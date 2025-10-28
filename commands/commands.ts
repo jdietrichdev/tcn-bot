@@ -573,13 +573,11 @@ export const createRoster = new SlashCommandBuilder()
       .setDescription("Name of the clan")
       .setRequired(true);
   })
-  .addIntegerOption((option) => {
+  .addStringOption((option) => {
     return option
       .setName("clan-rank")
-      .setDescription("Clan rank (1-15)")
-      .setRequired(true)
-      .setMinValue(1)
-      .setMaxValue(15);
+      .setDescription("Clan rank (ex: C1, M2, etc.)")
+      .setRequired(true);
   });
 
 export const rosterAdd = new SlashCommandBuilder()

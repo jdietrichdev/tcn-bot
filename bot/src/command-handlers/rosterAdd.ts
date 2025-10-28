@@ -1,7 +1,8 @@
 import { APIChatInputApplicationCommandInteraction, APIApplicationCommandInteractionDataStringOption } from 'discord-api-types/v10';
 import { updateResponse } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
-import { GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { fetchUnrosteredPlayersFromCSV } from '../util/fetchUnrosteredPlayersCSV';
 
 export const handleRosterAdd = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -22,39 +23,73 @@ export const handleRosterAdd = async (
     }
 
     const playerName = playerNameOption.value;
-    const rosterName = rosterNameOption.value;
+    const selectedRosterName = rosterNameOption.value;
     const guildId = interaction.guild_id!;
 
-    // Get the roster
-    const rosterResult = await dynamoDbClient.send(
-      new GetCommand({
+    const allPlayers = await fetchUnrosteredPlayersFromCSV();
+    const playerExists = allPlayers.some(p => p.trim() === playerName.trim());
+    
+    if (!playerExists) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: `❌ Player **${playerName}** not found in the signup list.`,
+      });
+      return;
+    }
+
+    const rostersResult = await dynamoDbClient.send(
+      new QueryCommand({
         TableName: 'BotTable',
-        Key: {
-          pk: guildId,
-          sk: `roster#${rosterName}`,
+        KeyConditionExpression: 'pk = :pk AND begins_with(sk, :sk)',
+        ExpressionAttributeValues: {
+          ':pk': guildId,
+          ':sk': 'roster#',
         },
       })
     );
 
-    if (!rosterResult.Item) {
+    if (!rostersResult.Items || rostersResult.Items.length === 0) {
       await updateResponse(interaction.application_id, interaction.token, {
-        content: `Roster \`${rosterName}\` not found.`,
+        content: '❌ No rosters found. Create a roster first with `/create-roster`.',
       });
       return;
     }
 
-    const roster = rosterResult.Item;
+    const roster = rostersResult.Items.find(
+      (r) => r.clanName && r.clanName.toLowerCase() === selectedRosterName.toLowerCase()
+    );
+
+    if (!roster) {
+      const availableRosters = rostersResult.Items
+        .map((r) => `**${r.clanName}**`)
+        .join(', ');
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: `❌ Roster **${selectedRosterName}** not found.\n\nAvailable rosters: ${availableRosters}`,
+      });
+      return;
+    }
+
     const players = roster.players || [];
 
-    // Check if player is already in the roster
     if (players.some((p: any) => p.playerName === playerName)) {
       await updateResponse(interaction.application_id, interaction.token, {
-        content: `Player **${playerName}** is already in the roster **${roster.clanName}**.`,
+        content: `❌ Player **${playerName}** is already in the roster **${roster.clanName}**.`,
       });
       return;
     }
 
-    // Add player to roster
+    const playerInAnotherRoster = rostersResult.Items.find((r) => {
+      if (r.sk === roster.sk) return false; // Skip current roster
+      const rosterPlayers = r.players || [];
+      return rosterPlayers.some((p: any) => p.playerName === playerName);
+    });
+
+    if (playerInAnotherRoster) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: `⚠️ Player **${playerName}** is already in roster **${playerInAnotherRoster.clanName}**.\nRemove them from that roster first.`,
+      });
+      return;
+    }
+
     players.push({
       playerName,
       addedAt: new Date().toISOString(),
@@ -66,7 +101,7 @@ export const handleRosterAdd = async (
         TableName: 'BotTable',
         Key: {
           pk: guildId,
-          sk: `roster#${rosterName}`,
+          sk: roster.sk,
         },
         UpdateExpression: 'SET players = :players',
         ExpressionAttributeValues: {
