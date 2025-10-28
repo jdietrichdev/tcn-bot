@@ -16,6 +16,7 @@ import {
   questionClose,
   questionAnswer,
   eventLeaderboard,
+  deleteEvent
 } from "./commands";
 
 export const tcnCommands = [
@@ -33,6 +34,7 @@ export const tcnCommands = [
   questionAnswer,
   eventLeaderboard,
   eventWinner,
+  deleteEvent,
   nominate,
   nominationResult,
   rankProposalReminder,

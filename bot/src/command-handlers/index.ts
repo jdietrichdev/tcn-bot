@@ -46,6 +46,8 @@ export const handleCommand = async (
         return await commands.handleEventLeaderboard(event.detail);
       case "event-winner":
         return await commands.handleEventWinner(event.detail);
+      case "delete-event":
+        return await commands.handleDeleteEvent(event.detail);
       case "nominate":
         return await commands.handleNominate(event.detail);
       case "nomination-result":

@@ -18,6 +18,7 @@ export * from "./questionClose";
 export * from "./questionAnswer";
 export * from "./eventLeaderboard";
 export * from "./eventWinner";
+export * from "./deleteEvent";
 export * from "./nominate";
 export * from "./nominationResult";
 export * from "./rankProposalReminder";

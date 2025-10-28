@@ -448,6 +448,11 @@ export const eventWinner = new SlashCommandBuilder()
       .setRequired(false);
   });
 
+export const deleteEvent = new SlashCommandBuilder()
+  .setName("delete-event")
+  .setDescription("Delete the current event channel")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 export const nominate = new SlashCommandBuilder()
   .setName("nominate")
   .setDescription("Nominate a member for promotion/demotion")
