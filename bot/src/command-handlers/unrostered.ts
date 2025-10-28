@@ -15,12 +15,10 @@ export const handleUnrosteredCommand = async (
       return;
     }
 
-    // Escape underscores and other markdown characters
     const escapedPlayers = players.map(p => p.replace(/_/g, "\\_"));
 
-    // Split players into chunks that fit within Discord's 2000 character limit
     const header = `**Unrostered Players (${players.length} total):**\n`;
-    const maxChunkSize = 1900; // Leave room for header and formatting
+    const maxChunkSize = 1900; 
     const chunks: string[][] = [];
     let currentChunk: string[] = [];
     let currentLength = 0;
@@ -39,20 +37,17 @@ export const handleUnrosteredCommand = async (
       chunks.push(currentChunk);
     }
 
-    // Send first chunk as the initial response
     const firstContent = header + chunks[0].map(p => `- ${p}`).join('\n');
     await updateResponse(interaction.application_id, interaction.token, { 
-      content: firstContent 
+      content: firstContent
     });
 
-    // Send remaining chunks as follow-up messages
     for (let i = 1; i < chunks.length; i++) {
       const content = `**Continued (${i + 1}/${chunks.length}):**\n` + 
                      chunks[i].map(p => `- ${p}`).join('\n');
       await sendFollowupMessage(interaction.application_id, interaction.token, { 
-        content 
+        content
       });
-      // Small delay to avoid rate limiting
       await new Promise(resolve => setTimeout(resolve, 500));
     }
   } catch (err) {

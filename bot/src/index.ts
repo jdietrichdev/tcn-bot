@@ -72,9 +72,15 @@ export const proxy = async (
         ],
       })
     );
+    
+    // Commands that should be visible to everyone (not ephemeral)
+    const publicCommands = ['unrostered', 'announceRoster'];
+    const isPublicCommand = body.type === InteractionType.ApplicationCommand && 
+                           publicCommands.includes((body as APIChatInputApplicationCommandInteraction).data.name);
+    
     response = {
       type: InteractionResponseType.DeferredChannelMessageWithSource,
-      data: {
+      data: isPublicCommand ? {} : {
         flags: MessageFlags.Ephemeral,
       },
     } as APIInteractionResponse;

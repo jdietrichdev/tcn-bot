@@ -42,5 +42,9 @@ export async function fetchUnrosteredPlayersFromCSV(): Promise<string[]> {
   });
   return records
     .map((row: string[]) => row[0])
-    .filter((name: string) => name && name.trim() !== '');
+    .filter((name: string) => {
+      if (!name || name.trim() === '') return false;
+      const trimmedName = name.trim();
+      return trimmedName !== 'A2' && trimmedName !== 'Name' && trimmedName !== 'name';
+    });
 }
