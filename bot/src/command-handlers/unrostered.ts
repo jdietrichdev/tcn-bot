@@ -104,8 +104,11 @@ export const handleUnrosteredCommand = async (
       const discord = p.discord ? p.discord.replace(/_/g, "\\_") : 'N/A';
       const stars = p.avgStars || 'N/A';
       const defStars = p.defenseAvgStars || 'N/A';
+      const heroes = p.combinedHeroes || 'N/A';
+      const destruction = p.destruction || 'N/A';
+      const missed = p.missed || 'N/A';
       const league = p.cwlLeague || 'Unknown';
-      return `**${name}**\n👤 Discord: \`${discord}\`\n⭐ Avg Stars: \`${stars}\` • 🛡️ Def Stars: \`${defStars}\`\n🏆 CWL League: \`${league}\``;
+      return `**${name}**\n👤 Discord: \`${discord}\`\n⭐ Avg: \`${stars}\` • 🛡️ Def: \`${defStars}\` • 🦸 Heroes: \`${heroes}\`\n💥 Destruction: \`${destruction}\` • ❌ Missed: \`${missed}\`\n🏆 CWL League: \`${league}\``;
     };
 
     // Create pages of 10 players each
@@ -174,10 +177,8 @@ export const handleUnrosteredCommand = async (
       ];
     };
 
-    // Cache the data for pagination
     unrosteredDataCache.set(interaction.id, playersWithLeague);
     
-    // Auto-cleanup after 15 minutes
     setTimeout(() => {
       unrosteredDataCache.delete(interaction.id);
     }, 15 * 60 * 1000);

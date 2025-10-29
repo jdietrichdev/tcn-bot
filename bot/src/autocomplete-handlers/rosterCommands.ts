@@ -35,11 +35,22 @@ export const handleRosterAdd = async (
     if (focused.name === "player-name") {
       const allPlayers = await fetchUnrosteredPlayersFromCSV();
       
-      const filteredPlayers = focused.value 
-        ? allPlayers.filter((player) =>
-            player.toLowerCase().includes(focused.value.toLowerCase())
-          )
-        : allPlayers;
+      const searchTerm = focused.value?.toLowerCase() || '';
+      
+      const filteredPlayers = allPlayers
+        .filter((player) => player.toLowerCase().includes(searchTerm))
+        .sort((a, b) => {
+          const aLower = a.toLowerCase();
+          const bLower = b.toLowerCase();
+          
+          if (aLower === searchTerm) return -1;
+          if (bLower === searchTerm) return 1;
+          
+          if (aLower.startsWith(searchTerm) && !bLower.startsWith(searchTerm)) return -1;
+          if (bLower.startsWith(searchTerm) && !aLower.startsWith(searchTerm)) return 1;
+          
+          return a.localeCompare(b);
+        });
 
       options.choices = filteredPlayers.slice(0, 25).map((player) => ({
         name: player,
@@ -62,14 +73,25 @@ export const handleRosterAdd = async (
       const rosters = queryResult.Items || [];
       console.log("Found rosters:", rosters.length);
       
-      const filteredRosters = focused.value
-        ? rosters.filter((roster) =>
-            roster.clanName?.toLowerCase().includes(focused.value.toLowerCase())
-          )
-        : rosters;
+      const searchTerm = focused.value?.toLowerCase() || '';
+      
+      const filteredRosters = rosters
+        .filter((roster) => roster.clanName?.toLowerCase().includes(searchTerm))
+        .sort((a, b) => {
+          const aLower = a.clanName?.toLowerCase() || '';
+          const bLower = b.clanName?.toLowerCase() || '';
+          
+          if (aLower === searchTerm) return -1;
+          if (bLower === searchTerm) return 1;
+          
+          if (aLower.startsWith(searchTerm) && !bLower.startsWith(searchTerm)) return -1;
+          if (bLower.startsWith(searchTerm) && !aLower.startsWith(searchTerm)) return 1;
+          
+          return (a.clanRank || 999) - (b.clanRank || 999);
+        });
 
       options.choices = filteredRosters.slice(0, 25).map((roster) => ({
-        name: `${roster.clanName} (Rank: ${roster.clanRank})`,
+        name: `${roster.clanName} (Rank ${roster.clanRank} • ${roster.players?.length || 0} players)`,
         value: roster.clanName,
       }));
     }
@@ -122,14 +144,25 @@ export const handleRosterShow = async (
     const rosters = queryResult.Items || [];
     console.log("Found rosters:", rosters.length);
     
-    const filteredRosters = focused.value
-      ? rosters.filter((roster) =>
-          roster.clanName?.toLowerCase().includes(focused.value.toLowerCase())
-        )
-      : rosters;
+    const searchTerm = focused.value?.toLowerCase() || '';
+    
+    const filteredRosters = rosters
+      .filter((roster) => roster.clanName?.toLowerCase().includes(searchTerm))
+      .sort((a, b) => {
+        const aLower = a.clanName?.toLowerCase() || '';
+        const bLower = b.clanName?.toLowerCase() || '';
+        
+        if (aLower === searchTerm) return -1;
+        if (bLower === searchTerm) return 1;
+        
+        if (aLower.startsWith(searchTerm) && !bLower.startsWith(searchTerm)) return -1;
+        if (bLower.startsWith(searchTerm) && !aLower.startsWith(searchTerm)) return 1;
+        
+        return (a.clanRank || 999) - (b.clanRank || 999);
+      });
 
     options.choices = filteredRosters.slice(0, 25).map((roster) => ({
-      name: `${roster.clanName} (Rank: ${roster.clanRank})`,
+      name: `${roster.clanName} (Rank ${roster.clanRank} • ${roster.players?.length || 0} players)`,
       value: roster.clanName,
     }));
   } catch (error) {
@@ -182,14 +215,25 @@ export const handleRosterRemove = async (
     console.log("Found rosters:", rosters.length);
 
     if (focused.name === "roster-name") {
-      const filteredRosters = focused.value
-        ? rosters.filter((roster) =>
-            roster.clanName?.toLowerCase().includes(focused.value.toLowerCase())
-          )
-        : rosters;
+      const searchTerm = focused.value?.toLowerCase() || '';
+      
+      const filteredRosters = rosters
+        .filter((roster) => roster.clanName?.toLowerCase().includes(searchTerm))
+        .sort((a, b) => {
+          const aLower = a.clanName?.toLowerCase() || '';
+          const bLower = b.clanName?.toLowerCase() || '';
+          
+          if (aLower === searchTerm) return -1;
+          if (bLower === searchTerm) return 1;
+          
+          if (aLower.startsWith(searchTerm) && !bLower.startsWith(searchTerm)) return -1;
+          if (bLower.startsWith(searchTerm) && !aLower.startsWith(searchTerm)) return 1;
+          
+          return (a.clanRank || 999) - (b.clanRank || 999);
+        });
 
       options.choices = filteredRosters.slice(0, 25).map((roster) => ({
-        name: `${roster.clanName} (Rank: ${roster.clanRank})`,
+        name: `${roster.clanName} (Rank ${roster.clanRank} • ${roster.players?.length || 0} players)`,
         value: roster.clanName,
       }));
     }
@@ -209,18 +253,35 @@ export const handleRosterRemove = async (
         console.log("RosterRemove autocomplete - found roster:", roster?.clanName, "players:", roster?.players?.length);
 
         if (roster?.players && Array.isArray(roster.players)) {
-          const filteredPlayers = focused.value
-            ? roster.players.filter(
-                (p: { playerName: string }) =>
-                  p.playerName.toLowerCase().includes(focused.value.toLowerCase())
-              )
-            : roster.players;
+          const searchTerm = focused.value?.toLowerCase() || '';
+          
+          const filteredPlayers = roster.players
+            .filter((p: { playerName: string }) =>
+              p.playerName.toLowerCase().includes(searchTerm)
+            )
+            .sort((a: { playerName: string }, b: { playerName: string }) => {
+              const aLower = a.playerName.toLowerCase();
+              const bLower = b.playerName.toLowerCase();
+              
+              if (aLower === searchTerm) return -1;
+              if (bLower === searchTerm) return 1;
+              
+              if (aLower.startsWith(searchTerm) && !bLower.startsWith(searchTerm)) return -1;
+              if (bLower.startsWith(searchTerm) && !aLower.startsWith(searchTerm)) return 1;
+              
+              return a.playerName.localeCompare(b.playerName);
+            });
 
           options.choices = filteredPlayers.slice(0, 25).map((p: { playerName: string }) => ({
             name: p.playerName,
             value: p.playerName,
           }));
         }
+      } else {
+        options.choices = [{
+          name: "Please select a roster first",
+          value: "_select_roster_first_",
+        }];
       }
     }
   } catch (error) {

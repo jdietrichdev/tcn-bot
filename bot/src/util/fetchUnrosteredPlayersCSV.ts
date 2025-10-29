@@ -10,6 +10,9 @@ export interface PlayerData {
   discord: string;
   avgStars: string;
   defenseAvgStars: string;
+  combinedHeroes: string;
+  destruction: string;
+  missed: string;
   cwlLeague?: string;
 }
 
@@ -102,7 +105,10 @@ export async function fetchPlayersWithDetailsFromCSV(): Promise<PlayerData[]> {
       name: row[0] || '',
       playerTag: row[1] || '',
       discord: row[5] || '',
+      combinedHeroes: row[9] || '',
       avgStars: row[12] || '',
+      destruction: row[13] || '',
+      missed: row[19] || '',
       defenseAvgStars: row[21] || '',
     }))
     .filter((player: PlayerData) => {
