@@ -29,7 +29,8 @@ import {
   createRoster,
   rosterAdd,
   rosterShow,
-  rosterRemove
+  rosterRemove,
+  cwlResponse
 } from "./commands";
 
 export const testCommands = [
@@ -63,5 +64,6 @@ export const testCommands = [
   createRoster,
   rosterAdd,
   rosterShow,
-  rosterRemove
+  rosterRemove,
+  cwlResponse
 ];
