@@ -77,14 +77,27 @@ export const getPlayerCWLLeague = async (
     const cwlStartDate = new Date("2025-10-02T00:00:00Z");
     const cwlEndDate = new Date("2025-10-04T23:59:59Z");
 
+    console.log(`Total war hits: ${warHits.length}, checking for CWL between ${cwlStartDate.toISOString()} and ${cwlEndDate.toISOString()}`);
+    
+    // Log a few sample war hits to see the structure
+    if (warHits.length > 0) {
+      console.log(`Sample war hit:`, JSON.stringify(warHits[0]));
+    }
+
     const cwlAttacks = warHits.filter((hit) => {
       const warDate = new Date(hit.war_date);
+      const warType = hit.war_type?.toLowerCase();
       return (
         warDate >= cwlStartDate &&
         warDate <= cwlEndDate &&
-        hit.war_type === "cwl"
+        warType === "cwl"
       );
     });
+
+    console.log(`Found ${cwlAttacks.length} CWL attacks for ${playerTag} between Oct 2-4`);
+    if (cwlAttacks.length > 0) {
+      console.log(`First attack: ${cwlAttacks[0].war_date} in clan ${cwlAttacks[0].clan_name}`);
+    }
 
     if (cwlAttacks.length === 0) {
       console.log(
@@ -104,6 +117,10 @@ export const getPlayerCWLLeague = async (
 
     try {
       const clanData = await getClan(clanTag);
+      console.log(`Clan data for ${clanTag}:`, JSON.stringify({
+        name: clanData?.name,
+        warLeague: clanData?.warLeague
+      }));
 
       if (clanData && clanData.warLeague && clanData.warLeague.id) {
         const leagueName = CWL_LEAGUE_NAMES[clanData.warLeague.id];
