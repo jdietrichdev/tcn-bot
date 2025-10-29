@@ -3,18 +3,20 @@ import { getClan } from "./coc-api-adapter";
 
 const CLASHKING_BASE_URL = "https://api.clashk.ing";
 
-interface JoinLeaveEvent {
-  type: "join" | "leave";
-  clan: string;
-  time: string;
-  tag: string;
-  name: string;
-  th: number;
+interface WarHit {
+  war_id: string;
+  clan_tag: string;
   clan_name: string;
+  attack_order: number;
+  stars: number;
+  destruction: number;
+  war_type: string;
+  war_date: string;
+  fresh_hit: boolean;
 }
 
-interface JoinLeaveHistory {
-  items: JoinLeaveEvent[];
+interface WarHitsResponse {
+  items: WarHit[];
 }
 
 const CWL_LEAGUE_NAMES: Record<number, string> = {
@@ -44,63 +46,64 @@ export const getPlayerCWLLeague = async (
 ): Promise<string> => {
   try {
     const tag = encodeURIComponent(playerTag);
-    const historyUrl = `${CLASHKING_BASE_URL}/player/${tag}/join-leave`;
+    const warHitsUrl = `${CLASHKING_BASE_URL}/player/${tag}/warhits`;
 
-    console.log(`Fetching join/leave history for ${playerTag} from ${historyUrl}`);
+    console.log(`Fetching war hits for ${playerTag} from ${warHitsUrl}`);
 
-    let historyResponse;
+    let warHitsResponse;
     try {
-      historyResponse = await axios.get<JoinLeaveHistory>(historyUrl, {
+      warHitsResponse = await axios.get<WarHitsResponse>(warHitsUrl, {
         timeout: 10000,
       });
     } catch (apiError) {
-      console.error(`ClashKing API request failed for ${playerTag}:`, apiError instanceof Error ? apiError.message : apiError);
+      console.error(
+        `ClashKing API request failed for ${playerTag}:`,
+        apiError instanceof Error ? apiError.message : apiError
+      );
       return "Unknown";
     }
 
-    console.log(`Successfully fetched ${historyResponse.data.items?.length || 0} history events`);
-
-    const history = historyResponse.data.items;
-
-    if (!history || history.length === 0) {
-      console.log(`No join/leave history found for ${playerTag}`);
-      return "Unknown";
-    }
-
-    const targetDate = new Date("2025-10-01T11:59:59Z");
-
-    const sortedHistory = history.sort(
-      (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()
+    console.log(
+      `Successfully fetched ${warHitsResponse.data.items?.length || 0} war hits`
     );
 
-    let clanTag: string | null = null;
+    const warHits = warHitsResponse.data.items;
 
-    for (const event of sortedHistory) {
-      const eventDate = new Date(event.time);
-
-      if (eventDate <= targetDate) {
-        if (event.type === "join") {
-          clanTag = event.clan;
-          console.log(
-            `Player ${playerTag} was in clan ${clanTag} (${event.clan_name}) on Oct 1st`
-          );
-          break;
-        }
-      }
-    }
-
-    if (!clanTag) {
-      console.log(`Could not determine clan for ${playerTag} on Oct 1st`);
+    if (!warHits || warHits.length === 0) {
+      console.log(`No war hits found for ${playerTag}`);
       return "Unknown";
     }
 
+    const cwlStartDate = new Date("2025-10-02T00:00:00Z");
+    const cwlEndDate = new Date("2025-10-04T23:59:59Z");
+
+    const cwlAttacks = warHits.filter((hit) => {
+      const warDate = new Date(hit.war_date);
+      return (
+        warDate >= cwlStartDate &&
+        warDate <= cwlEndDate &&
+        hit.war_type === "cwl"
+      );
+    });
+
+    if (cwlAttacks.length === 0) {
+      console.log(
+        `No CWL attacks found for ${playerTag} between Oct 2-4, 2025`
+      );
+      return "Unknown";
+    }
+
+    const firstCwlAttack = cwlAttacks[0];
+    const clanTag = firstCwlAttack.clan_tag;
+
+    console.log(
+      `Player ${playerTag} attacked in CWL for clan ${clanTag} (${firstCwlAttack.clan_name})`
+    );
+
     console.log(`Attempting to fetch clan data for ${clanTag}`);
-    
+
     try {
       const clanData = await getClan(clanTag);
-      console.log(`Clan data type:`, typeof clanData);
-      console.log(`Has warLeague?`, !!clanData?.warLeague);
-      console.log(`WarLeague:`, clanData?.warLeague);
 
       if (clanData && clanData.warLeague && clanData.warLeague.id) {
         const leagueName = CWL_LEAGUE_NAMES[clanData.warLeague.id];
