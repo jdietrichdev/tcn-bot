@@ -24,6 +24,8 @@ export const handleAutocomplete = async (
         return await autocomplete.handleRosterShow(interaction);
       case "roster-remove":
         return await autocomplete.handleRosterRemove(interaction);
+      case "roster-delete":
+        return await autocomplete.handleRosterDelete(interaction);
       case "cwl-response":
         return await autocomplete.handleCwlResponse(interaction);
       default:

@@ -110,7 +110,6 @@ export const handleRosterShow = async (
       }
     }
 
-    // Create CWL league map
     const cwlLeagueMap = new Map(
       playersWithLeague.map(p => [p.playerName.toLowerCase().trim(), p.cwlLeague])
     );
@@ -123,12 +122,13 @@ export const handleRosterShow = async (
       if (details) {
         const discord = details.discord || 'N/A';
         const stars = details.avgStars || 'N/A';
+        const attacks = details.totalAttacks || 'N/A';
         const defStars = details.defenseAvgStars || 'N/A';
         const heroes = details.combinedHeroes || 'N/A';
         const destruction = details.destruction || 'N/A';
         const missed = details.missed || 'N/A';
         
-        return `**${playerName}**\n👤 \`${discord}\` • ⭐ \`${stars}\` • 🛡️ \`${defStars}\` • 🦸 \`${heroes}\` • 💥 \`${destruction}\` • ❌ \`${missed}\`\n🏆 CWL: \`${cwlLeague}\``;
+        return `**${playerName}**\n👤 \`${discord}\` • ⭐ \`${stars}\` • ⚔️ \`${attacks}\` • 🛡️ \`${defStars}\` • 🦸 \`${heroes}\` • 💥 \`${destruction}\` • ❌ \`${missed}\`\n🏆 CWL: \`${cwlLeague}\``;
       }
       
       return `**${playerName}**\n🏆 CWL: \`${cwlLeague}\`\n_No other stats available_`;

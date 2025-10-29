@@ -9,6 +9,7 @@ export interface PlayerData {
   playerTag: string;
   discord: string;
   avgStars: string;
+  totalAttacks: string;
   defenseAvgStars: string;
   combinedHeroes: string;
   destruction: string;
@@ -106,6 +107,7 @@ export async function fetchPlayersWithDetailsFromCSV(): Promise<PlayerData[]> {
       playerTag: row[1] || '',
       discord: row[5] || '',
       combinedHeroes: row[9] || '',
+      totalAttacks: row[10] || '',
       avgStars: row[12] || '',
       destruction: row[13] || '',
       missed: row[19] || '',

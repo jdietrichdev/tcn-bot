@@ -30,6 +30,7 @@ import {
   rosterAdd,
   rosterShow,
   rosterRemove,
+  rosterDelete,
   cwlResponse
 } from "./commands";
 
@@ -65,5 +66,6 @@ export const testCommands = [
   rosterAdd,
   rosterShow,
   rosterRemove,
+  rosterDelete,
   cwlResponse
 ];

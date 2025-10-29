@@ -66,6 +66,8 @@ export const handleCommand = async (
         return await commands.handleRosterShow(event.detail);
       case "roster-remove":
         return await commands.handleRosterRemove(event.detail);
+      case "roster-delete":
+        return await commands.handleRosterDelete(event.detail);
       case "cwl-response":
         return await commands.handleCwlResponseCommand(event.detail);
       default:

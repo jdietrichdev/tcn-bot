@@ -627,6 +627,17 @@ export const rosterRemove = new SlashCommandBuilder()
       .setAutocomplete(true);
   });
 
+export const rosterDelete = new SlashCommandBuilder()
+  .setName("roster-delete")
+  .setDescription("Delete an entire roster and all its players")
+  .addStringOption((option) => {
+    return option
+      .setName("roster-name")
+      .setDescription("Name of the roster to delete")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
 export const cwlResponse = new SlashCommandBuilder()
   .setName("cwl-response")
   .setDescription("View a user's CWL signup response")

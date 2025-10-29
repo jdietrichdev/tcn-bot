@@ -294,3 +294,73 @@ export const handleRosterRemove = async (
     data: options,
   };
 };
+
+export const handleRosterDelete = async (
+  interaction: APIApplicationCommandAutocompleteInteraction
+) => {
+  const options: APICommandAutocompleteInteractionResponseCallbackData = {
+    choices: [],
+  };
+
+  const focused = (interaction.data.options as APIApplicationCommandInteractionDataStringOption[])?.find(
+    (option) => option.focused
+  );
+
+  const guildId = interaction.guild_id;
+
+  console.log("RosterDelete autocomplete - focused:", focused?.name, "value:", focused?.value);
+
+  if (!focused || !guildId || focused.name !== "roster-name") {
+    console.log("RosterDelete autocomplete - missing focused or guildId or not roster-name");
+    return {
+      type: InteractionResponseType.ApplicationCommandAutocompleteResult,
+      data: options,
+    };
+  }
+
+  try {
+    const queryResult = await dynamoDbClient.send(
+      new QueryCommand({
+        TableName: "BotTable",
+        KeyConditionExpression: "pk = :pk AND begins_with(sk, :sk)",
+        ExpressionAttributeValues: {
+          ":pk": guildId,
+          ":sk": "roster#",
+        },
+      })
+    );
+
+    const rosters = queryResult.Items || [];
+    console.log("Found rosters:", rosters.length);
+    
+    const searchTerm = focused.value?.toLowerCase() || '';
+    
+    const filteredRosters = rosters
+      .filter((roster) => roster.clanName?.toLowerCase().includes(searchTerm))
+      .sort((a, b) => {
+        const aLower = a.clanName?.toLowerCase() || '';
+        const bLower = b.clanName?.toLowerCase() || '';
+        
+        if (aLower === searchTerm) return -1;
+        if (bLower === searchTerm) return 1;
+        
+        if (aLower.startsWith(searchTerm) && !bLower.startsWith(searchTerm)) return -1;
+        if (bLower.startsWith(searchTerm) && !aLower.startsWith(searchTerm)) return 1;
+        
+        return (a.clanRank || 999) - (b.clanRank || 999);
+      });
+
+    options.choices = filteredRosters.slice(0, 25).map((roster) => ({
+      name: `${roster.clanName} (Rank ${roster.clanRank} • ${roster.players?.length || 0} players)`,
+      value: roster.clanName,
+    }));
+  } catch (error) {
+    console.error("Error in roster-delete autocomplete:", error);
+  }
+
+  console.log("RosterDelete autocomplete - returning choices:", options.choices?.length || 0);
+  return {
+    type: InteractionResponseType.ApplicationCommandAutocompleteResult,
+    data: options,
+  };
+};

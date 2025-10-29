@@ -58,13 +58,14 @@ export const handleUnrosteredPagination = async (
     const name = p.name.replace(/_/g, "\\_");
     const discord = p.discord ? p.discord.replace(/_/g, "\\_") : 'N/A';
     const stars = p.avgStars || 'N/A';
+    const attacks = p.totalAttacks || 'N/A';
     const defStars = p.defenseAvgStars || 'N/A';
     const heroes = p.combinedHeroes || 'N/A';
     const destruction = p.destruction || 'N/A';
     const missed = p.missed || 'N/A';
     const league = p.cwlLeague || 'Unknown';
     const responseIcon = p.cwlSignedUp ? '✅' : '❌';
-    return `**${name}** ${responseIcon}\n👤 Discord: \`${discord}\`\n⭐ Avg: \`${stars}\` • 🛡️ Def: \`${defStars}\` • 🦸 Heroes: \`${heroes}\`\n💥 Destruction: \`${destruction}\` • ❌ Missed: \`${missed}\`\n🏆 CWL League: \`${league}\``;
+    return `**${name}** ${responseIcon}\n👤 Discord: \`${discord}\`\n⭐ Avg: \`${stars}\` • ⚔️ Attacks: \`${attacks}\` • 🛡️ Def: \`${defStars}\` • 🦸 Heroes: \`${heroes}\`\n💥 Destruction: \`${destruction}\` • ❌ Missed: \`${missed}\`\n🏆 CWL League: \`${league}\``;
   };
 
   const createEmbed = (pageIndex: number): APIEmbed => {
