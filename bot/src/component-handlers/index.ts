@@ -18,6 +18,7 @@ import { claimEvent } from "./claim";
 // import { indifferentNomination } from "./indifferentNomination";
 import { nominationResults } from "./nominationResults";
 import { answerQuestion } from "./answerQuestion";
+import { handleUnrosteredPagination } from "./unrosteredButton";
 
 export const handleComponent = async (
   interaction: APIMessageComponentInteraction
@@ -53,5 +54,7 @@ export const handleComponent = async (
     await nominationResults(interaction);
   } else if (customId.startsWith("answer")) {
     await answerQuestion(interaction);
+  } else if (customId.startsWith("unrostered_")) {
+    await handleUnrosteredPagination(interaction, customId);
   }
 };

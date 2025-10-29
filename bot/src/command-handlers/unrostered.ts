@@ -1,9 +1,10 @@
-import { APIChatInputApplicationCommandInteraction } from 'discord-api-types/v10';
+import { APIChatInputApplicationCommandInteraction, APIEmbed, ButtonStyle, ComponentType } from 'discord-api-types/v10';
 import { fetchPlayersWithDetailsFromCSV, PlayerData } from '../util/fetchUnrosteredPlayersCSV';
 import { updateResponse, sendFollowupMessage } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { getPlayerCWLLeague } from '../adapters/clashking-adapter';
+import { unrosteredDataCache } from '../component-handlers/unrosteredButton';
 
 interface PlayerWithLeague extends PlayerData {
   cwlLeague: string;
@@ -104,42 +105,87 @@ export const handleUnrosteredCommand = async (
       const stars = p.avgStars || 'N/A';
       const defStars = p.defenseAvgStars || 'N/A';
       const league = p.cwlLeague || 'Unknown';
-      return `**${name}**\n└ 👤 Discord: \`${discord}\` • ⭐ Avg: \`${stars}\` • 🛡️ Def: \`${defStars}\` • 🏆 CWL: \`${league}\``;
+      return `**${name}**\n👤 Discord: \`${discord}\`\n⭐ Avg Stars: \`${stars}\` • 🛡️ Def Stars: \`${defStars}\`\n🏆 CWL League: \`${league}\``;
     };
 
-    const header = `**Unrostered Players (${playersWithLeague.length} of ${allPlayers.length} total):**\n`;
-    const maxChunkSize = 1800; 
-    const chunks: PlayerWithLeague[][] = [];
-    let currentChunk: PlayerWithLeague[] = [];
-    let currentLength = 0;
-
-    for (const player of playersWithLeague) {
-      const line = formatPlayer(player) + '\n\n';
-      if (currentLength + line.length > maxChunkSize && currentChunk.length > 0) {
-        chunks.push(currentChunk);
-        currentChunk = [];
-        currentLength = 0;
-      }
-      currentChunk.push(player);
-      currentLength += line.length;
-    }
-    if (currentChunk.length > 0) {
-      chunks.push(currentChunk);
+    // Create pages of 10 players each
+    const playersPerPage = 10;
+    const pages: PlayerWithLeague[][] = [];
+    for (let i = 0; i < playersWithLeague.length; i += playersPerPage) {
+      pages.push(playersWithLeague.slice(i, i + playersPerPage));
     }
 
-    const firstContent = header + chunks[0].map(formatPlayer).join('\n\n');
+    const createEmbed = (pageIndex: number): APIEmbed => {
+      const page = pages[pageIndex];
+      return {
+        title: `📋 Unrostered Players`,
+        description: page.map(formatPlayer).join('\n\n'),
+        color: 0x3498db, // Blue color
+        footer: {
+          text: `Page ${pageIndex + 1} of ${pages.length} • ${playersWithLeague.length} unrostered of ${allPlayers.length} total players`
+        }
+      };
+    };
+
+    const createComponents = (currentPage: number) => {
+      if (pages.length === 1) return [];
+      
+      return [
+        {
+          type: ComponentType.ActionRow as ComponentType.ActionRow,
+          components: [
+            {
+              type: ComponentType.Button as ComponentType.Button,
+              custom_id: `unrostered_first_${interaction.id}`,
+              label: '⏮️',
+              style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+              disabled: currentPage === 0
+            },
+            {
+              type: ComponentType.Button as ComponentType.Button,
+              custom_id: `unrostered_prev_${interaction.id}`,
+              label: '◀️',
+              style: ButtonStyle.Primary as ButtonStyle.Primary,
+              disabled: currentPage === 0
+            },
+            {
+              type: ComponentType.Button as ComponentType.Button,
+              custom_id: `unrostered_page_${interaction.id}`,
+              label: `${currentPage + 1}/${pages.length}`,
+              style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+              disabled: true
+            },
+            {
+              type: ComponentType.Button as ComponentType.Button,
+              custom_id: `unrostered_next_${interaction.id}`,
+              label: '▶️',
+              style: ButtonStyle.Primary as ButtonStyle.Primary,
+              disabled: currentPage === pages.length - 1
+            },
+            {
+              type: ComponentType.Button as ComponentType.Button,
+              custom_id: `unrostered_last_${interaction.id}`,
+              label: '⏭️',
+              style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+              disabled: currentPage === pages.length - 1
+            }
+          ]
+        }
+      ];
+    };
+
+    // Cache the data for pagination
+    unrosteredDataCache.set(interaction.id, playersWithLeague);
+    
+    // Auto-cleanup after 15 minutes
+    setTimeout(() => {
+      unrosteredDataCache.delete(interaction.id);
+    }, 15 * 60 * 1000);
+
     await updateResponse(interaction.application_id, interaction.token, { 
-      content: firstContent
+      embeds: [createEmbed(0)],
+      components: createComponents(0)
     });
-
-    for (let i = 1; i < chunks.length; i++) {
-      const content = `**Continued (${i + 1}/${chunks.length}):**\n` + 
-                     chunks[i].map(formatPlayer).join('\n\n');
-      await sendFollowupMessage(interaction.application_id, interaction.token, { 
-        content
-      });
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
   } catch (err) {
     console.error('Failed to fetch unrostered players:', err);
     const errorMessage = err instanceof Error ? err.message : 'Unknown error';
