@@ -62,7 +62,6 @@ export const handleUnrosteredCommand = async (
       return;
     }
 
-    // Fetch CWL responses
     let cwlResponses: CWLResponse[] = [];
     try {
       cwlResponses = await fetchCWLResponses();
@@ -70,7 +69,6 @@ export const handleUnrosteredCommand = async (
       console.error('Failed to fetch CWL responses:', error);
     }
 
-    // Create a map of discord usernames to CWL signup status
     const cwlSignupMap = new Map(
       cwlResponses.map(r => [r.username.toLowerCase(), true])
     );
@@ -128,10 +126,10 @@ export const handleUnrosteredCommand = async (
       const destruction = p.destruction || 'N/A';
       const missed = p.missed || 'N/A';
       const league = p.cwlLeague || 'Unknown';
-      return `**${name}**\n👤 Discord: \`${discord}\`\n⭐ Avg: \`${stars}\` • 🛡️ Def: \`${defStars}\` • 🦸 Heroes: \`${heroes}\`\n💥 Destruction: \`${destruction}\` • ❌ Missed: \`${missed}\`\n🏆 CWL League: \`${league}\``;
+      const responseIcon = p.cwlSignedUp ? '✅' : '❌';
+      return `**${name}** ${responseIcon}\n👤 Discord: \`${discord}\`\n⭐ Avg: \`${stars}\` • 🛡️ Def: \`${defStars}\` • 🦸 Heroes: \`${heroes}\`\n💥 Destruction: \`${destruction}\` • ❌ Missed: \`${missed}\`\n🏆 CWL League: \`${league}\``;
     };
 
-    // Create pages of 10 players each
     const playersPerPage = 10;
     const pages: PlayerWithLeague[][] = [];
     for (let i = 0; i < playersWithLeague.length; i += playersPerPage) {

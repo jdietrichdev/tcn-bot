@@ -63,7 +63,8 @@ export const handleUnrosteredPagination = async (
     const destruction = p.destruction || 'N/A';
     const missed = p.missed || 'N/A';
     const league = p.cwlLeague || 'Unknown';
-    return `**${name}**\n👤 Discord: \`${discord}\`\n⭐ Avg: \`${stars}\` • 🛡️ Def: \`${defStars}\` • 🦸 Heroes: \`${heroes}\`\n💥 Destruction: \`${destruction}\` • ❌ Missed: \`${missed}\`\n🏆 CWL League: \`${league}\``;
+    const responseIcon = p.cwlSignedUp ? '✅' : '❌';
+    return `**${name}** ${responseIcon}\n👤 Discord: \`${discord}\`\n⭐ Avg: \`${stars}\` • 🛡️ Def: \`${defStars}\` • 🦸 Heroes: \`${heroes}\`\n💥 Destruction: \`${destruction}\` • ❌ Missed: \`${missed}\`\n🏆 CWL League: \`${league}\``;
   };
 
   const createEmbed = (pageIndex: number): APIEmbed => {

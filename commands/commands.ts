@@ -626,3 +626,14 @@ export const rosterRemove = new SlashCommandBuilder()
       .setRequired(true)
       .setAutocomplete(true);
   });
+
+export const cwlResponse = new SlashCommandBuilder()
+  .setName("cwl-response")
+  .setDescription("View a user's CWL signup response")
+  .addStringOption((option) => {
+    return option
+      .setName("user")
+      .setDescription("Username to lookup")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });

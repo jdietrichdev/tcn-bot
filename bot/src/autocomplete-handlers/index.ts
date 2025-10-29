@@ -24,6 +24,8 @@ export const handleAutocomplete = async (
         return await autocomplete.handleRosterShow(interaction);
       case "roster-remove":
         return await autocomplete.handleRosterRemove(interaction);
+      case "cwl-response":
+        return await autocomplete.handleCwlResponse(interaction);
       default:
         console.log("Autocomplete not found, no response needed");
         throw new Error("No autocomplete process defined");
