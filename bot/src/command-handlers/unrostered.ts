@@ -5,9 +5,11 @@ import { dynamoDbClient } from '../clients/dynamodb-client';
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { getPlayerCWLLeague } from '../adapters/clashking-adapter';
 import { unrosteredDataCache } from '../component-handlers/unrosteredButton';
+import { fetchCWLResponses, CWLResponse } from '../util/fetchCWLResponses';
 
 interface PlayerWithLeague extends PlayerData {
   cwlLeague: string;
+  cwlSignedUp?: boolean;
 }
 
 export const handleUnrosteredCommand = async (
@@ -60,6 +62,19 @@ export const handleUnrosteredCommand = async (
       return;
     }
 
+    // Fetch CWL responses
+    let cwlResponses: CWLResponse[] = [];
+    try {
+      cwlResponses = await fetchCWLResponses();
+    } catch (error) {
+      console.error('Failed to fetch CWL responses:', error);
+    }
+
+    // Create a map of discord usernames to CWL signup status
+    const cwlSignupMap = new Map(
+      cwlResponses.map(r => [r.username.toLowerCase(), true])
+    );
+
     const playersWithLeague: PlayerWithLeague[] = [];
     
     const batchSize = 25;
@@ -70,24 +85,29 @@ export const handleUnrosteredCommand = async (
       
       const batchResults = await Promise.all(
         batch.map(async (player): Promise<PlayerWithLeague> => {
+          const cwlSignedUp = cwlSignupMap.has(player.discord.toLowerCase());
+          
           if (player.playerTag && player.playerTag.trim()) {
             try {
               const cwlLeague = await getPlayerCWLLeague(player.playerTag);
               return {
                 ...player,
                 cwlLeague,
+                cwlSignedUp,
               };
             } catch (error) {
               console.error(`Failed to fetch CWL league for ${player.name}:`, error);
               return {
                 ...player,
                 cwlLeague: 'Unknown',
+                cwlSignedUp,
               };
             }
           }
           return {
             ...player,
             cwlLeague: 'No Tag',
+            cwlSignedUp,
           };
         })
       );

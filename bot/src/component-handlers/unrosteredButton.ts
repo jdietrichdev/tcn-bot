@@ -23,7 +23,6 @@ export const handleUnrosteredPagination = async (
     return;
   }
 
-  // Get current page from the message
   const currentMessage = interaction.message;
   const currentPageMatch = currentMessage.embeds?.[0]?.footer?.text?.match(/Page (\d+) of (\d+)/);
   if (!currentPageMatch) {
