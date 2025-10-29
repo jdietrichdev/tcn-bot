@@ -4,15 +4,23 @@ import { getClan } from "./coc-api-adapter";
 const CLASHKING_BASE_URL = "https://api.clashk.ing";
 
 interface WarHit {
-  war_id: string;
-  clan_tag: string;
-  clan_name: string;
-  attack_order: number;
-  stars: number;
-  destruction: number;
-  war_type: string;
-  war_date: string;
-  fresh_hit: boolean;
+  war_data: {
+    type: string;
+    endTime: string;
+    clan: {
+      tag: string;
+      name: string;
+    };
+  };
+  member_data: {
+    tag: string;
+    name: string;
+  };
+  attacks: Array<{
+    stars: number;
+    destructionPercentage: number;
+    fresh: boolean;
+  }>;
 }
 
 interface WarHitsResponse {
@@ -79,14 +87,13 @@ export const getPlayerCWLLeague = async (
 
     console.log(`Total war hits: ${warHits.length}, checking for CWL between ${cwlStartDate.toISOString()} and ${cwlEndDate.toISOString()}`);
     
-    // Log a few sample war hits to see the structure
     if (warHits.length > 0) {
       console.log(`Sample war hit:`, JSON.stringify(warHits[0]));
     }
 
     const cwlAttacks = warHits.filter((hit) => {
-      const warDate = new Date(hit.war_date);
-      const warType = hit.war_type?.toLowerCase();
+      const warDate = new Date(hit.war_data.endTime);
+      const warType = hit.war_data.type?.toLowerCase();
       return (
         warDate >= cwlStartDate &&
         warDate <= cwlEndDate &&
@@ -96,7 +103,7 @@ export const getPlayerCWLLeague = async (
 
     console.log(`Found ${cwlAttacks.length} CWL attacks for ${playerTag} between Oct 2-4`);
     if (cwlAttacks.length > 0) {
-      console.log(`First attack: ${cwlAttacks[0].war_date} in clan ${cwlAttacks[0].clan_name}`);
+      console.log(`First attack: ${cwlAttacks[0].war_data.endTime} in clan ${cwlAttacks[0].war_data.clan.name}`);
     }
 
     if (cwlAttacks.length === 0) {
@@ -107,10 +114,10 @@ export const getPlayerCWLLeague = async (
     }
 
     const firstCwlAttack = cwlAttacks[0];
-    const clanTag = firstCwlAttack.clan_tag;
+    const clanTag = firstCwlAttack.war_data.clan.tag;
 
     console.log(
-      `Player ${playerTag} attacked in CWL for clan ${clanTag} (${firstCwlAttack.clan_name})`
+      `Player ${playerTag} attacked in CWL for clan ${clanTag} (${firstCwlAttack.war_data.clan.name})`
     );
 
     console.log(`Attempting to fetch clan data for ${clanTag}`);
