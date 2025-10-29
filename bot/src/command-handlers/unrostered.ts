@@ -59,29 +59,44 @@ export const handleUnrosteredCommand = async (
       return;
     }
 
-    const playersWithLeague: PlayerWithLeague[] = await Promise.all(
-      unrosteredPlayers.map(async (player): Promise<PlayerWithLeague> => {
-        if (player.playerTag && player.playerTag.trim()) {
-          try {
-            const cwlLeague = await getPlayerCWLLeague(player.playerTag);
-            return {
-              ...player,
-              cwlLeague,
-            };
-          } catch (error) {
-            console.error(`Failed to fetch CWL league for ${player.name}:`, error);
-            return {
-              ...player,
-              cwlLeague: 'Unknown',
-            };
+    const playersWithLeague: PlayerWithLeague[] = [];
+    
+    const batchSize = 25;
+    const delayBetweenBatches = 1000;
+    
+    for (let i = 0; i < unrosteredPlayers.length; i += batchSize) {
+      const batch = unrosteredPlayers.slice(i, i + batchSize);
+      
+      const batchResults = await Promise.all(
+        batch.map(async (player): Promise<PlayerWithLeague> => {
+          if (player.playerTag && player.playerTag.trim()) {
+            try {
+              const cwlLeague = await getPlayerCWLLeague(player.playerTag);
+              return {
+                ...player,
+                cwlLeague,
+              };
+            } catch (error) {
+              console.error(`Failed to fetch CWL league for ${player.name}:`, error);
+              return {
+                ...player,
+                cwlLeague: 'Unknown',
+              };
+            }
           }
-        }
-        return {
-          ...player,
-          cwlLeague: 'No Tag',
-        };
-      })
-    );
+          return {
+            ...player,
+            cwlLeague: 'No Tag',
+          };
+        })
+      );
+      
+      playersWithLeague.push(...batchResults);
+      
+      if (i + batchSize < unrosteredPlayers.length) {
+        await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
+      }
+    }
 
     const formatPlayer = (p: PlayerWithLeague) => {
       const name = p.name.replace(/_/g, "\\_");

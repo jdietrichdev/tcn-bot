@@ -46,11 +46,19 @@ export const getPlayerCWLLeague = async (
     const tag = encodeURIComponent(playerTag);
     const historyUrl = `${CLASHKING_BASE_URL}/player/${tag}/join-leave`;
 
-    console.log(`Fetching join/leave history for ${playerTag} from ClashKing`);
+    console.log(`Fetching join/leave history for ${playerTag} from ${historyUrl}`);
 
-    const historyResponse = await axios.get<JoinLeaveHistory>(historyUrl, {
-      timeout: 5000,
-    });
+    let historyResponse;
+    try {
+      historyResponse = await axios.get<JoinLeaveHistory>(historyUrl, {
+        timeout: 10000,
+      });
+    } catch (apiError) {
+      console.error(`ClashKing API request failed for ${playerTag}:`, apiError instanceof Error ? apiError.message : apiError);
+      return "Unknown";
+    }
+
+    console.log(`Successfully fetched ${historyResponse.data.items?.length || 0} history events`);
 
     const history = historyResponse.data.items;
 
@@ -117,7 +125,7 @@ export const getPlayerCWLLeague = async (
       console.error(
         `ClashKing API error for ${playerTag}:`,
         error.response?.status,
-        error.response?.data
+        error.message
       );
     } else {
       console.error(`Failed to get CWL league for player ${playerTag}:`, error);
