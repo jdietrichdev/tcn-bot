@@ -90,7 +90,9 @@ export const getPlayerCWLLeague = async (
     
     try {
       const clanData = await getClan(clanTag);
-      console.log(`Clan data received:`, JSON.stringify(clanData).substring(0, 200));
+      console.log(`Clan data type:`, typeof clanData);
+      console.log(`Has warLeague?`, !!clanData?.warLeague);
+      console.log(`WarLeague:`, clanData?.warLeague);
 
       if (clanData && clanData.warLeague && clanData.warLeague.id) {
         const leagueName = CWL_LEAGUE_NAMES[clanData.warLeague.id];
@@ -100,10 +102,14 @@ export const getPlayerCWLLeague = async (
         return leagueName || "Unknown";
       }
 
-      console.log(`Could not get war league for clan ${clanTag}. ClanData:`, clanData);
+      console.log(`Could not get war league for clan ${clanTag}`);
       return "Unknown";
     } catch (clanError) {
       console.error(`Error fetching clan ${clanTag}:`, clanError);
+      if (axios.isAxiosError(clanError)) {
+        console.error(`Response status:`, clanError.response?.status);
+        console.error(`Response data:`, clanError.response?.data);
+      }
       return "Unknown";
     }
   } catch (error) {
