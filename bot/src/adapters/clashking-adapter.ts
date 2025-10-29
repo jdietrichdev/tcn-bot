@@ -92,13 +92,21 @@ export const getPlayerCWLLeague = async (
     }
 
     const cwlAttacks = warHits.filter((hit) => {
-      const warDate = new Date(hit.war_data.endTime);
-      const warType = hit.war_data.type?.toLowerCase();
-      return (
-        warDate >= cwlStartDate &&
-        warDate <= cwlEndDate &&
-        warType === "cwl"
+      const dateStr = hit.war_data.endTime;
+      const formattedDate = dateStr.replace(
+        /(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})\.(\d{3})Z/,
+        '$1-$2-$3T$4:$5:$6.$7Z'
       );
+      const warDate = new Date(formattedDate);
+      const warType = hit.war_data.type?.toLowerCase();
+      const inDateRange = warDate >= cwlStartDate && warDate <= cwlEndDate;
+      const isCWL = warType === "cwl";
+      
+      if (isCWL) {
+        console.log(`CWL war found: ${dateStr} -> ${formattedDate} (${warDate.toISOString()}) in date range: ${inDateRange}, clan: ${hit.war_data.clan.tag}`);
+      }
+      
+      return inDateRange && isCWL;
     });
 
     console.log(`Found ${cwlAttacks.length} CWL attacks for ${playerTag} between Oct 1-10`);
@@ -141,9 +149,17 @@ export const getPlayerCWLLeague = async (
 
     try {
       const clanData = await getClan(clanTag);
+      
+      if (!clanData) {
+        console.log(`getClan returned null/undefined for ${clanTag}`);
+        return "Unknown";
+      }
+      
       console.log(`Clan data for ${clanTag}:`, JSON.stringify({
         name: clanData?.name,
-        warLeague: clanData?.warLeague
+        warLeague: clanData?.warLeague,
+        hasWarLeague: !!clanData?.warLeague,
+        hasWarLeagueId: !!clanData?.warLeague?.id
       }));
 
       if (clanData && clanData.warLeague && clanData.warLeague.id) {
@@ -151,10 +167,15 @@ export const getPlayerCWLLeague = async (
         console.log(
           `Clan ${clanTag} war league: ${leagueName} (ID: ${clanData.warLeague.id})`
         );
+        
+        if (!leagueName) {
+          console.log(`Warning: No league name found for ID ${clanData.warLeague.id}`);
+        }
+        
         return leagueName || "Unknown";
       }
 
-      console.log(`Could not get war league for clan ${clanTag}`);
+      console.log(`Could not get war league for clan ${clanTag} - missing warLeague data`);
       return "Unknown";
     } catch (clanError) {
       console.error(`Error fetching clan ${clanTag}:`, clanError);
