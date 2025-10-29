@@ -3,7 +3,7 @@ import { fetchPlayersWithDetailsFromCSV, PlayerData } from '../util/fetchUnroste
 import { updateResponse, sendFollowupMessage } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
-import { getPlayerCWLLeague } from '../adapters/clashofstats-adapter';
+import { getPlayerCWLLeague } from '../adapters/clashking-adapter';
 
 interface PlayerWithLeague extends PlayerData {
   cwlLeague: string;
