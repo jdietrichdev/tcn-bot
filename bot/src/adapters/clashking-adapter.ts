@@ -67,7 +67,7 @@ export const getPlayerCWLLeague = async (
       return "Unknown";
     }
 
-    const targetDate = new Date("2025-10-01T23:59:59Z");
+    const targetDate = new Date("2025-10-01T11:59:59Z");
 
     const sortedHistory = history.sort(
       (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()
