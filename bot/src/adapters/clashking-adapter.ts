@@ -82,8 +82,8 @@ export const getPlayerCWLLeague = async (
       return "Unknown";
     }
 
-    const cwlStartDate = new Date("2025-10-02T00:00:00Z");
-    const cwlEndDate = new Date("2025-10-04T23:59:59Z");
+    const cwlStartDate = new Date("2025-10-01T00:00:00Z");
+    const cwlEndDate = new Date("2025-10-10T23:59:59Z");
 
     console.log(`Total war hits: ${warHits.length}, checking for CWL between ${cwlStartDate.toISOString()} and ${cwlEndDate.toISOString()}`);
     
@@ -101,24 +101,41 @@ export const getPlayerCWLLeague = async (
       );
     });
 
-    console.log(`Found ${cwlAttacks.length} CWL attacks for ${playerTag} between Oct 2-4`);
-    if (cwlAttacks.length > 0) {
-      console.log(`First attack: ${cwlAttacks[0].war_data.endTime} in clan ${cwlAttacks[0].war_data.clan.name}`);
-    }
-
+    console.log(`Found ${cwlAttacks.length} CWL attacks for ${playerTag} between Oct 1-10`);
+    
     if (cwlAttacks.length === 0) {
       console.log(
-        `No CWL attacks found for ${playerTag} between Oct 2-4, 2025`
+        `No CWL attacks found for ${playerTag} between Oct 1-10, 2025`
       );
       return "Unknown";
     }
 
-    const firstCwlAttack = cwlAttacks[0];
-    const clanTag = firstCwlAttack.war_data.clan.tag;
+    const clanAttackCounts = new Map<string, { count: number; name: string }>();
+    cwlAttacks.forEach((hit) => {
+      const tag = hit.war_data.clan.tag;
+      const existing = clanAttackCounts.get(tag);
+      if (existing) {
+        existing.count++;
+      } else {
+        clanAttackCounts.set(tag, { count: 1, name: hit.war_data.clan.name });
+      }
+    });
 
+    let mostAttacksClan = { tag: "", count: 0, name: "" };
+    clanAttackCounts.forEach((value, tag) => {
+      if (value.count > mostAttacksClan.count) {
+        mostAttacksClan = { tag, count: value.count, name: value.name };
+      }
+    });
+
+    const clanTag = mostAttacksClan.tag;
     console.log(
-      `Player ${playerTag} attacked in CWL for clan ${clanTag} (${firstCwlAttack.war_data.clan.name})`
+      `Player ${playerTag} attacked ${mostAttacksClan.count} times in CWL for clan ${clanTag} (${mostAttacksClan.name})`
     );
+    
+    if (clanAttackCounts.size > 1) {
+      console.log(`Note: Player participated in CWL for ${clanAttackCounts.size} different clans`);
+    }
 
     console.log(`Attempting to fetch clan data for ${clanTag}`);
 
