@@ -6,6 +6,7 @@ import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { getPlayerCWLLeague, getPlayerWarHitRate } from '../adapters/clashking-adapter';
 import { unrosteredDataCache, storeCacheInDynamoDB } from '../component-handlers/unrosteredButton';
 import { fetchCWLResponses, CWLResponse } from '../util/fetchCWLResponses';
+import { WAR_LEAGUE } from '../constants/emojis/coc/cwlLeague';
 
 interface PlayerWithLeague extends PlayerData {
   cwlLeague: string;
@@ -182,6 +183,7 @@ export const handleUnrosteredCommand = async (
       const hitRate = p.warHitRate || '—';
       const cwlStars = p.totalCwlStars || '—';
       const league = p.cwlLeague || 'Unknown';
+      const leagueEmoji = league !== 'Unknown' && league in WAR_LEAGUE ? WAR_LEAGUE[league as keyof typeof WAR_LEAGUE] : '🏆';
       const stars = p.avgStars || '—';
       const attacks = p.totalAttacks || '—';
       const defStars = p.defenseAvgStars || '—';
@@ -193,14 +195,15 @@ export const handleUnrosteredCommand = async (
       return [
         `### ${index + 1}. ${name} ${responseIcon}`,
         `> **Discord:** ${discord}`,
-        `> **CWL:** 🎯 \`${hitRate}\` 3★  •  ⭐ \`${cwlStars}\` total  •  🏆 \`${league}\``,
-        `> **War Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total`,
-        `> **War Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
+        `> **CWL:** ${leagueEmoji} \`${league}\``,
+        `> **CWL Attack:** ⚔️ \`${attacks}\` attacks  •  ⭐ \`${cwlStars}\` stars  •  ⭐ \`${stars}\` avg  •  💥 \`${destruction}%\` dest`,
+        `> **CWL Defense:** 🛡️ \`${defStars}\` avg`,
+        `> **War Attack:** 🎯 \`${hitRate}\` 3★`,
         `> **Other:** 🏠 TH\`${townHall}\`  •  🦸 \`${heroes}\` heroes`
       ].join('\n');
     };
 
-    const playersPerPage = 8;
+    const playersPerPage = 6;
     const pages: PlayerWithLeague[][] = [];
     for (let i = 0; i < sortedPlayers.length; i += playersPerPage) {
       pages.push(sortedPlayers.slice(i, i + playersPerPage));

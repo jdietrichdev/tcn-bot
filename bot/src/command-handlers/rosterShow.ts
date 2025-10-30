@@ -6,6 +6,7 @@ import { fetchPlayersWithDetailsFromCSV, PlayerData } from "../util/fetchUnroste
 import { getPlayerCWLLeague, getPlayerWarHitRate } from "../adapters/clashking-adapter";
 import { v4 as uuidv4 } from 'uuid';
 import { storeCacheInDynamoDB } from "../component-handlers/rosterShowButton";
+import { WAR_LEAGUE } from '../constants/emojis/coc/cwlLeague';
 
 export const handleRosterShow = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -184,6 +185,7 @@ export const handleRosterShow = async (
       const playerName = p.playerName.replace(/_/g, "\\_");
       const details = playerDetailsMap.get(p.playerName.toLowerCase().trim());
       const cwlLeague = cwlLeagueMap.get(p.playerName.toLowerCase().trim()) || 'Unknown';
+      const leagueEmoji = cwlLeague !== 'Unknown' && cwlLeague in WAR_LEAGUE ? WAR_LEAGUE[cwlLeague as keyof typeof WAR_LEAGUE] : '🏆';
       const hitRate = hitRateMap.get(p.playerName.toLowerCase().trim()) || '—';
       
       if (details) {
@@ -201,9 +203,10 @@ export const handleRosterShow = async (
         return [
           `### ${index + 1}. ${playerName}`,
           `> **Discord:** ${discord}`,
-          `> **CWL:** 🎯 \`${hitRate}\` 3★  •  ⭐ \`${cwlStars}\` total  •  🏆 \`${cwlLeague}\``,
-          `> **War Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total`,
-          `> **War Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
+          `> **CWL:** ${leagueEmoji} \`${cwlLeague}\``,
+          `> **CWL Attack:** ⚔️ \`${attacks}\` attacks  •  ⭐ \`${cwlStars}\` stars  •  ⭐ \`${stars}\` avg  •  💥 \`${destruction}%\` dest`,
+          `> **CWL Defense:** 🛡️ \`${defStars}\` avg`,
+          `> **War Attack:** 🎯 \`${hitRate}\` 3★`,
           `> **Other:** 🏠 TH\`${townHall}\`  •  🦸 \`${heroes}\` heroes`
         ].join('\n');
       }
@@ -211,12 +214,13 @@ export const handleRosterShow = async (
       return [
         `### ${index + 1}. ${playerName}`,
         `> **Discord:** *Unknown*`,
-        `> **CWL:** 🎯 \`${hitRate}\` 3★  •  🏆 \`${cwlLeague}\``,
+        `> **CWL:** ${leagueEmoji} \`${cwlLeague}\``,
+        `> **War Attack:** � \`${hitRate}\` 3★`,
         `> *No stats available from signup sheet*`
       ].join('\n');
     };
 
-    const playersPerPage = 8;
+    const playersPerPage = 6;
     const pages: any[][] = [];
     for (let i = 0; i < sortedPlayers.length; i += playersPerPage) {
       pages.push(sortedPlayers.slice(i, i + playersPerPage));

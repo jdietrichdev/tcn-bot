@@ -2,6 +2,7 @@ import { APIMessageComponentInteraction, ComponentType, ButtonStyle, APIEmbed, I
 import { updateMessage } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { PutCommand, GetCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
+import { WAR_LEAGUE } from '../constants/emojis/coc/cwlLeague';
 
 interface UnrosteredCacheData {
   players: any[];
@@ -105,7 +106,7 @@ export const handleUnrosteredPagination = async (
       break;
   }
 
-  const playersPerPage = 8;
+  const playersPerPage = 6;
   const pages: any[][] = [];
   for (let i = 0; i < data.players.length; i += playersPerPage) {
     pages.push(data.players.slice(i, i + playersPerPage));
@@ -119,6 +120,7 @@ export const handleUnrosteredPagination = async (
     const hitRate = p.warHitRate || '—';
     const cwlStars = p.totalCwlStars || '—';
     const league = p.cwlLeague || 'Unknown';
+    const leagueEmoji = league !== 'Unknown' && league in WAR_LEAGUE ? WAR_LEAGUE[league as keyof typeof WAR_LEAGUE] : '🏆';
     const stars = p.avgStars || '—';
     const attacks = p.totalAttacks || '—';
     const defStars = p.defenseAvgStars || '—';
@@ -130,9 +132,10 @@ export const handleUnrosteredPagination = async (
     return [
       `### ${index + 1}. ${name} ${responseIcon}`,
       `> **Discord:** ${discord}`,
-      `> **CWL:** 🎯 \`${hitRate}\` 3★  •  ⭐ \`${cwlStars}\` total  •  🏆 \`${league}\``,
-      `> **War Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total`,
-      `> **War Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
+      `> **CWL:** ${leagueEmoji} \`${league}\``,
+      `> **CWL Attack:** ⚔️ \`${attacks}\` attacks  •  ⭐ \`${cwlStars}\` stars  •  ⭐ \`${stars}\` avg  •  💥 \`${destruction}%\` dest`,
+      `> **CWL Defense:** 🛡️ \`${defStars}\` avg`,
+      `> **War Attack:** 🎯 \`${hitRate}\` 3★`,
       `> **Other:** 🏠 TH\`${townHall}\`  •  🦸 \`${heroes}\` heroes`
     ].join('\n');
   };
@@ -216,7 +219,7 @@ export const refreshUnrosteredMessages = async (updatedPlayers: any[], allPlayer
   
   console.log(`Refreshing unrostered messages.`);
   
-  const playersPerPage = 8;
+  const playersPerPage = 6;
   
   const { QueryCommand } = await import('@aws-sdk/lib-dynamodb');
   const cacheResult = await dynamoDbClient.send(
@@ -277,6 +280,7 @@ export const refreshUnrosteredMessages = async (updatedPlayers: any[], allPlayer
         const hitRate = p.warHitRate || '—';
         const cwlStars = p.totalCwlStars || '—';
         const league = p.cwlLeague || 'Unknown';
+        const leagueEmoji = league !== 'Unknown' && league in WAR_LEAGUE ? WAR_LEAGUE[league as keyof typeof WAR_LEAGUE] : '🏆';
         const stars = p.avgStars || '—';
         const attacks = p.totalAttacks || '—';
         const defStars = p.defenseAvgStars || '—';
@@ -288,9 +292,10 @@ export const refreshUnrosteredMessages = async (updatedPlayers: any[], allPlayer
         return [
           `### ${index + 1}. ${name} ${responseIcon}`,
           `> **Discord:** ${discord}`,
-          `> **CWL:** 🎯 \`${hitRate}\` 3★  •  ⭐ \`${cwlStars}\` total  •  🏆 \`${league}\``,
-          `> **War Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total`,
-          `> **War Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
+          `> **CWL:** ${leagueEmoji} \`${league}\``,
+          `> **CWL Attack:** ⚔️ \`${attacks}\` attacks  •  ⭐ \`${cwlStars}\` stars  •  ⭐ \`${stars}\` avg  •  💥 \`${destruction}%\` dest`,
+          `> **CWL Defense:** 🛡️ \`${defStars}\` avg`,
+          `> **War Attack:** 🎯 \`${hitRate}\` 3★`,
           `> **Other:** 🏠 TH\`${townHall}\`  •  🦸 \`${heroes}\` heroes`
         ].join('\n');
       };
@@ -371,7 +376,7 @@ export const refreshUnrosteredMessages = async (updatedPlayers: any[], allPlayer
 export const refreshUnrosteredMessagesQuick = async (playerNameToRemove: string) => {
   console.log(`Quick refresh: removing player "${playerNameToRemove}"`);
   
-  const playersPerPage = 8;
+  const playersPerPage = 6;
   
   const { QueryCommand } = await import('@aws-sdk/lib-dynamodb');
   const cacheResult = await dynamoDbClient.send(
@@ -447,24 +452,22 @@ export const refreshUnrosteredMessagesQuick = async (playerNameToRemove: string)
         const hitRate = p.warHitRate || '—';
         const cwlStars = p.totalCwlStars || '—';
         const league = p.cwlLeague || 'Unknown';
-        
-        // Regular War Stats
+        const leagueEmoji = league !== 'Unknown' && league in WAR_LEAGUE ? WAR_LEAGUE[league as keyof typeof WAR_LEAGUE] : '🏆';
         const stars = p.avgStars || '—';
         const attacks = p.totalAttacks || '—';
         const defStars = p.defenseAvgStars || '—';
         const destruction = p.destruction || '—';
         const missed = p.missed || '—';
-        
-        // Other Stats
         const townHall = p.townHall || '—';
         const heroes = p.combinedHeroes || '—';
         
         return [
           `### ${index + 1}. ${name} ${responseIcon}`,
           `> **Discord:** ${discord}`,
-          `> **CWL:** 🎯 \`${hitRate}\` 3★  •  ⭐ \`${cwlStars}\` total  •  🏆 \`${league}\``,
-          `> **War Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total`,
-          `> **War Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
+          `> **CWL:** ${leagueEmoji} \`${league}\``,
+          `> **CWL Attack:** ⚔️ \`${attacks}\` attacks  •  ⭐ \`${cwlStars}\` stars  •  ⭐ \`${stars}\` avg  •  💥 \`${destruction}%\` dest`,
+          `> **CWL Defense:** 🛡️ \`${defStars}\` avg`,
+          `> **War Attack:** 🎯 \`${hitRate}\` 3★`,
           `> **Other:** 🏠 TH\`${townHall}\`  •  🦸 \`${heroes}\` heroes`
         ].join('\n');
       };
@@ -601,7 +604,7 @@ export const refreshUnrosteredMessagesAddPlayer = async (playerName: string) => 
       playerWithData.warHitRate = 'N/A';
     }
     
-    const playersPerPage = 8;
+    const playersPerPage = 6;
     const { QueryCommand } = await import('@aws-sdk/lib-dynamodb');
     const cacheResult = await dynamoDbClient.send(
       new QueryCommand({
@@ -671,6 +674,7 @@ export const refreshUnrosteredMessagesAddPlayer = async (playerName: string) => 
           const hitRate = p.warHitRate || '—';
           const cwlStars = p.totalCwlStars || '—';
           const league = p.cwlLeague || 'Unknown';
+          const leagueEmoji = league !== 'Unknown' && league in WAR_LEAGUE ? WAR_LEAGUE[league as keyof typeof WAR_LEAGUE] : '🏆';
           const stars = p.avgStars || '—';
           const attacks = p.totalAttacks || '—';
           const defStars = p.defenseAvgStars || '—';
@@ -682,9 +686,10 @@ export const refreshUnrosteredMessagesAddPlayer = async (playerName: string) => 
           return [
             `### ${index + 1}. ${name} ${responseIcon}`,
             `> **Discord:** ${discord}`,
-            `> **CWL:** 🎯 \`${hitRate}\` 3★  •  ⭐ \`${cwlStars}\` total  •  🏆 \`${league}\``,
-            `> **War Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total`,
-            `> **War Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
+            `> **CWL:** ${leagueEmoji} \`${league}\``,
+            `> **CWL Attack:** ⚔️ \`${attacks}\` attacks  •  ⭐ \`${cwlStars}\` stars  •  ⭐ \`${stars}\` avg  •  💥 \`${destruction}%\` dest`,
+            `> **CWL Defense:** 🛡️ \`${defStars}\` avg`,
+            `> **War Attack:** 🎯 \`${hitRate}\` 3★`,
             `> **Other:** 🏠 TH\`${townHall}\`  •  🦸 \`${heroes}\` heroes`
           ].join('\n');
         };

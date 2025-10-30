@@ -2,6 +2,7 @@ import { APIMessageComponentInteraction, APIEmbed, ComponentType, ButtonStyle, I
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { PutCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
 import { updateMessage } from '../adapters/discord-adapter';
+import { WAR_LEAGUE } from '../constants/emojis/coc/cwlLeague';
 
 interface RosterShowCacheData {
   rosterName: string;
@@ -72,7 +73,7 @@ export const handleRosterShowPagination = async (
     };
   }
   
-  const playersPerPage = 8;
+  const playersPerPage = 6;
   const { sortedPlayers, playerDetailsMap, cwlLeagueMap, hitRateMap, rosterName, clanRank } = cacheData;
   
   const detailsMap = new Map(playerDetailsMap);
@@ -107,6 +108,7 @@ export const handleRosterShowPagination = async (
     const playerName = p.playerName.replace(/_/g, "\\_");
     const details = detailsMap.get(p.playerName.toLowerCase().trim());
     const cwlLeague = leagueMap.get(p.playerName.toLowerCase().trim()) || 'Unknown';
+    const leagueEmoji = cwlLeague !== 'Unknown' && cwlLeague in WAR_LEAGUE ? WAR_LEAGUE[cwlLeague as keyof typeof WAR_LEAGUE] : '🏆';
     const hitRate = rateMap.get(p.playerName.toLowerCase().trim()) || '—';
     
     if (details) {
@@ -124,9 +126,10 @@ export const handleRosterShowPagination = async (
       return [
         `### ${index + 1}. ${playerName}`,
         `> **Discord:** ${discord}`,
-        `> **CWL:** 🎯 \`${hitRate}\` 3★  •  ⭐ \`${cwlStars}\` total  •  🏆 \`${cwlLeague}\``,
-        `> **War Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total`,
-        `> **War Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
+        `> **CWL:** ${leagueEmoji} \`${cwlLeague}\``,
+        `> **CWL Attack:** ⚔️ \`${attacks}\` attacks  •  ⭐ \`${cwlStars}\` stars  •  ⭐ \`${stars}\` avg  •  💥 \`${destruction}%\` dest`,
+        `> **CWL Defense:** 🛡️ \`${defStars}\` avg`,
+        `> **War Attack:** 🎯 \`${hitRate}\` 3★`,
         `> **Other:** 🏠 TH\`${townHall}\`  •  🦸 \`${heroes}\` heroes`
       ].join('\n');
     }
@@ -134,7 +137,8 @@ export const handleRosterShowPagination = async (
     return [
       `### ${index + 1}. ${playerName}`,
       `> **Discord:** *Unknown*`,
-      `> **CWL:** 🎯 \`${hitRate}\` 3★  •  🏆 \`${cwlLeague}\``,
+      `> **CWL:** ${leagueEmoji} \`${cwlLeague}\``,
+      `> **War Attack:** � \`${hitRate}\` 3★`,
       `> *No stats available from signup sheet*`
     ].join('\n');
   };
