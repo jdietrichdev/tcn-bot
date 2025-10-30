@@ -59,6 +59,13 @@ export const proxy = async (
   ) {
     console.log("Button modal triggered");
     response = createModal(body, body.data.custom_id);
+  } else if (
+    body.type === InteractionType.MessageComponent &&
+    body.data.custom_id.startsWith("unrostered_")
+  ) {
+    console.log("Unrostered pagination button clicked");
+    const { handleUnrosteredPagination } = await import("./component-handlers/unrosteredButton");
+    response = await handleUnrosteredPagination(body as APIMessageComponentInteraction, body.data.custom_id);
   } else {
     await eventClient.send(
       new PutEventsCommand({

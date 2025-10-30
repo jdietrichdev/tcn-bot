@@ -26,7 +26,7 @@ export const handleCwlResponse = async (
     try {
       const responses = await fetchCWLResponses();
       
-      const usernames = [...new Set(responses.map(r => r.username))].sort();
+              const usernames = [...new Set(responses.map(r => r.username))].sort();
 
       const exactMatch = usernames.filter(u => u.toLowerCase() === query);
       const startsWith = usernames.filter(u => u.toLowerCase().startsWith(query) && !exactMatch.includes(u));

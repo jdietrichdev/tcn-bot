@@ -46,6 +46,27 @@ export const updateResponse = async (
   }
 };
 
+export const getOriginalResponse = async (
+  applicationId: string,
+  interactionToken: string
+): Promise<APIMessage> => {
+  const url = `${BASE_URL}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
+  try {
+    const response = await axios.get(url);
+    return response.data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to get original response",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
 export const sendFollowupMessage = async (
   applicationId: string,
   interactionToken: string,

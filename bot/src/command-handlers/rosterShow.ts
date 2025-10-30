@@ -3,7 +3,7 @@ import { updateResponse } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { fetchPlayersWithDetailsFromCSV, PlayerData } from "../util/fetchUnrosteredPlayersCSV";
-import { getPlayerCWLLeague } from "../adapters/clashking-adapter";
+import { getPlayerCWLLeague, getPlayerWarHitRate } from "../adapters/clashking-adapter";
 
 export const handleRosterShow = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -54,7 +54,6 @@ export const handleRosterShow = async (
       });
     }
 
-    // Fetch player details from CSV
     let allPlayerDetails: PlayerData[] = [];
     try {
       allPlayerDetails = await fetchPlayersWithDetailsFromCSV();
@@ -62,13 +61,11 @@ export const handleRosterShow = async (
       console.error("Failed to fetch player details from CSV:", error);
     }
 
-    // Create a map for quick lookup
     const playerDetailsMap = new Map(
       allPlayerDetails.map(p => [p.name.toLowerCase().trim(), p])
     );
 
-    // Fetch CWL leagues for all players in the roster (with rate limiting)
-    const playersWithLeague: Array<{ playerName: string; cwlLeague: string }> = [];
+    const playersWithData: Array<{ playerName: string; cwlLeague: string; warHitRate: string }> = [];
     
     if (roster.players && roster.players.length > 0) {
       const batchSize = 25;
@@ -82,27 +79,38 @@ export const handleRosterShow = async (
             const details = playerDetailsMap.get(player.playerName.toLowerCase().trim());
             if (details?.playerTag && details.playerTag.trim()) {
               try {
-                const cwlLeague = await getPlayerCWLLeague(details.playerTag);
+                const [cwlLeague, hitRateData] = await Promise.all([
+                  getPlayerCWLLeague(details.playerTag),
+                  getPlayerWarHitRate(details.playerTag)
+                ]);
+                
+                const warHitRate = hitRateData 
+                  ? `${hitRateData.threeStars}/${hitRateData.totalAttacks} (${hitRateData.hitRate}%)`
+                  : 'N/A';
+                
                 return {
                   playerName: player.playerName,
                   cwlLeague,
+                  warHitRate,
                 };
               } catch (error) {
-                console.error(`Failed to fetch CWL league for ${player.playerName}:`, error);
+                console.error(`Failed to fetch data for ${player.playerName}:`, error);
                 return {
                   playerName: player.playerName,
                   cwlLeague: 'Unknown',
+                  warHitRate: 'N/A',
                 };
               }
             }
             return {
               playerName: player.playerName,
               cwlLeague: 'No Tag',
+              warHitRate: 'N/A',
             };
           })
         );
         
-        playersWithLeague.push(...batchResults);
+        playersWithData.push(...batchResults);
         
         if (i + batchSize < roster.players.length) {
           await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
@@ -111,41 +119,110 @@ export const handleRosterShow = async (
     }
 
     const cwlLeagueMap = new Map(
-      playersWithLeague.map(p => [p.playerName.toLowerCase().trim(), p.cwlLeague])
+      playersWithData.map(p => [p.playerName.toLowerCase().trim(), p.cwlLeague])
+    );
+    
+    const hitRateMap = new Map(
+      playersWithData.map(p => [p.playerName.toLowerCase().trim(), p.warHitRate])
     );
 
-    const formatPlayer = (p: { playerName: string }) => {
+    const sortedPlayers = (roster.players || []).sort((a: { playerName: string }, b: { playerName: string }) => {
+      const leagueRank: Record<string, number> = {
+        'Champion League I': 1,
+        'Champion League II': 2,
+        'Champion League III': 3,
+        'Master League I': 4,
+        'Master League II': 5,
+        'Master League III': 6,
+        'Crystal League I': 7,
+        'Crystal League II': 8,
+        'Crystal League III': 9,
+        'Gold League I': 10,
+        'Gold League II': 11,
+        'Gold League III': 12,
+        'Silver League I': 13,
+        'Silver League II': 14,
+        'Silver League III': 15,
+        'Bronze League I': 16,
+        'Bronze League II': 17,
+        'Bronze League III': 18,
+        'Unranked': 19,
+        'Unknown': 20,
+        'No Tag': 21
+      };
+
+      const aLeague = cwlLeagueMap.get(a.playerName.toLowerCase().trim()) || 'Unknown';
+      const bLeague = cwlLeagueMap.get(b.playerName.toLowerCase().trim()) || 'Unknown';
+      const aLeagueRank = leagueRank[aLeague] || 20;
+      const bLeagueRank = leagueRank[bLeague] || 20;
+
+      if (aLeagueRank !== bLeagueRank) {
+        return aLeagueRank - bLeagueRank;
+      }
+
+      const aDetails = playerDetailsMap.get(a.playerName.toLowerCase().trim());
+      const bDetails = playerDetailsMap.get(b.playerName.toLowerCase().trim());
+      const aStars = parseFloat(aDetails?.avgStars || '0') || 0;
+      const bStars = parseFloat(bDetails?.avgStars || '0') || 0;
+      if (aStars !== bStars) {
+        return bStars - aStars; // Descending order
+      }
+
+      const aHitRate = hitRateMap.get(a.playerName.toLowerCase().trim());
+      const bHitRate = hitRateMap.get(b.playerName.toLowerCase().trim());
+      const aRateMatch = aHitRate?.match(/\(([0-9.]+)%\)/)?.[1];
+      const bRateMatch = bHitRate?.match(/\(([0-9.]+)%\)/)?.[1];
+      const aRate = parseFloat(aRateMatch || '0') || 0;
+      const bRate = parseFloat(bRateMatch || '0') || 0;
+      
+      return bRate - aRate;
+    });
+
+    const formatPlayer = (p: { playerName: string }, index: number) => {
       const playerName = p.playerName.replace(/_/g, "\\_");
       const details = playerDetailsMap.get(p.playerName.toLowerCase().trim());
       const cwlLeague = cwlLeagueMap.get(p.playerName.toLowerCase().trim()) || 'Unknown';
+      const hitRate = hitRateMap.get(p.playerName.toLowerCase().trim()) || '—';
       
       if (details) {
-        const discord = details.discord || 'N/A';
-        const stars = details.avgStars || 'N/A';
-        const attacks = details.totalAttacks || 'N/A';
-        const defStars = details.defenseAvgStars || 'N/A';
-        const heroes = details.combinedHeroes || 'N/A';
-        const destruction = details.destruction || 'N/A';
-        const missed = details.missed || 'N/A';
+        const discord = details.discord ? `@${details.discord.replace(/_/g, "\\_")}` : '*Not Set*';
+        const stars = details.avgStars || '—';
+        const attacks = details.totalAttacks || '—';
+        const defStars = details.defenseAvgStars || '—';
+        const heroes = details.combinedHeroes || '—';
+        const destruction = details.destruction || '—';
+        const missed = details.missed || '—';
         
-        return `**${playerName}**\n👤 \`${discord}\` • ⭐ \`${stars}\` • ⚔️ \`${attacks}\` • 🛡️ \`${defStars}\` • 🦸 \`${heroes}\` • 💥 \`${destruction}\` • ❌ \`${missed}\`\n🏆 CWL: \`${cwlLeague}\``;
+        return [
+          `### ${index + 1}. ${playerName}`,
+          `> **Discord:** ${discord}`,
+          `> **Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total  •  🎯 \`${hitRate}\` 3★`,
+          `> **Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
+          `> **Other:** 🦸 \`${heroes}\` heroes  •  🏆 \`${cwlLeague}\``
+        ].join('\n');
       }
       
-      return `**${playerName}**\n🏆 CWL: \`${cwlLeague}\`\n_No other stats available_`;
+      return [
+        `### ${index + 1}. ${playerName}`,
+        `> **Discord:** *Unknown*`,
+        `> **Attack:** 🎯 \`${hitRate}\` 3★  •  🏆 \`${cwlLeague}\``,
+        `> *No stats available from signup sheet*`
+      ].join('\n');
     };
 
     const playerList =
-      roster.players && roster.players.length > 0
-        ? roster.players.map(formatPlayer).join("\n\n")
-        : "_No players yet_";
+      sortedPlayers && sortedPlayers.length > 0
+        ? sortedPlayers.map((p: { playerName: string }, i: number) => formatPlayer(p, i)).join("\n\n")
+        : "*No players yet*";
 
     const embed: APIEmbed = {
-      title: `${roster.clanName}`,
-      description: `**Rank:** ${roster.clanRank}\n\n**Players (${roster.players?.length || 0}):**\n\n${playerList}`,
-      color: 0x3498db,
+      title: `🏆 ${roster.clanName}`,
+      description: `> **Rank ${roster.clanRank}**  •  **${sortedPlayers?.length || 0} Players**\n\n${playerList}`,
+      color: 0x5865F2,
       footer: {
-        text: `${roster.players?.length || 0} player${roster.players?.length !== 1 ? 's' : ''} in roster`
-      }
+        text: `${sortedPlayers?.length || 0} player${sortedPlayers?.length !== 1 ? 's' : ''} in roster`
+      },
+      timestamp: new Date().toISOString()
     };
 
     return updateResponse(interaction.application_id, interaction.token, {

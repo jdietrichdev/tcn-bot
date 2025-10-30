@@ -20,7 +20,6 @@ export const handleCwlResponseCommand = async (
   try {
     const cwlResponses = await fetchCWLResponses();
     
-    // Find the response for this user (case-insensitive)
     const response = cwlResponses.find(
       r => r.username.toLowerCase() === username.toLowerCase()
     );

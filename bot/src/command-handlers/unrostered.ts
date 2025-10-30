@@ -1,9 +1,9 @@
 import { APIChatInputApplicationCommandInteraction, APIEmbed, ButtonStyle, ComponentType } from 'discord-api-types/v10';
 import { fetchPlayersWithDetailsFromCSV, PlayerData } from '../util/fetchUnrosteredPlayersCSV';
-import { updateResponse, sendFollowupMessage } from '../adapters/discord-adapter';
+import { updateResponse, sendFollowupMessage, getOriginalResponse } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
-import { getPlayerCWLLeague } from '../adapters/clashking-adapter';
+import { getPlayerCWLLeague, getPlayerWarHitRate } from '../adapters/clashking-adapter';
 import { unrosteredDataCache } from '../component-handlers/unrosteredButton';
 import { fetchCWLResponses, CWLResponse } from '../util/fetchCWLResponses';
 
@@ -87,18 +87,28 @@ export const handleUnrosteredCommand = async (
           
           if (player.playerTag && player.playerTag.trim()) {
             try {
-              const cwlLeague = await getPlayerCWLLeague(player.playerTag);
+              const [cwlLeague, hitRateData] = await Promise.all([
+                getPlayerCWLLeague(player.playerTag),
+                getPlayerWarHitRate(player.playerTag)
+              ]);
+              
+              const warHitRate = hitRateData 
+                ? `${hitRateData.threeStars}/${hitRateData.totalAttacks} (${hitRateData.hitRate}%)`
+                : 'N/A';
+              
               return {
                 ...player,
                 cwlLeague,
                 cwlSignedUp,
+                warHitRate,
               };
             } catch (error) {
-              console.error(`Failed to fetch CWL league for ${player.name}:`, error);
+              console.error(`Failed to fetch data for ${player.name}:`, error);
               return {
                 ...player,
                 cwlLeague: 'Unknown',
                 cwlSignedUp,
+                warHitRate: 'N/A',
               };
             }
           }
@@ -106,6 +116,7 @@ export const handleUnrosteredCommand = async (
             ...player,
             cwlLeague: 'No Tag',
             cwlSignedUp,
+            warHitRate: 'N/A',
           };
         })
       );
@@ -117,35 +128,103 @@ export const handleUnrosteredCommand = async (
       }
     }
 
-    const formatPlayer = (p: PlayerWithLeague) => {
+    // Sort players by multiple criteria
+    const sortedPlayers = playersWithLeague.sort((a, b) => {
+      // Define league ranking (higher rank = lower number)
+      const leagueRank: Record<string, number> = {
+        'Champion League I': 1,
+        'Champion League II': 2,
+        'Champion League III': 3,
+        'Master League I': 4,
+        'Master League II': 5,
+        'Master League III': 6,
+        'Crystal League I': 7,
+        'Crystal League II': 8,
+        'Crystal League III': 9,
+        'Gold League I': 10,
+        'Gold League II': 11,
+        'Gold League III': 12,
+        'Silver League I': 13,
+        'Silver League II': 14,
+        'Silver League III': 15,
+        'Bronze League I': 16,
+        'Bronze League II': 17,
+        'Bronze League III': 18,
+        'Unranked': 19,
+        'Unknown': 20,
+        'No Tag': 21
+      };
+
+      const aLeagueRank = leagueRank[a.cwlLeague || 'Unknown'] || 20;
+      const bLeagueRank = leagueRank[b.cwlLeague || 'Unknown'] || 20;
+
+      // 1. Sort by CWL league (Champion I first, etc.)
+      if (aLeagueRank !== bLeagueRank) {
+        return aLeagueRank - bLeagueRank;
+      }
+
+      // 2. If same league, sort by average stars (higher first)
+      const aStars = parseFloat(a.avgStars) || 0;
+      const bStars = parseFloat(b.avgStars) || 0;
+      if (aStars !== bStars) {
+        return bStars - aStars; // Descending order
+      }
+
+      // 3. If same league and stars, sort by hit rate (higher first)
+      const aHitRate = a.warHitRate?.match(/\(([0-9.]+)%\)/)?.[1];
+      const bHitRate = b.warHitRate?.match(/\(([0-9.]+)%\)/)?.[1];
+      const aRate = parseFloat(aHitRate || '0') || 0;
+      const bRate = parseFloat(bHitRate || '0') || 0;
+      
+      return bRate - aRate; // Descending order
+    });
+
+    const formatPlayer = (p: PlayerWithLeague, index: number) => {
       const name = p.name.replace(/_/g, "\\_");
-      const discord = p.discord ? p.discord.replace(/_/g, "\\_") : 'N/A';
-      const stars = p.avgStars || 'N/A';
-      const attacks = p.totalAttacks || 'N/A';
-      const defStars = p.defenseAvgStars || 'N/A';
-      const heroes = p.combinedHeroes || 'N/A';
-      const destruction = p.destruction || 'N/A';
-      const missed = p.missed || 'N/A';
-      const league = p.cwlLeague || 'Unknown';
+      const discord = p.discord ? `@${p.discord.replace(/_/g, "\\_")}` : '*Not Set*';
       const responseIcon = p.cwlSignedUp ? '✅' : '❌';
-      return `**${name}** ${responseIcon}\n👤 Discord: \`${discord}\`\n⭐ Avg: \`${stars}\` • ⚔️ Attacks: \`${attacks}\` • 🛡️ Def: \`${defStars}\` • 🦸 Heroes: \`${heroes}\`\n💥 Destruction: \`${destruction}\` • ❌ Missed: \`${missed}\`\n🏆 CWL League: \`${league}\``;
+      
+      // Stats row 1
+      const stars = p.avgStars || '—';
+      const attacks = p.totalAttacks || '—';
+      const defStars = p.defenseAvgStars || '—';
+      
+      // Stats row 2
+      const heroes = p.combinedHeroes || '—';
+      const destruction = p.destruction || '—';
+      const missed = p.missed || '—';
+      
+      // Stats row 3
+      const hitRate = p.warHitRate || '—';
+      const league = p.cwlLeague || 'Unknown';
+      
+      return [
+        `### ${index + 1}. ${name} ${responseIcon}`,
+        `> **Discord:** ${discord}`,
+        `> **Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total  •  🎯 \`${hitRate}\` 3★`,
+        `> **Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
+        `> **Other:** 🦸 \`${heroes}\` heroes  •  🏆 \`${league}\``
+      ].join('\n');
     };
 
     const playersPerPage = 10;
     const pages: PlayerWithLeague[][] = [];
-    for (let i = 0; i < playersWithLeague.length; i += playersPerPage) {
-      pages.push(playersWithLeague.slice(i, i + playersPerPage));
+    for (let i = 0; i < sortedPlayers.length; i += playersPerPage) {
+      pages.push(sortedPlayers.slice(i, i + playersPerPage));
     }
 
     const createEmbed = (pageIndex: number): APIEmbed => {
       const page = pages[pageIndex];
+      const startIndex = pageIndex * playersPerPage;
+      
       return {
-        title: `📋 Unrostered Players`,
-        description: page.map(formatPlayer).join('\n\n'),
-        color: 0x3498db, // Blue color
+        title: '📋 Unrostered Players',
+        description: page.map((p, i) => formatPlayer(p, startIndex + i)).join('\n\n'),
+        color: 0x5865F2,
         footer: {
-          text: `Page ${pageIndex + 1} of ${pages.length} • ${playersWithLeague.length} unrostered of ${allPlayers.length} total players`
-        }
+          text: `Page ${pageIndex + 1} of ${pages.length}  •  ${sortedPlayers.length} unrostered / ${allPlayers.length} total players`
+        },
+        timestamp: new Date().toISOString()
       };
     };
 
@@ -159,35 +238,35 @@ export const handleUnrosteredCommand = async (
             {
               type: ComponentType.Button as ComponentType.Button,
               custom_id: `unrostered_first_${interaction.id}`,
-              label: '⏮️',
+              emoji: { name: '⏮️' },
               style: ButtonStyle.Secondary as ButtonStyle.Secondary,
               disabled: currentPage === 0
             },
             {
               type: ComponentType.Button as ComponentType.Button,
               custom_id: `unrostered_prev_${interaction.id}`,
-              label: '◀️',
+              emoji: { name: '◀️' },
               style: ButtonStyle.Primary as ButtonStyle.Primary,
               disabled: currentPage === 0
             },
             {
               type: ComponentType.Button as ComponentType.Button,
               custom_id: `unrostered_page_${interaction.id}`,
-              label: `${currentPage + 1}/${pages.length}`,
+              label: `${currentPage + 1} / ${pages.length}`,
               style: ButtonStyle.Secondary as ButtonStyle.Secondary,
               disabled: true
             },
             {
               type: ComponentType.Button as ComponentType.Button,
               custom_id: `unrostered_next_${interaction.id}`,
-              label: '▶️',
+              emoji: { name: '▶️' },
               style: ButtonStyle.Primary as ButtonStyle.Primary,
               disabled: currentPage === pages.length - 1
             },
             {
               type: ComponentType.Button as ComponentType.Button,
               custom_id: `unrostered_last_${interaction.id}`,
-              label: '⏭️',
+              emoji: { name: '⏭️' },
               style: ButtonStyle.Secondary as ButtonStyle.Secondary,
               disabled: currentPage === pages.length - 1
             }
@@ -196,7 +275,12 @@ export const handleUnrosteredCommand = async (
       ];
     };
 
-    unrosteredDataCache.set(interaction.id, playersWithLeague);
+    unrosteredDataCache.set(interaction.id, {
+      players: sortedPlayers,
+      channelId: interaction.channel_id!,
+      messageId: '',
+      allPlayersCount: allPlayers.length
+    });
     
     setTimeout(() => {
       unrosteredDataCache.delete(interaction.id);
@@ -206,6 +290,16 @@ export const handleUnrosteredCommand = async (
       embeds: [createEmbed(0)],
       components: createComponents(0)
     });
+    
+    try {
+      const message = await getOriginalResponse(interaction.application_id, interaction.token);
+      const cacheData = unrosteredDataCache.get(interaction.id);
+      if (cacheData) {
+        cacheData.messageId = message.id;
+      }
+    } catch (error) {
+      console.error('Failed to fetch message ID for caching:', error);
+    }
   } catch (err) {
     console.error('Failed to fetch unrostered players:', err);
     const errorMessage = err instanceof Error ? err.message : 'Unknown error';

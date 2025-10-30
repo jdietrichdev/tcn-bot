@@ -198,3 +198,82 @@ export const getPlayerCWLLeague = async (
     return "Unknown";
   }
 };
+
+export const getPlayerWarHitRate = async (
+  playerTag: string
+): Promise<{ threeStars: number; totalAttacks: number; hitRate: number } | null> => {
+  try {
+    const tag = encodeURIComponent(playerTag);
+    const warHitsUrl = `${CLASHKING_BASE_URL}/player/${tag}/warhits`;
+
+    console.log(`Fetching war hits for hit rate calculation: ${playerTag}`);
+
+    let warHitsResponse;
+    try {
+      warHitsResponse = await axios.get<WarHitsResponse>(warHitsUrl, {
+        timeout: 10000,
+      });
+    } catch (apiError) {
+      console.error(
+        `ClashKing API request failed for ${playerTag}:`,
+        apiError instanceof Error ? apiError.message : apiError
+      );
+      return null;
+    }
+
+    const warHits = warHitsResponse.data.items;
+
+    if (!warHits || warHits.length === 0) {
+      console.log(`No war hits found for ${playerTag}`);
+      return null;
+    }
+
+    // Filter for October 2025 wars (all war types)
+    const octoberStartDate = new Date("2025-10-01T00:00:00Z");
+    const octoberEndDate = new Date("2025-10-31T23:59:59Z");
+
+    const octoberAttacks = warHits.filter((hit) => {
+      const dateStr = hit.war_data.endTime;
+      const formattedDate = dateStr.replace(
+        /(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})\.(\d{3})Z/,
+        '$1-$2-$3T$4:$5:$6.$7Z'
+      );
+      const warDate = new Date(formattedDate);
+      return warDate >= octoberStartDate && warDate <= octoberEndDate;
+    });
+
+    console.log(`Found ${octoberAttacks.length} October attacks for ${playerTag}`);
+
+    if (octoberAttacks.length === 0) {
+      return null;
+    }
+
+    // Count total attacks and 3-star attacks
+    let totalAttacks = 0;
+    let threeStarAttacks = 0;
+
+    octoberAttacks.forEach((hit) => {
+      if (hit.attacks && Array.isArray(hit.attacks)) {
+        hit.attacks.forEach((attack) => {
+          totalAttacks++;
+          if (attack.stars === 3) {
+            threeStarAttacks++;
+          }
+        });
+      }
+    });
+
+    console.log(`${playerTag}: ${threeStarAttacks} three-stars out of ${totalAttacks} attacks`);
+
+    const hitRate = totalAttacks > 0 ? (threeStarAttacks / totalAttacks) * 100 : 0;
+
+    return {
+      threeStars: threeStarAttacks,
+      totalAttacks: totalAttacks,
+      hitRate: Math.round(hitRate * 10) / 10, // Round to 1 decimal place
+    };
+  } catch (error) {
+    console.error(`Failed to get war hit rate for player ${playerTag}:`, error);
+    return null;
+  }
+};

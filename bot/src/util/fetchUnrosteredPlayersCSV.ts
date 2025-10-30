@@ -15,6 +15,7 @@ export interface PlayerData {
   destruction: string;
   missed: string;
   cwlLeague?: string;
+  warHitRate?: string;
 }
 
 export async function fetchUnrosteredPlayersFromCSV(): Promise<string[]> {

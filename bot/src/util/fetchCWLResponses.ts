@@ -51,7 +51,6 @@ export async function fetchCWLResponses(): Promise<CWLResponse[]> {
     skip_empty_lines: true,
   });
 
-  // Parse the notes field to extract individual responses
   const parseNotes = (notes: string) => {
     const league = notes.match(/League:\s*([^/]+)/)?.[1]?.trim() || 'Not specified';
     const availability = notes.match(/Availability:\s*([^/]+)/)?.[1]?.trim() || 'Not specified';
@@ -67,7 +66,7 @@ export async function fetchCWLResponses(): Promise<CWLResponse[]> {
   };
 
   return records
-    .slice(1) // Skip header row
+    .slice(1) 
     .map((row: string[]) => {
       const parsed = parseNotes(row[2] || '');
       return {

@@ -54,7 +54,5 @@ export const handleComponent = async (
     await nominationResults(interaction);
   } else if (customId.startsWith("answer")) {
     await answerQuestion(interaction);
-  } else if (customId.startsWith("unrostered_")) {
-    await handleUnrosteredPagination(interaction, customId);
   }
 };

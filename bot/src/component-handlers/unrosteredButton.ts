@@ -1,9 +1,16 @@
-import { APIMessageComponentInteraction, ComponentType, ButtonStyle, APIEmbed } from 'discord-api-types/v10';
-import { updateResponse } from '../adapters/discord-adapter';
+import { APIMessageComponentInteraction, ComponentType, ButtonStyle, APIEmbed, InteractionResponseType } from 'discord-api-types/v10';
+import { updateMessage } from '../adapters/discord-adapter';
 
 // This will be populated by the unrostered command
-// Key: interaction.id, Value: player data
-export const unrosteredDataCache = new Map<string, any[]>();
+// Key: interaction.id, Value: { players, channelId, messageId, allPlayersCount }
+interface UnrosteredCacheData {
+  players: any[];
+  channelId: string;
+  messageId: string;
+  allPlayersCount: number;
+}
+
+export const unrosteredDataCache = new Map<string, UnrosteredCacheData>();
 
 export const handleUnrosteredPagination = async (
   interaction: APIMessageComponentInteraction,
@@ -15,18 +22,23 @@ export const handleUnrosteredPagination = async (
 
   const data = unrosteredDataCache.get(originalInteractionId);
   if (!data) {
-    await updateResponse(interaction.application_id, interaction.token, {
-      content: 'This pagination has expired. Please run the command again.',
-      embeds: [],
-      components: []
-    });
-    return;
+    // Send ephemeral error response
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        content: '⚠️ This pagination has expired. Please run `/unrostered` again.',
+        flags: 64 // Ephemeral flag
+      }
+    };
   }
 
   const currentMessage = interaction.message;
   const currentPageMatch = currentMessage.embeds?.[0]?.footer?.text?.match(/Page (\d+) of (\d+)/);
   if (!currentPageMatch) {
-    return;
+    return {
+      type: InteractionResponseType.UpdateMessage,
+      data: {}
+    };
   }
 
   const currentPage = parseInt(currentPageMatch[1]) - 1;
@@ -50,36 +62,53 @@ export const handleUnrosteredPagination = async (
 
   const playersPerPage = 10;
   const pages: any[][] = [];
-  for (let i = 0; i < data.length; i += playersPerPage) {
-    pages.push(data.slice(i, i + playersPerPage));
+  for (let i = 0; i < data.players.length; i += playersPerPage) {
+    pages.push(data.players.slice(i, i + playersPerPage));
   }
 
-  const formatPlayer = (p: any) => {
+  const formatPlayer = (p: any, index: number) => {
     const name = p.name.replace(/_/g, "\\_");
-    const discord = p.discord ? p.discord.replace(/_/g, "\\_") : 'N/A';
-    const stars = p.avgStars || 'N/A';
-    const attacks = p.totalAttacks || 'N/A';
-    const defStars = p.defenseAvgStars || 'N/A';
-    const heroes = p.combinedHeroes || 'N/A';
-    const destruction = p.destruction || 'N/A';
-    const missed = p.missed || 'N/A';
-    const league = p.cwlLeague || 'Unknown';
+    const discord = p.discord ? `@${p.discord.replace(/_/g, "\\_")}` : '*Not Set*';
     const responseIcon = p.cwlSignedUp ? '✅' : '❌';
-    return `**${name}** ${responseIcon}\n👤 Discord: \`${discord}\`\n⭐ Avg: \`${stars}\` • ⚔️ Attacks: \`${attacks}\` • 🛡️ Def: \`${defStars}\` • 🦸 Heroes: \`${heroes}\`\n💥 Destruction: \`${destruction}\` • ❌ Missed: \`${missed}\`\n🏆 CWL League: \`${league}\``;
+    
+    // Stats row 1
+    const stars = p.avgStars || '—';
+    const attacks = p.totalAttacks || '—';
+    const defStars = p.defenseAvgStars || '—';
+    
+    // Stats row 2
+    const heroes = p.combinedHeroes || '—';
+    const destruction = p.destruction || '—';
+    const missed = p.missed || '—';
+    
+    // Stats row 3
+    const hitRate = p.warHitRate || '—';
+    const league = p.cwlLeague || 'Unknown';
+    
+    return [
+      `### ${index + 1}. ${name} ${responseIcon}`,
+      `> **Discord:** ${discord}`,
+      `> **Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total  •  🎯 \`${hitRate}\` 3★`,
+      `> **Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
+      `> **Other:** 🦸 \`${heroes}\` heroes  •  🏆 \`${league}\``
+    ].join('\n');
   };
 
   const createEmbed = (pageIndex: number): APIEmbed => {
     const page = pages[pageIndex];
-    const totalPlayers = data.length;
-    const allPlayers = (currentMessage.embeds?.[0]?.footer?.text?.match(/of (\d+) total/) || [])[1];
+    const totalPlayers = data.players.length;
+    const allPlayers = data.allPlayersCount;
+    const startIndex = pageIndex * playersPerPage;
     
     return {
-      title: `📋 Unrostered Players`,
-      description: page.map(formatPlayer).join('\n\n'),
-      color: 0x3498db,
+      title: '📋 Unrostered Players',
+      description: page.map((p, i) => formatPlayer(p, startIndex + i)).join('\n\n'),
+      color: 0x5865F2, // Discord blurple
       footer: {
-        text: `Page ${pageIndex + 1} of ${pages.length} • ${totalPlayers} unrostered of ${allPlayers} total players`
-      }
+        text: `Page ${pageIndex + 1} of ${pages.length}  •  ${totalPlayers} unrostered / ${allPlayers} total players`,
+        icon_url: 'https://cdn.discordapp.com/emojis/1234567890.png' // Optional: add server icon
+      },
+      timestamp: new Date().toISOString()
     };
   };
 
@@ -88,41 +117,41 @@ export const handleUnrosteredPagination = async (
     
     return [
       {
-        type: ComponentType.ActionRow as ComponentType.ActionRow,
+        type: ComponentType.ActionRow,
         components: [
           {
-            type: ComponentType.Button as ComponentType.Button,
+            type: ComponentType.Button,
             custom_id: `unrostered_first_${originalInteractionId}`,
-            label: '⏮️',
-            style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+            emoji: { name: '⏮️' },
+            style: ButtonStyle.Secondary,
             disabled: currentPage === 0
           },
           {
-            type: ComponentType.Button as ComponentType.Button,
+            type: ComponentType.Button,
             custom_id: `unrostered_prev_${originalInteractionId}`,
-            label: '◀️',
-            style: ButtonStyle.Primary as ButtonStyle.Primary,
+            emoji: { name: '◀️' },
+            style: ButtonStyle.Primary,
             disabled: currentPage === 0
           },
           {
-            type: ComponentType.Button as ComponentType.Button,
+            type: ComponentType.Button,
             custom_id: `unrostered_page_${originalInteractionId}`,
-            label: `${currentPage + 1}/${pages.length}`,
-            style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+            label: `${currentPage + 1} / ${pages.length}`,
+            style: ButtonStyle.Secondary,
             disabled: true
           },
           {
-            type: ComponentType.Button as ComponentType.Button,
+            type: ComponentType.Button,
             custom_id: `unrostered_next_${originalInteractionId}`,
-            label: '▶️',
-            style: ButtonStyle.Primary as ButtonStyle.Primary,
+            emoji: { name: '▶️' },
+            style: ButtonStyle.Primary,
             disabled: currentPage === pages.length - 1
           },
           {
-            type: ComponentType.Button as ComponentType.Button,
+            type: ComponentType.Button,
             custom_id: `unrostered_last_${originalInteractionId}`,
-            label: '⏭️',
-            style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+            emoji: { name: '⏭️' },
+            style: ButtonStyle.Secondary,
             disabled: currentPage === pages.length - 1
           }
         ]
@@ -130,8 +159,135 @@ export const handleUnrosteredPagination = async (
     ];
   };
 
-  await updateResponse(interaction.application_id, interaction.token, {
-    embeds: [createEmbed(newPage)],
-    components: createComponents(newPage)
-  });
+  // Update the original message
+  return {
+    type: InteractionResponseType.UpdateMessage,
+    data: {
+      embeds: [createEmbed(newPage)],
+      components: createComponents(newPage)
+    }
+  };
+};
+
+// Function to refresh all active unrostered messages
+export const refreshUnrosteredMessages = async (updatedPlayers: any[], allPlayersCount: number) => {
+  const playersPerPage = 10;
+  
+  for (const [interactionId, cacheData] of unrosteredDataCache.entries()) {
+    try {
+      // Update the cached data
+      cacheData.players = updatedPlayers;
+      cacheData.allPlayersCount = allPlayersCount;
+      
+      // Recreate pages
+      const pages: any[][] = [];
+      for (let i = 0; i < updatedPlayers.length; i += playersPerPage) {
+        pages.push(updatedPlayers.slice(i, i + playersPerPage));
+      }
+      
+      if (pages.length === 0) {
+        // No more unrostered players
+        await updateMessage(cacheData.channelId, cacheData.messageId, {
+          embeds: [{
+            title: '📋 Unrostered Players',
+            description: '*All players have been rostered!* ✅',
+            color: 0x57F287, // Green
+            timestamp: new Date().toISOString()
+          }],
+          components: []
+        });
+        continue;
+      }
+      
+      const formatPlayer = (p: any, index: number) => {
+        const name = p.name.replace(/_/g, "\\_");
+        const discord = p.discord ? `@${p.discord.replace(/_/g, "\\_")}` : '*Not Set*';
+        const responseIcon = p.cwlSignedUp ? '✅' : '❌';
+        
+        const stars = p.avgStars || '—';
+        const attacks = p.totalAttacks || '—';
+        const defStars = p.defenseAvgStars || '—';
+        const heroes = p.combinedHeroes || '—';
+        const destruction = p.destruction || '—';
+        const missed = p.missed || '—';
+        const hitRate = p.warHitRate || '—';
+        const league = p.cwlLeague || 'Unknown';
+        
+        return [
+          `### ${index + 1}. ${name} ${responseIcon}`,
+          `> **Discord:** ${discord}`,
+          `> **Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total  •  🎯 \`${hitRate}\` 3★`,
+          `> **Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
+          `> **Other:** 🦸 \`${heroes}\` heroes  •  🏆 \`${league}\``
+        ].join('\n');
+      };
+      
+      const createComponents = (currentPage: number) => {
+        if (pages.length === 1) return [];
+        
+        return [
+          {
+            type: ComponentType.ActionRow as ComponentType.ActionRow,
+            components: [
+              {
+                type: ComponentType.Button as ComponentType.Button,
+                custom_id: `unrostered_first_${interactionId}`,
+                emoji: { name: '⏮️' },
+                style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+                disabled: currentPage === 0
+              },
+              {
+                type: ComponentType.Button as ComponentType.Button,
+                custom_id: `unrostered_prev_${interactionId}`,
+                emoji: { name: '◀️' },
+                style: ButtonStyle.Primary as ButtonStyle.Primary,
+                disabled: currentPage === 0
+              },
+              {
+                type: ComponentType.Button as ComponentType.Button,
+                custom_id: `unrostered_page_${interactionId}`,
+                label: `${currentPage + 1} / ${pages.length}`,
+                style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+                disabled: true
+              },
+              {
+                type: ComponentType.Button as ComponentType.Button,
+                custom_id: `unrostered_next_${interactionId}`,
+                emoji: { name: '▶️' },
+                style: ButtonStyle.Primary as ButtonStyle.Primary,
+                disabled: currentPage === pages.length - 1
+              },
+              {
+                type: ComponentType.Button as ComponentType.Button,
+                custom_id: `unrostered_last_${interactionId}`,
+                emoji: { name: '⏭️' },
+                style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+                disabled: currentPage === pages.length - 1
+              }
+            ]
+          }
+        ];
+      };
+      
+      // Update to page 1 (index 0)
+      const embed = {
+        title: '📋 Unrostered Players',
+        description: pages[0].map((p, i) => formatPlayer(p, i)).join('\n\n'),
+        color: 0x5865F2,
+        footer: {
+          text: `Page 1 of ${pages.length}  •  ${updatedPlayers.length} unrostered / ${allPlayersCount} total players`
+        },
+        timestamp: new Date().toISOString()
+      };
+      
+      await updateMessage(cacheData.channelId, cacheData.messageId, {
+        embeds: [embed],
+        components: createComponents(0)
+      });
+      
+      console.log(`Updated unrostered message in channel ${cacheData.channelId}`);
+    } catch (error) {
+      console.error(`Failed to refresh unrostered message for interaction ${interactionId}:`, error);
+    }
+  }
 };
