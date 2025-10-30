@@ -29,4 +29,5 @@ export * from "./rosterAdd";
 export * from "./rosterShow";
 export * from "./rosterRemove";
 export * from "./rosterDelete";
+export * from "./exportRosters";
 export * from "./cwlResponse";

@@ -98,13 +98,6 @@ export const handleRosterRemove = async (
       })
     );
 
-    return updateResponse(interaction.application_id, interaction.token, {
-      content: `✅ Successfully removed **${playerName.replace(
-        /_/g,
-        "\\_"
-      )}** from roster **${rosterName.replace(/_/g, "\\_")}**.`,
-    });
-    
     try {
       console.log(`Quick add refresh: adding ${playerName} back to unrostered lists`);
       const { refreshUnrosteredMessagesAddPlayer } = await import('../component-handlers/unrosteredButton');
@@ -113,6 +106,13 @@ export const handleRosterRemove = async (
     } catch (error) {
       console.error('Failed to refresh unrostered messages:', error);
     }
+
+    return updateResponse(interaction.application_id, interaction.token, {
+      content: `✅ Successfully removed **${playerName.replace(
+        /_/g,
+        "\\_"
+      )}** from roster **${rosterName.replace(/_/g, "\\_")}**.`,
+    });
   } catch (error) {
     console.error("Error removing player from roster:", error);
     console.error("PlayerName:", playerName, "RosterName:", rosterName, "GuildId:", guildId);

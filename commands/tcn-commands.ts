@@ -22,6 +22,7 @@ import {
   rosterShow,
   rosterRemove,
   rosterDelete,
+  exportRosters,
   cwlResponse,
 } from "./commands";
 
@@ -49,5 +50,6 @@ export const tcnCommands = [
   rosterShow,
   rosterRemove,
   rosterDelete,
+  exportRosters,
   cwlResponse,
 ];

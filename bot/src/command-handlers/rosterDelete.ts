@@ -64,9 +64,26 @@ export const handleRosterDelete = async (
       })
     );
 
-    return updateResponse(interaction.application_id, interaction.token, {
+    await updateResponse(interaction.application_id, interaction.token, {
       content: `✅ Successfully deleted roster **${rosterName}** (Rank ${roster.clanRank}) and removed ${playerCount} player${playerCount !== 1 ? 's' : ''}.`,
     });
+
+    if (roster.players && Array.isArray(roster.players) && roster.players.length > 0) {
+      try {
+        console.log(`Refreshing unrostered lists after deleting roster with ${roster.players.length} players`);
+        const { refreshUnrosteredMessagesAddPlayer } = await import('../component-handlers/unrosteredButton');
+        
+        for (const player of roster.players) {
+          if (player.playerName) {
+            console.log(`Adding back player: ${player.playerName}`);
+            await refreshUnrosteredMessagesAddPlayer(player.playerName);
+          }
+        }
+        console.log('Refresh completed after roster deletion');
+      } catch (error) {
+        console.error('Failed to refresh unrostered messages after roster deletion:', error);
+      }
+    }
   } catch (err) {
     console.error("Failed to delete roster:", err);
     return updateResponse(interaction.application_id, interaction.token, {

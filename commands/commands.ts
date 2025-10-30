@@ -638,6 +638,11 @@ export const rosterDelete = new SlashCommandBuilder()
       .setAutocomplete(true);
   });
 
+export const exportRosters = new SlashCommandBuilder()
+  .setName("export-rosters")
+  .setDescription("Export all rosters with player stats to a CSV file")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 export const cwlResponse = new SlashCommandBuilder()
   .setName("cwl-response")
   .setDescription("View a user's CWL signup response")
