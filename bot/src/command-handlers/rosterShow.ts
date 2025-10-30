@@ -1,9 +1,11 @@
-import { APIChatInputApplicationCommandInteraction, APIApplicationCommandInteractionDataStringOption, APIEmbed } from "discord-api-types/v10";
-import { updateResponse } from "../adapters/discord-adapter";
+import { APIChatInputApplicationCommandInteraction, APIApplicationCommandInteractionDataStringOption, APIEmbed, ComponentType, ButtonStyle } from "discord-api-types/v10";
+import { updateResponse, getOriginalResponse } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { fetchPlayersWithDetailsFromCSV, PlayerData } from "../util/fetchUnrosteredPlayersCSV";
 import { getPlayerCWLLeague, getPlayerWarHitRate } from "../adapters/clashking-adapter";
+import { v4 as uuidv4 } from 'uuid';
+import { storeCacheInDynamoDB } from "../component-handlers/rosterShowButton";
 
 export const handleRosterShow = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -210,24 +212,101 @@ export const handleRosterShow = async (
       ].join('\n');
     };
 
-    const playerList =
-      sortedPlayers && sortedPlayers.length > 0
-        ? sortedPlayers.map((p: { playerName: string }, i: number) => formatPlayer(p, i)).join("\n\n")
+    const playersPerPage = 8;
+    const pages: any[][] = [];
+    for (let i = 0; i < sortedPlayers.length; i += playersPerPage) {
+      pages.push(sortedPlayers.slice(i, i + playersPerPage));
+    }
+
+    const createEmbed = (currentPage: number): APIEmbed => {
+      const startIndex = currentPage * playersPerPage;
+      const playerList = pages[currentPage]
+        ? pages[currentPage].map((p: { playerName: string }, i: number) => formatPlayer(p, startIndex + i)).join("\n\n")
         : "*No players yet*";
 
-    const embed: APIEmbed = {
-      title: `🏆 ${roster.clanName}`,
-      description: `> **Rank ${roster.clanRank}**  •  **${sortedPlayers?.length || 0} Players**\n\n${playerList}`,
-      color: 0x5865F2,
-      footer: {
-        text: `${sortedPlayers?.length || 0} player${sortedPlayers?.length !== 1 ? 's' : ''} in roster`
-      },
-      timestamp: new Date().toISOString()
+      return {
+        title: `🏆 ${roster.clanName}`,
+        description: `> **Rank ${roster.clanRank}**  •  **${sortedPlayers?.length || 0} Players**\n\n${playerList}`,
+        color: 0x5865F2,
+        footer: {
+          text: pages.length > 1 
+            ? `Page ${currentPage + 1}/${pages.length} • ${sortedPlayers?.length || 0} player${sortedPlayers?.length !== 1 ? 's' : ''} in roster`
+            : `${sortedPlayers?.length || 0} player${sortedPlayers?.length !== 1 ? 's' : ''} in roster`
+        },
+        timestamp: new Date().toISOString()
+      };
     };
 
-    return updateResponse(interaction.application_id, interaction.token, {
-      embeds: [embed]
+    const createComponents = (currentPage: number, interactionId: string) => {
+      if (pages.length === 1) return [];
+      return [{
+        type: ComponentType.ActionRow as ComponentType.ActionRow,
+        components: [
+          {
+            type: ComponentType.Button as ComponentType.Button,
+            custom_id: `roster_show_first_${interactionId}`,
+            emoji: { name: '⏮️' },
+            style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+            disabled: currentPage === 0
+          },
+          {
+            type: ComponentType.Button as ComponentType.Button,
+            custom_id: `roster_show_prev_${interactionId}`,
+            emoji: { name: '◀️' },
+            style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+            disabled: currentPage === 0
+          },
+          {
+            type: ComponentType.Button as ComponentType.Button,
+            custom_id: `roster_show_page_${interactionId}`,
+            label: `${currentPage + 1}/${pages.length}`,
+            style: ButtonStyle.Primary as ButtonStyle.Primary,
+            disabled: true
+          },
+          {
+            type: ComponentType.Button as ComponentType.Button,
+            custom_id: `roster_show_next_${interactionId}`,
+            emoji: { name: '▶️' },
+            style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+            disabled: currentPage === pages.length - 1
+          },
+          {
+            type: ComponentType.Button as ComponentType.Button,
+            custom_id: `roster_show_last_${interactionId}`,
+            emoji: { name: '⏭️' },
+            style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+            disabled: currentPage === pages.length - 1
+          }
+        ]
+      }];
+    };
+
+    const interactionId = uuidv4();
+    
+    const initialEmbed = createEmbed(0);
+    const initialComponents = createComponents(0, interactionId);
+
+    await updateResponse(interaction.application_id, interaction.token, {
+      embeds: [initialEmbed],
+      components: initialComponents
     });
+
+    if (pages.length > 1) {
+      const message = await getOriginalResponse(interaction.application_id, interaction.token);
+      
+      await storeCacheInDynamoDB(interactionId, {
+        rosterName: roster.clanName,
+        clanRank: roster.clanRank,
+        sortedPlayers,
+        playerDetailsMap: Array.from(playerDetailsMap.entries()),
+        cwlLeagueMap: Array.from(cwlLeagueMap.entries()),
+        hitRateMap: Array.from(hitRateMap.entries()),
+        channelId: message.channel_id,
+        messageId: message.id
+      });
+    }
+
+    return;
   } catch (error) {
     console.error("Error showing roster:", error);
     console.error("RosterName:", rosterName, "GuildId:", guildId);

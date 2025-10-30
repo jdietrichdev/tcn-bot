@@ -66,6 +66,13 @@ export const proxy = async (
     console.log("Unrostered pagination button clicked");
     const { handleUnrosteredPagination } = await import("./component-handlers/unrosteredButton");
     response = await handleUnrosteredPagination(body as APIMessageComponentInteraction, body.data.custom_id);
+  } else if (
+    body.type === InteractionType.MessageComponent &&
+    body.data.custom_id.startsWith("roster_show_")
+  ) {
+    console.log("Roster show pagination button clicked");
+    const { handleRosterShowPagination } = await import("./component-handlers/rosterShowButton");
+    response = await handleRosterShowPagination(body as APIMessageComponentInteraction);
   } else {
     await eventClient.send(
       new PutEventsCommand({
