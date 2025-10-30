@@ -111,26 +111,30 @@ export const handleRosterShowPagination = async (
     
     if (details) {
       const discord = details.discord ? `@${details.discord.replace(/_/g, "\\_")}` : '*Not Set*';
+      
+      const cwlStars = details.totalCwlStars || '—';
       const stars = details.avgStars || '—';
       const attacks = details.totalAttacks || '—';
       const defStars = details.defenseAvgStars || '—';
-      const heroes = details.combinedHeroes || '—';
       const destruction = details.destruction || '—';
       const missed = details.missed || '—';
+      const townHall = details.townHall || '—';
+      const heroes = details.combinedHeroes || '—';
       
       return [
         `### ${index + 1}. ${playerName}`,
         `> **Discord:** ${discord}`,
-        `> **Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total  •  🎯 \`${hitRate}\` 3★`,
-        `> **Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
-        `> **Other:** 🦸 \`${heroes}\` heroes  •  🏆 \`${cwlLeague}\``
+        `> **CWL:** 🎯 \`${hitRate}\` 3★  •  ⭐ \`${cwlStars}\` total  •  🏆 \`${cwlLeague}\``,
+        `> **War Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total`,
+        `> **War Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
+        `> **Other:** 🏠 TH\`${townHall}\`  •  🦸 \`${heroes}\` heroes`
       ].join('\n');
     }
     
     return [
       `### ${index + 1}. ${playerName}`,
       `> **Discord:** *Unknown*`,
-      `> **Attack:** 🎯 \`${hitRate}\` 3★  •  🏆 \`${cwlLeague}\``,
+      `> **CWL:** 🎯 \`${hitRate}\` 3★  •  🏆 \`${cwlLeague}\``,
       `> *No stats available from signup sheet*`
     ].join('\n');
   };

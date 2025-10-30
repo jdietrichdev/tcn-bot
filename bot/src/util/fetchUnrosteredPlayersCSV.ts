@@ -8,12 +8,14 @@ export interface PlayerData {
   name: string;
   playerTag: string;
   discord: string;
+  townHall: string;
   avgStars: string;
   totalAttacks: string;
   defenseAvgStars: string;
   combinedHeroes: string;
   destruction: string;
   missed: string;
+  totalCwlStars: string;
   cwlLeague?: string;
   warHitRate?: string;
 }
@@ -107,8 +109,10 @@ export async function fetchPlayersWithDetailsFromCSV(): Promise<PlayerData[]> {
       name: row[0] || '',
       playerTag: row[1] || '',
       discord: row[5] || '',
+      townHall: row[8] || '',
       combinedHeroes: row[9] || '',
       totalAttacks: row[10] || '',
+      totalCwlStars: row[11] || '',
       avgStars: row[12] || '',
       destruction: row[13] || '',
       missed: row[19] || '',

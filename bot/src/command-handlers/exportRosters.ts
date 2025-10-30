@@ -50,14 +50,16 @@ export const handleExportRosters = async (
       'Roster Name',
       'Clan Rank',
       'Player Name',
+      'Town Hall',
       'CWL League',
-      'War Hit Rate',
+      'War Hit Rate (3★)',
+      'Total CWL Stars',
       'Avg Stars',
       'Total Attacks',
       'Defense Avg Stars',
-      'Combined Heroes',
       'Destruction %',
       'Missed Attacks',
+      'Combined Heroes',
       'Discord',
       'Player Tag'
     ]];
@@ -71,6 +73,8 @@ export const handleExportRosters = async (
           rosterName,
           clanRank,
           'No players',
+          '',
+          '',
           '',
           '',
           '',
@@ -120,14 +124,16 @@ export const handleExportRosters = async (
 
             return {
               playerName: player.playerName,
+              townHall: details?.townHall || '',
               cwlLeague,
               warHitRate,
+              totalCwlStars: details?.totalCwlStars || '',
               avgStars: details?.avgStars || '',
               totalAttacks: details?.totalAttacks || '',
               defenseAvgStars: details?.defenseAvgStars || '',
-              combinedHeroes: details?.combinedHeroes || '',
               destruction: details?.destruction || '',
               missed: details?.missed || '',
+              combinedHeroes: details?.combinedHeroes || '',
               discord: details?.discord || '',
               playerTag: details?.playerTag || ''
             };
@@ -139,14 +145,16 @@ export const handleExportRosters = async (
             rosterName,
             clanRank,
             playerData.playerName,
+            playerData.townHall,
             playerData.cwlLeague,
             playerData.warHitRate,
+            playerData.totalCwlStars,
             playerData.avgStars,
             playerData.totalAttacks,
             playerData.defenseAvgStars,
-            playerData.combinedHeroes,
             playerData.destruction,
             playerData.missed,
+            playerData.combinedHeroes,
             playerData.discord,
             playerData.playerTag
           ]);

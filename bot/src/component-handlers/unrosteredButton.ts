@@ -116,23 +116,24 @@ export const handleUnrosteredPagination = async (
     const discord = p.discord ? `@${p.discord.replace(/_/g, "\\_")}` : '*Not Set*';
     const responseIcon = p.cwlSignedUp ? '✅' : '❌';
     
+    const hitRate = p.warHitRate || '—';
+    const cwlStars = p.totalCwlStars || '—';
+    const league = p.cwlLeague || 'Unknown';
     const stars = p.avgStars || '—';
     const attacks = p.totalAttacks || '—';
     const defStars = p.defenseAvgStars || '—';
-    
-    const heroes = p.combinedHeroes || '—';
     const destruction = p.destruction || '—';
     const missed = p.missed || '—';
-    
-    const hitRate = p.warHitRate || '—';
-    const league = p.cwlLeague || 'Unknown';
+    const townHall = p.townHall || '—';
+    const heroes = p.combinedHeroes || '—';
     
     return [
       `### ${index + 1}. ${name} ${responseIcon}`,
       `> **Discord:** ${discord}`,
-      `> **Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total  •  🎯 \`${hitRate}\` 3★`,
-      `> **Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
-      `> **Other:** 🦸 \`${heroes}\` heroes  •  🏆 \`${league}\``
+      `> **CWL:** 🎯 \`${hitRate}\` 3★  •  ⭐ \`${cwlStars}\` total  •  🏆 \`${league}\``,
+      `> **War Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total`,
+      `> **War Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
+      `> **Other:** 🏠 TH\`${townHall}\`  •  🦸 \`${heroes}\` heroes`
     ].join('\n');
   };
 
@@ -273,21 +274,24 @@ export const refreshUnrosteredMessages = async (updatedPlayers: any[], allPlayer
         const discord = p.discord ? `@${p.discord.replace(/_/g, "\\_")}` : '*Not Set*';
         const responseIcon = p.cwlSignedUp ? '✅' : '❌';
         
+        const hitRate = p.warHitRate || '—';
+        const cwlStars = p.totalCwlStars || '—';
+        const league = p.cwlLeague || 'Unknown';
         const stars = p.avgStars || '—';
         const attacks = p.totalAttacks || '—';
         const defStars = p.defenseAvgStars || '—';
-        const heroes = p.combinedHeroes || '—';
         const destruction = p.destruction || '—';
         const missed = p.missed || '—';
-        const hitRate = p.warHitRate || '—';
-        const league = p.cwlLeague || 'Unknown';
+        const townHall = p.townHall || '—';
+        const heroes = p.combinedHeroes || '—';
         
         return [
           `### ${index + 1}. ${name} ${responseIcon}`,
           `> **Discord:** ${discord}`,
-          `> **Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total  •  🎯 \`${hitRate}\` 3★`,
-          `> **Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
-          `> **Other:** 🦸 \`${heroes}\` heroes  •  🏆 \`${league}\``
+          `> **CWL:** 🎯 \`${hitRate}\` 3★  •  ⭐ \`${cwlStars}\` total  •  🏆 \`${league}\``,
+          `> **War Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total`,
+          `> **War Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
+          `> **Other:** 🏠 TH\`${townHall}\`  •  🦸 \`${heroes}\` heroes`
         ].join('\n');
       };
       
@@ -440,21 +444,28 @@ export const refreshUnrosteredMessagesQuick = async (playerNameToRemove: string)
         const discord = p.discord ? `@${p.discord.replace(/_/g, "\\_")}` : '*Not Set*';
         const responseIcon = p.cwlSignedUp ? '✅' : '❌';
         
+        const hitRate = p.warHitRate || '—';
+        const cwlStars = p.totalCwlStars || '—';
+        const league = p.cwlLeague || 'Unknown';
+        
+        // Regular War Stats
         const stars = p.avgStars || '—';
         const attacks = p.totalAttacks || '—';
         const defStars = p.defenseAvgStars || '—';
-        const heroes = p.combinedHeroes || '—';
         const destruction = p.destruction || '—';
         const missed = p.missed || '—';
-        const hitRate = p.warHitRate || '—';
-        const league = p.cwlLeague || 'Unknown';
+        
+        // Other Stats
+        const townHall = p.townHall || '—';
+        const heroes = p.combinedHeroes || '—';
         
         return [
           `### ${index + 1}. ${name} ${responseIcon}`,
           `> **Discord:** ${discord}`,
-          `> **Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total  •  🎯 \`${hitRate}\` 3★`,
-          `> **Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
-          `> **Other:** 🦸 \`${heroes}\` heroes  •  🏆 \`${league}\``
+          `> **CWL:** 🎯 \`${hitRate}\` 3★  •  ⭐ \`${cwlStars}\` total  •  🏆 \`${league}\``,
+          `> **War Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total`,
+          `> **War Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
+          `> **Other:** 🏠 TH\`${townHall}\`  •  🦸 \`${heroes}\` heroes`
         ].join('\n');
       };
       
@@ -656,21 +667,25 @@ export const refreshUnrosteredMessagesAddPlayer = async (playerName: string) => 
           const name = p.name.replace(/_/g, "\\_");
           const discord = p.discord ? `@${p.discord.replace(/_/g, "\\_")}` : '*Not Set*';
           const responseIcon = p.cwlSignedUp ? '✅' : '❌';
+          
+          const hitRate = p.warHitRate || '—';
+          const cwlStars = p.totalCwlStars || '—';
+          const league = p.cwlLeague || 'Unknown';
           const stars = p.avgStars || '—';
           const attacks = p.totalAttacks || '—';
           const defStars = p.defenseAvgStars || '—';
-          const heroes = p.combinedHeroes || '—';
           const destruction = p.destruction || '—';
           const missed = p.missed || '—';
-          const hitRate = p.warHitRate || '—';
-          const league = p.cwlLeague || 'Unknown';
+          const townHall = p.townHall || '—';
+          const heroes = p.combinedHeroes || '—';
           
           return [
             `### ${index + 1}. ${name} ${responseIcon}`,
             `> **Discord:** ${discord}`,
-            `> **Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total  •  🎯 \`${hitRate}\` 3★`,
-            `> **Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
-            `> **Other:** 🦸 \`${heroes}\` heroes  •  🏆 \`${league}\``
+            `> **CWL:** 🎯 \`${hitRate}\` 3★  •  ⭐ \`${cwlStars}\` total  •  🏆 \`${league}\``,
+            `> **War Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total`,
+            `> **War Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
+            `> **Other:** 🏠 TH\`${townHall}\`  •  🦸 \`${heroes}\` heroes`
           ].join('\n');
         };
         
