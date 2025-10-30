@@ -245,14 +245,14 @@ export const handleRosterRemove = async (
 
       console.log("RosterRemove autocomplete - roster-name option:", rosterNameOption?.value);
 
-      if (rosterNameOption?.value) {
+      if (rosterNameOption?.value && rosterNameOption.value.trim() !== '') {
         const roster = rosters.find(
           (r) => r.clanName?.toLowerCase() === rosterNameOption.value.toLowerCase()
         );
 
         console.log("RosterRemove autocomplete - found roster:", roster?.clanName, "players:", roster?.players?.length);
 
-        if (roster?.players && Array.isArray(roster.players)) {
+        if (roster?.players && Array.isArray(roster.players) && roster.players.length > 0) {
           const searchTerm = focused.value?.toLowerCase() || '';
           
           const filteredPlayers = roster.players
@@ -276,10 +276,15 @@ export const handleRosterRemove = async (
             name: p.playerName,
             value: p.playerName,
           }));
+        } else {
+          options.choices = [{
+            name: "No players in this roster",
+            value: "_no_players_",
+          }];
         }
       } else {
         options.choices = [{
-          name: "Please select a roster first",
+          name: "↑ Please select a roster first ↑",
           value: "_select_roster_first_",
         }];
       }

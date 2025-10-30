@@ -363,3 +363,385 @@ export const refreshUnrosteredMessages = async (updatedPlayers: any[], allPlayer
     }
   }
 };
+
+export const refreshUnrosteredMessagesQuick = async (playerNameToRemove: string) => {
+  console.log(`Quick refresh: removing player "${playerNameToRemove}"`);
+  
+  const playersPerPage = 8;
+  
+  const { QueryCommand } = await import('@aws-sdk/lib-dynamodb');
+  const cacheResult = await dynamoDbClient.send(
+    new QueryCommand({
+      TableName: 'BotTable',
+      KeyConditionExpression: 'pk = :pk',
+      ExpressionAttributeValues: {
+        ':pk': 'unrostered-cache'
+      }
+    })
+  );
+  
+  if (!cacheResult.Items || cacheResult.Items.length === 0) {
+    console.log('No cache entries found for quick refresh');
+    return;
+  }
+  
+  console.log(`Found ${cacheResult.Items.length} cache entries for quick refresh`);
+  
+  for (const item of cacheResult.Items) {
+    const interactionId = item.sk;
+    const cacheData = item.data as UnrosteredCacheData;
+    
+    try {
+      if (!cacheData.messageId) {
+        console.log(`Skipping cache entry ${interactionId} - no messageId`);
+        continue;
+      }
+      
+      let removed = false;
+      const updatedPlayers = cacheData.players.filter((p) => {
+        const nameMatch = p.name.trim().toLowerCase() === playerNameToRemove.trim().toLowerCase();
+        if (nameMatch && !removed) {
+          removed = true;
+          return false;
+        }
+        return true;
+      });
+      
+      if (updatedPlayers.length === cacheData.players.length) {
+        console.log(`Player "${playerNameToRemove}" not found in cache entry ${interactionId}`);
+        continue;
+      }
+      
+      console.log(`Removed player from cache entry ${interactionId}: ${cacheData.players.length} -> ${updatedPlayers.length} players`);
+      
+      const pages: any[][] = [];
+      for (let i = 0; i < updatedPlayers.length; i += playersPerPage) {
+        pages.push(updatedPlayers.slice(i, i + playersPerPage));
+      }
+      
+      if (pages.length === 0) {
+        await updateMessage(cacheData.channelId, cacheData.messageId, {
+          embeds: [{
+            title: '📋 Unrostered Players',
+            description: '*All players have been rostered!* ✅',
+            color: 0x57F287,
+            timestamp: new Date().toISOString()
+          }],
+          components: []
+        });
+        
+        cacheData.players = [];
+        await storeCacheInDynamoDB(interactionId, cacheData);
+        continue;
+      }
+      
+      const formatPlayer = (p: any, index: number) => {
+        const name = p.name.replace(/_/g, "\\_");
+        const discord = p.discord ? `@${p.discord.replace(/_/g, "\\_")}` : '*Not Set*';
+        const responseIcon = p.cwlSignedUp ? '✅' : '❌';
+        
+        const stars = p.avgStars || '—';
+        const attacks = p.totalAttacks || '—';
+        const defStars = p.defenseAvgStars || '—';
+        const heroes = p.combinedHeroes || '—';
+        const destruction = p.destruction || '—';
+        const missed = p.missed || '—';
+        const hitRate = p.warHitRate || '—';
+        const league = p.cwlLeague || 'Unknown';
+        
+        return [
+          `### ${index + 1}. ${name} ${responseIcon}`,
+          `> **Discord:** ${discord}`,
+          `> **Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total  •  🎯 \`${hitRate}\` 3★`,
+          `> **Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
+          `> **Other:** 🦸 \`${heroes}\` heroes  •  🏆 \`${league}\``
+        ].join('\n');
+      };
+      
+      const createComponents = (currentPage: number) => {
+        if (pages.length === 1) return [];
+        
+        return [
+          {
+            type: ComponentType.ActionRow as ComponentType.ActionRow,
+            components: [
+              {
+                type: ComponentType.Button as ComponentType.Button,
+                custom_id: `unrostered_first_${interactionId}`,
+                emoji: { name: '⏮️' },
+                style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+                disabled: currentPage === 0
+              },
+              {
+                type: ComponentType.Button as ComponentType.Button,
+                custom_id: `unrostered_prev_${interactionId}`,
+                emoji: { name: '◀️' },
+                style: ButtonStyle.Primary as ButtonStyle.Primary,
+                disabled: currentPage === 0
+              },
+              {
+                type: ComponentType.Button as ComponentType.Button,
+                custom_id: `unrostered_page_${interactionId}`,
+                label: `${currentPage + 1} / ${pages.length}`,
+                style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+                disabled: true
+              },
+              {
+                type: ComponentType.Button as ComponentType.Button,
+                custom_id: `unrostered_next_${interactionId}`,
+                emoji: { name: '▶️' },
+                style: ButtonStyle.Primary as ButtonStyle.Primary,
+                disabled: currentPage === pages.length - 1
+              },
+              {
+                type: ComponentType.Button as ComponentType.Button,
+                custom_id: `unrostered_last_${interactionId}`,
+                emoji: { name: '⏭️' },
+                style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+                disabled: currentPage === pages.length - 1
+              }
+            ]
+          }
+        ];
+      };
+      
+      const embed = {
+        title: '📋 Unrostered Players',
+        description: pages[0].map((p, i) => formatPlayer(p, i)).join('\n\n'),
+        color: 0x5865F2,
+        footer: {
+          text: `Page 1 of ${pages.length}  •  ${updatedPlayers.length} unrostered / ${cacheData.allPlayersCount} total players`
+        },
+        timestamp: new Date().toISOString()
+      };
+      
+      await updateMessage(cacheData.channelId, cacheData.messageId, {
+        embeds: [embed],
+        components: createComponents(0)
+      });
+      
+      cacheData.players = updatedPlayers;
+      await storeCacheInDynamoDB(interactionId, cacheData);
+      
+      console.log(`Quick refresh completed for message in channel ${cacheData.channelId}`);
+    } catch (error) {
+      console.error(`Failed to quick refresh message for interaction ${interactionId}:`, error);
+    }
+  }
+};
+
+export const refreshUnrosteredMessagesAddPlayer = async (playerName: string) => {
+  console.log(`Quick refresh: adding player "${playerName}" back to unrostered lists`);
+  
+  const { fetchPlayersWithDetailsFromCSV } = await import('../util/fetchUnrosteredPlayersCSV');
+  const { getPlayerCWLLeague, getPlayerWarHitRate } = await import('../adapters/clashking-adapter');
+  const { fetchCWLResponses } = await import('../util/fetchCWLResponses');
+  
+  try {
+    const allPlayers = await fetchPlayersWithDetailsFromCSV();
+    const player = allPlayers.find(p => p.name.trim().toLowerCase() === playerName.trim().toLowerCase());
+    
+    if (!player) {
+      console.log(`Player "${playerName}" not found in CSV`);
+      return;
+    }
+    
+    let cwlResponses: any[] = [];
+    try {
+      cwlResponses = await fetchCWLResponses();
+    } catch (error) {
+      console.error('Failed to fetch CWL responses:', error);
+    }
+    
+    const cwlSignupMap = new Map(
+      cwlResponses.map((r: any) => [r.username.toLowerCase(), true])
+    );
+    
+    const cwlSignedUp = cwlSignupMap.has(player.discord.toLowerCase());
+    let playerWithData: any = { ...player, cwlSignedUp };
+    
+    if (player.playerTag && player.playerTag.trim()) {
+      try {
+        const [cwlLeague, hitRateData] = await Promise.all([
+          getPlayerCWLLeague(player.playerTag),
+          getPlayerWarHitRate(player.playerTag)
+        ]);
+        
+        const warHitRate = hitRateData 
+          ? `${hitRateData.threeStars}/${hitRateData.totalAttacks} (${hitRateData.hitRate}%)`
+          : 'N/A';
+        
+        playerWithData = {
+          ...player,
+          cwlLeague,
+          cwlSignedUp,
+          warHitRate,
+        };
+      } catch (error) {
+        playerWithData = {
+          ...player,
+          cwlLeague: 'Unknown',
+          cwlSignedUp,
+          warHitRate: 'N/A',
+        };
+      }
+    } else {
+      playerWithData.cwlLeague = 'No Tag';
+      playerWithData.warHitRate = 'N/A';
+    }
+    
+    const playersPerPage = 8;
+    const { QueryCommand } = await import('@aws-sdk/lib-dynamodb');
+    const cacheResult = await dynamoDbClient.send(
+      new QueryCommand({
+        TableName: 'BotTable',
+        KeyConditionExpression: 'pk = :pk',
+        ExpressionAttributeValues: {
+          ':pk': 'unrostered-cache'
+        }
+      })
+    );
+    
+    if (!cacheResult.Items || cacheResult.Items.length === 0) {
+      console.log('No cache entries found for quick add refresh');
+      return;
+    }
+    
+    console.log(`Found ${cacheResult.Items.length} cache entries for quick add refresh`);
+    
+    for (const item of cacheResult.Items) {
+      const interactionId = item.sk;
+      const cacheData = item.data as UnrosteredCacheData;
+      
+      try {
+        if (!cacheData.messageId) {
+          continue;
+        }
+        
+        const updatedPlayers = [...cacheData.players, playerWithData];
+        
+        const sortedPlayers = updatedPlayers.sort((a, b) => {
+          const leagueRank: Record<string, number> = {
+            'Champion League I': 1, 'Champion League II': 2, 'Champion League III': 3,
+            'Master League I': 4, 'Master League II': 5, 'Master League III': 6,
+            'Crystal League I': 7, 'Crystal League II': 8, 'Crystal League III': 9,
+            'Gold League I': 10, 'Gold League II': 11, 'Gold League III': 12,
+            'Silver League I': 13, 'Silver League II': 14, 'Silver League III': 15,
+            'Bronze League I': 16, 'Bronze League II': 17, 'Bronze League III': 18,
+            'Unranked': 19, 'Unknown': 20, 'No Tag': 21
+          };
+          
+          const aLeagueRank = leagueRank[a.cwlLeague || 'Unknown'] || 20;
+          const bLeagueRank = leagueRank[b.cwlLeague || 'Unknown'] || 20;
+          if (aLeagueRank !== bLeagueRank) return aLeagueRank - bLeagueRank;
+          
+          const aStars = parseFloat(a.avgStars) || 0;
+          const bStars = parseFloat(b.avgStars) || 0;
+          if (aStars !== bStars) return bStars - aStars;
+          
+          const aHitRate = a.warHitRate?.match(/\(([0-9.]+)%\)/)?.[1];
+          const bHitRate = b.warHitRate?.match(/\(([0-9.]+)%\)/)?.[1];
+          const aRate = parseFloat(aHitRate || '0') || 0;
+          const bRate = parseFloat(bHitRate || '0') || 0;
+          
+          return bRate - aRate;
+        });
+        
+        const pages: any[][] = [];
+        for (let i = 0; i < sortedPlayers.length; i += playersPerPage) {
+          pages.push(sortedPlayers.slice(i, i + playersPerPage));
+        }
+        
+        const formatPlayer = (p: any, index: number) => {
+          const name = p.name.replace(/_/g, "\\_");
+          const discord = p.discord ? `@${p.discord.replace(/_/g, "\\_")}` : '*Not Set*';
+          const responseIcon = p.cwlSignedUp ? '✅' : '❌';
+          const stars = p.avgStars || '—';
+          const attacks = p.totalAttacks || '—';
+          const defStars = p.defenseAvgStars || '—';
+          const heroes = p.combinedHeroes || '—';
+          const destruction = p.destruction || '—';
+          const missed = p.missed || '—';
+          const hitRate = p.warHitRate || '—';
+          const league = p.cwlLeague || 'Unknown';
+          
+          return [
+            `### ${index + 1}. ${name} ${responseIcon}`,
+            `> **Discord:** ${discord}`,
+            `> **Attack:** ⭐ \`${stars}\` avg  •  ⚔️ \`${attacks}\` total  •  🎯 \`${hitRate}\` 3★`,
+            `> **Defense:** 🛡️ \`${defStars}\` avg  •  💥 \`${destruction}%\` dest  •  ❌ \`${missed}\` missed`,
+            `> **Other:** 🦸 \`${heroes}\` heroes  •  🏆 \`${league}\``
+          ].join('\n');
+        };
+        
+        const createComponents = (currentPage: number) => {
+          if (pages.length === 1) return [];
+          return [{
+            type: ComponentType.ActionRow as ComponentType.ActionRow,
+            components: [
+              {
+                type: ComponentType.Button as ComponentType.Button,
+                custom_id: `unrostered_first_${interactionId}`,
+                emoji: { name: '⏮️' },
+                style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+                disabled: currentPage === 0
+              },
+              {
+                type: ComponentType.Button as ComponentType.Button,
+                custom_id: `unrostered_prev_${interactionId}`,
+                emoji: { name: '◀️' },
+                style: ButtonStyle.Primary as ButtonStyle.Primary,
+                disabled: currentPage === 0
+              },
+              {
+                type: ComponentType.Button as ComponentType.Button,
+                custom_id: `unrostered_page_${interactionId}`,
+                label: `${currentPage + 1} / ${pages.length}`,
+                style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+                disabled: true
+              },
+              {
+                type: ComponentType.Button as ComponentType.Button,
+                custom_id: `unrostered_next_${interactionId}`,
+                emoji: { name: '▶️' },
+                style: ButtonStyle.Primary as ButtonStyle.Primary,
+                disabled: currentPage === pages.length - 1
+              },
+              {
+                type: ComponentType.Button as ComponentType.Button,
+                custom_id: `unrostered_last_${interactionId}`,
+                emoji: { name: '⏭️' },
+                style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+                disabled: currentPage === pages.length - 1
+              }
+            ]
+          }];
+        };
+        
+        const embed = {
+          title: '📋 Unrostered Players',
+          description: pages[0].map((p, i) => formatPlayer(p, i)).join('\n\n'),
+          color: 0x5865F2,
+          footer: {
+            text: `Page 1 of ${pages.length}  •  ${sortedPlayers.length} unrostered / ${cacheData.allPlayersCount} total players`
+          },
+          timestamp: new Date().toISOString()
+        };
+        
+        await updateMessage(cacheData.channelId, cacheData.messageId, {
+          embeds: [embed],
+          components: createComponents(0)
+        });
+        
+        cacheData.players = sortedPlayers;
+        await storeCacheInDynamoDB(interactionId, cacheData);
+        
+        console.log(`Added player back to message in channel ${cacheData.channelId}`);
+      } catch (error) {
+        console.error(`Failed to add player to message ${interactionId}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error('Failed to quick add refresh:', error);
+  }
+};

@@ -614,15 +614,15 @@ export const rosterRemove = new SlashCommandBuilder()
   .setDescription("Remove a player from a roster")
   .addStringOption((option) => {
     return option
-      .setName("player-name")
-      .setDescription("Name of the player to remove")
+      .setName("roster-name")
+      .setDescription("Name of the roster to remove from")
       .setRequired(true)
       .setAutocomplete(true);
   })
   .addStringOption((option) => {
     return option
-      .setName("roster-name")
-      .setDescription("Name of the roster to remove from")
+      .setName("player-name")
+      .setDescription("Name of the player to remove")
       .setRequired(true)
       .setAutocomplete(true);
   });
