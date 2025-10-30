@@ -4,7 +4,7 @@ import { updateResponse, sendFollowupMessage, getOriginalResponse } from '../ada
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { getPlayerCWLLeague, getPlayerWarHitRate } from '../adapters/clashking-adapter';
-import { unrosteredDataCache } from '../component-handlers/unrosteredButton';
+import { unrosteredDataCache, storeCacheInDynamoDB } from '../component-handlers/unrosteredButton';
 import { fetchCWLResponses, CWLResponse } from '../util/fetchCWLResponses';
 
 interface PlayerWithLeague extends PlayerData {
@@ -128,9 +128,7 @@ export const handleUnrosteredCommand = async (
       }
     }
 
-    // Sort players by multiple criteria
     const sortedPlayers = playersWithLeague.sort((a, b) => {
-      // Define league ranking (higher rank = lower number)
       const leagueRank: Record<string, number> = {
         'Champion League I': 1,
         'Champion League II': 2,
@@ -158,25 +156,22 @@ export const handleUnrosteredCommand = async (
       const aLeagueRank = leagueRank[a.cwlLeague || 'Unknown'] || 20;
       const bLeagueRank = leagueRank[b.cwlLeague || 'Unknown'] || 20;
 
-      // 1. Sort by CWL league (Champion I first, etc.)
       if (aLeagueRank !== bLeagueRank) {
         return aLeagueRank - bLeagueRank;
       }
 
-      // 2. If same league, sort by average stars (higher first)
       const aStars = parseFloat(a.avgStars) || 0;
       const bStars = parseFloat(b.avgStars) || 0;
       if (aStars !== bStars) {
-        return bStars - aStars; // Descending order
+        return bStars - aStars;
       }
 
-      // 3. If same league and stars, sort by hit rate (higher first)
       const aHitRate = a.warHitRate?.match(/\(([0-9.]+)%\)/)?.[1];
       const bHitRate = b.warHitRate?.match(/\(([0-9.]+)%\)/)?.[1];
       const aRate = parseFloat(aHitRate || '0') || 0;
       const bRate = parseFloat(bHitRate || '0') || 0;
       
-      return bRate - aRate; // Descending order
+      return bRate - aRate;
     });
 
     const formatPlayer = (p: PlayerWithLeague, index: number) => {
@@ -282,7 +277,10 @@ export const handleUnrosteredCommand = async (
       allPlayersCount: allPlayers.length
     });
     
+    console.log(`Set cache for interaction ID: ${interaction.id}, cache size: ${unrosteredDataCache.size}`);
+    
     setTimeout(() => {
+      console.log(`Deleting cache for interaction ID: ${interaction.id}`);
       unrosteredDataCache.delete(interaction.id);
     }, 15 * 60 * 1000);
 
@@ -291,13 +289,14 @@ export const handleUnrosteredCommand = async (
       components: createComponents(0)
     });
     
-    // Fetch the message ID after sending the response
     try {
       const message = await getOriginalResponse(interaction.application_id, interaction.token);
       const cacheData = unrosteredDataCache.get(interaction.id);
       if (cacheData) {
         cacheData.messageId = message.id;
         console.log(`Cached unrostered message: interaction=${interaction.id}, message=${message.id}, channel=${cacheData.channelId}`);
+        
+        await storeCacheInDynamoDB(interaction.id, cacheData);
       }
     } catch (error) {
       console.error('Failed to fetch message ID for caching:', error);

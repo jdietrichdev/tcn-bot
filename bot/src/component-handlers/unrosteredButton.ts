@@ -1,8 +1,8 @@
 import { APIMessageComponentInteraction, ComponentType, ButtonStyle, APIEmbed, InteractionResponseType } from 'discord-api-types/v10';
 import { updateMessage } from '../adapters/discord-adapter';
+import { dynamoDbClient } from '../clients/dynamodb-client';
+import { PutCommand, GetCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 
-// This will be populated by the unrostered command
-// Key: interaction.id, Value: { players, channelId, messageId, allPlayersCount }
 interface UnrosteredCacheData {
   players: any[];
   channelId: string;
@@ -12,25 +12,70 @@ interface UnrosteredCacheData {
 
 export const unrosteredDataCache = new Map<string, UnrosteredCacheData>();
 
+export const storeCacheInDynamoDB = async (interactionId: string, data: UnrosteredCacheData) => {
+  const ttl = Math.floor(Date.now() / 1000) + (15 * 60);
+  
+  await dynamoDbClient.send(
+    new PutCommand({
+      TableName: 'BotTable',
+      Item: {
+        pk: 'unrostered-cache',
+        sk: interactionId,
+        data: data,
+        ttl: ttl
+      }
+    })
+  );
+  console.log(`Stored cache in DynamoDB for interaction ID: ${interactionId}`);
+};
+
+export const getCacheFromDynamoDB = async (interactionId: string): Promise<UnrosteredCacheData | null> => {
+  try {
+    const result = await dynamoDbClient.send(
+      new GetCommand({
+        TableName: 'BotTable',
+        Key: {
+          pk: 'unrostered-cache',
+          sk: interactionId
+        }
+      })
+    );
+    
+    if (result.Item && result.Item.data) {
+      console.log(`Retrieved cache from DynamoDB for interaction ID: ${interactionId}`);
+      return result.Item.data as UnrosteredCacheData;
+    }
+    return null;
+  } catch (error) {
+    console.error(`Failed to retrieve cache from DynamoDB:`, error);
+    return null;
+  }
+};
+
 export const handleUnrosteredPagination = async (
   interaction: APIMessageComponentInteraction,
   customId: string
 ) => {
   const parts = customId.split('_');
-  const action = parts[1]; // first, prev, next, last
+  const action = parts[1];
   const originalInteractionId = parts[2];
 
-  const data = unrosteredDataCache.get(originalInteractionId);
+  console.log(`Pagination click: action=${action}, originalInteractionId=${originalInteractionId}`);
+
+  let data = await getCacheFromDynamoDB(originalInteractionId);
+  
   if (!data) {
-    // Send ephemeral error response
+    console.error(`Cache miss for interaction ID: ${originalInteractionId}`);
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
         content: '⚠️ This pagination has expired. Please run `/unrostered` again.',
-        flags: 64 // Ephemeral flag
+        flags: 64
       }
     };
   }
+  
+  console.log(`Cache hit! Data has ${data.players.length} players`);
 
   const currentMessage = interaction.message;
   const currentPageMatch = currentMessage.embeds?.[0]?.footer?.text?.match(/Page (\d+) of (\d+)/);
@@ -71,17 +116,14 @@ export const handleUnrosteredPagination = async (
     const discord = p.discord ? `@${p.discord.replace(/_/g, "\\_")}` : '*Not Set*';
     const responseIcon = p.cwlSignedUp ? '✅' : '❌';
     
-    // Stats row 1
     const stars = p.avgStars || '—';
     const attacks = p.totalAttacks || '—';
     const defStars = p.defenseAvgStars || '—';
     
-    // Stats row 2
     const heroes = p.combinedHeroes || '—';
     const destruction = p.destruction || '—';
     const missed = p.missed || '—';
     
-    // Stats row 3
     const hitRate = p.warHitRate || '—';
     const league = p.cwlLeague || 'Unknown';
     
@@ -103,10 +145,10 @@ export const handleUnrosteredPagination = async (
     return {
       title: '📋 Unrostered Players',
       description: page.map((p, i) => formatPlayer(p, startIndex + i)).join('\n\n'),
-      color: 0x5865F2, // Discord blurple
+      color: 0x5865F2,
       footer: {
         text: `Page ${pageIndex + 1} of ${pages.length}  •  ${totalPlayers} unrostered / ${allPlayers} total players`,
-        icon_url: 'https://cdn.discordapp.com/emojis/1234567890.png' // Optional: add server icon
+        icon_url: 'https://cdn.discordapp.com/emojis/1234567890.png'
       },
       timestamp: new Date().toISOString()
     };
@@ -171,11 +213,32 @@ export const handleUnrosteredPagination = async (
 export const refreshUnrosteredMessages = async (updatedPlayers: any[], allPlayersCount: number) => {
   await new Promise(resolve => setTimeout(resolve, 500));
   
-  console.log(`Refreshing unrostered messages. Cache size: ${unrosteredDataCache.size}`);
+  console.log(`Refreshing unrostered messages.`);
   
   const playersPerPage = 8;
   
-  for (const [interactionId, cacheData] of unrosteredDataCache.entries()) {
+  const { QueryCommand } = await import('@aws-sdk/lib-dynamodb');
+  const cacheResult = await dynamoDbClient.send(
+    new QueryCommand({
+      TableName: 'BotTable',
+      KeyConditionExpression: 'pk = :pk',
+      ExpressionAttributeValues: {
+        ':pk': 'unrostered-cache'
+      }
+    })
+  );
+  
+  if (!cacheResult.Items || cacheResult.Items.length === 0) {
+    console.log('No cache entries found in DynamoDB');
+    return;
+  }
+  
+  console.log(`Found ${cacheResult.Items.length} cache entries to refresh`);
+  
+  for (const item of cacheResult.Items) {
+    const interactionId = item.sk;
+    const cacheData = item.data as UnrosteredCacheData;
+    
     try {
       console.log(`Processing cache entry: interaction=${interactionId}, messageId=${cacheData.messageId}, channelId=${cacheData.channelId}`);
       
@@ -289,6 +352,10 @@ export const refreshUnrosteredMessages = async (updatedPlayers: any[], allPlayer
         embeds: [embed],
         components: createComponents(0)
       });
+      
+      cacheData.players = updatedPlayers;
+      cacheData.allPlayersCount = allPlayersCount;
+      await storeCacheInDynamoDB(interactionId, cacheData);
       
       console.log(`Updated unrostered message in channel ${cacheData.channelId}`);
     } catch (error) {
