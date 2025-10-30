@@ -60,7 +60,7 @@ export const handleUnrosteredPagination = async (
       break;
   }
 
-  const playersPerPage = 10;
+  const playersPerPage = 8;
   const pages: any[][] = [];
   for (let i = 0; i < data.players.length; i += playersPerPage) {
     pages.push(data.players.slice(i, i + playersPerPage));
@@ -159,7 +159,6 @@ export const handleUnrosteredPagination = async (
     ];
   };
 
-  // Update the original message
   return {
     type: InteractionResponseType.UpdateMessage,
     data: {
@@ -169,24 +168,31 @@ export const handleUnrosteredPagination = async (
   };
 };
 
-// Function to refresh all active unrostered messages
 export const refreshUnrosteredMessages = async (updatedPlayers: any[], allPlayersCount: number) => {
-  const playersPerPage = 10;
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  console.log(`Refreshing unrostered messages. Cache size: ${unrosteredDataCache.size}`);
+  
+  const playersPerPage = 8;
   
   for (const [interactionId, cacheData] of unrosteredDataCache.entries()) {
     try {
-      // Update the cached data
+      console.log(`Processing cache entry: interaction=${interactionId}, messageId=${cacheData.messageId}, channelId=${cacheData.channelId}`);
+      
+      if (!cacheData.messageId) {
+        console.log(`Skipping cache entry ${interactionId} - no messageId yet`);
+        continue;
+      }
+      
       cacheData.players = updatedPlayers;
       cacheData.allPlayersCount = allPlayersCount;
       
-      // Recreate pages
       const pages: any[][] = [];
       for (let i = 0; i < updatedPlayers.length; i += playersPerPage) {
         pages.push(updatedPlayers.slice(i, i + playersPerPage));
       }
       
       if (pages.length === 0) {
-        // No more unrostered players
         await updateMessage(cacheData.channelId, cacheData.messageId, {
           embeds: [{
             title: '📋 Unrostered Players',
@@ -269,7 +275,6 @@ export const refreshUnrosteredMessages = async (updatedPlayers: any[], allPlayer
         ];
       };
       
-      // Update to page 1 (index 0)
       const embed = {
         title: '📋 Unrostered Players',
         description: pages[0].map((p, i) => formatPlayer(p, i)).join('\n\n'),

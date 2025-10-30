@@ -207,7 +207,7 @@ export const handleUnrosteredCommand = async (
       ].join('\n');
     };
 
-    const playersPerPage = 10;
+    const playersPerPage = 8;
     const pages: PlayerWithLeague[][] = [];
     for (let i = 0; i < sortedPlayers.length; i += playersPerPage) {
       pages.push(sortedPlayers.slice(i, i + playersPerPage));
@@ -291,11 +291,13 @@ export const handleUnrosteredCommand = async (
       components: createComponents(0)
     });
     
+    // Fetch the message ID after sending the response
     try {
       const message = await getOriginalResponse(interaction.application_id, interaction.token);
       const cacheData = unrosteredDataCache.get(interaction.id);
       if (cacheData) {
         cacheData.messageId = message.id;
+        console.log(`Cached unrostered message: interaction=${interaction.id}, message=${message.id}, channel=${cacheData.channelId}`);
       }
     } catch (error) {
       console.error('Failed to fetch message ID for caching:', error);

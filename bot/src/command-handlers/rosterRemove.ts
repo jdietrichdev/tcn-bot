@@ -237,7 +237,9 @@ export const handleRosterRemove = async (
         return bRate - aRate;
       });
       
+      console.log(`Calling refreshUnrosteredMessages with ${sortedPlayers.length} players`);
       await refreshUnrosteredMessages(sortedPlayers, allPlayers.length);
+      console.log('Refresh completed');
     } catch (error) {
       console.error('Failed to refresh unrostered messages:', error);
     }
