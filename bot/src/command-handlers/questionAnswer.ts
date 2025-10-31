@@ -59,8 +59,8 @@ export const handleQuestionAnswer = async (
     console.log(scoreboard);
     for (const response of question.responses) {
       console.log(`Answer: ${answer}`);
-      console.log(`${response.username} response: ${response.answer}`);
-      if (response.answer === answer) {
+      console.log(`${response.username} response: ${response.response}`);
+      if (response.response === answer) {
         const index = scoreboard.findIndex(
           (score) => score.id === response.userId,
         );
