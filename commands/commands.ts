@@ -653,3 +653,31 @@ export const cwlResponse = new SlashCommandBuilder()
       .setRequired(true)
       .setAutocomplete(true);
   });
+
+export const registerSubs = new SlashCommandBuilder()
+  .setName("register-subs")
+  .setDescription("Register player substitutions between clans")
+  .addStringOption((option) => {
+    return option
+      .setName("out-players")
+      .setDescription("Players going out (mention users separated by commas: @user1, @user2)")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("in-players")
+      .setDescription("Players coming in (mention users separated by commas: @user1, @user2)")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("approval-channels")
+      .setDescription("Channels where leads will approve (channel IDs separated by commas)")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("notification-channels")
+      .setDescription("Channels to notify after approval (channel IDs separated by commas)")
+      .setRequired(true);
+  });

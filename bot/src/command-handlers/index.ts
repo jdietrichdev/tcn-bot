@@ -72,6 +72,8 @@ export const handleCommand = async (
         return await commands.handleExportRosters(event.detail);
       case "cwl-response":
         return await commands.handleCwlResponseCommand(event.detail);
+      case "register-subs":
+        return await commands.handleRegisterSubsCommand(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);

@@ -31,3 +31,4 @@ export * from "./rosterRemove";
 export * from "./rosterDelete";
 export * from "./exportRosters";
 export * from "./cwlResponse";
+export * from "./registerSubs";

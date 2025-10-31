@@ -73,6 +73,13 @@ export const proxy = async (
     console.log("Roster show pagination button clicked");
     const { handleRosterShowPagination } = await import("./component-handlers/rosterShowButton");
     response = await handleRosterShowPagination(body as APIMessageComponentInteraction);
+  } else if (
+    body.type === InteractionType.MessageComponent &&
+    (body.data.custom_id.startsWith("approve_sub_") || body.data.custom_id.startsWith("deny_sub_"))
+  ) {
+    console.log("Subs approval/denial button clicked");
+    const { handleSubsApproval } = await import("./component-handlers/subsApproval");
+    response = await handleSubsApproval(body as APIMessageComponentInteraction);
   } else {
     await eventClient.send(
       new PutEventsCommand({

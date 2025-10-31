@@ -24,6 +24,7 @@ import {
   rosterDelete,
   exportRosters,
   cwlResponse,
+  registerSubs,
 } from "./commands";
 
 export const tcnCommands = [
@@ -52,4 +53,5 @@ export const tcnCommands = [
   rosterDelete,
   exportRosters,
   cwlResponse,
+  registerSubs,
 ];
