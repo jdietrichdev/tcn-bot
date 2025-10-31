@@ -665,8 +665,20 @@ export const registerSubs = new SlashCommandBuilder()
   })
   .addStringOption((option) => {
     return option
+      .setName("out-clan")
+      .setDescription("Clan the players are leaving from")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
       .setName("in-players")
       .setDescription("Players coming in (mention users separated by commas: @user1, @user2)")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("in-clan")
+      .setDescription("Clan the players are going to")
       .setRequired(true);
   })
   .addStringOption((option) => {

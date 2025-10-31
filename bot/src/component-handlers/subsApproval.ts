@@ -88,12 +88,12 @@ export const handleSubsApproval = async (
         description: `**Requested by:** <@${subData.requestedBy}>\n**Approved by:** <@${approvedBy}>`,
         fields: [
           {
-            name: '📤 Players Going Out',
+            name: `📤 Players Leaving ${subData.outClan}`,
             value: subData.outPlayerIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
           {
-            name: '📥 Players Coming In',
+            name: `📥 Players Joining ${subData.inClan}`,
             value: subData.inPlayerIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
@@ -119,12 +119,12 @@ export const handleSubsApproval = async (
         description: `**Requested by:** <@${subData.requestedBy}>\n**Approved by:** <@${approvedBy}>`,
         fields: [
           {
-            name: '📤 Players Going Out',
+            name: `📤 Players Leaving ${subData.outClan}`,
             value: subData.outPlayerIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
           {
-            name: '📥 Players Coming In',
+            name: `📥 Players Joining ${subData.inClan}`,
             value: subData.inPlayerIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
@@ -133,7 +133,7 @@ export const handleSubsApproval = async (
         timestamp: new Date().toISOString(),
       };
 
-      const discordBotToken = process.env.DISCORD_BOT_TOKEN;
+      const discordBotToken = process.env.BOT_TOKEN;
 
       for (const channelId of subData.notificationChannelIds) {
         try {
@@ -186,12 +186,12 @@ export const handleSubsApproval = async (
         description: `**Requested by:** <@${subData.requestedBy}>\n**Denied by:** <@${approvedBy}>`,
         fields: [
           {
-            name: '📤 Players Going Out',
+            name: `📤 Players Leaving ${subData.outClan}`,
             value: subData.outPlayerIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
           {
-            name: '📥 Players Coming In',
+            name: `📥 Players Joining ${subData.inClan}`,
             value: subData.inPlayerIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },

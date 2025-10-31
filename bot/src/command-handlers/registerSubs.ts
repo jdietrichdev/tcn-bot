@@ -26,8 +26,16 @@ export const handleRegisterSubsCommand = async (
       (opt) => opt.name === 'out-players'
     ) as APIApplicationCommandInteractionDataStringOption;
     
+    const outClanOption = interaction.data.options?.find(
+      (opt) => opt.name === 'out-clan'
+    ) as APIApplicationCommandInteractionDataStringOption;
+    
     const inPlayersOption = interaction.data.options?.find(
       (opt) => opt.name === 'in-players'
+    ) as APIApplicationCommandInteractionDataStringOption;
+    
+    const inClanOption = interaction.data.options?.find(
+      (opt) => opt.name === 'in-clan'
     ) as APIApplicationCommandInteractionDataStringOption;
     
     const approvalChannelsOption = interaction.data.options?.find(
@@ -38,7 +46,7 @@ export const handleRegisterSubsCommand = async (
       (opt) => opt.name === 'notification-channels'
     ) as APIApplicationCommandInteractionDataStringOption;
 
-    if (!outPlayersOption || !inPlayersOption || !approvalChannelsOption || !notificationChannelsOption) {
+    if (!outPlayersOption || !outClanOption || !inPlayersOption || !inClanOption || !approvalChannelsOption || !notificationChannelsOption) {
       await updateResponse(interaction.application_id, interaction.token, {
         content: '❌ Missing required parameters.',
       });
@@ -46,7 +54,9 @@ export const handleRegisterSubsCommand = async (
     }
 
     const outPlayers = outPlayersOption.value;
+    const outClan = outClanOption.value;
     const inPlayers = inPlayersOption.value;
+    const inClan = inClanOption.value;
     const approvalChannelIds = approvalChannelsOption.value.split(',').map(id => id.trim());
     const notificationChannelIds = notificationChannelsOption.value.split(',').map(id => id.trim());
 
@@ -70,7 +80,9 @@ export const handleRegisterSubsCommand = async (
           pk: `subs#${guildId}`,
           sk: `request#${subId}`,
           outPlayerIds: outUserIds,
+          outClan,
           inPlayerIds: inUserIds,
+          inClan,
           approvalChannelIds,
           notificationChannelIds,
           requestedBy,
@@ -85,12 +97,12 @@ export const handleRegisterSubsCommand = async (
       description: `**Requested by:** <@${requestedBy}>`,
       fields: [
         {
-          name: '📤 Players Going Out',
+          name: `📤 Players Leaving ${outClan}`,
           value: outUserIds.map(id => `<@${id}>`).join('\n'),
           inline: true,
         },
         {
-          name: '📥 Players Coming In',
+          name: `📥 Players Joining ${inClan}`,
           value: inUserIds.map(id => `<@${id}>`).join('\n'),
           inline: true,
         },
@@ -132,7 +144,7 @@ export const handleRegisterSubsCommand = async (
       ],
     };
 
-    const discordBotToken = process.env.DISCORD_BOT_TOKEN;
+    const discordBotToken = process.env.BOT_TOKEN;
 
     for (const approvalChannelId of approvalChannelIds) {
       try {
@@ -162,7 +174,9 @@ export const handleRegisterSubsCommand = async (
           pk: `subs#${guildId}`,
           sk: `request#${subId}`,
           outPlayerIds: outUserIds,
+          outClan,
           inPlayerIds: inUserIds,
+          inClan,
           approvalChannelIds,
           notificationChannelIds,
           requestedBy,
