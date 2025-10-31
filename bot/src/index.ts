@@ -59,6 +59,20 @@ export const proxy = async (
   ) {
     console.log("Button modal triggered");
     response = createModal(body, body.data.custom_id);
+  } else if (
+    body.type === InteractionType.MessageComponent &&
+    body.data.custom_id.startsWith("unrostered_")
+  ) {
+    console.log("Unrostered pagination button clicked");
+    const { handleUnrosteredPagination } = await import("./component-handlers/unrosteredButton");
+    response = await handleUnrosteredPagination(body as APIMessageComponentInteraction, body.data.custom_id);
+  } else if (
+    body.type === InteractionType.MessageComponent &&
+    body.data.custom_id.startsWith("roster_show_")
+  ) {
+    console.log("Roster show pagination button clicked");
+    const { handleRosterShowPagination } = await import("./component-handlers/rosterShowButton");
+    response = await handleRosterShowPagination(body as APIMessageComponentInteraction);
   } else {
     await eventClient.send(
       new PutEventsCommand({
@@ -72,9 +86,14 @@ export const proxy = async (
         ],
       })
     );
+    
+    const publicCommands = ['unrostered', 'announceRoster', 'create-roster', 'roster-add', 'roster-show', 'roster-remove'];
+    const isPublicCommand = body.type === InteractionType.ApplicationCommand && 
+                           publicCommands.includes((body as APIChatInputApplicationCommandInteraction).data.name);
+    
     response = {
       type: InteractionResponseType.DeferredChannelMessageWithSource,
-      data: {
+      data: isPublicCommand ? {} : {
         flags: MessageFlags.Ephemeral,
       },
     } as APIInteractionResponse;

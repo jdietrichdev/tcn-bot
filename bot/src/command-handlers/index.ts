@@ -56,6 +56,22 @@ export const handleCommand = async (
         return await commands.handleAnnounceRoster(event.detail);
       case "schedule-event":
         return await commands.handleScheduleEvent(event.detail);
+      case "unrostered":
+        return await commands.handleUnrosteredCommand(event.detail);
+      case "create-roster":
+        return await commands.handleCreateRoster(event.detail);
+      case "roster-add":
+        return await commands.handleRosterAdd(event.detail);
+      case "roster-show":
+        return await commands.handleRosterShow(event.detail);
+      case "roster-remove":
+        return await commands.handleRosterRemove(event.detail);
+      case "roster-delete":
+        return await commands.handleRosterDelete(event.detail);
+      case "export-rosters":
+        return await commands.handleExportRosters(event.detail);
+      case "cwl-response":
+        return await commands.handleCwlResponseCommand(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);

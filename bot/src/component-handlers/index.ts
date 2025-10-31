@@ -18,6 +18,7 @@ import { claimEvent } from "./claim";
 // import { indifferentNomination } from "./indifferentNomination";
 import { nominationResults } from "./nominationResults";
 import { answerQuestion } from "./answerQuestion";
+import { handleUnrosteredPagination } from "./unrosteredButton";
 
 export const handleComponent = async (
   interaction: APIMessageComponentInteraction

@@ -16,6 +16,14 @@ import {
   questionClose,
   questionAnswer,
   eventLeaderboard,
+  unrostered,
+  createRoster,
+  rosterAdd,
+  rosterShow,
+  rosterRemove,
+  rosterDelete,
+  exportRosters,
+  cwlResponse,
 } from "./commands";
 
 export const tcnCommands = [
@@ -36,4 +44,12 @@ export const tcnCommands = [
   nominate,
   nominationResult,
   rankProposalReminder,
+  unrostered,
+  createRoster,
+  rosterAdd,
+  rosterShow,
+  rosterRemove,
+  rosterDelete,
+  exportRosters,
+  cwlResponse,
 ];

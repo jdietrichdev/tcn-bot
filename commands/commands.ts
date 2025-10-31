@@ -559,3 +559,97 @@ export const scheduleEvent = new SlashCommandBuilder()
       .setDescription("End time in UTC (yyyy-mm-ddThh:mm)")
       .setRequired(true);
   });
+
+export const unrostered = new SlashCommandBuilder()
+  .setName("unrostered")
+  .setDescription("List all unrostered players");
+
+export const createRoster = new SlashCommandBuilder()
+  .setName("create-roster")
+  .setDescription("Create a new roster for CWL")
+  .addStringOption((option) => {
+    return option
+      .setName("clan-name")
+      .setDescription("Name of the clan")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("clan-rank")
+      .setDescription("Clan rank (ex: C1, M2, etc.)")
+      .setRequired(true);
+  });
+
+export const rosterAdd = new SlashCommandBuilder()
+  .setName("roster-add")
+  .setDescription("Add a player to a roster")
+  .addStringOption((option) => {
+    return option
+      .setName("player-name")
+      .setDescription("Name of the player to add")
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("roster-name")
+      .setDescription("Name of the roster to add to")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const rosterShow = new SlashCommandBuilder()
+  .setName("roster-show")
+  .setDescription("Show the details of a roster")
+  .addStringOption((option) => {
+    return option
+      .setName("roster-name")
+      .setDescription("Name of the roster to show")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const rosterRemove = new SlashCommandBuilder()
+  .setName("roster-remove")
+  .setDescription("Remove a player from a roster")
+  .addStringOption((option) => {
+    return option
+      .setName("roster-name")
+      .setDescription("Name of the roster to remove from")
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("player-name")
+      .setDescription("Name of the player to remove")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const rosterDelete = new SlashCommandBuilder()
+  .setName("roster-delete")
+  .setDescription("Delete an entire roster and all its players")
+  .addStringOption((option) => {
+    return option
+      .setName("roster-name")
+      .setDescription("Name of the roster to delete")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const exportRosters = new SlashCommandBuilder()
+  .setName("export-rosters")
+  .setDescription("Export all rosters with player stats to a CSV file")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+export const cwlResponse = new SlashCommandBuilder()
+  .setName("cwl-response")
+  .setDescription("View a user's CWL signup response")
+  .addStringOption((option) => {
+    return option
+      .setName("user")
+      .setDescription("Username to lookup")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });

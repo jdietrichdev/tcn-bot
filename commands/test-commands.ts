@@ -25,6 +25,14 @@ import {
   questionClose,
   questionAnswer,
   eventLeaderboard,
+  unrostered,
+  createRoster,
+  rosterAdd,
+  rosterShow,
+  rosterRemove,
+  rosterDelete,
+  exportRosters,
+  cwlResponse
 } from "./commands";
 
 export const testCommands = [
@@ -54,4 +62,12 @@ export const testCommands = [
   nominationResult,
   rankProposalReminder,
   announceRoster,
+  unrostered,
+  createRoster,
+  rosterAdd,
+  rosterShow,
+  rosterRemove,
+  rosterDelete,
+  exportRosters,
+  cwlResponse
 ];
