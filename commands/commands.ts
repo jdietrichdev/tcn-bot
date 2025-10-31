@@ -681,15 +681,39 @@ export const registerSubs = new SlashCommandBuilder()
       .setDescription("Clan the players are going to")
       .setRequired(true);
   })
-  .addStringOption((option) => {
+  .addChannelOption((option) => {
     return option
-      .setName("approval-channels")
-      .setDescription("Channels where leads will approve (channel IDs separated by commas)")
+      .setName("approval-channel-1")
+      .setDescription("First approval channel")
       .setRequired(true);
   })
-  .addStringOption((option) => {
+  .addChannelOption((option) => {
     return option
-      .setName("notification-channels")
-      .setDescription("Channels to notify after approval (channel IDs separated by commas)")
+      .setName("approval-channel-2")
+      .setDescription("Second approval channel (optional)")
+      .setRequired(false);
+  })
+  .addChannelOption((option) => {
+    return option
+      .setName("approval-channel-3")
+      .setDescription("Third approval channel (optional)")
+      .setRequired(false);
+  })
+  .addChannelOption((option) => {
+    return option
+      .setName("notification-channel-1")
+      .setDescription("First notification channel")
       .setRequired(true);
+  })
+  .addChannelOption((option) => {
+    return option
+      .setName("notification-channel-2")
+      .setDescription("Second notification channel (optional)")
+      .setRequired(false);
+  })
+  .addChannelOption((option) => {
+    return option
+      .setName("notification-channel-3")
+      .setDescription("Third notification channel (optional)")
+      .setRequired(false);
   });

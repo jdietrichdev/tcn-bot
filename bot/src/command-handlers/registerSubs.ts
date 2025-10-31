@@ -1,6 +1,7 @@
 import { 
   APIChatInputApplicationCommandInteraction, 
   APIApplicationCommandInteractionDataStringOption,
+  APIApplicationCommandInteractionDataChannelOption,
   APIEmbed,
   ComponentType,
   ButtonStyle
@@ -38,15 +39,31 @@ export const handleRegisterSubsCommand = async (
       (opt) => opt.name === 'in-clan'
     ) as APIApplicationCommandInteractionDataStringOption;
     
-    const approvalChannelsOption = interaction.data.options?.find(
-      (opt) => opt.name === 'approval-channels'
-    ) as APIApplicationCommandInteractionDataStringOption;
+    const approvalChannel1Option = interaction.data.options?.find(
+      (opt) => opt.name === 'approval-channel-1'
+    ) as APIApplicationCommandInteractionDataChannelOption;
     
-    const notificationChannelsOption = interaction.data.options?.find(
-      (opt) => opt.name === 'notification-channels'
-    ) as APIApplicationCommandInteractionDataStringOption;
+    const approvalChannel2Option = interaction.data.options?.find(
+      (opt) => opt.name === 'approval-channel-2'
+    ) as APIApplicationCommandInteractionDataChannelOption;
+    
+    const approvalChannel3Option = interaction.data.options?.find(
+      (opt) => opt.name === 'approval-channel-3'
+    ) as APIApplicationCommandInteractionDataChannelOption;
+    
+    const notificationChannel1Option = interaction.data.options?.find(
+      (opt) => opt.name === 'notification-channel-1'
+    ) as APIApplicationCommandInteractionDataChannelOption;
+    
+    const notificationChannel2Option = interaction.data.options?.find(
+      (opt) => opt.name === 'notification-channel-2'
+    ) as APIApplicationCommandInteractionDataChannelOption;
+    
+    const notificationChannel3Option = interaction.data.options?.find(
+      (opt) => opt.name === 'notification-channel-3'
+    ) as APIApplicationCommandInteractionDataChannelOption;
 
-    if (!outPlayersOption || !outClanOption || !inPlayersOption || !inClanOption || !approvalChannelsOption || !notificationChannelsOption) {
+    if (!outPlayersOption || !outClanOption || !inPlayersOption || !inClanOption || !approvalChannel1Option || !notificationChannel1Option) {
       await updateResponse(interaction.application_id, interaction.token, {
         content: '❌ Missing required parameters.',
       });
@@ -57,8 +74,14 @@ export const handleRegisterSubsCommand = async (
     const outClan = outClanOption.value;
     const inPlayers = inPlayersOption.value;
     const inClan = inClanOption.value;
-    const approvalChannelIds = approvalChannelsOption.value.split(',').map(id => id.trim());
-    const notificationChannelIds = notificationChannelsOption.value.split(',').map(id => id.trim());
+    
+    const approvalChannelIds: string[] = [approvalChannel1Option.value];
+    if (approvalChannel2Option) approvalChannelIds.push(approvalChannel2Option.value);
+    if (approvalChannel3Option) approvalChannelIds.push(approvalChannel3Option.value);
+    
+    const notificationChannelIds: string[] = [notificationChannel1Option.value];
+    if (notificationChannel2Option) notificationChannelIds.push(notificationChannel2Option.value);
+    if (notificationChannel3Option) notificationChannelIds.push(notificationChannel3Option.value);
 
     const outUserIds = extractUserIds(outPlayers);
     const inUserIds = extractUserIds(inPlayers);
@@ -108,7 +131,7 @@ export const handleRegisterSubsCommand = async (
         },
         {
           name: '📢 Notification Channels',
-          value: notificationChannelIds.map(id => `<#${id}>`).join(', '),
+          value: notificationChannelIds.map((id: string) => `<#${id}>`).join(', '),
           inline: false,
         },
       ],
@@ -146,8 +169,18 @@ export const handleRegisterSubsCommand = async (
 
     const discordBotToken = process.env.BOT_TOKEN;
 
+    if (!discordBotToken) {
+      console.error('BOT_TOKEN environment variable is not set');
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: '❌ Bot token is not configured.',
+      });
+      return;
+    }
+
+    let successCount = 0;
     for (const approvalChannelId of approvalChannelIds) {
       try {
+        console.log(`Attempting to send approval message to channel: ${approvalChannelId}`);
         const discordApiUrl = `https://discord.com/api/v10/channels/${approvalChannelId}/messages`;
 
         const response = await fetch(discordApiUrl, {
@@ -160,11 +193,23 @@ export const handleRegisterSubsCommand = async (
         });
 
         if (!response.ok) {
-          console.error(`Failed to send approval message to channel ${approvalChannelId}:`, await response.text());
+          const errorText = await response.text();
+          console.error(`Failed to send approval message to channel ${approvalChannelId}:`, errorText);
+        } else {
+          successCount++;
+          const responseData = await response.json();
+          console.log(`Successfully sent approval message to channel ${approvalChannelId}, message ID: ${responseData.id}`);
         }
       } catch (error) {
         console.error(`Error sending to approval channel ${approvalChannelId}:`, error);
       }
+    }
+
+    if (successCount === 0) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: '❌ Failed to send approval messages to any channels. Please check the channel IDs and bot permissions.',
+      });
+      return;
     }
 
     await dynamoDbClient.send(
@@ -187,7 +232,7 @@ export const handleRegisterSubsCommand = async (
     );
 
     await updateResponse(interaction.application_id, interaction.token, {
-      content: `✅ Substitution request submitted! Approval messages sent to ${approvalChannelIds.length} channel(s): ${approvalChannelIds.map(id => `<#${id}>`).join(', ')}`,
+      content: `✅ Substitution request submitted! Approval messages sent to ${approvalChannelIds.length} channel(s): ${approvalChannelIds.map((id: string) => `<#${id}>`).join(', ')}`,
     });
 
   } catch (error) {
