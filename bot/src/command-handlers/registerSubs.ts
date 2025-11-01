@@ -121,7 +121,7 @@ export const handleRegisterSubsCommand = async (
           inline: false,
         },
       ],
-      color: 0xFFA500,
+      color: 0x5865F2,
       footer: {
         text: `Sub ID: ${subId}`,
       },
