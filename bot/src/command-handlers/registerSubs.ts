@@ -1,7 +1,6 @@
 import { 
   APIChatInputApplicationCommandInteraction, 
   APIApplicationCommandInteractionDataStringOption,
-  APIApplicationCommandInteractionDataChannelOption,
   APIEmbed,
   ComponentType,
   ButtonStyle
@@ -39,31 +38,15 @@ export const handleRegisterSubsCommand = async (
       (opt) => opt.name === 'in-clan'
     ) as APIApplicationCommandInteractionDataStringOption;
     
-    const approvalChannel1Option = interaction.data.options?.find(
-      (opt) => opt.name === 'approval-channel-1'
-    ) as APIApplicationCommandInteractionDataChannelOption;
+    const approvalChannelsOption = interaction.data.options?.find(
+      (opt) => opt.name === 'approval-channels'
+    ) as APIApplicationCommandInteractionDataStringOption;
     
-    const approvalChannel2Option = interaction.data.options?.find(
-      (opt) => opt.name === 'approval-channel-2'
-    ) as APIApplicationCommandInteractionDataChannelOption;
-    
-    const approvalChannel3Option = interaction.data.options?.find(
-      (opt) => opt.name === 'approval-channel-3'
-    ) as APIApplicationCommandInteractionDataChannelOption;
-    
-    const notificationChannel1Option = interaction.data.options?.find(
-      (opt) => opt.name === 'notification-channel-1'
-    ) as APIApplicationCommandInteractionDataChannelOption;
-    
-    const notificationChannel2Option = interaction.data.options?.find(
-      (opt) => opt.name === 'notification-channel-2'
-    ) as APIApplicationCommandInteractionDataChannelOption;
-    
-    const notificationChannel3Option = interaction.data.options?.find(
-      (opt) => opt.name === 'notification-channel-3'
-    ) as APIApplicationCommandInteractionDataChannelOption;
+    const notificationChannelsOption = interaction.data.options?.find(
+      (opt) => opt.name === 'notification-channels'
+    ) as APIApplicationCommandInteractionDataStringOption;
 
-    if (!outPlayersOption || !outClanOption || !inPlayersOption || !inClanOption || !approvalChannel1Option || !notificationChannel1Option) {
+    if (!outPlayersOption || !outClanOption || !inPlayersOption || !inClanOption || !approvalChannelsOption || !notificationChannelsOption) {
       await updateResponse(interaction.application_id, interaction.token, {
         content: '❌ Missing required parameters.',
       });
@@ -74,21 +57,24 @@ export const handleRegisterSubsCommand = async (
     const outClan = outClanOption.value;
     const inPlayers = inPlayersOption.value;
     const inClan = inClanOption.value;
+    const approvalChannels = approvalChannelsOption.value;
+    const notificationChannels = notificationChannelsOption.value;
     
-    const approvalChannelIds: string[] = [approvalChannel1Option.value];
-    if (approvalChannel2Option) approvalChannelIds.push(approvalChannel2Option.value);
-    if (approvalChannel3Option) approvalChannelIds.push(approvalChannel3Option.value);
-    
-    const notificationChannelIds: string[] = [notificationChannel1Option.value];
-    if (notificationChannel2Option) notificationChannelIds.push(notificationChannel2Option.value);
-    if (notificationChannel3Option) notificationChannelIds.push(notificationChannel3Option.value);
-
     const outUserIds = extractUserIds(outPlayers);
     const inUserIds = extractUserIds(inPlayers);
+    const approvalChannelIds = extractChannelIds(approvalChannels);
+    const notificationChannelIds = extractChannelIds(notificationChannels);
 
     if (outUserIds.length === 0 || inUserIds.length === 0) {
       await updateResponse(interaction.application_id, interaction.token, {
         content: '❌ Please mention at least one user for both out-players and in-players using @username format.',
+      });
+      return;
+    }
+
+    if (approvalChannelIds.length === 0 || notificationChannelIds.length === 0) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: '❌ Please mention at least one channel for both approval-channels and notification-channels using #channel format.',
       });
       return;
     }
@@ -246,5 +232,11 @@ export const handleRegisterSubsCommand = async (
 function extractUserIds(input: string): string[] {
   const mentionRegex = /<@!?(\d+)>/g;
   const matches = [...input.matchAll(mentionRegex)];
+  return matches.map(match => match[1]);
+}
+
+function extractChannelIds(input: string): string[] {
+  const channelRegex = /<#(\d+)>/g;
+  const matches = [...input.matchAll(channelRegex)];
   return matches.map(match => match[1]);
 }

@@ -660,60 +660,36 @@ export const registerSubs = new SlashCommandBuilder()
   .addStringOption((option) => {
     return option
       .setName("out-players")
-      .setDescription("Players going out (mention users separated by commas: @user1, @user2)")
+      .setDescription("Players leaving (mention users: @user1 @user2)")
       .setRequired(true);
   })
   .addStringOption((option) => {
     return option
       .setName("out-clan")
-      .setDescription("Clan the players are leaving from")
+      .setDescription("Clan players are leaving from")
       .setRequired(true);
   })
   .addStringOption((option) => {
     return option
       .setName("in-players")
-      .setDescription("Players coming in (mention users separated by commas: @user1, @user2)")
+      .setDescription("Players joining (mention users: @user1 @user2)")
       .setRequired(true);
   })
   .addStringOption((option) => {
     return option
       .setName("in-clan")
-      .setDescription("Clan the players are going to")
+      .setDescription("Clan players are joining")
       .setRequired(true);
   })
-  .addChannelOption((option) => {
+  .addStringOption((option) => {
     return option
-      .setName("approval-channel-1")
-      .setDescription("First approval channel")
+      .setName("approval-channels")
+      .setDescription("Approval channels (mention: #channel1 #channel2)")
       .setRequired(true);
   })
-  .addChannelOption((option) => {
+  .addStringOption((option) => {
     return option
-      .setName("approval-channel-2")
-      .setDescription("Second approval channel (optional)")
-      .setRequired(false);
-  })
-  .addChannelOption((option) => {
-    return option
-      .setName("approval-channel-3")
-      .setDescription("Third approval channel (optional)")
-      .setRequired(false);
-  })
-  .addChannelOption((option) => {
-    return option
-      .setName("notification-channel-1")
-      .setDescription("First notification channel")
+      .setName("notification-channels")
+      .setDescription("Notification channels (mention: #channel1 #channel2)")
       .setRequired(true);
-  })
-  .addChannelOption((option) => {
-    return option
-      .setName("notification-channel-2")
-      .setDescription("Second notification channel (optional)")
-      .setRequired(false);
-  })
-  .addChannelOption((option) => {
-    return option
-      .setName("notification-channel-3")
-      .setDescription("Third notification channel (optional)")
-      .setRequired(false);
   });
