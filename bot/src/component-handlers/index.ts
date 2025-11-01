@@ -19,6 +19,7 @@ import { claimEvent } from "./claim";
 import { nominationResults } from "./nominationResults";
 import { answerQuestion } from "./answerQuestion";
 import { handleUnrosteredPagination } from "./unrosteredButton";
+import { handleSubsApproval } from "./subsApproval";
 
 export const handleComponent = async (
   interaction: APIMessageComponentInteraction
@@ -54,5 +55,7 @@ export const handleComponent = async (
     await nominationResults(interaction);
   } else if (customId.startsWith("answer")) {
     await answerQuestion(interaction);
+  } else if (customId.startsWith("approve_sub_") || customId.startsWith("deny_sub_")) {
+    await handleSubsApproval(interaction);
   }
 };

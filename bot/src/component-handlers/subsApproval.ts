@@ -1,12 +1,11 @@
 import { 
   APIMessageComponentInteraction, 
   APIEmbed,
-  InteractionResponseType,
   MessageFlags
 } from 'discord-api-types/v10';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { updateMessage } from '../adapters/discord-adapter';
+import { updateMessage, updateResponse } from '../adapters/discord-adapter';
 
 export const handleSubsApproval = async (
   interaction: APIMessageComponentInteraction
@@ -16,13 +15,11 @@ export const handleSubsApproval = async (
     const guildId = interaction.guild_id;
     
     if (!guildId) {
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: '❌ This can only be used in a server.',
-          flags: MessageFlags.Ephemeral,
-        },
-      };
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: '❌ This can only be used in a server.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
     }
 
     const parts = customId.split('_');
@@ -40,26 +37,22 @@ export const handleSubsApproval = async (
     );
 
     if (!result.Item) {
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: '❌ Substitution request not found.',
-          flags: MessageFlags.Ephemeral,
-        },
-      };
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: '❌ Substitution request not found.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
     }
 
     const subData = result.Item;
     const currentChannelId = interaction.channel.id;
 
     if (subData.status !== 'pending') {
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: `❌ This substitution request has already been ${subData.status}.`,
-          flags: MessageFlags.Ephemeral,
-        },
-      };
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: `❌ This substitution request has already been ${subData.status}.`,
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
     }
 
     const approvedBy = interaction.member?.user?.id || 'Unknown';
@@ -179,22 +172,18 @@ export const handleSubsApproval = async (
           }
         }
 
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: `✅ All approvals received! Notifications sent to ${subData.notificationChannelIds.length} channel(s).`,
-            flags: MessageFlags.Ephemeral,
-          },
-        };
+        await updateResponse(interaction.application_id, interaction.token, {
+          content: `✅ All approvals received! Notifications sent to ${subData.notificationChannelIds.length} channel(s).`,
+          flags: MessageFlags.Ephemeral,
+        });
+        return;
       }
 
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: `✅ Approval recorded. ${approvalCount}/${totalApprovals} approvals received.`,
-          flags: MessageFlags.Ephemeral,
-        },
-      };
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: `✅ Approval recorded. ${approvalCount}/${totalApprovals} approvals received.`,
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
 
     } else if (action === 'deny') {
       denials[currentChannelId] = {
@@ -292,31 +281,23 @@ export const handleSubsApproval = async (
         }
       );
 
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: '❌ Substitution denied.',
-          flags: MessageFlags.Ephemeral,
-        },
-      };
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: '❌ Substitution denied.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
     }
 
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        content: '❌ Unknown action.',
-        flags: MessageFlags.Ephemeral,
-      },
-    };
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: '❌ Unknown action.',
+      flags: MessageFlags.Ephemeral,
+    });
 
   } catch (error) {
     console.error('Error in handleSubsApproval:', error);
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        content: '❌ An error occurred while processing the approval.',
-        flags: MessageFlags.Ephemeral,
-      },
-    };
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: '❌ An error occurred while processing the approval.',
+      flags: MessageFlags.Ephemeral,
+    });
   }
 };
