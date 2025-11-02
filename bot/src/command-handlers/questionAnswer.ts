@@ -52,33 +52,66 @@ export const handleQuestionAnswer = async (
     const question = questions.find(
       (question: Question) => question.id === questionId,
     );
+    
+    const previousAnswer = question.answer;
+    const previousPoints = question.points || 0;
+    const isUpdatingAnswer = previousAnswer !== undefined;
+    
     question.answer = answer;
     question.points = points;
 
     const scoreboard: Record<string, any>[] = eventData.scoreboard ?? [];
     console.log(scoreboard);
-    for (const response of question.responses) {
-      console.log(`Answer: ${answer}`);
-      console.log(`${response.username} response: ${response.response}`);
-      if (response.response === answer) {
+    
+    if (isUpdatingAnswer) {
+      for (const response of question.responses) {
+        console.log(`Answer: ${answer}`);
+        console.log(`${response.username} response: ${response.response}`);
         const index = scoreboard.findIndex(
           (score) => score.id === response.userId,
         );
         console.log(index);
-        if (index !== -1) scoreboard[index].points += Number(points);
-        else
+        if (index !== -1) {
+          if (response.response === previousAnswer) {
+            scoreboard[index].points -= Number(previousPoints);
+          }
+          if (response.response === answer) {
+            scoreboard[index].points += Number(points);
+          }
+          if (scoreboard[index].points <= 0) {
+            scoreboard.splice(index, 1);
+          }
+        } else if (response.response === answer) {
           scoreboard.push({
             id: response.userId,
             username: response.username,
             points: Number(points),
           });
+        }
+      }
+    } else {
+      for (const response of question.responses) {
+        console.log(`Answer: ${answer}`);
+        console.log(`${response.username} response: ${response.response}`);
+        if (response.response === answer) {
+          const index = scoreboard.findIndex(
+            (score) => score.id === response.userId,
+          );
+          console.log(index);
+          if (index !== -1) scoreboard[index].points += Number(points);
+          else
+            scoreboard.push({
+              id: response.userId,
+              username: response.username,
+              points: Number(points),
+            });
+        }
       }
     }
     console.log(scoreboard);
     eventData.scoreboard = scoreboard;
     console.log(eventData.scoreboard);
 
-    // Calculate response statistics
     const totalResponses = question.responses?.length || 0;
     const correctResponses =
       question.responses?.filter((r: QuestionResponse) => r.response === answer)
@@ -107,7 +140,6 @@ export const handleQuestionAnswer = async (
         : 0,
     };
 
-    // Create the results embed
     const embed = {
       title: '📊 ' + question.question,
       description:
