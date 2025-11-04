@@ -14,6 +14,8 @@ export const handleSubsApproval = async (
     const customId = interaction.data.custom_id;
     const guildId = interaction.guild_id;
     
+    console.log(`[handleSubsApproval] Called with custom_id: ${customId}, guildId: ${guildId}`);
+    
     if (!guildId) {
       await updateResponse(interaction.application_id, interaction.token, {
         content: '❌ This can only be used in a server.',
@@ -23,8 +25,10 @@ export const handleSubsApproval = async (
     }
 
     const parts = customId.split('_');
-    const action = parts[1];
+    const action = parts[0];
     const subId = parts.slice(2).join('_');
+    
+    console.log(`[handleSubsApproval] Parsed - action: ${action}, subId: ${subId}`);
 
     const result = await dynamoDbClient.send(
       new GetCommand({
@@ -296,7 +300,7 @@ export const handleSubsApproval = async (
   } catch (error) {
     console.error('Error in handleSubsApproval:', error);
     await updateResponse(interaction.application_id, interaction.token, {
-      content: '❌ An error occurred while processing the approval.',
+      content: `❌ An error occurred while processing the approval. Error: ${error instanceof Error ? error.message : 'Unknown error'}. Custom ID: ${interaction.data.custom_id}`,
       flags: MessageFlags.Ephemeral,
     });
   }
