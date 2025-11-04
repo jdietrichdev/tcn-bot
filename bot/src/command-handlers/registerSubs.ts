@@ -22,59 +22,83 @@ export const handleRegisterSubsCommand = async (
       return;
     }
 
-    const outPlayersOption = interaction.data.options?.find(
-      (opt) => opt.name === 'out-players'
+    const clan1OutOption = interaction.data.options?.find(
+      (opt) => opt.name === 'clan1-out'
     ) as APIApplicationCommandInteractionDataStringOption;
     
-    const outClanOption = interaction.data.options?.find(
-      (opt) => opt.name === 'out-clan'
+    const clan1InOption = interaction.data.options?.find(
+      (opt) => opt.name === 'clan1-in'
     ) as APIApplicationCommandInteractionDataStringOption;
     
-    const inPlayersOption = interaction.data.options?.find(
-      (opt) => opt.name === 'in-players'
+    const clan1NameOption = interaction.data.options?.find(
+      (opt) => opt.name === 'clan1-name'
     ) as APIApplicationCommandInteractionDataStringOption;
     
-    const inClanOption = interaction.data.options?.find(
-      (opt) => opt.name === 'in-clan'
+    const clan2OutOption = interaction.data.options?.find(
+      (opt) => opt.name === 'clan2-out'
     ) as APIApplicationCommandInteractionDataStringOption;
     
-    const approvalChannelsOption = interaction.data.options?.find(
-      (opt) => opt.name === 'approval-channels'
+    const clan2InOption = interaction.data.options?.find(
+      (opt) => opt.name === 'clan2-in'
     ) as APIApplicationCommandInteractionDataStringOption;
     
-    const notificationChannelsOption = interaction.data.options?.find(
-      (opt) => opt.name === 'notification-channels'
+    const clan2NameOption = interaction.data.options?.find(
+      (opt) => opt.name === 'clan2-name'
+    ) as APIApplicationCommandInteractionDataStringOption;
+    
+    const clan1ApprovalChannelOption = interaction.data.options?.find(
+      (opt) => opt.name === 'clan1-approval-channel'
+    ) as APIApplicationCommandInteractionDataStringOption;
+    
+    const clan2ApprovalChannelOption = interaction.data.options?.find(
+      (opt) => opt.name === 'clan2-approval-channel'
+    ) as APIApplicationCommandInteractionDataStringOption;
+    
+    const clan1NotificationChannelOption = interaction.data.options?.find(
+      (opt) => opt.name === 'clan1-notification-channel'
+    ) as APIApplicationCommandInteractionDataStringOption;
+    
+    const clan2NotificationChannelOption = interaction.data.options?.find(
+      (opt) => opt.name === 'clan2-notification-channel'
     ) as APIApplicationCommandInteractionDataStringOption;
 
-    if (!outPlayersOption || !outClanOption || !inPlayersOption || !inClanOption || !approvalChannelsOption || !notificationChannelsOption) {
+    if (!clan1OutOption || !clan1InOption || !clan1NameOption || !clan2OutOption || !clan2InOption || !clan2NameOption || !clan1ApprovalChannelOption || !clan2ApprovalChannelOption || !clan1NotificationChannelOption || !clan2NotificationChannelOption) {
       await updateResponse(interaction.application_id, interaction.token, {
         content: '❌ Missing required parameters.',
       });
       return;
     }
 
-    const outPlayers = outPlayersOption.value;
-    const outClan = outClanOption.value;
-    const inPlayers = inPlayersOption.value;
-    const inClan = inClanOption.value;
-    const approvalChannels = approvalChannelsOption.value;
-    const notificationChannels = notificationChannelsOption.value;
+    const clan1Out = clan1OutOption.value;
+    const clan1In = clan1InOption.value;
+    const clan1Name = clan1NameOption.value;
+    const clan2Out = clan2OutOption.value;
+    const clan2In = clan2InOption.value;
+    const clan2Name = clan2NameOption.value;
+    const clan1ApprovalChannel = clan1ApprovalChannelOption.value;
+    const clan2ApprovalChannel = clan2ApprovalChannelOption.value;
+    const clan1NotificationChannel = clan1NotificationChannelOption.value;
+    const clan2NotificationChannel = clan2NotificationChannelOption.value;
     
-    const outUserIds = extractUserIds(outPlayers);
-    const inUserIds = extractUserIds(inPlayers);
-    const approvalChannelIds = extractChannelIds(approvalChannels);
-    const notificationChannelIds = extractChannelIds(notificationChannels);
+    const clan1OutIds = extractUserIds(clan1Out);
+    const clan1InIds = extractUserIds(clan1In);
+    const clan2OutIds = extractUserIds(clan2Out);
+    const clan2InIds = extractUserIds(clan2In);
+    const clan1ApprovalChannelId = extractChannelIds(clan1ApprovalChannel)[0];
+    const clan2ApprovalChannelId = extractChannelIds(clan2ApprovalChannel)[0];
+    const clan1NotificationChannelId = extractChannelIds(clan1NotificationChannel)[0];
+    const clan2NotificationChannelId = extractChannelIds(clan2NotificationChannel)[0];
 
-    if (outUserIds.length === 0 || inUserIds.length === 0) {
+    if (clan1OutIds.length === 0 || clan1InIds.length === 0 || clan2OutIds.length === 0 || clan2InIds.length === 0) {
       await updateResponse(interaction.application_id, interaction.token, {
-        content: '❌ Please mention at least one user for both out-players and in-players using @username format.',
+        content: '❌ Please mention at least one user for all player fields using @username format.',
       });
       return;
     }
 
-    if (approvalChannelIds.length === 0 || notificationChannelIds.length === 0) {
+    if (!clan1ApprovalChannelId || !clan2ApprovalChannelId || !clan1NotificationChannelId || !clan2NotificationChannelId) {
       await updateResponse(interaction.application_id, interaction.token, {
-        content: '❌ Please mention at least one channel for both approval-channels and notification-channels using #channel format.',
+        content: '❌ Please mention valid channels using #channel format.',
       });
       return;
     }
@@ -88,12 +112,16 @@ export const handleRegisterSubsCommand = async (
         Item: {
           pk: `subs#${guildId}`,
           sk: `request#${subId}`,
-          outPlayerIds: outUserIds,
-          outClan,
-          inPlayerIds: inUserIds,
-          inClan,
-          approvalChannelIds,
-          notificationChannelIds,
+          clan1OutIds,
+          clan1InIds,
+          clan1Name,
+          clan2OutIds,
+          clan2InIds,
+          clan2Name,
+          clan1ApprovalChannelId,
+          clan2ApprovalChannelId,
+          clan1NotificationChannelId,
+          clan2NotificationChannelId,
           requestedBy,
           status: 'pending',
           createdAt: new Date().toISOString(),
@@ -101,23 +129,23 @@ export const handleRegisterSubsCommand = async (
       })
     );
 
-    const approvalEmbed: APIEmbed = {
+    const clan1ApprovalEmbed: APIEmbed = {
       title: '🔄 Substitution Request',
       description: `**Requested by:** <@${requestedBy}>`,
       fields: [
         {
-          name: `📤 Players Leaving ${outClan}`,
-          value: outUserIds.map(id => `<@${id}>`).join('\n'),
+          name: `📤 Players Leaving ${clan1Name}`,
+          value: clan1OutIds.map((id: string) => `<@${id}>`).join('\n'),
           inline: true,
         },
         {
-          name: `📥 Players Joining ${inClan}`,
-          value: inUserIds.map(id => `<@${id}>`).join('\n'),
+          name: `📥 Players Joining ${clan1Name}`,
+          value: clan1InIds.map((id: string) => `<@${id}>`).join('\n'),
           inline: true,
         },
         {
-          name: '📢 Notification Channels',
-          value: notificationChannelIds.map((id: string) => `<#${id}>`).join(', '),
+          name: '📢 Notification Channel',
+          value: `<#${clan1NotificationChannelId}>`,
           inline: false,
         },
       ],
@@ -128,8 +156,35 @@ export const handleRegisterSubsCommand = async (
       timestamp: new Date().toISOString(),
     };
 
-    const approvalMessage = {
-      embeds: [approvalEmbed],
+    const clan2ApprovalEmbed: APIEmbed = {
+      title: '🔄 Substitution Request',
+      description: `**Requested by:** <@${requestedBy}>`,
+      fields: [
+        {
+          name: `📤 Players Leaving ${clan2Name}`,
+          value: clan2OutIds.map((id: string) => `<@${id}>`).join('\n'),
+          inline: true,
+        },
+        {
+          name: `📥 Players Joining ${clan2Name}`,
+          value: clan2InIds.map((id: string) => `<@${id}>`).join('\n'),
+          inline: true,
+        },
+        {
+          name: '📢 Notification Channel',
+          value: `<#${clan2NotificationChannelId}>`,
+          inline: false,
+        },
+      ],
+      color: 0x5865F2,
+      footer: {
+        text: `Sub ID: ${subId}`,
+      },
+      timestamp: new Date().toISOString(),
+    };
+
+    const approvalMessage = (embed: APIEmbed) => ({
+      embeds: [embed],
       components: [
         {
           type: ComponentType.ActionRow,
@@ -151,7 +206,7 @@ export const handleRegisterSubsCommand = async (
           ],
         },
       ],
-    };
+    });
 
     const discordBotToken = process.env.BOT_TOKEN;
 
@@ -164,31 +219,55 @@ export const handleRegisterSubsCommand = async (
     }
 
     let successCount = 0;
-    for (const approvalChannelId of approvalChannelIds) {
-      try {
-        console.log(`Attempting to send approval message to channel: ${approvalChannelId}`);
-        const discordApiUrl = `https://discord.com/api/v10/channels/${approvalChannelId}/messages`;
-
-        const response = await fetch(discordApiUrl, {
+    
+    try {
+      console.log(`Attempting to send approval message to clan 1 channel: ${clan1ApprovalChannelId}`);
+      const clan1Response = await fetch(
+        `https://discord.com/api/v10/channels/${clan1ApprovalChannelId}/messages`,
+        {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bot ${discordBotToken}`,
           },
-          body: JSON.stringify(approvalMessage),
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`Failed to send approval message to channel ${approvalChannelId}:`, errorText);
-        } else {
-          successCount++;
-          const responseData = await response.json();
-          console.log(`Successfully sent approval message to channel ${approvalChannelId}, message ID: ${responseData.id}`);
+          body: JSON.stringify(approvalMessage(clan1ApprovalEmbed)),
         }
-      } catch (error) {
-        console.error(`Error sending to approval channel ${approvalChannelId}:`, error);
+      );
+
+      if (clan1Response.ok) {
+        successCount++;
+        console.log(`Successfully sent approval message to clan 1 channel`);
+      } else {
+        const errorText = await clan1Response.text();
+        console.error(`Failed to send approval message to clan 1 channel:`, errorText);
       }
+    } catch (error) {
+      console.error(`Error sending to clan 1 approval channel:`, error);
+    }
+
+    try {
+      console.log(`Attempting to send approval message to clan 2 channel: ${clan2ApprovalChannelId}`);
+      const clan2Response = await fetch(
+        `https://discord.com/api/v10/channels/${clan2ApprovalChannelId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bot ${discordBotToken}`,
+          },
+          body: JSON.stringify(approvalMessage(clan2ApprovalEmbed)),
+        }
+      );
+
+      if (clan2Response.ok) {
+        successCount++;
+        console.log(`Successfully sent approval message to clan 2 channel`);
+      } else {
+        const errorText = await clan2Response.text();
+        console.error(`Failed to send approval message to clan 2 channel:`, errorText);
+      }
+    } catch (error) {
+      console.error(`Error sending to clan 2 approval channel:`, error);
     }
 
     if (successCount === 0) {
@@ -204,12 +283,16 @@ export const handleRegisterSubsCommand = async (
         Item: {
           pk: `subs#${guildId}`,
           sk: `request#${subId}`,
-          outPlayerIds: outUserIds,
-          outClan,
-          inPlayerIds: inUserIds,
-          inClan,
-          approvalChannelIds,
-          notificationChannelIds,
+          clan1OutIds,
+          clan1InIds,
+          clan1Name,
+          clan2OutIds,
+          clan2InIds,
+          clan2Name,
+          clan1ApprovalChannelId,
+          clan2ApprovalChannelId,
+          clan1NotificationChannelId,
+          clan2NotificationChannelId,
           requestedBy,
           status: 'pending',
           createdAt: new Date().toISOString(),
@@ -218,7 +301,7 @@ export const handleRegisterSubsCommand = async (
     );
 
     await updateResponse(interaction.application_id, interaction.token, {
-      content: `✅ Substitution request submitted! Approval messages sent to ${approvalChannelIds.length} channel(s): ${approvalChannelIds.map((id: string) => `<#${id}>`).join(', ')}`,
+      content: `✅ Substitution request submitted! Approval messages sent to both clans.`,
     });
 
   } catch (error) {

@@ -659,37 +659,61 @@ export const registerSubs = new SlashCommandBuilder()
   .setDescription("Register player substitutions between clans")
   .addStringOption((option) => {
     return option
-      .setName("out-players")
-      .setDescription("Players leaving (mention users: @user1 @user2)")
+      .setName("clan1-out")
+      .setDescription("Players leaving clan 1 (mention: @user1 @user2)")
       .setRequired(true);
   })
   .addStringOption((option) => {
     return option
-      .setName("out-clan")
-      .setDescription("Clan players are leaving from")
+      .setName("clan1-in")
+      .setDescription("Players joining clan 1 (mention: @user1 @user2)")
       .setRequired(true);
   })
   .addStringOption((option) => {
     return option
-      .setName("in-players")
-      .setDescription("Players joining (mention users: @user1 @user2)")
+      .setName("clan1-name")
+      .setDescription("Clan 1 name")
       .setRequired(true);
   })
   .addStringOption((option) => {
     return option
-      .setName("in-clan")
-      .setDescription("Clan players are joining")
+      .setName("clan2-out")
+      .setDescription("Players leaving clan 2 (mention: @user1 @user2)")
       .setRequired(true);
   })
   .addStringOption((option) => {
     return option
-      .setName("approval-channels")
-      .setDescription("Approval channels (mention: #channel1 #channel2)")
+      .setName("clan2-in")
+      .setDescription("Players joining clan 2 (mention: @user1 @user2)")
       .setRequired(true);
   })
   .addStringOption((option) => {
     return option
-      .setName("notification-channels")
-      .setDescription("Notification channels (mention: #channel1 #channel2)")
+      .setName("clan2-name")
+      .setDescription("Clan 2 name")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("clan1-approval-channel")
+      .setDescription("Clan 1 approval channel (mention: #channel)")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("clan2-approval-channel")
+      .setDescription("Clan 2 approval channel (mention: #channel)")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("clan1-notification-channel")
+      .setDescription("Clan 1 notification channel (mention: #channel)")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("clan2-notification-channel")
+      .setDescription("Clan 2 notification channel (mention: #channel)")
       .setRequired(true);
   });

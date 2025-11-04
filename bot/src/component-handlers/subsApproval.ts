@@ -64,15 +64,18 @@ export const handleSubsApproval = async (
     const approvals = subData.approvals || {};
     const denials = subData.denials || {};
 
+    const isClan1Channel = currentChannelId === subData.clan1ApprovalChannelId;
+    const isClan2Channel = currentChannelId === subData.clan2ApprovalChannelId;
+
     if (action === 'approve') {
       approvals[currentChannelId] = {
         approvedBy,
         approvedAt: new Date().toISOString(),
       };
 
-      const allApproved = subData.approvalChannelIds.every((channelId: string) => 
-        approvals[channelId] !== undefined
-      );
+      const clan1Approved = approvals[subData.clan1ApprovalChannelId] !== undefined;
+      const clan2Approved = approvals[subData.clan2ApprovalChannelId] !== undefined;
+      const allApproved = clan1Approved && clan2Approved;
 
       const updateExpression = allApproved
         ? 'SET #status = :status, approvals = :approvals, allApprovedAt = :allApprovedAt'
@@ -103,20 +106,40 @@ export const handleSubsApproval = async (
       );
 
       const approvalCount = Object.keys(approvals).length;
-      const totalApprovals = subData.approvalChannelIds.length;
+      const totalApprovals = 2;
 
-      const updatedEmbed: APIEmbed = {
+      const updatedEmbed: APIEmbed = isClan1Channel ? {
         title: allApproved ? '✅ Substitution Fully Approved' : '⏳ Substitution Partially Approved',
         description: `**Requested by:** <@${subData.requestedBy}>\n**Approvals:** ${approvalCount}/${totalApprovals}`,
         fields: [
           {
-            name: `📤 Players Leaving ${subData.outClan}`,
-            value: subData.outPlayerIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📤 Players Leaving ${subData.clan1Name}`,
+            value: subData.clan1OutIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
           {
-            name: `📥 Players Joining ${subData.inClan}`,
-            value: subData.inPlayerIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📥 Players Joining ${subData.clan1Name}`,
+            value: subData.clan1InIds.map((id: string) => `<@${id}>`).join('\n'),
+            inline: true,
+          },
+        ],
+        color: 0x5865F2,
+        footer: {
+          text: `Sub ID: ${subId}`,
+        },
+        timestamp: new Date().toISOString(),
+      } : {
+        title: allApproved ? '✅ Substitution Fully Approved' : '⏳ Substitution Partially Approved',
+        description: `**Requested by:** <@${subData.requestedBy}>\n**Approvals:** ${approvalCount}/${totalApprovals}`,
+        fields: [
+          {
+            name: `📤 Players Leaving ${subData.clan2Name}`,
+            value: subData.clan2OutIds.map((id: string) => `<@${id}>`).join('\n'),
+            inline: true,
+          },
+          {
+            name: `📥 Players Joining ${subData.clan2Name}`,
+            value: subData.clan2InIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
         ],
@@ -137,18 +160,35 @@ export const handleSubsApproval = async (
       );
 
       if (allApproved) {
-        const notificationEmbed: APIEmbed = {
+        const clan1NotificationEmbed: APIEmbed = {
           title: '🔄 Player Substitution Notification',
-          description: `**Requested by:** <@${subData.requestedBy}>`,
           fields: [
             {
-              name: `📤 Players Leaving ${subData.outClan}`,
-              value: subData.outPlayerIds.map((id: string) => `<@${id}>`).join('\n'),
+              name: `📤 Players Leaving ${subData.clan1Name}`,
+              value: subData.clan1OutIds.map((id: string) => `<@${id}>`).join('\n'),
               inline: true,
             },
             {
-              name: `📥 Players Joining ${subData.inClan}`,
-              value: subData.inPlayerIds.map((id: string) => `<@${id}>`).join('\n'),
+              name: `📥 Players Joining ${subData.clan1Name}`,
+              value: subData.clan1InIds.map((id: string) => `<@${id}>`).join('\n'),
+              inline: true,
+            },
+          ],
+          color: 0x5865F2,
+          timestamp: new Date().toISOString(),
+        };
+
+        const clan2NotificationEmbed: APIEmbed = {
+          title: '🔄 Player Substitution Notification',
+          fields: [
+            {
+              name: `📤 Players Leaving ${subData.clan2Name}`,
+              value: subData.clan2OutIds.map((id: string) => `<@${id}>`).join('\n'),
+              inline: true,
+            },
+            {
+              name: `📥 Players Joining ${subData.clan2Name}`,
+              value: subData.clan2InIds.map((id: string) => `<@${id}>`).join('\n'),
               inline: true,
             },
           ],
@@ -158,26 +198,40 @@ export const handleSubsApproval = async (
 
         const discordBotToken = process.env.BOT_TOKEN;
 
-        for (const channelId of subData.notificationChannelIds) {
-          try {
-            const discordApiUrl = `https://discord.com/api/v10/channels/${channelId}/messages`;
-            await fetch(discordApiUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bot ${discordBotToken}`,
-              },
-              body: JSON.stringify({
-                embeds: [notificationEmbed],
-              }),
-            });
-          } catch (error) {
-            console.error(`Failed to send notification to channel ${channelId}:`, error);
-          }
+        try {
+          const discordApiUrl = `https://discord.com/api/v10/channels/${subData.clan1NotificationChannelId}/messages`;
+          await fetch(discordApiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bot ${discordBotToken}`,
+            },
+            body: JSON.stringify({
+              embeds: [clan1NotificationEmbed],
+            }),
+          });
+        } catch (error) {
+          console.error(`Failed to send notification to clan 1 channel ${subData.clan1NotificationChannelId}:`, error);
+        }
+
+        try {
+          const discordApiUrl = `https://discord.com/api/v10/channels/${subData.clan2NotificationChannelId}/messages`;
+          await fetch(discordApiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bot ${discordBotToken}`,
+            },
+            body: JSON.stringify({
+              embeds: [clan2NotificationEmbed],
+            }),
+          });
+        } catch (error) {
+          console.error(`Failed to send notification to clan 2 channel ${subData.clan2NotificationChannelId}:`, error);
         }
 
         await updateResponse(interaction.application_id, interaction.token, {
-          content: `✅ All approvals received! Notifications sent to ${subData.notificationChannelIds.length} channel(s).`,
+          content: `✅ All approvals received! Notifications sent to both clans.`,
           flags: MessageFlags.Ephemeral,
         });
         return;
@@ -216,15 +270,26 @@ export const handleSubsApproval = async (
       const updatedEmbed: APIEmbed = {
         title: '❌ Substitution Denied',
         description: `**Requested by:** <@${subData.requestedBy}>\n**Denied by:** <@${approvedBy}>`,
-        fields: [
+        fields: isClan1Channel ? [
           {
-            name: `📤 Players Leaving ${subData.outClan}`,
-            value: subData.outPlayerIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📤 Players Leaving ${subData.clan1Name}`,
+            value: subData.clan1OutIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
           {
-            name: `📥 Players Joining ${subData.inClan}`,
-            value: subData.inPlayerIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📥 Players Joining ${subData.clan1Name}`,
+            value: subData.clan1InIds.map((id: string) => `<@${id}>`).join('\n'),
+            inline: true,
+          },
+        ] : [
+          {
+            name: `📤 Players Leaving ${subData.clan2Name}`,
+            value: subData.clan2OutIds.map((id: string) => `<@${id}>`).join('\n'),
+            inline: true,
+          },
+          {
+            name: `📥 Players Joining ${subData.clan2Name}`,
+            value: subData.clan2InIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
         ],
@@ -237,43 +302,73 @@ export const handleSubsApproval = async (
 
       const discordBotToken = process.env.BOT_TOKEN;
 
-      for (const channelId of subData.approvalChannelIds) {
-        if (channelId === currentChannelId) continue;
-        
-        try {
-          const discordApiUrl = `https://discord.com/api/v10/channels/${channelId}/messages`;
-          const messagesResponse = await fetch(`${discordApiUrl}?limit=50`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bot ${discordBotToken}`,
-            },
-          });
+      const otherChannelId = isClan1Channel ? subData.clan2ApprovalChannelId : subData.clan1ApprovalChannelId;
+      const otherEmbed: APIEmbed = {
+        title: '❌ Substitution Denied',
+        description: `**Requested by:** <@${subData.requestedBy}>\n**Denied by:** <@${approvedBy}>`,
+        fields: isClan1Channel ? [
+          {
+            name: `📤 Players Leaving ${subData.clan2Name}`,
+            value: subData.clan2OutIds.map((id: string) => `<@${id}>`).join('\n'),
+            inline: true,
+          },
+          {
+            name: `📥 Players Joining ${subData.clan2Name}`,
+            value: subData.clan2InIds.map((id: string) => `<@${id}>`).join('\n'),
+            inline: true,
+          },
+        ] : [
+          {
+            name: `📤 Players Leaving ${subData.clan1Name}`,
+            value: subData.clan1OutIds.map((id: string) => `<@${id}>`).join('\n'),
+            inline: true,
+          },
+          {
+            name: `📥 Players Joining ${subData.clan1Name}`,
+            value: subData.clan1InIds.map((id: string) => `<@${id}>`).join('\n'),
+            inline: true,
+          },
+        ],
+        color: 0xFF0000,
+        footer: {
+          text: `Sub ID: ${subId}`,
+        },
+        timestamp: new Date().toISOString(),
+      };
 
-          if (messagesResponse.ok) {
-            const messages = await messagesResponse.json();
-            const subMessage = messages.find((msg: any) => 
-              msg.embeds?.[0]?.footer?.text === `Sub ID: ${subId}` && 
-              msg.components?.length > 0
-            );
+      try {
+        const discordApiUrl = `https://discord.com/api/v10/channels/${otherChannelId}/messages`;
+        const messagesResponse = await fetch(`${discordApiUrl}?limit=50`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bot ${discordBotToken}`,
+          },
+        });
 
-            if (subMessage) {
-              await fetch(`${discordApiUrl}/${subMessage.id}`, {
-                method: 'PATCH',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bot ${discordBotToken}`,
-                },
-                body: JSON.stringify({
-                  embeds: [updatedEmbed],
-                  components: [],
-                }),
-              });
-            }
+        if (messagesResponse.ok) {
+          const messages = await messagesResponse.json();
+          const subMessage = messages.find((msg: any) => 
+            msg.embeds?.[0]?.footer?.text === `Sub ID: ${subId}` && 
+            msg.components?.length > 0
+          );
+
+          if (subMessage) {
+            await fetch(`${discordApiUrl}/${subMessage.id}`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bot ${discordBotToken}`,
+              },
+              body: JSON.stringify({
+                embeds: [otherEmbed],
+                components: [],
+              }),
+            });
           }
-        } catch (error) {
-          console.error(`Failed to update message in channel ${channelId}:`, error);
         }
+      } catch (error) {
+        console.error(`Failed to update message in channel ${otherChannelId}:`, error);
       }
 
       await updateMessage(
