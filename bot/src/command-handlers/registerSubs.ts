@@ -9,6 +9,7 @@ import { updateResponse } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { PutCommand } from '@aws-sdk/lib-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
+import { getConfig } from '../util/serverConfig';
 
 export const handleRegisterSubsCommand = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -22,83 +23,68 @@ export const handleRegisterSubsCommand = async (
       return;
     }
 
-    const clan1OutOption = interaction.data.options?.find(
-      (opt) => opt.name === 'clan1-out'
+    const config = getConfig(guildId);
+
+    const clanOutOption = interaction.data.options?.find(
+      (opt) => opt.name === 'clan-out'
     ) as APIApplicationCommandInteractionDataStringOption;
     
-    const clan1InOption = interaction.data.options?.find(
-      (opt) => opt.name === 'clan1-in'
+    const clanOutPlayersOption = interaction.data.options?.find(
+      (opt) => opt.name === 'clan-out-players'
     ) as APIApplicationCommandInteractionDataStringOption;
     
-    const clan1NameOption = interaction.data.options?.find(
-      (opt) => opt.name === 'clan1-name'
+    const clanInOption = interaction.data.options?.find(
+      (opt) => opt.name === 'clan-in'
     ) as APIApplicationCommandInteractionDataStringOption;
     
-    const clan2OutOption = interaction.data.options?.find(
-      (opt) => opt.name === 'clan2-out'
-    ) as APIApplicationCommandInteractionDataStringOption;
-    
-    const clan2InOption = interaction.data.options?.find(
-      (opt) => opt.name === 'clan2-in'
-    ) as APIApplicationCommandInteractionDataStringOption;
-    
-    const clan2NameOption = interaction.data.options?.find(
-      (opt) => opt.name === 'clan2-name'
-    ) as APIApplicationCommandInteractionDataStringOption;
-    
-    const clan1ApprovalChannelOption = interaction.data.options?.find(
-      (opt) => opt.name === 'clan1-approval-channel'
-    ) as APIApplicationCommandInteractionDataStringOption;
-    
-    const clan2ApprovalChannelOption = interaction.data.options?.find(
-      (opt) => opt.name === 'clan2-approval-channel'
-    ) as APIApplicationCommandInteractionDataStringOption;
-    
-    const clan1NotificationChannelOption = interaction.data.options?.find(
-      (opt) => opt.name === 'clan1-notification-channel'
-    ) as APIApplicationCommandInteractionDataStringOption;
-    
-    const clan2NotificationChannelOption = interaction.data.options?.find(
-      (opt) => opt.name === 'clan2-notification-channel'
+    const clanInPlayersOption = interaction.data.options?.find(
+      (opt) => opt.name === 'clan-in-players'
     ) as APIApplicationCommandInteractionDataStringOption;
 
-    if (!clan1OutOption || !clan1InOption || !clan1NameOption || !clan2OutOption || !clan2InOption || !clan2NameOption || !clan1ApprovalChannelOption || !clan2ApprovalChannelOption || !clan1NotificationChannelOption || !clan2NotificationChannelOption) {
+    if (!clanOutOption || !clanOutPlayersOption || !clanInOption || !clanInPlayersOption) {
       await updateResponse(interaction.application_id, interaction.token, {
         content: '❌ Missing required parameters.',
       });
       return;
     }
 
-    const clan1Out = clan1OutOption.value;
-    const clan1In = clan1InOption.value;
-    const clan1Name = clan1NameOption.value;
-    const clan2Out = clan2OutOption.value;
-    const clan2In = clan2InOption.value;
-    const clan2Name = clan2NameOption.value;
-    const clan1ApprovalChannel = clan1ApprovalChannelOption.value;
-    const clan2ApprovalChannel = clan2ApprovalChannelOption.value;
-    const clan1NotificationChannel = clan1NotificationChannelOption.value;
-    const clan2NotificationChannel = clan2NotificationChannelOption.value;
-    
-    const clan1OutIds = extractUserIds(clan1Out);
-    const clan1InIds = extractUserIds(clan1In);
-    const clan2OutIds = extractUserIds(clan2Out);
-    const clan2InIds = extractUserIds(clan2In);
-    const clan1ApprovalChannelId = extractChannelIds(clan1ApprovalChannel)[0];
-    const clan2ApprovalChannelId = extractChannelIds(clan2ApprovalChannel)[0];
-    const clan1NotificationChannelId = extractChannelIds(clan1NotificationChannel)[0];
-    const clan2NotificationChannelId = extractChannelIds(clan2NotificationChannel)[0];
+    const clanOutKey = clanOutOption.value;
+    const clanOutPlayers = clanOutPlayersOption.value;
+    const clanInKey = clanInOption.value;
+    const clanInPlayers = clanInPlayersOption.value;
 
-    if (clan1OutIds.length === 0 || clan1InIds.length === 0 || clan2OutIds.length === 0 || clan2InIds.length === 0) {
+    // Look up clan configs
+    const clanOutConfig = config.CLANS[clanOutKey];
+    const clanInConfig = config.CLANS[clanInKey];
+
+    if (!clanOutConfig) {
       await updateResponse(interaction.application_id, interaction.token, {
-        content: '❌ Please mention at least one user for all player fields using @username format.',
+        content: `❌ Clan "${clanOutKey}" not found in server config. Available clans: ${Object.keys(config.CLANS).join(', ')}`,
       });
       return;
     }
 
-    if (!clan1ApprovalChannelId || !clan2ApprovalChannelId || !clan1NotificationChannelId || !clan2NotificationChannelId) {
+    if (!clanInConfig) {
       await updateResponse(interaction.application_id, interaction.token, {
-        content: '❌ Please mention valid channels using #channel format.',
+        content: `❌ Clan "${clanInKey}" not found in server config. Available clans: ${Object.keys(config.CLANS).join(', ')}`,
+      });
+      return;
+    }
+
+    // Extract user IDs from mentions
+    const clanOutIds = extractUserIds(clanOutPlayers);
+    const clanInIds = extractUserIds(clanInPlayers);
+
+    if (clanOutIds.length === 0) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: '❌ No valid user mentions found for players leaving. Use @username format.',
+      });
+      return;
+    }
+
+    if (clanInIds.length === 0) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: '❌ No valid user mentions found for players joining. Use @username format.',
       });
       return;
     }
@@ -106,22 +92,23 @@ export const handleRegisterSubsCommand = async (
     const subId = uuidv4();
     const requestedBy = interaction.member?.user?.id || 'Unknown';
 
+    // Store in DynamoDB with clan config data
     await dynamoDbClient.send(
       new PutCommand({
         TableName: 'BotTable',
         Item: {
           pk: `subs#${guildId}`,
           sk: `request#${subId}`,
-          clan1OutIds,
-          clan1InIds,
-          clan1Name,
-          clan2OutIds,
-          clan2InIds,
-          clan2Name,
-          clan1ApprovalChannelId,
-          clan2ApprovalChannelId,
-          clan1NotificationChannelId,
-          clan2NotificationChannelId,
+          clanOutKey,
+          clanOutIds,
+          clanOutName: clanOutConfig.name,
+          clanOutApprovalChannelId: clanOutConfig.leadChannel,
+          clanOutNotificationChannelId: clanOutConfig.clanChannel,
+          clanInKey,
+          clanInIds,
+          clanInName: clanInConfig.name,
+          clanInApprovalChannelId: clanInConfig.leadChannel,
+          clanInNotificationChannelId: clanInConfig.clanChannel,
           requestedBy,
           status: 'pending',
           createdAt: new Date().toISOString(),
@@ -129,23 +116,24 @@ export const handleRegisterSubsCommand = async (
       })
     );
 
-    const clan1ApprovalEmbed: APIEmbed = {
+    // Create approval embeds for each clan
+    const clanOutApprovalEmbed: APIEmbed = {
       title: '🔄 Substitution Request',
       description: `**Requested by:** <@${requestedBy}>`,
       fields: [
         {
-          name: `📤 Players Leaving ${clan1Name}`,
-          value: clan1OutIds.map((id: string) => `<@${id}>`).join('\n'),
+          name: `📤 Players Leaving ${clanOutConfig.name}`,
+          value: clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
           inline: true,
         },
         {
-          name: `📥 Players Joining ${clan1Name}`,
-          value: clan1InIds.map((id: string) => `<@${id}>`).join('\n'),
+          name: `📥 Players Joining from ${clanInConfig.name}`,
+          value: clanInIds.map((id: string) => `<@${id}>`).join('\n'),
           inline: true,
         },
         {
           name: '📢 Notification Channel',
-          value: `<#${clan1NotificationChannelId}>`,
+          value: `<#${clanOutConfig.clanChannel}>`,
           inline: false,
         },
       ],
@@ -156,23 +144,23 @@ export const handleRegisterSubsCommand = async (
       timestamp: new Date().toISOString(),
     };
 
-    const clan2ApprovalEmbed: APIEmbed = {
+    const clanInApprovalEmbed: APIEmbed = {
       title: '🔄 Substitution Request',
       description: `**Requested by:** <@${requestedBy}>`,
       fields: [
         {
-          name: `📤 Players Leaving ${clan2Name}`,
-          value: clan2OutIds.map((id: string) => `<@${id}>`).join('\n'),
+          name: `📤 Players Leaving to ${clanOutConfig.name}`,
+          value: clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
           inline: true,
         },
         {
-          name: `📥 Players Joining ${clan2Name}`,
-          value: clan2InIds.map((id: string) => `<@${id}>`).join('\n'),
+          name: `📥 Players Joining ${clanInConfig.name}`,
+          value: clanInIds.map((id: string) => `<@${id}>`).join('\n'),
           inline: true,
         },
         {
           name: '📢 Notification Channel',
-          value: `<#${clan2NotificationChannelId}>`,
+          value: `<#${clanInConfig.clanChannel}>`,
           inline: false,
         },
       ],
@@ -220,106 +208,82 @@ export const handleRegisterSubsCommand = async (
 
     let successCount = 0;
     
+    // Send to clan OUT approval channel (lead channel)
     try {
-      console.log(`Attempting to send approval message to clan 1 channel: ${clan1ApprovalChannelId}`);
-      const clan1Response = await fetch(
-        `https://discord.com/api/v10/channels/${clan1ApprovalChannelId}/messages`,
+      console.log(`Sending approval message to ${clanOutConfig.name} lead channel: ${clanOutConfig.leadChannel}`);
+      const clanOutResponse = await fetch(
+        `https://discord.com/api/v10/channels/${clanOutConfig.leadChannel}/messages`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bot ${discordBotToken}`,
           },
-          body: JSON.stringify(approvalMessage(clan1ApprovalEmbed)),
+          body: JSON.stringify(approvalMessage(clanOutApprovalEmbed)),
         }
       );
 
-      if (clan1Response.ok) {
+      if (clanOutResponse.ok) {
         successCount++;
-        console.log(`Successfully sent approval message to clan 1 channel`);
+        console.log(`Successfully sent approval message to ${clanOutConfig.name}`);
       } else {
-        const errorText = await clan1Response.text();
-        console.error(`Failed to send approval message to clan 1 channel:`, errorText);
+        const errorText = await clanOutResponse.text();
+        console.error(`Failed to send approval message to ${clanOutConfig.name}:`, errorText);
       }
     } catch (error) {
-      console.error(`Error sending to clan 1 approval channel:`, error);
+      console.error(`Error sending to ${clanOutConfig.name} approval channel:`, error);
     }
 
+    // Send to clan IN approval channel (lead channel)
     try {
-      console.log(`Attempting to send approval message to clan 2 channel: ${clan2ApprovalChannelId}`);
-      const clan2Response = await fetch(
-        `https://discord.com/api/v10/channels/${clan2ApprovalChannelId}/messages`,
+      console.log(`Sending approval message to ${clanInConfig.name} lead channel: ${clanInConfig.leadChannel}`);
+      const clanInResponse = await fetch(
+        `https://discord.com/api/v10/channels/${clanInConfig.leadChannel}/messages`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bot ${discordBotToken}`,
           },
-          body: JSON.stringify(approvalMessage(clan2ApprovalEmbed)),
+          body: JSON.stringify(approvalMessage(clanInApprovalEmbed)),
         }
       );
 
-      if (clan2Response.ok) {
+      if (clanInResponse.ok) {
         successCount++;
-        console.log(`Successfully sent approval message to clan 2 channel`);
+        console.log(`Successfully sent approval message to ${clanInConfig.name}`);
       } else {
-        const errorText = await clan2Response.text();
-        console.error(`Failed to send approval message to clan 2 channel:`, errorText);
+        const errorText = await clanInResponse.text();
+        console.error(`Failed to send approval message to ${clanInConfig.name}:`, errorText);
       }
     } catch (error) {
-      console.error(`Error sending to clan 2 approval channel:`, error);
+      console.error(`Error sending to ${clanInConfig.name} approval channel:`, error);
     }
 
     if (successCount === 0) {
       await updateResponse(interaction.application_id, interaction.token, {
-        content: '❌ Failed to send approval messages to any channels. Please check the channel IDs and bot permissions.',
+        content: '❌ Failed to send approval messages to any channels. Please check the clan configuration and bot permissions.',
       });
       return;
     }
 
-    await dynamoDbClient.send(
-      new PutCommand({
-        TableName: 'BotTable',
-        Item: {
-          pk: `subs#${guildId}`,
-          sk: `request#${subId}`,
-          clan1OutIds,
-          clan1InIds,
-          clan1Name,
-          clan2OutIds,
-          clan2InIds,
-          clan2Name,
-          clan1ApprovalChannelId,
-          clan2ApprovalChannelId,
-          clan1NotificationChannelId,
-          clan2NotificationChannelId,
-          requestedBy,
-          status: 'pending',
-          createdAt: new Date().toISOString(),
-        },
-      })
-    );
-
     await updateResponse(interaction.application_id, interaction.token, {
-      content: `✅ Substitution request submitted! Approval messages sent to both clans.`,
+      content: `✅ Substitution request submitted! Approval messages sent to ${clanOutConfig.name} and ${clanInConfig.name} leadership channels.`,
     });
 
   } catch (error) {
     console.error('Error in handleRegisterSubsCommand:', error);
     await updateResponse(interaction.application_id, interaction.token, {
-      content: '❌ An error occurred while processing the substitution request.',
+      content: `❌ An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`,
     });
   }
 };
 
-function extractUserIds(input: string): string[] {
-  const mentionRegex = /<@!?(\d+)>/g;
-  const matches = [...input.matchAll(mentionRegex)];
-  return matches.map(match => match[1]);
-}
-
-function extractChannelIds(input: string): string[] {
-  const channelRegex = /<#(\d+)>/g;
-  const matches = [...input.matchAll(channelRegex)];
-  return matches.map(match => match[1]);
+function extractUserIds(text: string): string[] {
+  const mentions = text.match(/<@!?(\d+)>/g);
+  if (!mentions) return [];
+  return mentions.map((mention) => {
+    const match = mention.match(/\d+/);
+    return match ? match[0] : '';
+  }).filter(Boolean);
 }

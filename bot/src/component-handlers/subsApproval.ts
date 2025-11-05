@@ -64,8 +64,8 @@ export const handleSubsApproval = async (
     const approvals = subData.approvals || {};
     const denials = subData.denials || {};
 
-    const isClan1Channel = currentChannelId === subData.clan1ApprovalChannelId;
-    const isClan2Channel = currentChannelId === subData.clan2ApprovalChannelId;
+    const isClanOutChannel = currentChannelId === subData.clanOutApprovalChannelId;
+    const isClanInChannel = currentChannelId === subData.clanInApprovalChannelId;
 
     if (action === 'approve') {
       approvals[currentChannelId] = {
@@ -73,9 +73,9 @@ export const handleSubsApproval = async (
         approvedAt: new Date().toISOString(),
       };
 
-      const clan1Approved = approvals[subData.clan1ApprovalChannelId] !== undefined;
-      const clan2Approved = approvals[subData.clan2ApprovalChannelId] !== undefined;
-      const allApproved = clan1Approved && clan2Approved;
+      const clanOutApproved = approvals[subData.clanOutApprovalChannelId] !== undefined;
+      const clanInApproved = approvals[subData.clanInApprovalChannelId] !== undefined;
+      const allApproved = clanOutApproved && clanInApproved;
 
       const updateExpression = allApproved
         ? 'SET #status = :status, approvals = :approvals, allApprovedAt = :allApprovedAt'
@@ -108,18 +108,18 @@ export const handleSubsApproval = async (
       const approvalCount = Object.keys(approvals).length;
       const totalApprovals = 2;
 
-      const updatedEmbed: APIEmbed = isClan1Channel ? {
+      const updatedEmbed: APIEmbed = isClanOutChannel ? {
         title: allApproved ? '✅ Substitution Fully Approved' : '⏳ Substitution Partially Approved',
         description: `**Requested by:** <@${subData.requestedBy}>\n**Approvals:** ${approvalCount}/${totalApprovals}`,
         fields: [
           {
-            name: `📤 Players Leaving ${subData.clan1Name}`,
-            value: subData.clan1OutIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📤 Players Leaving ${subData.clanOutName}`,
+            value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
           {
-            name: `📥 Players Joining ${subData.clan1Name}`,
-            value: subData.clan1InIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📥 Players Joining from ${subData.clanInName}`,
+            value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
         ],
@@ -133,13 +133,13 @@ export const handleSubsApproval = async (
         description: `**Requested by:** <@${subData.requestedBy}>\n**Approvals:** ${approvalCount}/${totalApprovals}`,
         fields: [
           {
-            name: `📤 Players Leaving ${subData.clan2Name}`,
-            value: subData.clan2OutIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📤 Players Leaving to ${subData.clanOutName}`,
+            value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
           {
-            name: `📥 Players Joining ${subData.clan2Name}`,
-            value: subData.clan2InIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📥 Players Joining ${subData.clanInName}`,
+            value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
         ],
@@ -160,17 +160,17 @@ export const handleSubsApproval = async (
       );
 
       if (allApproved) {
-        const clan1NotificationEmbed: APIEmbed = {
+        const clanOutNotificationEmbed: APIEmbed = {
           title: '🔄 Player Substitution Notification',
           fields: [
             {
-              name: `📤 Players Leaving ${subData.clan1Name}`,
-              value: subData.clan1OutIds.map((id: string) => `<@${id}>`).join('\n'),
+              name: `📤 Players Leaving ${subData.clanOutName}`,
+              value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
               inline: true,
             },
             {
-              name: `📥 Players Joining ${subData.clan1Name}`,
-              value: subData.clan1InIds.map((id: string) => `<@${id}>`).join('\n'),
+              name: `📥 Players Joining from ${subData.clanInName}`,
+              value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
               inline: true,
             },
           ],
@@ -178,17 +178,17 @@ export const handleSubsApproval = async (
           timestamp: new Date().toISOString(),
         };
 
-        const clan2NotificationEmbed: APIEmbed = {
+        const clanInNotificationEmbed: APIEmbed = {
           title: '🔄 Player Substitution Notification',
           fields: [
             {
-              name: `📤 Players Leaving ${subData.clan2Name}`,
-              value: subData.clan2OutIds.map((id: string) => `<@${id}>`).join('\n'),
+              name: `📤 Players Leaving to ${subData.clanOutName}`,
+              value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
               inline: true,
             },
             {
-              name: `📥 Players Joining ${subData.clan2Name}`,
-              value: subData.clan2InIds.map((id: string) => `<@${id}>`).join('\n'),
+              name: `📥 Players Joining ${subData.clanInName}`,
+              value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
               inline: true,
             },
           ],
@@ -199,7 +199,7 @@ export const handleSubsApproval = async (
         const discordBotToken = process.env.BOT_TOKEN;
 
         try {
-          const discordApiUrl = `https://discord.com/api/v10/channels/${subData.clan1NotificationChannelId}/messages`;
+          const discordApiUrl = `https://discord.com/api/v10/channels/${subData.clanOutNotificationChannelId}/messages`;
           await fetch(discordApiUrl, {
             method: 'POST',
             headers: {
@@ -207,15 +207,15 @@ export const handleSubsApproval = async (
               Authorization: `Bot ${discordBotToken}`,
             },
             body: JSON.stringify({
-              embeds: [clan1NotificationEmbed],
+              embeds: [clanOutNotificationEmbed],
             }),
           });
         } catch (error) {
-          console.error(`Failed to send notification to clan 1 channel ${subData.clan1NotificationChannelId}:`, error);
+          console.error(`Failed to send notification to ${subData.clanOutName} channel ${subData.clanOutNotificationChannelId}:`, error);
         }
 
         try {
-          const discordApiUrl = `https://discord.com/api/v10/channels/${subData.clan2NotificationChannelId}/messages`;
+          const discordApiUrl = `https://discord.com/api/v10/channels/${subData.clanInNotificationChannelId}/messages`;
           await fetch(discordApiUrl, {
             method: 'POST',
             headers: {
@@ -223,11 +223,11 @@ export const handleSubsApproval = async (
               Authorization: `Bot ${discordBotToken}`,
             },
             body: JSON.stringify({
-              embeds: [clan2NotificationEmbed],
+              embeds: [clanInNotificationEmbed],
             }),
           });
         } catch (error) {
-          console.error(`Failed to send notification to clan 2 channel ${subData.clan2NotificationChannelId}:`, error);
+          console.error(`Failed to send notification to ${subData.clanInName} channel ${subData.clanInNotificationChannelId}:`, error);
         }
 
         await updateResponse(interaction.application_id, interaction.token, {
@@ -270,26 +270,26 @@ export const handleSubsApproval = async (
       const updatedEmbed: APIEmbed = {
         title: '❌ Substitution Denied',
         description: `**Requested by:** <@${subData.requestedBy}>\n**Denied by:** <@${approvedBy}>`,
-        fields: isClan1Channel ? [
+        fields: isClanOutChannel ? [
           {
-            name: `📤 Players Leaving ${subData.clan1Name}`,
-            value: subData.clan1OutIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📤 Players Leaving ${subData.clanOutName}`,
+            value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
           {
-            name: `📥 Players Joining ${subData.clan1Name}`,
-            value: subData.clan1InIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📥 Players Joining from ${subData.clanInName}`,
+            value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
         ] : [
           {
-            name: `📤 Players Leaving ${subData.clan2Name}`,
-            value: subData.clan2OutIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📤 Players Leaving to ${subData.clanOutName}`,
+            value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
           {
-            name: `📥 Players Joining ${subData.clan2Name}`,
-            value: subData.clan2InIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📥 Players Joining ${subData.clanInName}`,
+            value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
         ],
@@ -302,30 +302,30 @@ export const handleSubsApproval = async (
 
       const discordBotToken = process.env.BOT_TOKEN;
 
-      const otherChannelId = isClan1Channel ? subData.clan2ApprovalChannelId : subData.clan1ApprovalChannelId;
+      const otherChannelId = isClanOutChannel ? subData.clanInApprovalChannelId : subData.clanOutApprovalChannelId;
       const otherEmbed: APIEmbed = {
         title: '❌ Substitution Denied',
         description: `**Requested by:** <@${subData.requestedBy}>\n**Denied by:** <@${approvedBy}>`,
-        fields: isClan1Channel ? [
+        fields: isClanOutChannel ? [
           {
-            name: `📤 Players Leaving ${subData.clan2Name}`,
-            value: subData.clan2OutIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📤 Players Leaving to ${subData.clanOutName}`,
+            value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
           {
-            name: `📥 Players Joining ${subData.clan2Name}`,
-            value: subData.clan2InIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📥 Players Joining ${subData.clanInName}`,
+            value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
         ] : [
           {
-            name: `📤 Players Leaving ${subData.clan1Name}`,
-            value: subData.clan1OutIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📤 Players Leaving ${subData.clanOutName}`,
+            value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
           {
-            name: `📥 Players Joining ${subData.clan1Name}`,
-            value: subData.clan1InIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📥 Players Joining from ${subData.clanInName}`,
+            value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
         ],

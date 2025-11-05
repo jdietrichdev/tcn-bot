@@ -1,3 +1,9 @@
+export interface ClanConfig {
+  name: string;
+  leadChannel: string;
+  clanChannel: string;
+}
+
 export interface ServerConfig {
   LEAD_APPLICATION_CATEGORY: string;
   APPLICATION_CATEGORY: string;
@@ -25,6 +31,7 @@ export interface ServerConfig {
   TRIAL_ELDER_ROLE: string;
   TRIAL_LEAD_ROLE: string;
   BOT_ID: string;
+  CLANS: Record<string, ClanConfig>;
 }
 
 const configMap = new Map<string, ServerConfig>();
@@ -57,6 +64,29 @@ configMap.set("1021786969077973022", {
   TRIAL_ELDER_ROLE: "1424943970810593360",
   TRIAL_LEAD_ROLE: "1424943896743645184",
   BOT_ID: "1257342457868451920",
+
+  CLANS: {
+    "TCN1": {
+      name: "TCN1",
+      leadChannel: "1433941375648272454",
+      clanChannel: "1433941486277492846"
+    },
+    "TCN2": {
+      name: "TCN2",
+      leadChannel: "1433941435283148832",
+      clanChannel: "1433941517159891064"
+    },
+    "TCN3": {
+      name: "TCN3",
+      leadChannel: "",
+      clanChannel: ""
+    },
+    "TCN4": {
+      name: "TCN4",
+      leadChannel: "",
+      clanChannel: ""
+    },
+  }
 });
 
 // TCN Server
@@ -87,6 +117,28 @@ configMap.set("1111490767991615518", {
   TRIAL_ELDER_ROLE: "1358235739824979978",
   TRIAL_LEAD_ROLE: "1358287688343621882",
   BOT_ID: "1257342457868451920",
+  CLANS: {
+    "TCN1": {
+      name: "TCN1",
+      leadChannel: "REPLACE_WITH_TCN1_LEAD_CHANNEL_ID",
+      clanChannel: "REPLACE_WITH_TCN1_CLAN_CHANNEL_ID"
+    },
+    "TCN2": {
+      name: "TCN2",
+      leadChannel: "REPLACE_WITH_TCN2_LEAD_CHANNEL_ID",
+      clanChannel: "REPLACE_WITH_TCN2_CLAN_CHANNEL_ID"
+    },
+    "TCN3": {
+      name: "TCN3",
+      leadChannel: "REPLACE_WITH_TCN3_LEAD_CHANNEL_ID",
+      clanChannel: "REPLACE_WITH_TCN3_CLAN_CHANNEL_ID"
+    },
+    "TCN4": {
+      name: "TCN4",
+      leadChannel: "REPLACE_WITH_TCN4_LEAD_CHANNEL_ID",
+      clanChannel: "REPLACE_WITH_TCN4_CLAN_CHANNEL_ID"
+    },
+  }
 });
 
 export const getConfig = (guidId: string): ServerConfig => {
