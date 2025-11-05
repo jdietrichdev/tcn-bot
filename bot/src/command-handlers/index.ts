@@ -88,6 +88,8 @@ export const handleCommand = async (
         return await commands.handleTaskApprove(event.detail);
       case "task-delete":
         return await commands.handleTaskDelete(event.detail);
+      case "task-notify":
+        return await commands.handleTaskNotify(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);

@@ -368,3 +368,86 @@ export const handleTaskDelete = async (
     data: options,
   };
 };
+
+export const handleTaskNotify = async (
+  interaction: APIApplicationCommandAutocompleteInteraction
+) => {
+  const options: APICommandAutocompleteInteractionResponseCallbackData = {
+    choices: [],
+  };
+
+  const focused = (interaction.data.options as APIApplicationCommandInteractionDataStringOption[])?.find(
+    (option) => option.focused
+  );
+
+  const guildId = interaction.guild_id;
+
+  if (!focused || !guildId || focused.name !== "task") {
+    return {
+      type: InteractionResponseType.ApplicationCommandAutocompleteResult,
+      data: options,
+    };
+  }
+
+  try {
+    const queryResult = await dynamoDbClient.send(
+      new QueryCommand({
+        TableName: "BotTable",
+        KeyConditionExpression: "pk = :pk AND begins_with(sk, :sk)",
+        ExpressionAttributeValues: {
+          ":pk": guildId,
+          ":sk": "task#",
+        },
+      })
+    );
+
+    const tasks = queryResult.Items || [];
+    const searchTerm = focused.value?.toLowerCase() || '';
+    
+    const filteredTasks = tasks
+      .filter((task) => task.title?.toLowerCase().includes(searchTerm))
+      .sort((a, b) => {
+        const aLower = a.title?.toLowerCase() || '';
+        const bLower = b.title?.toLowerCase() || '';
+        
+        if (aLower === searchTerm) return -1;
+        if (bLower === searchTerm) return 1;
+        
+        if (aLower.startsWith(searchTerm) && !bLower.startsWith(searchTerm)) return -1;
+        if (bLower.startsWith(searchTerm) && !aLower.startsWith(searchTerm)) return 1;
+        
+        const statusOrder = { pending: 1, claimed: 2, completed: 3 };
+        const aStatus = statusOrder[a.status as keyof typeof statusOrder] || 4;
+        const bStatus = statusOrder[b.status as keyof typeof statusOrder] || 4;
+        
+        if (aStatus !== bStatus) return aStatus - bStatus;
+        
+        const priorityOrder = { high: 1, medium: 2, low: 3 };
+        const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] || 4;
+        const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 4;
+        
+        if (aPriority !== bPriority) return aPriority - bPriority;
+        
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      });
+
+    options.choices = filteredTasks.slice(0, 25).map((task) => {
+      const status = task.status ? ` [${task.status.toUpperCase()}]` : '';
+      const priority = task.priority ? ` ${task.priority.toUpperCase()}` : '';
+      const assignment = task.assignedRoles && task.assignedRoles.length > 0 
+        ? ` (${task.assignedRoles.length} role${task.assignedRoles.length > 1 ? 's' : ''})` 
+        : '';
+      return {
+        name: `${task.title}${status}${priority}${assignment}`,
+        value: task.taskId,
+      };
+    });
+  } catch (error) {
+    console.error("Error in task-notify autocomplete:", error);
+  }
+
+  return {
+    type: InteractionResponseType.ApplicationCommandAutocompleteResult,
+    data: options,
+  };
+};

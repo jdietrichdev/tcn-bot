@@ -788,3 +788,14 @@ export const taskDelete = new SlashCommandBuilder()
 export const taskDashboard = new SlashCommandBuilder()
   .setName("task-dashboard")
   .setDescription("Get a link to the task management dashboard");
+
+export const taskNotify = new SlashCommandBuilder()
+  .setName("task-notify")
+  .setDescription("Send task notifications and ping assigned roles")
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to notify about")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });

@@ -38,6 +38,8 @@ export const handleAutocomplete = async (
         return await autocomplete.handleTaskUnclaim(interaction);
       case "task-delete":
         return await autocomplete.handleTaskDelete(interaction);
+      case "task-notify":
+        return await autocomplete.handleTaskNotify(interaction);
       default:
         console.log("Autocomplete not found, no response needed");
         throw new Error("No autocomplete process defined");
