@@ -89,19 +89,19 @@ export const handleTaskNotify = async (
     let color = 0x5865F2;
 
     if (isOverdue) {
-      notificationType = '⏰ OVERDUE TASK ALERT';
+      notificationType = '⏰ ══════ OVERDUE TASK ALERT ══════ 🚨';
       urgencyLevel = '🚨 **URGENT ATTENTION NEEDED**';
       color = 0xff0000;
     } else if (task.priority === 'high' && task.status === 'pending') {
-      notificationType = '🔥 HIGH PRIORITY TASK';
+      notificationType = '🔥 ═══════ HIGH PRIORITY TASK ═══════ ⚡';
       urgencyLevel = '⚡ **HIGH PRIORITY - NEEDS CLAIMING**';
       color = 0xff8c00;
     } else if (task.status === 'completed') {
-      notificationType = '✅ TASK COMPLETED - AWAITING APPROVAL';
+      notificationType = '✅ ════ TASK COMPLETED - AWAITING APPROVAL ════ 👑';
       urgencyLevel = '👀 **ADMIN REVIEW NEEDED**';
       color = 0x00ff00;
     } else {
-      notificationType = '📢 TASK NOTIFICATION';
+      notificationType = '📢 ═══════ TASK NOTIFICATION ═══════ 📋';
       urgencyLevel = '📋 **NEEDS ATTENTION**';
     }
 

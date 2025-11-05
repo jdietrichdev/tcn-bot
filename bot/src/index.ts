@@ -87,7 +87,23 @@ export const proxy = async (
       })
     );
     
-    const publicCommands = ['unrostered', 'announceRoster', 'create-roster', 'roster-add', 'roster-show', 'roster-remove'];
+    const publicCommands = [
+      'unrostered', 
+      'announceRoster', 
+      'create-roster', 
+      'roster-add', 
+      'roster-show', 
+      'roster-remove',
+      'task-create',
+      'task-claim',
+      'task-complete',
+      'task-approve',
+      'task-list',
+      'task-unclaim',
+      'task-delete',
+      'task-dashboard',
+      'task-notify'
+    ];
     const isPublicCommand = body.type === InteractionType.ApplicationCommand && 
                            publicCommands.includes((body as APIChatInputApplicationCommandInteraction).data.name);
     
