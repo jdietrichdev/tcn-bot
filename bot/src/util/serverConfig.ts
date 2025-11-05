@@ -68,23 +68,23 @@ configMap.set("1021786969077973022", {
   CLANS: {
     "TCN1": {
       name: "TCN1",
-      leadChannel: "1433941375648272454",
-      clanChannel: "1433941486277492846"
+      leadChannel: "1348703240744734802",
+      clanChannel: "1155234422640082944"
     },
     "TCN2": {
       name: "TCN2",
-      leadChannel: "1433941435283148832",
-      clanChannel: "1433941517159891064"
+      leadChannel: "1205399715533819985",
+      clanChannel: "1175919814481555466"
     },
     "TCN3": {
       name: "TCN3",
-      leadChannel: "",
-      clanChannel: ""
+      leadChannel: "1227636785031549050",
+      clanChannel: "1208565052102156378"
     },
     "TCN4": {
       name: "TCN4",
-      leadChannel: "",
-      clanChannel: ""
+      leadChannel: "1247610244864016384",
+      clanChannel: "1232442920062156800"
     },
   }
 });

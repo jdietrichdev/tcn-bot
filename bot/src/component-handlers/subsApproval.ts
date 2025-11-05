@@ -113,12 +113,12 @@ export const handleSubsApproval = async (
         description: `**Requested by:** <@${subData.requestedBy}>\n**Approvals:** ${approvalCount}/${totalApprovals}`,
         fields: [
           {
-            name: `📤 Players Leaving ${subData.clanOutName}`,
+            name: `📤 Players Leaving ${subData.clanOutName} to join ${subData.clanInName}`,
             value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
           {
-            name: `📥 Players Joining from ${subData.clanInName}`,
+            name: `📥 Players Joining ${subData.clanOutName} from ${subData.clanInName}`,
             value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
@@ -133,13 +133,13 @@ export const handleSubsApproval = async (
         description: `**Requested by:** <@${subData.requestedBy}>\n**Approvals:** ${approvalCount}/${totalApprovals}`,
         fields: [
           {
-            name: `📤 Players Leaving to ${subData.clanOutName}`,
-            value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📤 Players Leaving ${subData.clanInName} to join ${subData.clanOutName}`,
+            value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
           {
-            name: `📥 Players Joining ${subData.clanInName}`,
-            value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📥 Players Joining ${subData.clanInName} from ${subData.clanOutName}`,
+            value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
         ],
@@ -164,12 +164,12 @@ export const handleSubsApproval = async (
           title: '🔄 Player Substitution Notification',
           fields: [
             {
-              name: `📤 Players Leaving ${subData.clanOutName}`,
+              name: `📤 Players Leaving ${subData.clanOutName} to join ${subData.clanInName}`,
               value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
               inline: true,
             },
             {
-              name: `📥 Players Joining from ${subData.clanInName}`,
+              name: `📥 Players Joining ${subData.clanOutName} from ${subData.clanInName}`,
               value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
               inline: true,
             },
@@ -182,13 +182,13 @@ export const handleSubsApproval = async (
           title: '🔄 Player Substitution Notification',
           fields: [
             {
-              name: `📤 Players Leaving to ${subData.clanOutName}`,
-              value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
+              name: `📤 Players Leaving ${subData.clanInName} to join ${subData.clanOutName}`,
+              value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
               inline: true,
             },
             {
-              name: `📥 Players Joining ${subData.clanInName}`,
-              value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
+              name: `📥 Players Joining ${subData.clanInName} from ${subData.clanOutName}`,
+              value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
               inline: true,
             },
           ],
@@ -272,24 +272,24 @@ export const handleSubsApproval = async (
         description: `**Requested by:** <@${subData.requestedBy}>\n**Denied by:** <@${approvedBy}>`,
         fields: isClanOutChannel ? [
           {
-            name: `📤 Players Leaving ${subData.clanOutName}`,
+            name: `📤 Players Leaving ${subData.clanOutName} to join ${subData.clanInName}`,
             value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
           {
-            name: `📥 Players Joining from ${subData.clanInName}`,
+            name: `📥 Players Joining ${subData.clanOutName} from ${subData.clanInName}`,
             value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
         ] : [
           {
-            name: `📤 Players Leaving to ${subData.clanOutName}`,
-            value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📤 Players Leaving ${subData.clanInName} to join ${subData.clanOutName}`,
+            value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
           {
-            name: `📥 Players Joining ${subData.clanInName}`,
-            value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📥 Players Joining ${subData.clanInName} from ${subData.clanOutName}`,
+            value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
         ],
@@ -308,23 +308,23 @@ export const handleSubsApproval = async (
         description: `**Requested by:** <@${subData.requestedBy}>\n**Denied by:** <@${approvedBy}>`,
         fields: isClanOutChannel ? [
           {
-            name: `📤 Players Leaving to ${subData.clanOutName}`,
-            value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📤 Players Leaving ${subData.clanInName} to join ${subData.clanOutName}`,
+            value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
           {
-            name: `📥 Players Joining ${subData.clanInName}`,
-            value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
+            name: `📥 Players Joining ${subData.clanInName} from ${subData.clanOutName}`,
+            value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
         ] : [
           {
-            name: `📤 Players Leaving ${subData.clanOutName}`,
+            name: `📤 Players Leaving ${subData.clanOutName} to join ${subData.clanInName}`,
             value: subData.clanOutIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
           {
-            name: `📥 Players Joining from ${subData.clanInName}`,
+            name: `📥 Players Joining ${subData.clanOutName} from ${subData.clanInName}`,
             value: subData.clanInIds.map((id: string) => `<@${id}>`).join('\n'),
             inline: true,
           },
