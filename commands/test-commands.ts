@@ -32,7 +32,15 @@ import {
   rosterRemove,
   rosterDelete,
   exportRosters,
-  cwlResponse
+  cwlResponse,
+  taskCreate,
+  taskClaim,
+  taskComplete,
+  taskApprove,
+  taskList,
+  taskUnclaim,
+  taskDelete,
+  taskDashboard
 } from "./commands";
 
 export const testCommands = [
@@ -69,5 +77,13 @@ export const testCommands = [
   rosterRemove,
   rosterDelete,
   exportRosters,
-  cwlResponse
+  cwlResponse,
+  taskCreate,
+  taskClaim,
+  taskComplete,
+  taskApprove,
+  taskList,
+  taskUnclaim,
+  taskDelete,
+  taskDashboard
 ];

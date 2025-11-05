@@ -653,3 +653,138 @@ export const cwlResponse = new SlashCommandBuilder()
       .setRequired(true)
       .setAutocomplete(true);
   });
+
+// Task Management Commands
+export const taskCreate = new SlashCommandBuilder()
+  .setName("task-create")
+  .setDescription("Create a new task")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("title")
+      .setDescription("Title of the task")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("description")
+      .setDescription("Detailed description of the task")
+      .setRequired(false);
+  })
+  .addRoleOption((option) => {
+    return option
+      .setName("assigned-role")
+      .setDescription("Role that can claim this task")
+      .setRequired(false);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("priority")
+      .setDescription("Priority level of the task")
+      .setRequired(false)
+      .setChoices([
+        { name: "Low", value: "low" },
+        { name: "Medium", value: "medium" },
+        { name: "High", value: "high" },
+      ]);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("due-date")
+      .setDescription("Due date for the task (YYYY-MM-DD)")
+      .setRequired(false);
+  });
+
+export const taskClaim = new SlashCommandBuilder()
+  .setName("task-claim")
+  .setDescription("Claim a task to work on")
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to claim")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const taskComplete = new SlashCommandBuilder()
+  .setName("task-complete")
+  .setDescription("Mark your claimed task as completed")
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to mark as completed")
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("notes")
+      .setDescription("Completion notes or comments")
+      .setRequired(false);
+  });
+
+export const taskApprove = new SlashCommandBuilder()
+  .setName("task-approve")
+  .setDescription("Approve a completed task and remove it from the board")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to approve")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const taskList = new SlashCommandBuilder()
+  .setName("task-list")
+  .setDescription("List all tasks with optional filtering")
+  .addStringOption((option) => {
+    return option
+      .setName("status")
+      .setDescription("Filter by task status")
+      .setRequired(false)
+      .setChoices([
+        { name: "Pending", value: "pending" },
+        { name: "Claimed", value: "claimed" },
+        { name: "Completed", value: "completed" },
+      ]);
+  })
+  .addRoleOption((option) => {
+    return option
+      .setName("role")
+      .setDescription("Filter by assigned role")
+      .setRequired(false);
+  })
+  .addUserOption((option) => {
+    return option
+      .setName("user")
+      .setDescription("Filter by user (claimed by or created by)")
+      .setRequired(false);
+  });
+
+export const taskUnclaim = new SlashCommandBuilder()
+  .setName("task-unclaim")
+  .setDescription("Unclaim a task you previously claimed")
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to unclaim")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const taskDelete = new SlashCommandBuilder()
+  .setName("task-delete")
+  .setDescription("Delete a task permanently")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to delete")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const taskDashboard = new SlashCommandBuilder()
+  .setName("task-dashboard")
+  .setDescription("Get a link to the task management dashboard");

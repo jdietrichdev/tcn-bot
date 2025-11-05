@@ -6,3 +6,4 @@ export * from "./questionClose";
 export * from "./questionAnswer";
 export * from "./rosterCommands";
 export * from "./cwlResponse";
+export * from "./taskCommands";

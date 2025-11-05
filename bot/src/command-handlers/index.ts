@@ -72,6 +72,22 @@ export const handleCommand = async (
         return await commands.handleExportRosters(event.detail);
       case "cwl-response":
         return await commands.handleCwlResponseCommand(event.detail);
+      case "task-create":
+        return await commands.handleTaskCreate(event.detail);
+      case "task-claim":
+        return await commands.handleTaskClaim(event.detail);
+      case "task-complete":
+        return await commands.handleTaskComplete(event.detail);
+      case "task-list":
+        return await commands.handleTaskList(event.detail);
+      case "task-dashboard":
+        return await commands.handleTaskDashboard(event.detail);
+      case "task-unclaim":
+        return await commands.handleTaskUnclaim(event.detail);
+      case "task-approve":
+        return await commands.handleTaskApprove(event.detail);
+      case "task-delete":
+        return await commands.handleTaskDelete(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);

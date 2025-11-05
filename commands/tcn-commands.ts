@@ -24,6 +24,14 @@ import {
   rosterDelete,
   exportRosters,
   cwlResponse,
+  taskCreate,
+  taskClaim,
+  taskComplete,
+  taskApprove,
+  taskList,
+  taskUnclaim,
+  taskDelete,
+  taskDashboard,
 } from "./commands";
 
 export const tcnCommands = [
@@ -52,4 +60,12 @@ export const tcnCommands = [
   rosterDelete,
   exportRosters,
   cwlResponse,
+  taskCreate,
+  taskClaim,
+  taskComplete,
+  taskApprove,
+  taskList,
+  taskUnclaim,
+  taskDelete,
+  taskDashboard,
 ];
