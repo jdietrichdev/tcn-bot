@@ -43,6 +43,7 @@ export class ServiceStack extends Stack {
   private proxy: Lambda;
   private handler: Lambda;
   private scheduled: Lambda;
+  private taskApiLambda: Lambda;
   readonly rosterBucket: Bucket;
   readonly transcriptBucket: Bucket;
 
@@ -248,6 +249,34 @@ export class ServiceStack extends Stack {
         stageName: "prod",
         accessLogDestination: new LogGroupLogDestination(accessLogs),
         accessLogFormat: AccessLogFormat.jsonWithStandardFields(),
+      },
+    });
+
+    this.taskApiLambda = new Lambda(this, "task-api", {
+      functionName: "task-api",
+      runtime: Runtime.NODEJS_22_X,
+      handler: "taskApi.taskApi",
+      code: Code.fromAsset("../bot/dist"),
+      logRetention: RetentionDays.ONE_MONTH,
+      environment: {
+        REGION: props.env!.region!,
+      },
+      timeout: Duration.seconds(30),
+    });
+    props.botTable.grantReadWriteData(this.taskApiLambda);
+
+    new LambdaRestApi(this, "task-api-gateway", {
+      restApiName: "TaskApi",
+      handler: this.taskApiLambda,
+      deployOptions: {
+        stageName: "prod",
+        accessLogDestination: new LogGroupLogDestination(accessLogs),
+        accessLogFormat: AccessLogFormat.jsonWithStandardFields(),
+      },
+      defaultCorsPreflightOptions: {
+        allowOrigins: ["*"],
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowHeaders: ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token"],
       },
     });
 
