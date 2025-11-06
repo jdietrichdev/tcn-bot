@@ -31,7 +31,7 @@ export async function fetchTasks(guildId?: string): Promise<Task[]> {
     }));
   } catch (error) {
     console.error('Error fetching tasks from DynamoDB:', error);
-    return getMockTasks();
+    return [];
   }
 }
 
@@ -61,16 +61,7 @@ export async function createTask(task: Omit<Task, 'taskId' | 'createdAt' | 'stat
   } catch (error) {
     console.error('Error creating task:', error);
     console.error('Error details:', JSON.stringify(error, null, 2));
-    
-    // For now, return a mock task so the UI doesn't break during development
-    const mockTask: Task = {
-      ...task,
-      taskId: `mock-${Date.now()}`,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-    };
-    
-    return mockTask;
+    throw new Error('Failed to create task');
   }
 }
 
@@ -136,73 +127,4 @@ export async function deleteTask(taskId: string): Promise<void> {
     console.error('Error deleting task:', error);
     throw new Error('Failed to delete task');
   }
-}
-
-function getMockTasks(): Task[] {
-  return [
-    {
-      taskId: 'task-1',
-      title: 'Update Discord Bot Documentation',
-      description: 'Update the README and add setup instructions for the new task management features',
-      status: 'pending',
-      priority: 'high',
-      assignedRoles: ['Developer', 'Admin'],
-      createdBy: 'user123',
-      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      taskId: 'task-2',
-      title: 'Design New Server Icons',
-      description: 'Create custom emoji and role icons for the server',
-      status: 'claimed',
-      priority: 'medium',
-      assignedRoles: ['Designer'],
-      createdBy: 'user456',
-      claimedBy: 'user789',
-      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      claimedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      taskId: 'task-3',
-      title: 'Organize Community Event',
-      description: 'Plan and organize the monthly community game tournament',
-      status: 'completed',
-      priority: 'high',
-      assignedRoles: ['Event Manager', 'Moderator'],
-      createdBy: 'user123',
-      claimedBy: 'user999',
-      completedBy: 'user999',
-      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      claimedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-      completedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      taskId: 'task-4',
-      title: 'Review Clan War Logs',
-      description: 'Analyze recent clan war performance and provide feedback',
-      status: 'approved',
-      priority: 'medium',
-      assignedRoles: ['Leader'],
-      createdBy: 'user456',
-      claimedBy: 'user111',
-      completedBy: 'user111',
-      approvedBy: 'user123',
-      createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-      claimedAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000).toISOString(),
-      completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      approvedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      taskId: 'task-5',
-      title: 'Update Server Rules',
-      description: 'Review and update server rules based on recent community feedback',
-      status: 'pending',
-      priority: 'low',
-      assignedRoles: ['Admin', 'Moderator'],
-      createdBy: 'user789',
-      createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-    },
-  ];
 }
