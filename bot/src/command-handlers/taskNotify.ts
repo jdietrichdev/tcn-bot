@@ -214,7 +214,7 @@ export const handleTaskNotify = async (
       type: ComponentType.Button as ComponentType.Button,
       label: 'Open Dashboard',
       style: ButtonStyle.Link as ButtonStyle.Link,
-      url: `${process.env.DASHBOARD_URL || 'https://tcn-bot.vercel.app'}/tasks?guild=${guildId}`
+      url: `${process.env.DASHBOARD_URL || 'https://d19x3gu4qo04f3.cloudfront.net'}/tasks?guild=${guildId}`
     } as any);
 
     const components = [{

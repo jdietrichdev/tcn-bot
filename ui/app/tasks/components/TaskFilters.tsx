@@ -108,7 +108,7 @@ export function TaskFilters({ filters, onFiltersChange, tasks }: TaskFiltersProp
           
           {filters.search && (
             <span className="inline-flex items-center px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded text-sm">
-              Search: "{filters.search}"
+              Search: &quot;{filters.search}&quot;
               <button
                 onClick={() => updateFilter('search', '')}
                 className="ml-1 text-blue-600 hover:text-blue-800"

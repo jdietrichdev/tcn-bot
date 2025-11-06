@@ -133,7 +133,7 @@ export const handleTaskDelete = async (
           type: ComponentType.Button as ComponentType.Button,
           label: 'Open Dashboard',
           style: ButtonStyle.Link as ButtonStyle.Link,
-          url: `${process.env.DASHBOARD_URL || 'https://tcn-bot.vercel.app'}/tasks`
+          url: `${process.env.DASHBOARD_URL || 'https://d19x3gu4qo04f3.cloudfront.net'}/tasks`
         }
       ]
     }];

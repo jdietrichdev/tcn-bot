@@ -111,7 +111,7 @@ export const handleTaskDashboard = async (
       timestamp: new Date().toISOString()
     };
 
-    const dashboardUrl = `${process.env.DASHBOARD_URL || 'https://tcn-bot.vercel.app'}/tasks?guild=${guildId}`;
+    const dashboardUrl = `${process.env.DASHBOARD_URL || 'https://d19x3gu4qo04f3.cloudfront.net'}/tasks?guild=${guildId}`;
     
     const components = [{
       type: ComponentType.ActionRow as ComponentType.ActionRow,
