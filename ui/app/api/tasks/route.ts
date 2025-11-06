@@ -14,8 +14,10 @@ const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID || '1111490767991615518';
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('API: Fetching tasks...');
     const { searchParams } = new URL(request.url);
     const guildId = searchParams.get('guildId') || GUILD_ID;
+    console.log('API: Using guildId:', guildId);
 
     const result = await dynamoDbClient.send(
       new QueryCommand({
@@ -28,6 +30,7 @@ export async function GET(request: NextRequest) {
       })
     );
 
+    console.log('API: DynamoDB result:', result.Items?.length, 'items');
     const tasks = (result.Items || []).map((task: any) => ({
       taskId: task.taskId,
       title: task.title,
@@ -56,7 +59,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('API: Creating task...');
     const body = await request.json();
+    console.log('API: Task data:', body);
     
     const now = new Date().toISOString();
     const taskId = `task-${Date.now()}`;
@@ -68,6 +73,7 @@ export async function POST(request: NextRequest) {
       createdAt: now,
     };
 
+    console.log('API: Sending to DynamoDB:', newTask);
     await dynamoDbClient.send(
       new PutCommand({
         TableName: 'BotTable',
@@ -79,9 +85,11 @@ export async function POST(request: NextRequest) {
       })
     );
 
+    console.log('API: Task created successfully');
     return NextResponse.json(newTask);
   } catch (error) {
-    console.error('Error creating task:', error);
-    return NextResponse.json({ error: 'Failed to create task' }, { status: 500 });
+    console.error('API: Error creating task:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: 'Failed to create task', details: errorMessage }, { status: 500 });
   }
 }

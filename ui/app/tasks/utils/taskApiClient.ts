@@ -1,18 +1,18 @@
 import { Task } from '../types/Task';
 
+const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID || '1111490767991615518';
+
 export async function fetchTasks(guildId?: string): Promise<Task[]> {
   try {
-    const url = new URL('/api/tasks', window.location.origin);
-    if (guildId) {
-      url.searchParams.set('guildId', guildId);
-    }
+    const targetGuildId = guildId || GUILD_ID;
+    const response = await fetch(`/api/tasks?guildId=${targetGuildId}`);
     
-    const response = await fetch(url.toString());
     if (!response.ok) {
-      throw new Error(`Failed to fetch tasks: ${response.statusText}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
     
-    return await response.json();
+    const tasks: Task[] = await response.json();
+    return tasks;
   } catch (error) {
     console.error('Error fetching tasks:', error);
     return [];
@@ -30,10 +30,11 @@ export async function createTask(task: Omit<Task, 'taskId' | 'createdAt' | 'stat
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to create task: ${response.statusText}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    const newTask: Task = await response.json();
+    return newTask;
   } catch (error) {
     console.error('Error creating task:', error);
     throw new Error('Failed to create task');
@@ -51,7 +52,7 @@ export async function updateTaskStatus(taskId: string, status: Task['status'], u
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to update task status: ${response.statusText}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
   } catch (error) {
     console.error('Error updating task status:', error);
@@ -66,7 +67,7 @@ export async function deleteTask(taskId: string): Promise<void> {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to delete task: ${response.statusText}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
   } catch (error) {
     console.error('Error deleting task:', error);

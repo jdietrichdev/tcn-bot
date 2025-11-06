@@ -1,14 +1,3 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
-
-const client = new DynamoDBClient({
-  region: process.env.AWS_REGION ?? "us-east-1",
-});
-
-const dynamoDbClient = DynamoDBDocumentClient.from(client, {
-  marshallOptions: { removeUndefinedValues: true }
-});
-
 export interface CompletedTask {
   taskId: string;
   title: string;
@@ -26,18 +15,14 @@ export interface CompletedTask {
 
 export const fetchAnalyticsData = async (guildId: string = '1111490767991615518'): Promise<CompletedTask[]> => {
   try {
-    const response = await dynamoDbClient.send(
-      new QueryCommand({
-        TableName: 'BotTable',
-        KeyConditionExpression: 'pk = :guildId AND begins_with(sk, :analyticsPrefix)',
-        ExpressionAttributeValues: {
-          ':guildId': guildId,
-          ':analyticsPrefix': 'analytics#task#',
-        },
-      })
-    );
+    const response = await fetch(`/api/analytics?guildId=${guildId}`);
     
-    return (response.Items || []) as CompletedTask[];
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data as CompletedTask[];
   } catch (err) {
     console.error('Failed to fetch analytics data:', err);
     throw err;
@@ -46,18 +31,14 @@ export const fetchAnalyticsData = async (guildId: string = '1111490767991615518'
 
 export const fetchTasks = async (guildId: string = '1111490767991615518'): Promise<any[]> => {
   try {
-    const response = await dynamoDbClient.send(
-      new QueryCommand({
-        TableName: 'BotTable',
-        KeyConditionExpression: 'pk = :guildId AND begins_with(sk, :taskPrefix)',
-        ExpressionAttributeValues: {
-          ':guildId': guildId,
-          ':taskPrefix': 'task#',
-        },
-      })
-    );
+    const response = await fetch(`/api/tasks?guildId=${guildId}`);
     
-    return response.Items || [];
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
   } catch (err) {
     console.error('Failed to fetch tasks:', err);
     throw err;
