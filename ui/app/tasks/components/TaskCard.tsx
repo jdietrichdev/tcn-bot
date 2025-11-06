@@ -1,5 +1,5 @@
 import { Task } from '../types/Task';
-import { updateTaskStatus } from '../utils/taskApi';
+import { updateTaskStatus } from '../utils/taskApiClient';
 
 interface TaskCardProps {
   task: Task;

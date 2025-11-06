@@ -1,15 +1,22 @@
 import { Task } from '../types/Task';
-import { fetchTasks as fetchTasksFromDB } from '@/utils/analyticsHelper';
-import { dynamoDbClient } from '@/app/clients/dynamodbClient';
-import { PutCommand, UpdateCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
+import { fetchTasks as fetchTasksFromAnalytics } from '@/utils/analyticsHelper';
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, UpdateCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+
+const client = new DynamoDBClient({
+  region: process.env.AWS_REGION ?? "us-east-1",
+});
+
+const dynamoDbClient = DynamoDBDocumentClient.from(client, {
+  marshallOptions: { removeUndefinedValues: true }
+});
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID || '1111490767991615518';
 
 export async function fetchTasks(guildId?: string): Promise<Task[]> {
   try {
     const targetGuildId = guildId || GUILD_ID;
-    
-    const dbTasks = await fetchTasksFromDB(targetGuildId);
+    const dbTasks = await fetchTasksFromAnalytics(targetGuildId);
     
     return dbTasks.map((task: any) => ({
       taskId: task.taskId,
@@ -30,7 +37,7 @@ export async function fetchTasks(guildId?: string): Promise<Task[]> {
       completionNotes: task.completionNotes,
     }));
   } catch (error) {
-    console.error('Error fetching tasks from DynamoDB:', error);
+    console.error('Error fetching tasks:', error);
     return [];
   }
 }
@@ -47,20 +54,20 @@ export async function createTask(task: Omit<Task, 'taskId' | 'createdAt' | 'stat
       createdAt: now,
     };
 
-    const putCommand = new PutCommand({
-      TableName: 'BotTable',
-      Item: {
-        pk: GUILD_ID,
-        sk: `task#${taskId}`,
-        ...newTask,
-      },
-    });
+    await dynamoDbClient.send(
+      new PutCommand({
+        TableName: 'BotTable',
+        Item: {
+          pk: GUILD_ID,
+          sk: `task#${taskId}`,
+          ...newTask,
+        },
+      })
+    );
 
-    await dynamoDbClient.send(putCommand);
     return newTask;
   } catch (error) {
     console.error('Error creating task:', error);
-    console.error('Error details:', JSON.stringify(error, null, 2));
     throw new Error('Failed to create task');
   }
 }
@@ -69,14 +76,10 @@ export async function updateTaskStatus(taskId: string, status: Task['status'], u
   try {
     const now = new Date().toISOString();
     const user = userId || 'web-user';
-
-    const updateExpressions: string[] = [];
-    const expressionAttributeValues: any = {};
-    const expressionAttributeNames: any = {};
-
-    updateExpressions.push('#status = :status');
-    expressionAttributeNames['#status'] = 'status';
-    expressionAttributeValues[':status'] = status;
+    
+    const updateExpressions: string[] = ['#status = :status'];
+    const expressionAttributeNames: Record<string, string> = { '#status': 'status' };
+    const expressionAttributeValues: Record<string, any> = { ':status': status };
 
     if (status === 'claimed') {
       updateExpressions.push('claimedAt = :claimedAt', 'claimedBy = :claimedBy');
@@ -87,8 +90,6 @@ export async function updateTaskStatus(taskId: string, status: Task['status'], u
       expressionAttributeValues[':completedAt'] = now;
       expressionAttributeValues[':completedBy'] = user;
     } else if (status === 'approved') {
-      // When approved, we need to log to analytics and then delete the task
-      // For now, just update the status - the Discord bot will handle the deletion
       updateExpressions.push('approvedAt = :approvedAt', 'approvedBy = :approvedBy');
       expressionAttributeValues[':approvedAt'] = now;
       expressionAttributeValues[':approvedBy'] = user;

@@ -9,7 +9,7 @@ import { ThemeToggle } from './components/ThemeToggle';
 import { DashboardSkeleton } from './components/LoadingSkeletons';
 import { TaskAnalytics } from './components/TaskAnalytics';
 import { Task, TaskStatus, TaskPriority } from './types/Task';
-import { fetchTasks } from './utils/taskApi';
+import { fetchTasks } from './utils/taskApiClient';
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);

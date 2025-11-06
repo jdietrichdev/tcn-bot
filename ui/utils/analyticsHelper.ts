@@ -1,5 +1,13 @@
-import { dynamoDbClient } from "@/app/clients/dynamodbClient";
-import { QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
+
+const client = new DynamoDBClient({
+  region: process.env.AWS_REGION ?? "us-east-1",
+});
+
+const dynamoDbClient = DynamoDBDocumentClient.from(client, {
+  marshallOptions: { removeUndefinedValues: true }
+});
 
 export interface CompletedTask {
   taskId: string;

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TaskPriority } from '../types/Task';
-import { createTask } from '../utils/taskApi';
+import { createTask } from '../utils/taskApiClient';
 
 interface TaskCreateModalProps {
   isOpen: boolean;
