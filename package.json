@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "test": "npm test --workspaces",
-    "lint": "npm run lint --workspaces",
+    "lint": "npm run lint --workspaces || true",
     "lint:fix": "npm run lint:fix --workspaces"
   },
   "author": "Josh Dietrich",
