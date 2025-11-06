@@ -52,7 +52,6 @@ export function TaskCard({ task, onTaskUpdate }: TaskCardProps) {
       onTaskUpdate();
     } catch (error) {
       console.error('Failed to update task status:', error);
-      // You could add a toast notification here
     }
   };
 
