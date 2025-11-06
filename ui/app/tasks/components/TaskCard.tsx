@@ -57,13 +57,13 @@ export function TaskCard({ task, onTaskUpdate }: TaskCardProps) {
 
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-lg border-l-4 shadow-sm hover:shadow-md transition-shadow ${getPriorityColor(task.priority)} ${isOverdue ? 'ring-2 ring-red-500' : ''}`}>
-      <div className="p-4">
+      <div className="p-3 md:p-4">
         {/* Header */}
-        <div className="flex items-start justify-between mb-3">
+        <div className="flex items-start justify-between mb-2 md:mb-3">
           <div className="flex items-center space-x-2">
-            <span className="text-lg">{getPriorityEmoji(task.priority)}</span>
-            <span className="text-lg">{getStatusEmoji(task.status)}</span>
-            {isOverdue && <span className="text-red-500">⏰</span>}
+            <span className="text-lg md:text-xl">{getPriorityEmoji(task.priority)}</span>
+            <span className="text-lg md:text-xl">{getStatusEmoji(task.status)}</span>
+            {isOverdue && <span className="text-red-500 text-lg">⏰</span>}
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
             #{task.taskId.slice(-6)}
@@ -71,20 +71,20 @@ export function TaskCard({ task, onTaskUpdate }: TaskCardProps) {
         </div>
 
         {/* Title */}
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-2 leading-tight">
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-2 leading-tight text-sm md:text-base">
           {task.title}
         </h3>
 
         {/* Description */}
         {task.description && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-3">
+          <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-2 md:mb-3 line-clamp-3">
             {task.description}
           </p>
         )}
 
         {/* Assigned Roles */}
         {task.assignedRoles && task.assignedRoles.length > 0 && (
-          <div className="mb-3">
+          <div className="mb-2 md:mb-3">
             <div className="flex flex-wrap gap-1">
               {task.assignedRoles.map(role => (
                 <span
@@ -122,13 +122,13 @@ export function TaskCard({ task, onTaskUpdate }: TaskCardProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-3 md:mt-4 flex flex-wrap gap-2">
           {task.status === 'pending' && (
             <button
               onClick={() => handleStatusChange('claimed')}
-              className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+              className="flex-1 min-w-[100px] px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors font-medium touch-target"
             >
-              Claim
+              🔵 Claim
             </button>
           )}
           
@@ -136,15 +136,15 @@ export function TaskCard({ task, onTaskUpdate }: TaskCardProps) {
             <>
               <button
                 onClick={() => handleStatusChange('completed')}
-                className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+                className="flex-1 min-w-[90px] px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors font-medium touch-target"
               >
-                Complete
+                ✅ Complete
               </button>
               <button
                 onClick={() => handleStatusChange('pending')}
-                className="px-3 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 transition-colors"
+                className="px-3 py-2 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 transition-colors font-medium touch-target"
               >
-                Unclaim
+                ↩️ Unclaim
               </button>
             </>
           )}
@@ -152,9 +152,9 @@ export function TaskCard({ task, onTaskUpdate }: TaskCardProps) {
           {task.status === 'completed' && (
             <button
               onClick={() => handleStatusChange('approved')}
-              className="px-3 py-1 bg-emerald-600 text-white text-xs rounded hover:bg-emerald-700 transition-colors"
+              className="flex-1 min-w-[100px] px-3 py-2 bg-emerald-600 text-white text-sm rounded-md hover:bg-emerald-700 transition-colors font-medium touch-target"
             >
-              Approve
+              👑 Approve
             </button>
           )}
         </div>

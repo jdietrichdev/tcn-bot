@@ -78,36 +78,42 @@ export const handleTaskDelete = async (
     };
 
     const embed: APIEmbed = {
-      title: '🗑️ ═══════ TASK DELETED ═══════ ❌',
-      description: `### ${priorityEmoji[taskPriority as keyof typeof priorityEmoji]} ~~${taskTitle}~~`,
+      title: '🗑️ ╔═══════ TASK DELETED ═══════╗ ❌',
+      description: `### ${priorityEmoji[taskPriority as keyof typeof priorityEmoji]} ~~**${taskTitle}**~~\n\n` +
+                  `> *This task has been permanently removed from the system.*`,
       fields: [
         {
-          name: 'Task Information',
+          name: '📋 **Task Details**',
           value: [
-            `**Description:** ${taskDescription || '*No description*'}`,
-            `**Status:** ${statusEmoji[taskStatus as keyof typeof statusEmoji]} ${taskStatus}`,
-            `**Priority:** ${priorityEmoji[taskPriority as keyof typeof priorityEmoji]} ${taskPriority}`,
+            `**Description:** ${taskDescription || '`No description provided`'}`,
+            `**Status:** ${statusEmoji[taskStatus as keyof typeof statusEmoji]} \`${taskStatus.toUpperCase()}\``,
+            `**Priority:** ${priorityEmoji[taskPriority as keyof typeof priorityEmoji]} \`${taskPriority.toUpperCase()}\``
           ].join('\n'),
           inline: false
         },
         {
-          name: 'Task History',
+          name: '👥 **Task History**',
           value: [
             `**Created by:** <@${taskCreatedBy}>`,
-            taskClaimedBy ? `**Was claimed by:** <@${taskClaimedBy}>` : '*Never claimed*',
-            `**Deleted by:** <@${userId}>`,
+            taskClaimedBy ? `**Claimed by:** <@${taskClaimedBy}>` : '`Never claimed`',
+            `**Deleted by:** <@${userId}>`
           ].filter(line => !line.includes('undefined')).join('\n'),
           inline: true
         },
         {
-          name: '⚠️ Important',
-          value: 'This action cannot be undone. The task has been permanently removed from the system.',
+          name: '⏰ **Deletion Info**',
+          value: `**When:** <t:${Math.floor(Date.now() / 1000)}:R>\n**Task ID:** \`${taskId}\``,
+          inline: true
+        },
+        {
+          name: '⚠️ **Warning**',
+          value: '```\n❌ This action is permanent\n🔒 Task cannot be recovered\n📊 Removed from all analytics\n```',
           inline: false
         }
       ],
-      color: 0xff0000,
+      color: 0xff4444,
       footer: {
-        text: `Task ID: ${taskId} • Permanently Deleted`,
+        text: `Task Management System • Task permanently removed`,
       },
       timestamp: new Date().toISOString()
     };

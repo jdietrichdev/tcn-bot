@@ -88,38 +88,43 @@ export const handleTaskClaim = async (
     };
 
     const embed: APIEmbed = {
-      title: '🚀 ═══════ TASK CLAIMED ═══════ ✅',
-      description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} ${task.title}`,
+      title: '🚀 ╔═══════ TASK CLAIMED ═══════╗',
+      description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n` +
+                  `> ${task.description || '*No description provided*'}`,
       fields: [
         {
-          name: 'Description',
-          value: task.description || '*No description provided*',
+          name: '📊 **Task Information**',
+          value: [
+            `**Priority:** ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} \`${task.priority.toUpperCase()}\``,
+            `**Due Date:** ${task.dueDate ? `📅 \`${task.dueDate}\`` : '`No due date set`'}`,
+            `**Task ID:** \`${taskId}\``
+          ].join('\n'),
           inline: false
         },
         {
-          name: 'Priority',
-          value: `${priorityEmoji[task.priority as keyof typeof priorityEmoji]} ${task.priority.toUpperCase()}`,
-          inline: true
-        },
-        {
-          name: 'Due Date',
-          value: task.dueDate ? `📅 ${task.dueDate}` : '*No due date*',
-          inline: true
-        },
-        {
-          name: 'Claimed By',
+          name: '👤 **Claimed By**',
           value: `<@${userId}>`,
           inline: true
         },
         {
-          name: 'Next Steps',
-          value: 'Work on this task and use `/task-complete` when finished!',
+          name: '⏰ **Claimed At**',
+          value: `<t:${Math.floor(new Date(now).getTime() / 1000)}:R>`,
+          inline: true
+        },
+        {
+          name: '📋 **Status**',
+          value: '`🔄 IN PROGRESS`',
+          inline: true
+        },
+        {
+          name: '📝 **Next Steps**',
+          value: '```\n• Work on the task requirements\n• Use /task-complete when finished\n• Add completion notes if needed\n```',
           inline: false
         }
       ],
       color: 0x0099ff,
       footer: {
-        text: `Task ID: ${taskId}`,
+        text: `Task Management System • Now in progress`,
       },
       timestamp: now
     };

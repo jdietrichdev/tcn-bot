@@ -28,6 +28,8 @@ export const taskApi = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       case 'GET':
         if (path === '/api/tasks' || path.endsWith('/tasks')) {
           return await getTasks(guildId, queryStringParameters);
+        } else if (path === '/api/analytics' || path.endsWith('/analytics')) {
+          return await getAnalytics(guildId);
         } else if (pathParameters?.taskId) {
           return await getTask(guildId, pathParameters.taskId);
         }
@@ -221,9 +223,60 @@ async function updateTask(guildId: string, taskId: string, updates: any): Promis
         expressionAttributeValues[':completedAt'] = now;
         expressionAttributeValues[':completedBy'] = updates.userId;
       } else if (updates.status === 'approved') {
-        updateExpressions.push('approvedAt = :approvedAt', 'approvedBy = :approvedBy');
-        expressionAttributeValues[':approvedAt'] = now;
-        expressionAttributeValues[':approvedBy'] = updates.userId;
+        // When a task is approved, first get the task details to log to analytics
+        const getResult = await dynamoDbClient.send(
+          new GetCommand({
+            TableName: 'BotTable',
+            Key: {
+              pk: guildId,
+              sk: `task#${taskId}`,
+            },
+          })
+        );
+
+        if (getResult.Item) {
+          // Log completed task to analytics table
+          await dynamoDbClient.send(
+            new PutCommand({
+              TableName: 'BotTable',
+              Item: {
+                pk: guildId,
+                sk: `analytics#task#${taskId}#${now}`,
+                type: 'completed_task',
+                taskId: taskId,
+                title: getResult.Item.title,
+                description: getResult.Item.description,
+                priority: getResult.Item.priority,
+                assignedTo: getResult.Item.assignedTo,
+                createdBy: getResult.Item.createdBy,
+                claimedBy: getResult.Item.claimedBy,
+                completedBy: getResult.Item.completedBy,
+                createdAt: getResult.Item.createdAt,
+                claimedAt: getResult.Item.claimedAt,
+                completedAt: getResult.Item.completedAt,
+                approvedAt: now,
+                approvedBy: updates.userId,
+              },
+            })
+          );
+        }
+
+        // Then delete the task
+        await dynamoDbClient.send(
+          new DeleteCommand({
+            TableName: 'BotTable',
+            Key: {
+              pk: guildId,
+              sk: `task#${taskId}`,
+            },
+          })
+        );
+
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ message: 'Task approved and deleted successfully' }),
+        };
       } else if (updates.status === 'pending') {
         updateExpressions.push(
           'claimedAt = :null',
@@ -312,6 +365,30 @@ async function deleteTask(guildId: string, taskId: string): Promise<APIGatewayPr
     };
   } catch (error) {
     console.error('Error deleting task:', error);
+    throw error;
+  }
+}
+
+async function getAnalytics(guildId: string): Promise<APIGatewayProxyResult> {
+  try {
+    const result = await dynamoDbClient.send(
+      new QueryCommand({
+        TableName: 'BotTable',
+        KeyConditionExpression: 'pk = :guildId AND begins_with(sk, :analyticsPrefix)',
+        ExpressionAttributeValues: {
+          ':guildId': guildId,
+          ':analyticsPrefix': 'analytics#task#',
+        },
+      })
+    );
+
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify(result.Items || []),
+    };
+  } catch (error) {
+    console.error('Error fetching analytics:', error);
     throw error;
   }
 }

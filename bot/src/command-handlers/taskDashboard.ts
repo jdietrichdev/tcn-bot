@@ -61,52 +61,60 @@ export const handleTaskDashboard = async (
       : '*No tasks yet*';
 
     const embed: APIEmbed = {
-      title: '📊 ═══════ TASK DASHBOARD ═══════ 💻',
-      description: `Welcome to the TCN Task Management System! Here you can view and manage all community tasks.`,
+      title: '📊 ╔═══════ TASK DASHBOARD ═══════╗ 💻',
+      description: `### 🎯 **TCN Task Management System**\n\n` +
+                  `> *Streamline your community tasks with our comprehensive management platform.*`,
       fields: [
         {
-          name: '📈 Task Statistics',
+          name: '📈 **Current Board Status**',
           value: [
-            `📋 **Total Tasks:** ${stats.total}`,
-            `🟡 **Pending:** ${stats.pending}`,
-            `🔵 **Claimed:** ${stats.claimed}`,
-            `🟢 **Completed:** ${stats.completed}`,
-            `✅ **Approved:** ${stats.approved}`,
+            `**📋 Total Tasks:** \`${stats.total}\``,
+            `**🟡 Available:** \`${stats.pending}\``,
+            `**🔵 In Progress:** \`${stats.claimed}\``,
+            `**🟢 Ready for Review:** \`${stats.completed}\``,
+            `**✅ Completed:** \`${stats.approved}\``
           ].join('\n'),
           inline: true
         },
         {
-          name: '⚠️ Attention Needed',
+          name: '⚡ **Priority Overview**',
           value: [
-            `🔴 **High Priority:** ${stats.highPriority}`,
-            `⏰ **Overdue:** ${stats.overdue}`,
-            `👥 **Awaiting Approval:** ${stats.completed}`,
+            `**🔴 High Priority:** \`${stats.highPriority}\``,
+            `**⏰ Overdue Tasks:** \`${stats.overdue}\``,
+            `**👀 Needs Approval:** \`${stats.completed}\``,
             '',
             stats.highPriority > 0 || stats.overdue > 0 
-              ? '🚨 **Action Required!**'
-              : '✅ All caught up!'
+              ? '🚨 **Attention Required!**'
+              : '✅ **All caught up!**'
           ].join('\n'),
           inline: true
         },
         {
-          name: '🕒 Recent Activity',
-          value: recentTasksText,
+          name: '� **Recent Activity**',
+          value: recentTasksText || '`No recent activity`',
           inline: false
         },
         {
-          name: '🎯 Quick Actions',
+          name: '🚀 **Quick Commands**',
           value: [
-            '• `/task-create` - Create a new task',
-            '• `/task-claim` - Claim an available task',
-            '• `/task-list` - View all tasks',
-            '• Click **Open Dashboard** below for full interface'
+            '```',
+            '/task-create  → Create new task',
+            '/task-claim   → Claim available task',
+            '/task-list    → View task board',
+            '/task-help    → Get command help',
+            '```'
           ].join('\n'),
+          inline: false
+        },
+        {
+          name: '🌐 **Web Dashboard**',
+          value: '```\n• Full task management interface\n• Mobile-friendly design\n• Real-time analytics\n• Advanced filtering options\n```',
           inline: false
         }
       ],
       color: 0x5865F2,
       footer: {
-        text: 'Task Management System • Click "Open Dashboard" for full interface',
+        text: `Task Management System • ${new Date().toLocaleDateString()} • Click below to access full dashboard`,
       },
       timestamp: new Date().toISOString()
     };

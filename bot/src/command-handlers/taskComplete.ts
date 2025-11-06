@@ -111,38 +111,39 @@ export const handleTaskComplete = async (
     };
 
     const embed: APIEmbed = {
-      title: '🎉 ══════ TASK COMPLETED ══════ 🏆',
-      description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} ${task.title}`,
+      title: '🎉 ╔══════ TASK COMPLETED ══════╗ 🏆',
+      description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n` +
+                  `> ${task.description || '*No description provided*'}`,
       fields: [
         {
-          name: 'Description',
-          value: task.description || '*No description provided*',
+          name: '📝 **Completion Notes**',
+          value: notes ? `\`\`\`\n${notes}\n\`\`\`` : '`No additional notes provided`',
           inline: false
         },
         {
-          name: 'Completion Notes',
-          value: notes || '*No notes provided*',
-          inline: false
-        },
-        {
-          name: 'Completed By',
+          name: '👤 **Completed By**',
           value: `<@${userId}>`,
           inline: true
         },
         {
-          name: 'Completion Time',
+          name: '⏰ **Completed At**',
           value: `<t:${Math.floor(new Date(now).getTime() / 1000)}:R>`,
           inline: true
         },
         {
-          name: 'Next Step',
-          value: '⏳ Waiting for admin approval to remove from task board.',
+          name: '📋 **Status**',
+          value: '`✅ AWAITING APPROVAL`',
+          inline: true
+        },
+        {
+          name: '⚡ **What\'s Next?**',
+          value: '```\n• Task is ready for admin review\n• Will be removed from board once approved\n• Check dashboard for approval status\n```',
           inline: false
         }
       ],
       color: 0x00ff00,
       footer: {
-        text: `Task ID: ${taskId} • Completed`,
+        text: `Task Management System • Pending approval`,
       },
       timestamp: now
     };

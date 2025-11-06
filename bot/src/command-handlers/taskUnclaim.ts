@@ -90,33 +90,38 @@ export const handleTaskUnclaim = async (
     };
 
     const embed: APIEmbed = {
-      title: '↩️ ═══════ TASK UNCLAIMED ═══════ 🔄',
-      description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} ${task.title}`,
+      title: '↩️ ╔═══════ TASK UNCLAIMED ═══════╗ 🔄',
+      description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n` +
+                  `> ${task.description || '*No description provided*'}`,
       fields: [
         {
-          name: 'Description',
-          value: task.description || '*No description provided*',
+          name: '📊 **Task Information**',
+          value: [
+            `**Priority:** ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} \`${task.priority.toUpperCase()}\``,
+            `**Due Date:** ${task.dueDate ? `📅 \`${task.dueDate}\`` : '`No due date set`'}`,
+            `**Task ID:** \`${taskId}\``
+          ].join('\n'),
           inline: false
         },
         {
-          name: 'Status',
-          value: '🟡 Available for claiming',
+          name: '🔄 **Status Change**',
+          value: '**Previous:** `� IN PROGRESS`\n**Current:** `🟡 AVAILABLE`',
           inline: true
         },
         {
-          name: 'Priority',
-          value: `${priorityEmoji[task.priority as keyof typeof priorityEmoji]} ${task.priority.toUpperCase()}`,
+          name: '⏰ **Unclaimed At**',
+          value: `<t:${Math.floor(Date.now() / 1000)}:R>`,
           inline: true
         },
         {
-          name: 'Due Date',
-          value: task.dueDate ? `📅 ${task.dueDate}` : '*No due date*',
-          inline: true
+          name: '📋 **Next Steps**',
+          value: '```\n• Task is now available for claiming\n• Anyone can claim this task\n• No progress has been lost\n```',
+          inline: false
         }
       ],
       color: 0xffa500,
       footer: {
-        text: `Task ID: ${taskId} • Available for claiming`,
+        text: `Task Management System • Available for claiming`,
       },
       timestamp: new Date().toISOString()
     };

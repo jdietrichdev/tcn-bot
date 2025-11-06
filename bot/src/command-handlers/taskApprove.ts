@@ -7,7 +7,7 @@ import {
 } from 'discord-api-types/v10';
 import { updateResponse } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
-import { GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, DeleteCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 
 export const handleTaskApprove = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -61,21 +61,37 @@ export const handleTaskApprove = async (
     }
 
     const now = new Date().toISOString();
+    
     await dynamoDbClient.send(
-      new UpdateCommand({
+      new PutCommand({
+        TableName: 'BotTable',
+        Item: {
+          pk: guildId,
+          sk: `analytics#task#${taskId}#${now}`,
+          type: 'completed_task',
+          taskId: taskId,
+          title: task.title,
+          description: task.description,
+          priority: task.priority,
+          assignedTo: task.assignedTo,
+          createdBy: task.createdBy,
+          claimedBy: task.claimedBy,
+          completedBy: task.completedBy,
+          createdAt: task.createdAt,
+          claimedAt: task.claimedAt,
+          completedAt: task.completedAt,
+          approvedAt: now,
+          approvedBy: userId,
+        },
+      })
+    );
+    
+    await dynamoDbClient.send(
+      new DeleteCommand({
         TableName: 'BotTable',
         Key: {
           pk: guildId,
           sk: `task#${taskId}`,
-        },
-        UpdateExpression: 'SET #status = :status, approvedBy = :approvedBy, approvedAt = :approvedAt',
-        ExpressionAttributeNames: {
-          '#status': 'status',
-        },
-        ExpressionAttributeValues: {
-          ':status': 'approved',
-          ':approvedBy': userId,
-          ':approvedAt': now,
         },
       })
     );
@@ -106,43 +122,48 @@ export const handleTaskApprove = async (
     };
 
     const embed: APIEmbed = {
-      title: '👑 ══════ TASK APPROVED ══════ ✅',
-      description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} ${task.title}`,
+      title: '👑 ╔═══════ TASK APPROVED ═══════╗ ✅',
+      description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n` +
+                  `> ${task.description || '*No description provided*'}`,
       fields: [
         {
-          name: 'Description',
-          value: task.description || '*No description provided*',
+          name: '📝 **Completion Summary**',
+          value: task.completionNotes ? `\`\`\`\n${task.completionNotes}\n\`\`\`` : '`No completion notes provided`',
           inline: false
         },
         {
-          name: 'Completion Notes',
-          value: task.completionNotes || '*No notes provided*',
-          inline: false
-        },
-        {
-          name: 'Task Details',
+          name: '👥 **Team Involvement**',
           value: [
-            `**Created by:** <@${task.createdBy}>`,
+            `**Creator:** <@${task.createdBy}>`,
             `**Completed by:** <@${task.completedBy}>`,
-            `**Approved by:** <@${userId}>`,
-            `**Duration:** ${durationText}`,
+            `**Approved by:** <@${userId}>`
           ].join('\n'),
           inline: true
         },
         {
-          name: 'Timeline',
+          name: '⏱️ **Timeline**',
           value: [
             `**Created:** <t:${Math.floor(new Date(task.createdAt).getTime() / 1000)}:R>`,
             task.claimedAt ? `**Claimed:** <t:${Math.floor(new Date(task.claimedAt).getTime() / 1000)}:R>` : '',
             task.completedAt ? `**Completed:** <t:${Math.floor(new Date(task.completedAt).getTime() / 1000)}:R>` : '',
-            `**Approved:** <t:${Math.floor(new Date(now).getTime() / 1000)}:R>`,
+            `**Approved:** <t:${Math.floor(new Date(now).getTime() / 1000)}:R>`
           ].filter(Boolean).join('\n'),
           inline: true
+        },
+        {
+          name: '📊 **Performance**',
+          value: `**Duration:** \`${durationText}\`\n**Priority:** ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} \`${task.priority.toUpperCase()}\``,
+          inline: false
+        },
+        {
+          name: '🎉 **Task Complete!**',
+          value: '```\n✅ Task has been approved\n🗑️ Removed from active board\n📈 Added to analytics\n```',
+          inline: false
         }
       ],
-      color: 0x00ff00,
+      color: 0xffd700,
       footer: {
-        text: `Task ID: ${taskId} • Approved & Removed from Board`,
+        text: `Task Management System • Successfully completed and archived`,
       },
       timestamp: now
     };

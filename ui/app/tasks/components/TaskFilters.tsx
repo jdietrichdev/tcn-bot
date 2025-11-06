@@ -26,12 +26,12 @@ export function TaskFilters({ filters, onFiltersChange, tasks }: TaskFiltersProp
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm mb-8">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Filters</h3>
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 md:p-6 shadow-sm mb-6 md:mb-8">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 md:mb-4">🔍 Filters</h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {/* Search */}
-        <div>
+        <div className="md:col-span-2">
           <label htmlFor="search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Search Tasks
           </label>
@@ -41,7 +41,7 @@ export function TaskFilters({ filters, onFiltersChange, tasks }: TaskFiltersProp
             placeholder="Search title or description..."
             value={filters.search}
             onChange={(e) => updateFilter('search', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-base touch-target"
           />
         </div>
 
@@ -54,7 +54,7 @@ export function TaskFilters({ filters, onFiltersChange, tasks }: TaskFiltersProp
             id="status"
             value={filters.status}
             onChange={(e) => updateFilter('status', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-base touch-target"
           >
             <option value="all">All Status</option>
             <option value="pending">🟡 Pending</option>
@@ -73,7 +73,7 @@ export function TaskFilters({ filters, onFiltersChange, tasks }: TaskFiltersProp
             id="priority"
             value={filters.priority}
             onChange={(e) => updateFilter('priority', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-base touch-target"
           >
             <option value="all">All Priorities</option>
             <option value="high">🔴 High</option>
@@ -91,7 +91,7 @@ export function TaskFilters({ filters, onFiltersChange, tasks }: TaskFiltersProp
             id="role"
             value={filters.assignedRole}
             onChange={(e) => updateFilter('assignedRole', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-base touch-target"
           >
             <option value="all">All Roles</option>
             {uniqueRoles.map(role => (

@@ -1,5 +1,5 @@
 import { Construct } from "constructs";
-import { Duration, RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
+import { Duration, RemovalPolicy, Stack, StackProps, CfnOutput } from "aws-cdk-lib";
 import {
   Code,
   Function as Lambda,
@@ -265,7 +265,7 @@ export class ServiceStack extends Stack {
     });
     props.botTable.grantReadWriteData(this.taskApiLambda);
 
-    new LambdaRestApi(this, "task-api-gateway", {
+    const taskApiGateway = new LambdaRestApi(this, "task-api-gateway", {
       restApiName: "TaskApi",
       handler: this.taskApiLambda,
       deployOptions: {
@@ -278,6 +278,13 @@ export class ServiceStack extends Stack {
         allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowHeaders: ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token"],
       },
+    });
+
+    // Output the Task API Gateway URL
+    new CfnOutput(this, "TaskApiUrl", {
+      value: taskApiGateway.url,
+      description: "Task API Gateway URL",
+      exportName: "TaskApiUrl",
     });
 
     const botProcessor = new Lambda(this, "bot-processor", {

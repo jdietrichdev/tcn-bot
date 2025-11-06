@@ -140,25 +140,41 @@ export const handleTaskList = async (
     }).join('\n');
 
     const embed: APIEmbed = {
-      title: '📋 ═══════ TASK LIST ═══════ 📝',
-      description: taskList,
+      title: '📋 ╔═══════ TASK BOARD ═══════╗ 📝',
+      description: taskList || '`No tasks found matching the current filters.`',
       color: 0x5865F2,
       fields: [
         {
-          name: '📊 Task Summary',
-          value: `🟡 Pending: ${taskCounts.pending}\n🔵 Claimed: ${taskCounts.claimed}\n🟢 Completed: ${taskCounts.completed}\n✅ Approved: ${taskCounts.approved}`,
+          name: '📊 **Task Statistics**',
+          value: [
+            `**🟡 Pending:** \`${taskCounts.pending}\``,
+            `**🔵 In Progress:** \`${taskCounts.claimed}\``,
+            `**🟢 Completed:** \`${taskCounts.completed}\``,
+            `**✅ Approved:** \`${taskCounts.approved}\``
+          ].join('\n'),
           inline: true
         },
         {
-          name: '📖 Legend',
-          value: `🔴 High Priority\n🟡 Medium Priority\n🟢 Low Priority\n\n🟡 Pending\n🔵 Claimed\n🟢 Completed\n✅ Approved`,
+          name: '📖 **Status Legend**',
+          value: [
+            '**Priorities:**',
+            '🔴 `High Priority`',
+            '🟡 `Medium Priority`',
+            '🟢 `Low Priority`',
+            '',
+            '**Statuses:**',
+            '🟡 `Available`',
+            '🔵 `In Progress`',
+            '� `Ready for Review`',
+            '✅ `Completed`'
+          ].join('\n'),
           inline: true
         }
       ],
       footer: {
         text: tasks.length > 10 
-          ? `Showing 10 of ${tasks.length} tasks. Use dashboard for full list.`
-          : `${tasks.length} task${tasks.length !== 1 ? 's' : ''} total`
+          ? `📄 Showing first 10 of ${tasks.length} tasks • Use dashboard for complete view`
+          : `📊 ${tasks.length} task${tasks.length !== 1 ? 's' : ''} on the board`,
       },
       timestamp: new Date().toISOString()
     };

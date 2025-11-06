@@ -17,6 +17,7 @@ export interface Task {
   completedAt?: string;
   approvedAt?: string;
   dueDate?: string;
+  completionNotes?: string;
 }
 
 export interface TaskFilters {

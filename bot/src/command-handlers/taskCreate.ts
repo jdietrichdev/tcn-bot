@@ -88,41 +88,40 @@ export const handleTaskCreate = async (
     };
 
     const embed: APIEmbed = {
-      title: '🎯 ═══════ TASK CREATED ═══════ ✅',
-      description: `### ${priorityEmoji[priority as keyof typeof priorityEmoji]} ${title}`,
+      title: '🎯 ╔══════ TASK CREATED ══════╗',
+      description: `### ${priorityEmoji[priority as keyof typeof priorityEmoji]} **${title}**\n\n` +
+                  `> ${description || '*No description provided*'}`,
       fields: [
         {
-          name: 'Description',
-          value: description || '*No description provided*',
+          name: '📊 **Task Details**',
+          value: [
+            `**Priority:** ${priorityEmoji[priority as keyof typeof priorityEmoji]} \`${priority.toUpperCase()}\``,
+            `**Assigned To:** ${assignedRole ? `<@&${assignedRole}>` : '`Anyone can claim`'}`,
+            `**Due Date:** ${dueDate ? `📅 \`${dueDate}\`` : '`No due date set`'}`,
+            `**Task ID:** \`${taskId}\``
+          ].join('\n'),
           inline: false
         },
         {
-          name: 'Priority',
-          value: `${priorityEmoji[priority as keyof typeof priorityEmoji]} ${priority.toUpperCase()}`,
+          name: '👤 **Creator**',
+          value: `<@${interaction.member?.user?.id || interaction.user?.id}>`,
           inline: true
         },
         {
-          name: 'Assigned Role',
-          value: assignedRole ? `<@&${assignedRole}>` : '*Anyone can claim*',
+          name: '⏰ **Created**',
+          value: `<t:${Math.floor(new Date(now).getTime() / 1000)}:R>`,
           inline: true
         },
         {
-          name: 'Due Date',
-          value: dueDate ? `📅 ${dueDate}` : '*No due date*',
+          name: '📋 **Status**',
+          value: '`🔄 PENDING`',
           inline: true
-        },
-        {
-          name: 'Task ID',
-          value: `\`${taskId}\``,
-          inline: false
         }
       ],
-      color: 0x00ff00,
+      color: priority === 'high' ? 0xff4444 : priority === 'medium' ? 0xffaa00 : 0x00ff00,
       footer: {
-        text: `Created by ${interaction.member?.user?.username || interaction.user?.username}`,
-        icon_url: interaction.member?.user?.avatar 
-          ? `https://cdn.discordapp.com/avatars/${interaction.member.user.id}/${interaction.member.user.avatar}.png`
-          : undefined
+        text: `Task Management System • Ready to be claimed`,
+        icon_url: 'https://cdn.discordapp.com/emojis/1234567890123456789.png'
       },
       timestamp: now
     };
