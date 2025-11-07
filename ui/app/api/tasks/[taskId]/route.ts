@@ -4,6 +4,12 @@ import { DynamoDBDocumentClient, UpdateCommand, DeleteCommand } from "@aws-sdk/l
 
 const client = new DynamoDBClient({
   region: process.env.AWS_REGION ?? "us-east-1",
+  ...(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && {
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    }
+  })
 });
 
 const dynamoDbClient = DynamoDBDocumentClient.from(client, {
@@ -17,6 +23,14 @@ export async function PATCH(
   { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
+    // Check if AWS credentials are available
+    if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+      return NextResponse.json({ 
+        error: 'AWS credentials not configured',
+        details: 'Missing AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY'
+      }, { status: 500 });
+    }
+
     const { taskId } = await params;
     const body = await request.json();
     const { status, userId = 'web-user' } = body;
@@ -66,6 +80,14 @@ export async function DELETE(
   { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
+    // Check if AWS credentials are available
+    if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+      return NextResponse.json({ 
+        error: 'AWS credentials not configured',
+        details: 'Missing AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY'
+      }, { status: 500 });
+    }
+
     const { taskId } = await params;
 
     await dynamoDbClient.send(

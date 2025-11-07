@@ -4,6 +4,12 @@ import { DynamoDBDocumentClient, QueryCommand, PutCommand } from "@aws-sdk/lib-d
 
 const client = new DynamoDBClient({
   region: process.env.AWS_REGION ?? "us-east-1",
+  ...(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && {
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    }
+  })
 });
 
 const dynamoDbClient = DynamoDBDocumentClient.from(client, {
@@ -14,6 +20,14 @@ const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID || '1021786969077973022';
 
 export async function GET(request: NextRequest) {
   try {
+    // Check if AWS credentials are available
+    if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+      return NextResponse.json({ 
+        error: 'AWS credentials not configured',
+        details: 'Missing AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY'
+      }, { status: 500 });
+    }
+
     console.log('API: Fetching tasks...');
     const { searchParams } = new URL(request.url);
     const guildId = searchParams.get('guildId') || GUILD_ID;
@@ -59,6 +73,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if AWS credentials are available
+    if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+      return NextResponse.json({ 
+        error: 'AWS credentials not configured',
+        details: 'Missing AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY'
+      }, { status: 500 });
+    }
+
     console.log('API: Creating task...');
     const body = await request.json();
     console.log('API: Task data:', body);

@@ -5,10 +5,10 @@ export async function GET() {
     const debugInfo = {
       timestamp: new Date().toISOString(),
       environment: {
-        NODE_ENV: process.env.NODE_ENV,
-        AWS_REGION: process.env.AWS_REGION,
-        NEXT_PUBLIC_AWS_REGION: process.env.NEXT_PUBLIC_AWS_REGION,
-        NEXT_PUBLIC_GUILD_ID: process.env.NEXT_PUBLIC_GUILD_ID,
+        NODE_ENV: process.env.NODE_ENV || 'unknown',
+        AWS_REGION: process.env.AWS_REGION || 'not-set',
+        NEXT_PUBLIC_AWS_REGION: process.env.NEXT_PUBLIC_AWS_REGION || 'not-set',
+        NEXT_PUBLIC_GUILD_ID: process.env.NEXT_PUBLIC_GUILD_ID || 'not-set',
         hasAccessKey: !!process.env.AWS_ACCESS_KEY_ID,
         hasSecretKey: !!process.env.AWS_SECRET_ACCESS_KEY,
         accessKeyLength: process.env.AWS_ACCESS_KEY_ID?.length || 0,
