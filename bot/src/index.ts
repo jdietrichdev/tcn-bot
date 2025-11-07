@@ -131,6 +131,16 @@ export const proxy = async (
                             (body as APIMessageComponentInteraction).data.custom_id === buttonPrefix
                           );
     
+    // Debug logging
+    if (body.type === InteractionType.MessageComponent) {
+      const customId = (body as APIMessageComponentInteraction).data.custom_id;
+      console.log(`Button interaction: ${customId}, isPublic: ${isPublicButton}`);
+    }
+    if (body.type === InteractionType.ApplicationCommand) {
+      const commandName = (body as APIChatInputApplicationCommandInteraction).data.name;
+      console.log(`Slash command: ${commandName}, isPublic: ${isPublicCommand}`);
+    }
+    
     response = {
       type: InteractionResponseType.DeferredChannelMessageWithSource,
       data: (isPublicCommand || isPublicButton) ? {} : {

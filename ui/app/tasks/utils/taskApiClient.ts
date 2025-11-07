@@ -1,6 +1,6 @@
 import { Task } from '../types/Task';
 
-const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID || '1111490767991615518';
+const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID || '1021786969077973022';
 
 export async function fetchTasks(guildId?: string): Promise<Task[]> {
   try {

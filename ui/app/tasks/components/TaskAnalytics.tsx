@@ -33,7 +33,7 @@ export function TaskAnalytics({ tasks, completedTasks = [] }: TaskAnalyticsProps
     const fetchAnalytics = async () => {
       setIsLoading(true);
       try {
-        const guildId = process.env.NEXT_PUBLIC_GUILD_ID || '1111490767991615518';
+        const guildId = process.env.NEXT_PUBLIC_GUILD_ID || '1021786969077973022';
         const data = await fetchAnalyticsData(guildId);
         setAnalyticsData(data);
       } catch (error) {

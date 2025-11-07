@@ -13,7 +13,7 @@ export interface CompletedTask {
   approvedAt: string;
 }
 
-export const fetchAnalyticsData = async (guildId: string = '1111490767991615518'): Promise<CompletedTask[]> => {
+export const fetchAnalyticsData = async (guildId: string = '1021786969077973022'): Promise<CompletedTask[]> => {
   try {
     const response = await fetch(`/api/analytics?guildId=${guildId}`);
     
@@ -29,7 +29,7 @@ export const fetchAnalyticsData = async (guildId: string = '1111490767991615518'
   }
 };
 
-export const fetchTasks = async (guildId: string = '1111490767991615518'): Promise<any[]> => {
+export const fetchTasks = async (guildId: string = '1021786969077973022'): Promise<any[]> => {
   try {
     const response = await fetch(`/api/tasks?guildId=${guildId}`);
     
