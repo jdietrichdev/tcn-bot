@@ -66,14 +66,16 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(tasks);
   } catch (error) {
-    console.error('Error fetching tasks:', error);
-    return NextResponse.json({ error: 'Failed to fetch tasks' }, { status: 500 });
+    console.error('Error fetching tasks:', error instanceof Error ? error.stack || error.message : error);
+
+   
+    const details = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: 'Failed to fetch tasks', details }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if AWS credentials are available
     if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
       return NextResponse.json({ 
         error: 'AWS credentials not configured',
