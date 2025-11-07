@@ -12,7 +12,6 @@ export default function DebugPage() {
 
   useEffect(() => {
     const testApi = async () => {
-      // Test debug endpoint first
       try {
         const debugResponse = await fetch('/api/debug');
         const debugData = await debugResponse.json();
@@ -89,7 +88,22 @@ export default function DebugPage() {
                     <li>Has AWS Secret Key: {debugInfo.data.environment.hasSecretKey ? 'YES' : 'NO'}</li>
                     <li>Access Key Length: {debugInfo.data.environment.accessKeyLength}</li>
                     <li>Secret Key Length: {debugInfo.data.environment.secretKeyLength}</li>
+                    <li>Access Key Prefix: {debugInfo.data.environment.accessKeyPrefix}</li>
                   </ul>
+                  {debugInfo.data.dynamodb && (
+                    <div className="mt-4">
+                      <p><strong>DynamoDB Connection Test:</strong></p>
+                      <ul className="list-disc ml-6 text-sm">
+                        <li>Status: {debugInfo.data.dynamodb.connectionTest}</li>
+                        {debugInfo.data.dynamodb.connectionTest === 'SUCCESS' && (
+                          <li>Available Tables: {debugInfo.data.dynamodb.tables.join(', ') || 'None'}</li>
+                        )}
+                        {debugInfo.data.dynamodb.error && (
+                          <li>Error: {debugInfo.data.dynamodb.error}</li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               )}
               {!debugInfo.success && (
