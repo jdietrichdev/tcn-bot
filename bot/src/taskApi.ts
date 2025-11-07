@@ -22,7 +22,7 @@ export const taskApi = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
   try {
     const { httpMethod, path, pathParameters, queryStringParameters, body } = event;
-    const guildId = queryStringParameters?.guildId || '1111490767991615518';
+    const guildId = queryStringParameters?.guildId || '1021786969077973022';
 
     switch (httpMethod) {
       case 'GET':

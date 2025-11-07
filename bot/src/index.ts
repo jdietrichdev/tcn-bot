@@ -104,12 +104,36 @@ export const proxy = async (
       'task-dashboard',
       'task-notify'
     ];
+    
+    const publicTaskButtons = [
+      'task_claim_',
+      'task_complete_',
+      'task_unclaim_',
+      'task_approve_',
+      'task_list_all',
+      'task_list_my',
+      'task_list_pending',
+      'task_list_claimed',
+      'task_list_completed',
+      'task_list_approved',
+      'task_list_available',
+      'task_create_new',
+      'task_refresh_list',
+      'task_refresh_dashboard'
+    ];
+    
     const isPublicCommand = body.type === InteractionType.ApplicationCommand && 
                            publicCommands.includes((body as APIChatInputApplicationCommandInteraction).data.name);
     
+    const isPublicButton = body.type === InteractionType.MessageComponent && 
+                          publicTaskButtons.some(buttonPrefix => 
+                            (body as APIMessageComponentInteraction).data.custom_id.startsWith(buttonPrefix) ||
+                            (body as APIMessageComponentInteraction).data.custom_id === buttonPrefix
+                          );
+    
     response = {
       type: InteractionResponseType.DeferredChannelMessageWithSource,
-      data: isPublicCommand ? {} : {
+      data: (isPublicCommand || isPublicButton) ? {} : {
         flags: MessageFlags.Ephemeral,
       },
     } as APIInteractionResponse;

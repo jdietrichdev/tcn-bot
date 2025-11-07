@@ -136,7 +136,7 @@ export class ServiceStack extends Stack {
             source: "tcn-bot-scheduled",
             "detail-type": "Generate Recruiter Score",
             detail: {
-              guildId: "1111490767991615518",
+              guildId: "1021786969077973022",
             },
           }),
         }),
@@ -155,7 +155,7 @@ export class ServiceStack extends Stack {
             source: "tcn-bot-scheduled",
             "detail-type": "Rank Proposal Reminder",
             detail: {
-              guildId: "1111490767991615518",
+              guildId: "1021786969077973022",
             },
           }),
         }),
@@ -170,7 +170,7 @@ export class ServiceStack extends Stack {
             source: "tcn-bot-scheduled",
             "detail-type": "Applicant Leave Check",
             detail: {
-              guildId: "1111490767991615518"
+              guildId: "1021786969077973022"
             }
           })
         })
