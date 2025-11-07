@@ -14,9 +14,18 @@ export default function DebugPage() {
       try {
         const response = await fetch('/api/tasks');
         const data = await response.json();
-        setApiTest({ success: true, taskCount: data.length, tasks: data.slice(0, 3) });
+        
+        console.log('API Response:', data);
+        console.log('Response type:', typeof data);
+        console.log('Is array:', Array.isArray(data));
+        
+        if (Array.isArray(data)) {
+          setApiTest({ success: true, taskCount: data.length, tasks: data.slice(0, 3), rawResponse: data });
+        } else {
+          setApiTest({ success: false, error: 'API returned non-array', rawResponse: data });
+        }
       } catch (error) {
-        setApiTest({ success: false, error: (error as Error).message || 'Unknown error' });
+        setApiTest({ success: false, error: (error as Error).message || 'Unknown error', rawResponse: null });
       }
       setLoading(false);
     };
@@ -44,7 +53,7 @@ export default function DebugPage() {
             <div>
               <p><strong>API Status:</strong> {apiTest.success ? 'SUCCESS' : 'FAILED'}</p>
               <p><strong>Task Count:</strong> {apiTest.success ? apiTest.taskCount : 'N/A'}</p>
-              {apiTest.success && apiTest.tasks.length > 0 && (
+              {apiTest.success && apiTest.tasks && apiTest.tasks.length > 0 && (
                 <div>
                   <p><strong>Sample Tasks:</strong></p>
                   <ul className="list-disc ml-6">
@@ -55,7 +64,17 @@ export default function DebugPage() {
                 </div>
               )}
               {!apiTest.success && (
-                <p><strong>Error:</strong> {apiTest.error}</p>
+                <div>
+                  <p><strong>Error:</strong> {apiTest.error}</p>
+                  {apiTest.rawResponse && (
+                    <div>
+                      <p><strong>Raw API Response:</strong></p>
+                      <pre className="bg-gray-100 p-2 text-sm overflow-auto max-h-40">
+                        {JSON.stringify(apiTest.rawResponse, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}
