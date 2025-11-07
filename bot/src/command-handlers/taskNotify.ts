@@ -78,10 +78,10 @@ export const handleTaskNotify = async (
     };
 
     const statusEmoji = {
-      pending: '🟡',
-      claimed: '🔵',
-      completed: '🟢',
-      approved: '✅'
+      pending: '☢️',
+      claimed: '�',
+      completed: '✅',
+      approved: '☑️'
     };
 
     let notificationType = '';
@@ -157,7 +157,7 @@ export const handleTaskNotify = async (
       ],
       color,
       footer: {
-        text: `Task ID: ${taskId} • Notified by ${notifierUsername}`,
+        text: `Notified by ${notifierUsername}`,
       },
       timestamp: new Date().toISOString()
     };

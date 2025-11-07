@@ -124,10 +124,10 @@ export const handleTaskList = async (
     
     const priorityEmoji = { high: '🔴', medium: '🟡', low: '🟢' };
     const statusEmoji = { 
-      pending: '🟡', 
-      claimed: '🔵', 
-      completed: '🟢', 
-      approved: '✅' 
+      pending: '☢️', 
+      claimed: '�', 
+      completed: '✅', 
+      approved: '☑️' 
     };
 
     const taskList = displayTasks.map((task: any, index: number) => {
@@ -140,7 +140,7 @@ export const handleTaskList = async (
     }).join('\n');
 
     const embed: APIEmbed = {
-      title: '📋 ╔═══════ TASK BOARD ═══════╗ 📝',
+      title: '📋 ╔═ TASK BOARD ═╗ 📝',
       description: taskList || '`No tasks found matching the current filters.`',
       color: 0x5865F2,
       fields: [

@@ -27,10 +27,10 @@ export function TaskCard({ task, onTaskUpdate }: TaskCardProps) {
 
   const getStatusEmoji = (status: string) => {
     switch (status) {
-      case 'pending': return '🟡';
-      case 'claimed': return '🔵';
-      case 'completed': return '🟢';
-      case 'approved': return '✅';
+      case 'pending': return '☢️';
+      case 'claimed': return '�';
+      case 'completed': return '✅';
+      case 'approved': return '☑️';
       default: return '⚪';
     }
   };
@@ -128,7 +128,7 @@ export function TaskCard({ task, onTaskUpdate }: TaskCardProps) {
               onClick={() => handleStatusChange('claimed')}
               className="flex-1 min-w-[100px] px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors font-medium touch-target"
             >
-              🔵 Claim
+              � Claim
             </button>
           )}
           

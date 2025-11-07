@@ -88,7 +88,7 @@ export const handleTaskCreate = async (
     };
 
     const embed: APIEmbed = {
-      title: '🎯 ╔══════ TASK CREATED ══════╗',
+      title: '🎯 ╔═ TASK CREATED ═╗',
       description: `### ${priorityEmoji[priority as keyof typeof priorityEmoji]} **${title}**\n\n` +
                   `> ${description || '*No description provided*'}`,
       fields: [
@@ -97,8 +97,7 @@ export const handleTaskCreate = async (
           value: [
             `**Priority:** ${priorityEmoji[priority as keyof typeof priorityEmoji]} \`${priority.toUpperCase()}\``,
             `**Assigned To:** ${assignedRole ? `<@&${assignedRole}>` : '`Anyone can claim`'}`,
-            `**Due Date:** ${dueDate ? `📅 \`${dueDate}\`` : '`No due date set`'}`,
-            `**Task ID:** \`${taskId}\``
+            `**Due Date:** ${dueDate ? `📅 \`${dueDate}\`` : '`No due date set`'}`
           ].join('\n'),
           inline: false
         },

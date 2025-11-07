@@ -122,7 +122,7 @@ export const handleTaskApprove = async (
     };
 
     const embed: APIEmbed = {
-      title: '👑 ╔═══════ TASK APPROVED ═══════╗ ✅',
+      title: '👑 ╔═ TASK APPROVED ═╗ ✅',
       description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n` +
                   `> ${task.description || '*No description provided*'}`,
       fields: [

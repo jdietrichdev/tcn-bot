@@ -71,14 +71,14 @@ export const handleTaskDelete = async (
     };
 
     const statusEmoji = {
-      pending: '🟡',
-      claimed: '🔵',
-      completed: '🟢',
-      approved: '✅'
+      pending: '☢️',
+      claimed: '�',
+      completed: '✅',
+      approved: '☑️'
     };
 
     const embed: APIEmbed = {
-      title: '🗑️ ╔═══════ TASK DELETED ═══════╗ ❌',
+      title: '🗑️ ╔═ TASK DELETED ═╗ ❌',
       description: `### ${priorityEmoji[taskPriority as keyof typeof priorityEmoji]} ~~**${taskTitle}**~~\n\n` +
                   `> *This task has been permanently removed from the system.*`,
       fields: [
@@ -102,7 +102,7 @@ export const handleTaskDelete = async (
         },
         {
           name: '⏰ **Deletion Info**',
-          value: `**When:** <t:${Math.floor(Date.now() / 1000)}:R>\n**Task ID:** \`${taskId}\``,
+          value: `**When:** <t:${Math.floor(Date.now() / 1000)}:R>`,
           inline: true
         },
         {

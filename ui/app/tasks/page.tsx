@@ -119,7 +119,7 @@ export default function TasksPage() {
           <div className="space-y-3 md:space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white flex items-center">
-                🟡 Pending
+                ☢️ Pending
                 <span className="ml-2 px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded-full text-sm">
                   {tasksByStatus.pending.length}
                 </span>
@@ -142,7 +142,7 @@ export default function TasksPage() {
           <div className="space-y-3 md:space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white flex items-center">
-                🔵 Claimed
+                � Claimed
                 <span className="ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full text-sm">
                   {tasksByStatus.claimed.length}
                 </span>
@@ -165,7 +165,7 @@ export default function TasksPage() {
           <div className="space-y-3 md:space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white flex items-center">
-                🟢 Completed
+                ✅ Completed
                 <span className="ml-2 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full text-sm">
                   {tasksByStatus.completed.length}
                 </span>
@@ -188,7 +188,7 @@ export default function TasksPage() {
           <div className="space-y-3 md:space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white flex items-center">
-                ✅ Recently Approved
+                ☑️ Recently Approved
                 <span className="ml-2 px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200 rounded-full text-sm">
                   0
                 </span>

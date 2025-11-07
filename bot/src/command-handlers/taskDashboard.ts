@@ -46,10 +46,10 @@ export const handleTaskDashboard = async (
 
     const priorityEmoji = { high: '🔴', medium: '🟡', low: '🟢' };
     const statusEmoji = { 
-      pending: '🟡', 
-      claimed: '🔵', 
-      completed: '🟢', 
-      approved: '✅' 
+      pending: '☢️', 
+      claimed: '�', 
+      completed: '✅', 
+      approved: '☑️' 
     };
 
     const recentTasksText = recentTasks.length > 0 
@@ -61,18 +61,18 @@ export const handleTaskDashboard = async (
       : '*No tasks yet*';
 
     const embed: APIEmbed = {
-      title: '📊 ╔═══════ TASK DASHBOARD ═══════╗ 💻',
+      title: '📊 ╔═ TASK DASHBOARD ═╗ 💻',
       description: `### 🎯 **TCN Task Management System**\n\n` +
-                  `> *Streamline your community tasks with our comprehensive management platform.*`,
+                  `> *TCN management platform.*`,
       fields: [
         {
           name: '📈 **Current Board Status**',
           value: [
             `**📋 Total Tasks:** \`${stats.total}\``,
-            `**🟡 Available:** \`${stats.pending}\``,
-            `**🔵 In Progress:** \`${stats.claimed}\``,
-            `**🟢 Ready for Review:** \`${stats.completed}\``,
-            `**✅ Completed:** \`${stats.approved}\``
+            `**☢️ Available:** \`${stats.pending}\``,
+            `**� In Progress:** \`${stats.claimed}\``,
+            `**✅ Ready for Review:** \`${stats.completed}\``,
+            `**☑️ Completed:** \`${stats.approved}\``
           ].join('\n'),
           inline: true
         },
@@ -108,7 +108,7 @@ export const handleTaskDashboard = async (
         },
         {
           name: '🌐 **Web Dashboard**',
-          value: '```\n• Full task management interface\n• Mobile-friendly design\n• Real-time analytics\n• Advanced filtering options\n```',
+          value: '```\n• Full task management interface\n• Real-time analytics\n• Advanced filtering options\n```',
           inline: false
         }
       ],

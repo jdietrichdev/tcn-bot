@@ -90,7 +90,7 @@ export const handleTaskUnclaim = async (
     };
 
     const embed: APIEmbed = {
-      title: '↩️ ╔═══════ TASK UNCLAIMED ═══════╗ 🔄',
+      title: '↩️ ╔═ TASK UNCLAIMED ═╗ 🔄',
       description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n` +
                   `> ${task.description || '*No description provided*'}`,
       fields: [
@@ -98,8 +98,7 @@ export const handleTaskUnclaim = async (
           name: '📊 **Task Information**',
           value: [
             `**Priority:** ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} \`${task.priority.toUpperCase()}\``,
-            `**Due Date:** ${task.dueDate ? `📅 \`${task.dueDate}\`` : '`No due date set`'}`,
-            `**Task ID:** \`${taskId}\``
+            `**Due Date:** ${task.dueDate ? `📅 \`${task.dueDate}\`` : '`No due date set`'}`
           ].join('\n'),
           inline: false
         },
