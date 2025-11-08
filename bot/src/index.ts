@@ -106,7 +106,8 @@ export const proxy = async (
       'task-set-due-date',
       'task-assign',
       'task-reminders',
-      'task-admin-unclaim'
+      'task-admin-unclaim',
+      'task-overview'
     ];
     
     const publicTaskButtons = [
