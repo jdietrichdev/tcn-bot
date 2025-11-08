@@ -11,7 +11,6 @@ import { updateResponse } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { storeCacheInDynamoDB } from '../component-handlers/taskListButton';
-import { v4 as uuidv4 } from 'uuid';
 
 export const handleTaskList = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -122,7 +121,7 @@ export const handleTaskList = async (
       return;
     }
 
-    const interactionId = uuidv4();
+    const interactionId = interaction.id;
     
     const tasksPerPage = 8;
     const totalPages = Math.ceil(tasks.length / tasksPerPage);

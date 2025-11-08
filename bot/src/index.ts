@@ -68,7 +68,11 @@ export const proxy = async (
     response = await handleUnrosteredPagination(body as APIMessageComponentInteraction, body.data.custom_id);
   } else if (
     body.type === InteractionType.MessageComponent &&
-    body.data.custom_id.startsWith("task_list_")
+    (body.data.custom_id.startsWith("task_list_first_") ||
+     body.data.custom_id.startsWith("task_list_prev_") ||
+     body.data.custom_id.startsWith("task_list_next_") ||
+     body.data.custom_id.startsWith("task_list_last_") ||
+     body.data.custom_id.startsWith("task_list_page_"))
   ) {
     console.log("Task list pagination button clicked");
     const { handleTaskListPagination } = await import("./component-handlers/taskListButton");
