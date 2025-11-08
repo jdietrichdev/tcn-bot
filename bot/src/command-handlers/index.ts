@@ -100,6 +100,8 @@ export const handleCommand = async (
         return await commands.handleTaskAdminUnclaim(event.detail);
       case "task-overview":
         return await commands.handleTaskOverview(event.detail);
+      case "register-subs":
+        return await commands.handleRegisterSubsCommand(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);
