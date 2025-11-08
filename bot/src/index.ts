@@ -121,6 +121,11 @@ export const proxy = async (
       'task_list_completed',
       'task_list_approved',
       'task_list_available',
+      'task_list_first_',
+      'task_list_prev_',
+      'task_list_next_',
+      'task_list_last_',
+      'task_list_page_',
       'task_create_new',
       'task_refresh_list',
       'task_refresh_dashboard'
