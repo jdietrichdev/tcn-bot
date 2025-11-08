@@ -150,7 +150,7 @@ export const handleTaskButtonInteraction = async (
       const { handleTaskList } = await import('../command-handlers/taskList');
       await handleTaskList(listInteraction as any);
 
-    } else if (customId === 'task_create') {
+    } else if (customId === 'task_create' || customId === 'task_create_new') {
       await updateResponse(interaction.application_id, interaction.token, {
         content: '💡 **Create New Task**: Use the `/task-create` slash command to create a new task!\n\n📝 *Example: `/task-create title:Update Discord Bot description:Add new features`*',
       });
