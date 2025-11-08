@@ -148,12 +148,25 @@ export const handleTaskListPagination = async (
     }).join('\n');
 
     const embed: APIEmbed = {
-      title: '📋 ✦ TASK BOARD ✦ 📝',
-      description: taskList || '`No tasks found matching the current filters.`',
+      title: `📋 ✦ TASK BOARD${data.filters.status || data.filters.role || data.filters.user ? ' (FILTERED)' : ''} ✦ 📝`,
+      description: (() => {
+        const filterParts = [];
+        if (data.filters.status) filterParts.push(`Status: ${data.filters.status}`);
+        if (data.filters.role) filterParts.push(`Role: <@&${data.filters.role}>`);
+        if (data.filters.user) filterParts.push(`User: <@${data.filters.user}>`);
+        
+        const isFiltered = filterParts.length > 0;
+        const filterDescription = isFiltered ? ` (${filterParts.join(', ')})` : '';
+        
+        if (isFiltered) {
+          return `Showing ${data.tasks.length} task${data.tasks.length === 1 ? '' : 's'} matching filters${filterDescription}\n\n${taskList || '`No tasks found matching the current filters.`'}`;
+        }
+        return taskList || '`No tasks found matching the current filters.`';
+      })(),
       color: 0x5865F2,
       fields: [
         {
-          name: '📊 **Task Statistics**',
+          name: `📊 **Task Statistics${data.filters.status || data.filters.role || data.filters.user ? ' (Filtered)' : ''}**`,
           value: [
             `**📬 Pending:** \`${data.allTaskCounts.pending}\``,
             `**📪 In Progress:** \`${data.allTaskCounts.claimed}\``,

@@ -71,23 +71,32 @@ export const handleTaskList = async (
     });
 
     const allTasks = queryResult.Items || [];
+    
+    const tasksToCalculateFrom = (statusFilter || roleFilter || userFilter) ? tasks : allTasks;
     const taskCounts = {
-      pending: allTasks.filter(t => t.status === 'pending').length,
-      claimed: allTasks.filter(t => t.status === 'claimed').length,
-      completed: allTasks.filter(t => t.status === 'completed').length,
-      approved: allTasks.filter(t => t.status === 'approved').length,
+      pending: tasksToCalculateFrom.filter(t => t.status === 'pending').length,
+      claimed: tasksToCalculateFrom.filter(t => t.status === 'claimed').length,
+      completed: tasksToCalculateFrom.filter(t => t.status === 'completed').length,
+      approved: tasksToCalculateFrom.filter(t => t.status === 'approved').length,
     };
+
+    const filterParts = [];
+    if (statusFilter) filterParts.push(`Status: ${statusFilter}`);
+    if (roleFilter) filterParts.push(`Role: <@&${roleFilter}>`);
+    if (userFilter) filterParts.push(`User: <@${userFilter}>`);
+    const filterDescription = filterParts.length > 0 ? ` (${filterParts.join(', ')})` : '';
+    const isFiltered = filterParts.length > 0;
 
     if (tasks.length === 0) {
       const noTasksEmbed: APIEmbed = {
-        title: '📋 ✦ TASK LIST ✦ 📝',
-        description: statusFilter 
-          ? `No tasks found with status **${statusFilter}**.`
+        title: `📋 ✦ TASK LIST${isFiltered ? ' (FILTERED)' : ''} ✦ 📝`,
+        description: isFiltered 
+          ? `No tasks found matching filters${filterDescription}.`
           : 'No tasks found. Create your first task with `/task-create`!',
         color: 0x808080,
         fields: [
           {
-            name: '📊 Task Summary',
+            name: `📊 Task Summary${isFiltered ? ' (Filtered Results)' : ''}`,
             value: `📬 Pending: ${taskCounts.pending}\n� Claimed: ${taskCounts.claimed}\n✅ Ready for Review: ${taskCounts.completed}\n☑️ Approved: ${taskCounts.approved}`,
             inline: true
           }
@@ -148,12 +157,14 @@ export const handleTaskList = async (
     }).join('\n');
 
     const embed: APIEmbed = {
-      title: '📋 ✦ TASK BOARD ✦ 📝',
-      description: taskList || '`No tasks found matching the current filters.`',
+      title: `📋 ✦ TASK BOARD${isFiltered ? ' (FILTERED)' : ''} ✦ 📝`,
+      description: isFiltered 
+        ? `Showing ${tasks.length} task${tasks.length === 1 ? '' : 's'} matching filters${filterDescription}\n\n${taskList || '`No tasks found matching the current filters.`'}`
+        : taskList || '`No tasks found matching the current filters.`',
       color: 0x5865F2,
       fields: [
         {
-          name: '📊 **Task Statistics**',
+          name: `📊 **Task Statistics${isFiltered ? ' (Filtered)' : ''}**`,
           value: [
             `**📬 Pending:** \`${taskCounts.pending}\``,
             `**📪 In Progress:** \`${taskCounts.claimed}\``,
