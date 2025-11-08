@@ -57,7 +57,11 @@ export const handleComponent = async (
   } else if (customId.startsWith("answer")) {
     await answerQuestion(interaction);
   } else if (customId.startsWith("task_")) {
-    if (customId.startsWith("task_list_")) {
+    if (customId.startsWith("task_list_first_") ||
+        customId.startsWith("task_list_prev_") ||
+        customId.startsWith("task_list_next_") ||
+        customId.startsWith("task_list_last_") ||
+        customId.startsWith("task_list_page_")) {
       return await handleTaskListPagination(interaction, customId);
     } else {
       await handleTaskButtonInteraction(interaction);
