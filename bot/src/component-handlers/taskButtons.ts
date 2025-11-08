@@ -84,7 +84,7 @@ export const handleTaskButtonInteraction = async (
         type: 2,
         data: {
           name: 'task-list',
-          options: [{ name: 'claimed-by', value: userId, type: 6 }]
+          options: [{ name: 'user', value: userId, type: 6 }]
         }
       };
       const { handleTaskList } = await import('../command-handlers/taskList');
