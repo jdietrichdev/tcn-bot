@@ -636,3 +636,63 @@ export const handleTaskAdminUnclaim = async (
     data: { choices: options },
   };
 };
+
+export const handleTaskOverview = async (
+  interaction: APIApplicationCommandAutocompleteInteraction
+): Promise<{ type: InteractionResponseType; data: APICommandAutocompleteInteractionResponseCallbackData }> => {
+  const guildId = interaction.guild_id!;
+  const focusedOption = interaction.data.options.find(
+    (option) => 'focused' in option && option.focused
+  ) as APIApplicationCommandInteractionDataStringOption | undefined;
+
+  if (!focusedOption || focusedOption.name !== "task") {
+    return {
+      type: InteractionResponseType.ApplicationCommandAutocompleteResult,
+      data: { choices: [] },
+    };
+  }
+
+  const query = focusedOption.value.toLowerCase();
+  let options: APICommandAutocompleteInteractionResponseCallbackData['choices'] = [];
+
+  try {
+    const result = await dynamoDbClient.send(
+      new QueryCommand({
+        TableName: 'BotTable',
+        KeyConditionExpression: 'pk = :guildId AND begins_with(sk, :taskPrefix)',
+        ExpressionAttributeValues: {
+          ':guildId': guildId,
+          ':taskPrefix': 'task#',
+        },
+        Limit: 25,
+      })
+    );
+
+    const tasks = result.Items || [];
+    const filteredTasks = tasks
+      .filter(task => 
+        task.title?.toLowerCase().includes(query) ||
+        task.taskId?.toLowerCase().includes(query)
+      )
+      .slice(0, 25);
+
+    options = filteredTasks.map((task) => {
+      const status = task.status ? ` [${task.status.toUpperCase()}]` : "";
+      const priority = task.priority ? ` (${task.priority})` : "";
+      const claimedBy = task.claimedBy ? ` - Claimed by ${task.claimedBy}` : "";
+      const dueDate = task.dueDate ? ` - Due: ${new Date(task.dueDate).toLocaleDateString()}` : "";
+
+      return {
+        name: `${task.title}${status}${priority}${claimedBy}${dueDate}`,
+        value: task.taskId,
+      };
+    });
+  } catch (error) {
+    console.error("Error in task-overview autocomplete:", error);
+  }
+
+  return {
+    type: InteractionResponseType.ApplicationCommandAutocompleteResult,
+    data: { choices: options },
+  };
+};

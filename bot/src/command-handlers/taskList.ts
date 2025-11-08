@@ -10,6 +10,8 @@ import {
 import { updateResponse } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { storeCacheInDynamoDB } from '../component-handlers/taskListButton';
+import { v4 as uuidv4 } from 'uuid';
 
 export const handleTaskList = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -79,7 +81,7 @@ export const handleTaskList = async (
 
     if (tasks.length === 0) {
       const noTasksEmbed: APIEmbed = {
-        title: '📋 ═══════ TASK LIST ═══════ 📝',
+        title: '📋 ═════ TASK LIST ═════ 📝',
         description: statusFilter 
           ? `No tasks found with status **${statusFilter}**.`
           : 'No tasks found. Create your first task with `/task-create`!',
@@ -120,12 +122,17 @@ export const handleTaskList = async (
       return;
     }
 
-    const displayTasks = tasks.slice(0, 10);
+    const interactionId = uuidv4();
+    
+    const tasksPerPage = 8;
+    const totalPages = Math.ceil(tasks.length / tasksPerPage);
+    const currentPage = 0;
+    const displayTasks = tasks.slice(0, tasksPerPage);
     
     const priorityEmoji = { high: '🔴', medium: '🟡', low: '🟢' };
     const statusEmoji = {
       pending: '📬', 
-      claimed: '�',
+      claimed: '📪',
       completed: '✅',
       approved: '☑️'
     };
@@ -135,8 +142,10 @@ export const handleTaskList = async (
       const status = statusEmoji[task.status as keyof typeof statusEmoji] || '❓';
       const dueDate = task.dueDate ? ` (Due: ${task.dueDate})` : '';
       const claimedBy = task.claimedBy ? ` - <@${task.claimedBy}>` : '';
+      const assignedRole = task.assignedRole ? ` - <@&${task.assignedRole}>` : '';
+      const assignedTo = task.assignedTo ? ` - <@${task.assignedTo}>` : '';
       
-      return `${priority}${status} **${task.title}**${dueDate}${claimedBy}`;
+      return `${priority}${status} **${task.title}**${dueDate}${claimedBy}${assignedRole}${assignedTo}`;
     }).join('\n');
 
     const embed: APIEmbed = {
@@ -172,8 +181,8 @@ export const handleTaskList = async (
         }
       ],
       footer: {
-        text: tasks.length > 10 
-          ? `📄 Showing first 10 of ${tasks.length} tasks • Use dashboard for complete view`
+        text: totalPages > 1 
+          ? `Page 1 of ${totalPages}  •  ${tasks.length} task${tasks.length !== 1 ? 's' : ''} displayed`
           : `📊 ${tasks.length} task${tasks.length !== 1 ? 's' : ''} on the board`,
       },
       timestamp: new Date().toISOString()
@@ -192,7 +201,54 @@ export const handleTaskList = async (
       });
     }
 
-    const components = [{
+    const components = [];
+    
+    // Add pagination buttons if there are multiple pages
+    if (totalPages > 1) {
+      components.push({
+        type: ComponentType.ActionRow as ComponentType.ActionRow,
+        components: [
+          {
+            type: ComponentType.Button as ComponentType.Button,
+            custom_id: `task_list_first_${interactionId}`,
+            emoji: { name: '⏮️' },
+            style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+            disabled: currentPage === 0
+          },
+          {
+            type: ComponentType.Button as ComponentType.Button,
+            custom_id: `task_list_prev_${interactionId}`,
+            emoji: { name: '◀️' },
+            style: ButtonStyle.Primary as ButtonStyle.Primary,
+            disabled: currentPage === 0
+          },
+          {
+            type: ComponentType.Button as ComponentType.Button,
+            custom_id: `task_list_page_${interactionId}`,
+            label: `1 / ${totalPages}`,
+            style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+            disabled: true
+          },
+          {
+            type: ComponentType.Button as ComponentType.Button,
+            custom_id: `task_list_next_${interactionId}`,
+            emoji: { name: '▶️' },
+            style: ButtonStyle.Primary as ButtonStyle.Primary,
+            disabled: currentPage === totalPages - 1
+          },
+          {
+            type: ComponentType.Button as ComponentType.Button,
+            custom_id: `task_list_last_${interactionId}`,
+            emoji: { name: '⏭️' },
+            style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+            disabled: currentPage === totalPages - 1
+          }
+        ]
+      });
+    }
+
+    // Add action buttons
+    components.push({
       type: ComponentType.ActionRow as ComponentType.ActionRow,
       components: [
         {
@@ -216,12 +272,29 @@ export const handleTaskList = async (
           url: `${process.env.DASHBOARD_URL || 'https://d19x3gu4qo04f3.cloudfront.net'}/tasks`
         }
       ]
-    }];
+    });
 
     await updateResponse(interaction.application_id, interaction.token, {
       embeds: [embed],
       components
     });
+
+    // Store cache for pagination (only if there are multiple pages)
+    if (totalPages > 1) {
+      const cacheData = {
+        tasks,
+        filters: {
+          status: statusFilter,
+          role: roleFilter,
+          user: userFilter
+        },
+        channelId: interaction.channel?.id || '',
+        messageId: '', // Will be updated after response
+        allTaskCounts: taskCounts
+      };
+      
+      await storeCacheInDynamoDB(interactionId, cacheData);
+    }
 
   } catch (err) {
     console.error('Failed to list tasks:', err);

@@ -98,6 +98,8 @@ export const handleCommand = async (
         return await commands.handleTaskReminders(event.detail);
       case "task-admin-unclaim":
         return await commands.handleTaskAdminUnclaim(event.detail);
+      case "task-overview":
+        return await commands.handleTaskOverview(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);

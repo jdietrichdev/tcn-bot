@@ -20,10 +20,11 @@ import { nominationResults } from "./nominationResults";
 import { answerQuestion } from "./answerQuestion";
 import { handleUnrosteredPagination } from "./unrosteredButton";
 import { handleTaskButtonInteraction } from "./taskButtons";
+import { handleTaskListPagination } from "./taskListButton";
 
 export const handleComponent = async (
   interaction: APIMessageComponentInteraction
-) => {
+): Promise<any> => {
   const customId = interaction.data.custom_id;
   if (customId === "approveApp") {
     await approveApp(interaction, getConfig(interaction.guild_id!));
@@ -56,6 +57,12 @@ export const handleComponent = async (
   } else if (customId.startsWith("answer")) {
     await answerQuestion(interaction);
   } else if (customId.startsWith("task_")) {
-    await handleTaskButtonInteraction(interaction);
+    if (customId.startsWith("task_list_")) {
+      return await handleTaskListPagination(interaction, customId);
+    } else {
+      await handleTaskButtonInteraction(interaction);
+    }
+  } else if (customId.startsWith("unrostered_")) {
+    return await handleUnrosteredPagination(interaction, customId);
   }
 };

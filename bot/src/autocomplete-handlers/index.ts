@@ -46,6 +46,8 @@ export const handleAutocomplete = async (
         return await autocomplete.handleTaskAssign(interaction);
       case "task-admin-unclaim":
         return await autocomplete.handleTaskAdminUnclaim(interaction);
+      case "task-overview":
+        return await autocomplete.handleTaskOverview(interaction);
       default:
         console.log("Autocomplete not found, no response needed");
         throw new Error("No autocomplete process defined");

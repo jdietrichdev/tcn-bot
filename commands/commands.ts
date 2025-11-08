@@ -856,3 +856,14 @@ export const taskAdminUnclaim = new SlashCommandBuilder()
       .setRequired(true)
       .setAutocomplete(true);
   });
+
+export const taskOverview = new SlashCommandBuilder()
+  .setName("task-overview")
+  .setDescription("View detailed information about a specific task")
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to view details for")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
