@@ -68,6 +68,13 @@ export const proxy = async (
     response = await handleUnrosteredPagination(body as APIMessageComponentInteraction, body.data.custom_id);
   } else if (
     body.type === InteractionType.MessageComponent &&
+    body.data.custom_id.startsWith("task_list_")
+  ) {
+    console.log("Task list pagination button clicked");
+    const { handleTaskListPagination } = await import("./component-handlers/taskListButton");
+    response = await handleTaskListPagination(body as APIMessageComponentInteraction, body.data.custom_id);
+  } else if (
+    body.type === InteractionType.MessageComponent &&
     body.data.custom_id.startsWith("roster_show_")
   ) {
     console.log("Roster show pagination button clicked");
