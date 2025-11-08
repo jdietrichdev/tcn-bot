@@ -61,7 +61,7 @@ export const handleTaskDashboard = async (
       : '*No tasks yet*';
 
     const embed: APIEmbed = {
-      title: '📊 ╔═ TASK DASHBOARD ═╗ 💻',
+      title: '📊 ✦ TASK DASHBOARD ✦ 💻',
       description: `### 🎯 **TCN Task Management System**\n\n` +
                   `> *TCN management platform.*`,
       fields: [

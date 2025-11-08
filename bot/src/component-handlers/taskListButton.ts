@@ -26,7 +26,7 @@ interface TaskListCacheData {
 }
 
 export const storeCacheInDynamoDB = async (interactionId: string, data: TaskListCacheData) => {
-  const ttl = Math.floor(Date.now() / 1000) + (15 * 60); // 15 minutes TTL
+  const ttl = Math.floor(Date.now() / 1000) + (15 * 60);
   
   await dynamoDbClient.send(
     new PutCommand({
@@ -70,7 +70,7 @@ export const handleTaskListPagination = async (
   customId: string
 ) => {
   const parts = customId.split('_');
-  const action = parts[2]; // task_list_first, task_list_prev, etc.
+  const action = parts[2];
   const originalInteractionId = parts[3];
 
   console.log(`Task list pagination: action=${action}, originalInteractionId=${originalInteractionId}`);
@@ -148,7 +148,7 @@ export const handleTaskListPagination = async (
     }).join('\n');
 
     const embed: APIEmbed = {
-      title: '📋 ╔═ TASK BOARD ═╗ 📝',
+      title: '📋 ✦ TASK BOARD ✦ 📝',
       description: taskList || '`No tasks found matching the current filters.`',
       color: 0x5865F2,
       fields: [
@@ -185,7 +185,6 @@ export const handleTaskListPagination = async (
       timestamp: new Date().toISOString()
     };
 
-    // Add filter info if filters are applied
     if (data.filters.status || data.filters.role || data.filters.user) {
       const filterInfo = [];
       if (data.filters.status) filterInfo.push(`Status: ${data.filters.status}`);
@@ -205,7 +204,6 @@ export const handleTaskListPagination = async (
   const createComponents = (currentPage: number) => {
     const components = [];
     
-    // Only add pagination if there are multiple pages
     if (pages.length > 1) {
       components.push({
         type: ComponentType.ActionRow,
@@ -249,7 +247,6 @@ export const handleTaskListPagination = async (
       });
     }
 
-    // Add action buttons
     components.push({
       type: ComponentType.ActionRow,
       components: [
@@ -285,5 +282,60 @@ export const handleTaskListPagination = async (
       embeds: [createTaskEmbed(newPage)],
       components: createComponents(newPage)
     }
+  };
+};
+
+export const handleTaskListFilterButton = async (
+  interaction: APIMessageComponentInteraction,
+  customId: string
+) => {
+  const userId = interaction.member?.user?.id || interaction.user?.id!;
+  
+  let fakeInteraction: any = {
+    ...interaction,
+    type: 2,
+    data: {
+      name: 'task-list',
+      options: []
+    }
+  };
+
+  switch (customId) {
+    case 'task_list_all':
+      break;
+    case 'task_list_my':
+      fakeInteraction.data.options = [{ name: 'user', value: userId, type: 6 }];
+      break;
+    case 'task_list_pending':
+      fakeInteraction.data.options = [{ name: 'status', value: 'pending', type: 3 }];
+      break;
+    case 'task_list_claimed':
+      fakeInteraction.data.options = [{ name: 'status', value: 'claimed', type: 3 }];
+      break;
+    case 'task_list_completed':
+      fakeInteraction.data.options = [{ name: 'status', value: 'completed', type: 3 }];
+      break;
+    case 'task_list_approved':
+      fakeInteraction.data.options = [{ name: 'status', value: 'approved', type: 3 }];
+      break;
+    case 'task_list_available':
+      fakeInteraction.data.options = [{ name: 'status', value: 'pending', type: 3 }];
+      break;
+    default:
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: '❌ Unknown task list filter.',
+          flags: 64
+        }
+      };
+  }
+
+  const { handleTaskList } = await import('../command-handlers/taskList');
+  await handleTaskList(fakeInteraction);
+
+  return {
+    type: InteractionResponseType.DeferredChannelMessageWithSource,
+    data: {}
   };
 };

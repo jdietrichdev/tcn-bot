@@ -148,7 +148,7 @@ export const handleTaskCreate = async (
     }
 
     const embed: APIEmbed = {
-      title: '🎯 ╔═ TASK CREATED ═╗',
+      title: '🎯 ✦ TASK CREATED ✦',
       description: `### ${priorityEmoji[priority as keyof typeof priorityEmoji]} **${title}**\n\n` +
                   `> ${description || '*No description provided*'}`,
       fields: taskFields,

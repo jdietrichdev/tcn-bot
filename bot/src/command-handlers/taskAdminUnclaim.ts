@@ -94,7 +94,7 @@ export const handleTaskAdminUnclaim = async (
     };
 
     const embed: APIEmbed = {
-      title: '🛡️ ╔═ ADMIN TASK UNCLAIM ═╗',
+      title: '🛡️ ✦ ADMIN TASK UNCLAIM ✦',
       description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n` +
                   `> ${task.description || '*No description provided*'}`,
       fields: [

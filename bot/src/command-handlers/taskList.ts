@@ -80,7 +80,7 @@ export const handleTaskList = async (
 
     if (tasks.length === 0) {
       const noTasksEmbed: APIEmbed = {
-        title: '📋 ═════ TASK LIST ═════ 📝',
+        title: '📋 ✦ TASK LIST ✦ 📝',
         description: statusFilter 
           ? `No tasks found with status **${statusFilter}**.`
           : 'No tasks found. Create your first task with `/task-create`!',
@@ -148,7 +148,7 @@ export const handleTaskList = async (
     }).join('\n');
 
     const embed: APIEmbed = {
-      title: '📋 ╔═ TASK BOARD ═╗ 📝',
+      title: '📋 ✦ TASK BOARD ✦ 📝',
       description: taskList || '`No tasks found matching the current filters.`',
       color: 0x5865F2,
       fields: [

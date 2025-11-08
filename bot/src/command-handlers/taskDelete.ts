@@ -78,8 +78,8 @@ export const handleTaskDelete = async (
     };
 
     const embed: APIEmbed = {
-      title: '🗑️ ╔═ TASK DELETED ═╗ ❌',
-      description: `### ${priorityEmoji[taskPriority as keyof typeof priorityEmoji]} ~~**${taskTitle}**~~\n\n` +
+      title: '🗑️ ✦ TASK DELETED ✦ ❌',
+      description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n` +
                   `> *This task has been permanently removed from the system.*`,
       fields: [
         {

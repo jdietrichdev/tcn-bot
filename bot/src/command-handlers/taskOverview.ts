@@ -74,7 +74,7 @@ export const handleTaskOverview = async (
     const approvedDate = task.approvedAt ? new Date(task.approvedAt) : null;
 
     const embed: APIEmbed = {
-      title: '🔍 ╔═ TASK OVERVIEW ═╗',
+      title: '🔍 ✦ TASK OVERVIEW ✦',
       description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n` +
                   `> ${task.description || '*No description provided*'}`,
       color: task.priority === 'high' ? 0xff4444 : task.priority === 'medium' ? 0xffaa00 : 0x00ff00,

@@ -111,7 +111,7 @@ export const handleTaskComplete = async (
     };
 
     const embed: APIEmbed = {
-      title: '🎉 ╔═ TASK COMPLETED ═╗ 🏆',
+      title: '🎉 ✦ TASK COMPLETED ✦ 🏆',
       description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n` +
                   `> ${task.description || '*No description provided*'}`,
       fields: [

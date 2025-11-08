@@ -90,7 +90,7 @@ export const handleTaskUnclaim = async (
     };
 
     const embed: APIEmbed = {
-      title: '↩️ ╔═ TASK UNCLAIMED ═╗ 🔄',
+      title: '↩️ ✦ TASK UNCLAIMED ✦ 🔄',
       description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n` +
                   `> ${task.description || '*No description provided*'}`,
       fields: [

@@ -107,7 +107,7 @@ export const handleTaskClaim = async (
     };
 
     const embed: APIEmbed = {
-      title: '🚀 ╔═ TASK CLAIMED ═╗',
+      title: '🚀 ✦ TASK CLAIMED ✦',
       description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n` +
                   `> ${task.description || '*No description provided*'}`,
       fields: [

@@ -14,7 +14,7 @@ export const handleTaskReminders = async (
     await handleDailyTaskReminders({ guildId });
 
     const embed: APIEmbed = {
-      title: '✅ ╔═ TASK SUMMARIES SENT ═╗',
+      title: '✅ ✦ TASK SUMMARIES SENT ✦',
       description: 'Task summaries have been processed and sent to assignees, showing all pending and claimed tasks grouped by role/user.',
       color: 0x00ff00,
       footer: {
