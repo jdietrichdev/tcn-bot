@@ -203,7 +203,6 @@ export const handleTaskList = async (
 
     const components = [];
     
-    // Add pagination buttons if there are multiple pages
     if (totalPages > 1) {
       components.push({
         type: ComponentType.ActionRow as ComponentType.ActionRow,
@@ -247,7 +246,6 @@ export const handleTaskList = async (
       });
     }
 
-    // Add action buttons
     components.push({
       type: ComponentType.ActionRow as ComponentType.ActionRow,
       components: [
@@ -279,21 +277,29 @@ export const handleTaskList = async (
       components
     });
 
-    // Store cache for pagination (only if there are multiple pages)
     if (totalPages > 1) {
-      const cacheData = {
-        tasks,
-        filters: {
-          status: statusFilter,
-          role: roleFilter,
-          user: userFilter
-        },
-        channelId: interaction.channel?.id || '',
-        messageId: '', // Will be updated after response
-        allTaskCounts: taskCounts
-      };
+      const { getOriginalResponse } = await import('../adapters/discord-adapter');
       
-      await storeCacheInDynamoDB(interactionId, cacheData);
+      try {
+        const message = await getOriginalResponse(interaction.application_id, interaction.token);
+        
+        const cacheData = {
+          tasks,
+          filters: {
+            status: statusFilter,
+            role: roleFilter,
+            user: userFilter
+          },
+          channelId: interaction.channel?.id || '',
+          messageId: message.id,
+          allTaskCounts: taskCounts
+        };
+        
+        await storeCacheInDynamoDB(interactionId, cacheData);
+        console.log(`Cached task list message: interaction=${interactionId}, message=${message.id}, channel=${cacheData.channelId}`);
+      } catch (error) {
+        console.error('Failed to cache task list message:', error);
+      }
     }
 
   } catch (err) {
