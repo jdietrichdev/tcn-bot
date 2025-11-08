@@ -40,3 +40,7 @@ export * from "./taskUnclaim";
 export * from "./taskApprove";
 export * from "./taskDelete";
 export * from "./taskNotify";
+export * from "./taskSetDueDate";
+export * from "./taskAssign";
+export * from "./taskReminders";
+export * from "./taskAdminUnclaim";

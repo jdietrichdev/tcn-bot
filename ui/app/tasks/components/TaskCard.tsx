@@ -27,8 +27,8 @@ export function TaskCard({ task, onTaskUpdate }: TaskCardProps) {
 
   const getStatusEmoji = (status: string) => {
     switch (status) {
-      case 'pending': return '☢️';
-      case 'claimed': return '�';
+      case 'pending': return '📬';
+      case 'claimed': return '📪';
       case 'completed': return '✅';
       case 'approved': return '☑️';
       default: return '⚪';

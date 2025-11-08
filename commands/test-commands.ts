@@ -41,7 +41,11 @@ import {
   taskUnclaim,
   taskDelete,
   taskDashboard,
-  taskNotify
+  taskNotify,
+  taskSetDueDate,
+  taskAssign,
+  taskReminders,
+  taskAdminUnclaim
 } from "./commands";
 
 export const testCommands = [
@@ -87,5 +91,9 @@ export const testCommands = [
   taskUnclaim,
   taskDelete,
   taskDashboard,
-  taskNotify
+  taskNotify,
+  taskSetDueDate,
+  taskAssign,
+  taskReminders,
+  taskAdminUnclaim
 ];

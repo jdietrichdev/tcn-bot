@@ -87,7 +87,7 @@ export const handleTaskList = async (
         fields: [
           {
             name: '📊 Task Summary',
-            value: `🟡 Pending: ${taskCounts.pending}\n🔵 Claimed: ${taskCounts.claimed}\n🟢 Completed: ${taskCounts.completed}\n✅ Approved: ${taskCounts.approved}`,
+            value: `📬 Pending: ${taskCounts.pending}\n� Claimed: ${taskCounts.claimed}\n✅ Ready for Review: ${taskCounts.completed}\n☑️ Approved: ${taskCounts.approved}`,
             inline: true
           }
         ],
@@ -123,11 +123,11 @@ export const handleTaskList = async (
     const displayTasks = tasks.slice(0, 10);
     
     const priorityEmoji = { high: '🔴', medium: '🟡', low: '🟢' };
-    const statusEmoji = { 
-      pending: '☢️', 
-      claimed: '�', 
-      completed: '✅', 
-      approved: '☑️' 
+    const statusEmoji = {
+      pending: '📬', 
+      claimed: '�',
+      completed: '✅',
+      approved: '☑️'
     };
 
     const taskList = displayTasks.map((task: any, index: number) => {
@@ -147,10 +147,10 @@ export const handleTaskList = async (
         {
           name: '📊 **Task Statistics**',
           value: [
-            `**🟡 Pending:** \`${taskCounts.pending}\``,
-            `**🔵 In Progress:** \`${taskCounts.claimed}\``,
-            `**🟢 Completed:** \`${taskCounts.completed}\``,
-            `**✅ Approved:** \`${taskCounts.approved}\``
+            `**📬 Pending:** \`${taskCounts.pending}\``,
+            `**📪 In Progress:** \`${taskCounts.claimed}\``,
+            `**✅ Completed:** \`${taskCounts.completed}\``,
+            `**☑️ Approved:** \`${taskCounts.approved}\``
           ].join('\n'),
           inline: true
         },
@@ -163,10 +163,10 @@ export const handleTaskList = async (
             '🟢 `Low Priority`',
             '',
             '**Statuses:**',
-            '🟡 `Available`',
-            '🔵 `In Progress`',
-            '� `Ready for Review`',
-            '✅ `Completed`'
+            '📬 `Pending`',
+            '📪 `Claimed`',
+            '✅ `Ready for Review`',
+            '☑️ `Approved`'
           ].join('\n'),
           inline: true
         }

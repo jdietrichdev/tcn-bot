@@ -33,6 +33,10 @@ import {
   taskDelete,
   taskDashboard,
   taskNotify,
+  taskSetDueDate,
+  taskAssign,
+  taskReminders,
+  taskAdminUnclaim
 } from "./commands";
 
 export const tcnCommands = [
@@ -70,4 +74,8 @@ export const tcnCommands = [
   taskDelete,
   taskDashboard,
   taskNotify,
+  taskSetDueDate,
+  taskAssign,
+  taskReminders,
+  taskAdminUnclaim,
 ];

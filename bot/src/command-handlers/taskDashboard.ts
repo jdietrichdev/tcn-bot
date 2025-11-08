@@ -45,11 +45,11 @@ export const handleTaskDashboard = async (
       .slice(0, 5);
 
     const priorityEmoji = { high: '🔴', medium: '🟡', low: '🟢' };
-    const statusEmoji = { 
-      pending: '☢️', 
-      claimed: '�', 
-      completed: '✅', 
-      approved: '☑️' 
+    const statusEmoji = {
+      pending: '📬', 
+      claimed: '📪',
+      completed: '✅',
+      approved: '☑️'
     };
 
     const recentTasksText = recentTasks.length > 0 
@@ -69,10 +69,10 @@ export const handleTaskDashboard = async (
           name: '📈 **Current Board Status**',
           value: [
             `**📋 Total Tasks:** \`${stats.total}\``,
-            `**☢️ Available:** \`${stats.pending}\``,
-            `**� In Progress:** \`${stats.claimed}\``,
+            `**📬 Pending:** \`${stats.pending}\``,
+            `**📪 Claimed:** \`${stats.claimed}\``,
             `**✅ Ready for Review:** \`${stats.completed}\``,
-            `**☑️ Completed:** \`${stats.approved}\``
+            `**☑️ Approved:** \`${stats.approved}\``
           ].join('\n'),
           inline: true
         },

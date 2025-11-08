@@ -59,7 +59,7 @@ export function TaskFilters({ filters, onFiltersChange, tasks }: TaskFiltersProp
             <option value="all">All Status</option>
             <option value="pending">🟡 Pending</option>
             <option value="claimed">🔵 Claimed</option>
-            <option value="completed">🟢 Completed</option>
+            <option value="completed">✅ Ready for Review</option>
             <option value="approved">✅ Approved</option>
           </select>
         </div>

@@ -34,7 +34,7 @@ export function TaskStats({ tasks }: TaskStatsProps) {
       
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
         <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
-        <div className="text-sm text-gray-600 dark:text-gray-400">Completed</div>
+        <div className="text-sm text-gray-600 dark:text-gray-400">Ready for Review</div>
       </div>
       
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">

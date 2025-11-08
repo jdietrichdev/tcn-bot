@@ -71,8 +71,8 @@ export const handleTaskDelete = async (
     };
 
     const statusEmoji = {
-      pending: '☢️',
-      claimed: '�',
+      pending: '📬',
+      claimed: '📪',
       completed: '✅',
       approved: '☑️'
     };

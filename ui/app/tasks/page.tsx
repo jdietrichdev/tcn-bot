@@ -119,7 +119,7 @@ export default function TasksPage() {
           <div className="space-y-3 md:space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white flex items-center">
-                ☢️ Pending
+                📬 Pending
                 <span className="ml-2 px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded-full text-sm">
                   {tasksByStatus.pending.length}
                 </span>
@@ -142,7 +142,7 @@ export default function TasksPage() {
           <div className="space-y-3 md:space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white flex items-center">
-                � Claimed
+                📪 Claimed
                 <span className="ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full text-sm">
                   {tasksByStatus.claimed.length}
                 </span>
@@ -161,11 +161,11 @@ export default function TasksPage() {
             </div>
           </div>
 
-          {/* Completed Tasks */}
+          {/* Ready for Review Tasks */}
           <div className="space-y-3 md:space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white flex items-center">
-                ✅ Completed
+                ✅ Ready for Review
                 <span className="ml-2 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full text-sm">
                   {tasksByStatus.completed.length}
                 </span>
@@ -178,7 +178,7 @@ export default function TasksPage() {
               {tasksByStatus.completed.length === 0 && (
                 <div className="text-center py-6 md:py-8 text-gray-500 dark:text-gray-400">
                   <div className="text-3xl md:text-4xl mb-2">⏳</div>
-                  <p className="text-sm md:text-base">No completed tasks</p>
+                  <p className="text-sm md:text-base">No tasks ready for review</p>
                 </div>
               )}
             </div>

@@ -177,6 +177,24 @@ export class ServiceStack extends Stack {
       ]
     })
 
+    new Rule(this, 'daily-task-reminders', {
+      schedule: Schedule.cron({
+        minute: "0",
+        hour: "9", // 9 AM UTC (adjust as needed for your timezone)
+      }),
+      targets: [
+        new LambdaFunction(this.scheduled, {
+          event: RuleTargetInput.fromObject({
+            source: "tcn-bot-scheduled",
+            "detail-type": "Daily Task Reminders",
+            detail: {
+              guildId: "1021786969077973022"
+            }
+          })
+        })
+      ]
+    })
+
     this.proxy = new Lambda(this, "bot-proxy", {
       functionName: "bot-proxy",
       runtime: Runtime.NODEJS_22_X,

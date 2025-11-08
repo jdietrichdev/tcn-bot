@@ -78,8 +78,8 @@ export const handleTaskNotify = async (
     };
 
     const statusEmoji = {
-      pending: '☢️',
-      claimed: '�',
+      pending: '📬',
+      claimed: '📪',
       completed: '✅',
       approved: '☑️'
     };

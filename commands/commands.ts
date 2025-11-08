@@ -693,6 +693,12 @@ export const taskCreate = new SlashCommandBuilder()
       .setName("due-date")
       .setDescription("Due date for the task (YYYY-MM-DD)")
       .setRequired(false);
+  })
+  .addUserOption((option) => {
+    return option
+      .setName("assign-to")
+      .setDescription("User to assign this task to (optional)")
+      .setRequired(false);
   });
 
 export const taskClaim = new SlashCommandBuilder()
@@ -796,6 +802,57 @@ export const taskNotify = new SlashCommandBuilder()
     return option
       .setName("task")
       .setDescription("Task to notify about")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const taskSetDueDate = new SlashCommandBuilder()
+  .setName("task-set-due-date")
+  .setDescription("Set or update the due date for a task")
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to set due date for")
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("due_date")
+      .setDescription("Due date (YYYY-MM-DD format, e.g., 2025-11-15)")
+      .setRequired(true);
+  });
+
+export const taskAssign = new SlashCommandBuilder()
+  .setName("task-assign")
+  .setDescription("Assign a task to a specific user")
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to assign")
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addUserOption((option) => {
+    return option
+      .setName("user")
+      .setDescription("User to assign the task to")
+      .setRequired(true);
+  });
+
+export const taskReminders = new SlashCommandBuilder()
+  .setName("task-reminders")
+  .setDescription("Manually send task reminders for due and overdue tasks")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+export const taskAdminUnclaim = new SlashCommandBuilder()
+  .setName("task-admin-unclaim")
+  .setDescription("Admin command to forcibly unclaim a task from a user")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to unclaim from the current user")
       .setRequired(true)
       .setAutocomplete(true);
   });

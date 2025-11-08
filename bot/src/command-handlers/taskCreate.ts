@@ -2,6 +2,7 @@ import {
   APIChatInputApplicationCommandInteraction, 
   APIApplicationCommandInteractionDataStringOption,
   APIApplicationCommandInteractionDataRoleOption,
+  APIApplicationCommandInteractionDataUserOption,
   APIEmbed,
   ComponentType,
   ButtonStyle
@@ -34,6 +35,10 @@ export const handleTaskCreate = async (
     const dueDateOption = interaction.data.options?.find(
       (opt) => opt.name === 'due-date'
     ) as APIApplicationCommandInteractionDataStringOption;
+    
+    const assignToOption = interaction.data.options?.find(
+      (opt) => opt.name === 'assign-to'
+    ) as APIApplicationCommandInteractionDataUserOption;
 
     if (!titleOption) {
       await updateResponse(interaction.application_id, interaction.token, {
@@ -47,6 +52,7 @@ export const handleTaskCreate = async (
     const assignedRole = assignedRoleOption?.value;
     const priority = priorityOption?.value || 'medium';
     const dueDate = dueDateOption?.value;
+    const assignTo = assignToOption?.value;
     const guildId = interaction.guild_id!;
     const createdBy = interaction.member?.user?.id || interaction.user?.id;
 
@@ -60,6 +66,13 @@ export const handleTaskCreate = async (
     const taskId = `task-${uuidv4()}`;
     const now = new Date().toISOString();
 
+    const taskStatus = assignTo ? 'claimed' : 'pending';
+    const assignmentInfo = assignTo ? {
+      assignedTo: assignTo,
+      claimedBy: assignTo,
+      claimedAt: now
+    } : {};
+
     const taskItem = {
       pk: guildId,
       sk: `task#${taskId}`,
@@ -69,9 +82,10 @@ export const handleTaskCreate = async (
       assignedRole,
       priority,
       dueDate,
-      status: 'pending',
+      status: taskStatus,
       createdBy,
       createdAt: now,
+      ...assignmentInfo
     };
 
     await dynamoDbClient.send(
@@ -87,68 +101,99 @@ export const handleTaskCreate = async (
       low: '🟢'
     };
 
+    const statusEmoji = {
+      pending: '📬',
+      claimed: '📪',
+      'ready-for-review': '✅',
+      approved: '☑️'
+    };
+
+    const statusText = {
+      pending: 'PENDING',
+      claimed: 'CLAIMED',
+      'ready-for-review': 'READY FOR REVIEW',
+      approved: 'APPROVED'
+    };
+
+    const taskFields = [
+      {
+        name: '📊 **Task Details**',
+        value: [
+          `**Priority:** ${priorityEmoji[priority as keyof typeof priorityEmoji]} \`${priority.toUpperCase()}\``,
+          `**Assigned To:** ${assignedRole ? `<@&${assignedRole}>` : '`Anyone can claim`'}`,
+          `**Due Date:** ${dueDate ? `📅 \`${dueDate}\`` : '`No due date set`'}`
+        ].join('\n'),
+        inline: false
+      },
+      {
+        name: '👤 **Creator**',
+        value: `<@${interaction.member?.user?.id || interaction.user?.id}>`,
+        inline: true
+      },
+      {
+        name: '⏰ **Created**',
+        value: `<t:${Math.floor(new Date(now).getTime() / 1000)}:R>`,
+        inline: true
+      },
+      {
+        name: '📋 **Status**',
+        value: `\`${statusEmoji[taskStatus as keyof typeof statusEmoji]} ${statusText[taskStatus as keyof typeof statusText]}\``,
+        inline: true
+      }
+    ];
+
+    if (assignTo) {
+      taskFields.splice(3, 0, {
+        name: '👥 **Assigned User**',
+        value: `<@${assignTo}>`,
+        inline: true
+      });
+    }
+
     const embed: APIEmbed = {
       title: '🎯 ╔═ TASK CREATED ═╗',
       description: `### ${priorityEmoji[priority as keyof typeof priorityEmoji]} **${title}**\n\n` +
                   `> ${description || '*No description provided*'}`,
-      fields: [
-        {
-          name: '📊 **Task Details**',
-          value: [
-            `**Priority:** ${priorityEmoji[priority as keyof typeof priorityEmoji]} \`${priority.toUpperCase()}\``,
-            `**Assigned To:** ${assignedRole ? `<@&${assignedRole}>` : '`Anyone can claim`'}`,
-            `**Due Date:** ${dueDate ? `📅 \`${dueDate}\`` : '`No due date set`'}`
-          ].join('\n'),
-          inline: false
-        },
-        {
-          name: '👤 **Creator**',
-          value: `<@${interaction.member?.user?.id || interaction.user?.id}>`,
-          inline: true
-        },
-        {
-          name: '⏰ **Created**',
-          value: `<t:${Math.floor(new Date(now).getTime() / 1000)}:R>`,
-          inline: true
-        },
-        {
-          name: '📋 **Status**',
-          value: '`🔄 PENDING`',
-          inline: true
-        }
-      ],
+      fields: taskFields,
       color: priority === 'high' ? 0xff4444 : priority === 'medium' ? 0xffaa00 : 0x00ff00,
       footer: {
-        text: `Task Management System • Ready to be claimed`,
+        text: `Task Management System • ${assignTo ? 'Task assigned to user' : 'Ready to be claimed'}`,
         icon_url: 'https://cdn.discordapp.com/emojis/1234567890123456789.png'
       },
       timestamp: now
     };
 
+    const buttonComponents = [];
+    
+    if (!assignTo) {
+      buttonComponents.push({
+        type: ComponentType.Button as ComponentType.Button,
+        custom_id: `task_claim_${taskId}`,
+        label: 'Claim Task',
+        style: ButtonStyle.Primary as ButtonStyle.Primary,
+        emoji: { name: '✋' }
+      });
+    }
+    
+    buttonComponents.push(
+      {
+        type: ComponentType.Button as ComponentType.Button,
+        custom_id: `task_list_all`,
+        label: 'View All Tasks',
+        style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+        emoji: { name: '📋' }
+      },
+      {
+        type: ComponentType.Button as ComponentType.Button,
+        label: 'Open Dashboard',
+        style: ButtonStyle.Link as ButtonStyle.Link,
+        url: `${process.env.DASHBOARD_URL || 'https://d19x3gu4qo04f3.cloudfront.net'}/tasks`
+      }
+    );
+
     const components = [{
       type: ComponentType.ActionRow as ComponentType.ActionRow,
-      components: [
-        {
-          type: ComponentType.Button as ComponentType.Button,
-          custom_id: `task_claim_${taskId}`,
-          label: 'Claim Task',
-          style: ButtonStyle.Primary as ButtonStyle.Primary,
-          emoji: { name: '✋' }
-        },
-        {
-          type: ComponentType.Button as ComponentType.Button,
-          custom_id: `task_list_all`,
-          label: 'View All Tasks',
-          style: ButtonStyle.Secondary as ButtonStyle.Secondary,
-          emoji: { name: '📋' }
-        },
-        {
-          type: ComponentType.Button as ComponentType.Button,
-          label: 'Open Dashboard',
-          style: ButtonStyle.Link as ButtonStyle.Link,
-          url: `${process.env.DASHBOARD_URL || 'https://d19x3gu4qo04f3.cloudfront.net'}/tasks`
-        }
-      ]
+      components: buttonComponents
     }];
 
     await updateResponse(interaction.application_id, interaction.token, {
