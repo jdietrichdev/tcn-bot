@@ -20,6 +20,7 @@ export const handleTaskClaim = async (
 
   const guildId = interaction.guild_id;
   const userId = interaction.member?.user?.id || interaction.user?.id;
+  const userRoles = interaction.member?.roles || [];
 
   if (!focused || !guildId || focused.name !== "task") {
     return {
@@ -46,7 +47,13 @@ export const handleTaskClaim = async (
     const availableTasks = tasks
       .filter((task) => task.status === 'pending')
       .filter((task) => {
-        return !task.assignedRole || true;
+        if (task.assignedRole && !userRoles.includes(task.assignedRole)) {
+          return false;
+        }
+        if (task.assignedTo && task.assignedTo !== userId) {
+          return false;
+        }
+        return true;
       })
       .filter((task) => task.title?.toLowerCase().includes(searchTerm))
       .sort((a, b) => {

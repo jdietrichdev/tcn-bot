@@ -677,6 +677,12 @@ export const taskCreate = new SlashCommandBuilder()
       .setDescription("Role that can claim this task")
       .setRequired(false);
   })
+  .addUserOption((option) => {
+    return option
+      .setName("assign-user")
+      .setDescription("User to assign this task to (optional)")
+      .setRequired(false);
+  })
   .addStringOption((option) => {
     return option
       .setName("priority")
@@ -692,12 +698,6 @@ export const taskCreate = new SlashCommandBuilder()
     return option
       .setName("due-date")
       .setDescription("Due date for the task (YYYY-MM-DD)")
-      .setRequired(false);
-  })
-  .addUserOption((option) => {
-    return option
-      .setName("assign-to")
-      .setDescription("User to assign this task to (optional)")
       .setRequired(false);
   });
 
@@ -842,7 +842,7 @@ export const taskAssign = new SlashCommandBuilder()
 
 export const taskReminders = new SlashCommandBuilder()
   .setName("task-reminders")
-  .setDescription("Manually send task reminders for due and overdue tasks")
+  .setDescription("Send task summaries to all assignees showing their pending and claimed tasks")
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 export const taskAdminUnclaim = new SlashCommandBuilder()

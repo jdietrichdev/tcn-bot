@@ -70,7 +70,6 @@ export const handleTaskAssign = async (
     }
 
     const now = new Date().toISOString();
-    const wasAlreadyClaimed = task.status === 'claimed';
 
     await dynamoDbClient.send(
       new UpdateCommand({
@@ -79,22 +78,18 @@ export const handleTaskAssign = async (
           pk: guildId,
           sk: `task#${taskId}`,
         },
-        UpdateExpression: 'SET #status = :status, claimedBy = :claimedBy, claimedAt = :claimedAt, assignedBy = :assignedBy',
-        ExpressionAttributeNames: {
-          '#status': 'status'
-        },
+        UpdateExpression: 'SET assignedTo = :assignedTo, assignedBy = :assignedBy, assignedAt = :assignedAt',
         ExpressionAttributeValues: {
-          ':status': 'claimed',
-          ':claimedBy': userId,
-          ':claimedAt': now,
+          ':assignedTo': userId,
           ':assignedBy': assignerId,
+          ':assignedAt': now,
         },
       })
     );
 
     const successEmbed = createSuccessEmbed(
       '👤 Task Assigned Successfully',
-      `Task has been ${wasAlreadyClaimed ? 'reassigned' : 'assigned'} to <@${userId}>.`,
+      `Task has been assigned to <@${userId}>. They will need to claim it to begin work.`,
       [
         {
           name: '📋 Task',
@@ -108,7 +103,7 @@ export const handleTaskAssign = async (
         },
         {
           name: '📊 Status',
-          value: getStatusEmoji('claimed') + ' ' + getStatusText('claimed'),
+          value: getStatusEmoji(task.status) + ' ' + getStatusText(task.status),
           inline: true
         },
         {

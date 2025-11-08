@@ -60,6 +60,25 @@ export const handleTaskClaim = async (
       return;
     }
 
+    if (task.assignedRole) {
+      const userRoles = interaction.member?.roles || [];
+      const hasRequiredRole = userRoles.includes(task.assignedRole);
+      
+      if (!hasRequiredRole) {
+        await updateResponse(interaction.application_id, interaction.token, {
+          content: `❌ This task is restricted to users with the <@&${task.assignedRole}> role. Only members with this role can claim this task.`,
+        });
+        return;
+      }
+    }
+
+    if (task.assignedTo && task.assignedTo !== userId) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: `❌ This task has been assigned to <@${task.assignedTo}>. Only they can claim this task.`,
+      });
+      return;
+    }
+
 
     const now = new Date().toISOString();
     await dynamoDbClient.send(

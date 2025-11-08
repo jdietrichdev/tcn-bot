@@ -13,7 +13,7 @@ export const handleDailyTaskReminders = async (
     const result = await dynamoDbClient.send(
       new ScanCommand({
         TableName: "BotTable",
-        FilterExpression: "pk = :guildId AND begins_with(sk, :taskPrefix) AND attribute_exists(dueDate) AND (#status = :claimedStatus OR #status = :pendingStatus)",
+        FilterExpression: "pk = :guildId AND begins_with(sk, :taskPrefix) AND (#status = :claimedStatus OR #status = :pendingStatus)",
         ExpressionAttributeNames: {
           "#status": "status"
         },
@@ -27,7 +27,7 @@ export const handleDailyTaskReminders = async (
     );
 
     if (!result.Items || result.Items.length === 0) {
-      console.log("No tasks with due dates found for reminders");
+      console.log("No pending or claimed tasks found for reminders");
       return;
     }
 
@@ -35,29 +35,9 @@ export const handleDailyTaskReminders = async (
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     
-    const dueTasks = tasks.filter(task => {
-      if (!task.dueDate) return false;
-      
-      const dueDate = new Date(task.dueDate + 'T00:00:00.000Z');
-      const taskDueDateStr = task.dueDate;
-      
-      return taskDueDateStr <= todayStr;
-    });
-
-    if (dueTasks.length === 0) {
-      console.log("No tasks due today or overdue");
-      return;
-    }
-
     const tasksByAssignee = new Map();
     
-    for (const task of dueTasks) {
-      const today = new Date().toISOString().split('T')[0];
-      const isOverdue = task.dueDate < today;
-      const isDueToday = task.dueDate === today;
-      
-      if (!isDueToday && !isOverdue) continue;
-      
+    for (const task of tasks) {
       let assignee = null;
       let assigneeType = 'none';
       
@@ -76,21 +56,46 @@ export const handleDailyTaskReminders = async (
         tasksByAssignee.set(key, {
           assignee,
           assigneeType,
+          overdueTasks: [],
           dueTasks: [],
-          overdueTasks: []
+          pendingTasks: [],
+          claimedTasks: []
         });
       }
       
       const assigneeData = tasksByAssignee.get(key);
-      if (isOverdue) {
-        assigneeData.overdueTasks.push(task);
+      
+      if (task.dueDate) {
+        const dueDate = new Date(task.dueDate + 'T00:00:00.000Z');
+        const taskDueDateStr = task.dueDate;
+        
+        if (taskDueDateStr < todayStr) {
+          assigneeData.overdueTasks.push(task);
+        } else if (taskDueDateStr === todayStr) {
+          assigneeData.dueTasks.push(task);
+        } else {
+          if (task.status === 'claimed') {
+            assigneeData.claimedTasks.push(task);
+          } else {
+            assigneeData.pendingTasks.push(task);
+          }
+        }
       } else {
-        assigneeData.dueTasks.push(task);
+        if (task.status === 'claimed') {
+          assigneeData.claimedTasks.push(task);
+        } else {
+          assigneeData.pendingTasks.push(task);
+        }
       }
     }
 
+    if (tasksByAssignee.size === 0) {
+      console.log("No assigned tasks found for reminders");
+      return;
+    }
+
     for (const [key, data] of tasksByAssignee) {
-      const { assignee, assigneeType, dueTasks, overdueTasks } = data;
+      const { assignee, assigneeType, overdueTasks, dueTasks, pendingTasks, claimedTasks } = data;
       
       let mention = '';
       if (assigneeType === 'user') {
@@ -99,13 +104,14 @@ export const handleDailyTaskReminders = async (
         mention = `<@&${assignee}>`;
       }
       
-      let messageContent = `🔔 **Task Reminder** ${mention}\n\n`;
+      let messageContent = `🔔 **Task Summary** ${mention}\n\n`;
       
       if (overdueTasks.length > 0) {
         messageContent += `⚠️ **OVERDUE TASKS:**\n`;
         for (const task of overdueTasks) {
           const daysPast = Math.floor((new Date().getTime() - new Date(task.dueDate + 'T00:00:00.000Z').getTime()) / (1000 * 60 * 60 * 24));
-          messageContent += `• **${task.title}** - Due ${daysPast} day${daysPast > 1 ? 's' : ''} ago (${task.dueDate})\n`;
+          const statusEmoji = task.status === 'claimed' ? '📪' : '📬';
+          messageContent += `• ${statusEmoji} **${task.title}** - Due ${daysPast} day${daysPast > 1 ? 's' : ''} ago (${task.dueDate})\n`;
         }
         messageContent += '\n';
       }
@@ -113,11 +119,32 @@ export const handleDailyTaskReminders = async (
       if (dueTasks.length > 0) {
         messageContent += `📅 **DUE TODAY:**\n`;
         for (const task of dueTasks) {
-          messageContent += `• **${task.title}** - Due today (${task.dueDate})\n`;
+          const statusEmoji = task.status === 'claimed' ? '📪' : '📬';
+          messageContent += `• ${statusEmoji} **${task.title}** - Due today (${task.dueDate})\n`;
         }
         messageContent += '\n';
       }
       
+      if (claimedTasks.length > 0) {
+        messageContent += `📪 **IN PROGRESS:**\n`;
+        for (const task of claimedTasks) {
+          const dueDateText = task.dueDate ? ` - Due: ${task.dueDate}` : '';
+          messageContent += `• **${task.title}**${dueDateText}\n`;
+        }
+        messageContent += '\n';
+      }
+      
+      if (pendingTasks.length > 0) {
+        messageContent += `📬 **PENDING (Need to Claim):**\n`;
+        for (const task of pendingTasks) {
+          const dueDateText = task.dueDate ? ` - Due: ${task.dueDate}` : '';
+          messageContent += `• **${task.title}**${dueDateText}\n`;
+        }
+        messageContent += '\n';
+      }
+      
+      const totalTasks = overdueTasks.length + dueTasks.length + claimedTasks.length + pendingTasks.length;
+      messageContent += `📊 **Total Tasks: ${totalTasks}**\n\n`;
       messageContent += `Use \`/task-list\` to view all your tasks or visit the [Task Dashboard](${process.env.DASHBOARD_URL || 'https://d19x3gu4qo04f3.cloudfront.net'}/tasks) for more details.`;
       
       await sendMessage(
@@ -134,7 +161,7 @@ export const handleDailyTaskReminders = async (
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    console.log(`Sent task reminders for ${tasksByAssignee.size} assignee(s) in guild ${guildId}`);
+    console.log(`Sent task summary reminders for ${tasksByAssignee.size} assignee(s) in guild ${guildId}`);
     
   } catch (err) {
     console.error(`Failed to handle daily task reminders: ${err}`);

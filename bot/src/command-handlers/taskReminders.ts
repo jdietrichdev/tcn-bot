@@ -14,11 +14,11 @@ export const handleTaskReminders = async (
     await handleDailyTaskReminders({ guildId });
 
     const embed: APIEmbed = {
-      title: '✅ ╔═ TASK REMINDERS SENT ═╗',
-      description: 'Daily task reminders have been processed and sent to the designated channel.',
+      title: '✅ ╔═ TASK SUMMARIES SENT ═╗',
+      description: 'Task summaries have been processed and sent to assignees, showing all pending and claimed tasks grouped by role/user.',
       color: 0x00ff00,
       footer: {
-        text: 'Task Management System • Manual reminder trigger',
+        text: 'Task Management System • Manual summary trigger',
       },
       timestamp: new Date().toISOString(),
     };
@@ -29,7 +29,7 @@ export const handleTaskReminders = async (
   } catch (err) {
     console.error('Failed to send task reminders:', err);
     await updateResponse(interaction.application_id, interaction.token, {
-      content: '❌ Failed to send task reminders. Please try again later.',
+      content: '❌ Failed to send task summaries. Please try again later.',
     });
   }
 };

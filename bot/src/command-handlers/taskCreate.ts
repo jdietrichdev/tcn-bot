@@ -37,7 +37,7 @@ export const handleTaskCreate = async (
     ) as APIApplicationCommandInteractionDataStringOption;
     
     const assignToOption = interaction.data.options?.find(
-      (opt) => opt.name === 'assign-to'
+      (opt) => opt.name === 'assign-user'
     ) as APIApplicationCommandInteractionDataUserOption;
 
     if (!titleOption) {
@@ -66,11 +66,8 @@ export const handleTaskCreate = async (
     const taskId = `task-${uuidv4()}`;
     const now = new Date().toISOString();
 
-    const taskStatus = assignTo ? 'claimed' : 'pending';
     const assignmentInfo = assignTo ? {
       assignedTo: assignTo,
-      claimedBy: assignTo,
-      claimedAt: now
     } : {};
 
     const taskItem = {
@@ -82,7 +79,7 @@ export const handleTaskCreate = async (
       assignedRole,
       priority,
       dueDate,
-      status: taskStatus,
+      status: 'pending',
       createdBy,
       createdAt: now,
       ...assignmentInfo
@@ -137,7 +134,7 @@ export const handleTaskCreate = async (
       },
       {
         name: '📋 **Status**',
-        value: `\`${statusEmoji[taskStatus as keyof typeof statusEmoji]} ${statusText[taskStatus as keyof typeof statusText]}\``,
+        value: `\`${statusEmoji['pending']} ${statusText['pending']}\``,
         inline: true
       }
     ];
@@ -157,7 +154,7 @@ export const handleTaskCreate = async (
       fields: taskFields,
       color: priority === 'high' ? 0xff4444 : priority === 'medium' ? 0xffaa00 : 0x00ff00,
       footer: {
-        text: `Task Management System • ${assignTo ? 'Task assigned to user' : 'Ready to be claimed'}`,
+        text: `Task Management System • ${assignTo ? 'Task assigned to user - ready to be claimed' : 'Ready to be claimed'}`,
         icon_url: 'https://cdn.discordapp.com/emojis/1234567890123456789.png'
       },
       timestamp: now
@@ -165,15 +162,13 @@ export const handleTaskCreate = async (
 
     const buttonComponents = [];
     
-    if (!assignTo) {
-      buttonComponents.push({
-        type: ComponentType.Button as ComponentType.Button,
-        custom_id: `task_claim_${taskId}`,
-        label: 'Claim Task',
-        style: ButtonStyle.Primary as ButtonStyle.Primary,
-        emoji: { name: '✋' }
-      });
-    }
+    buttonComponents.push({
+      type: ComponentType.Button as ComponentType.Button,
+      custom_id: `task_claim_${taskId}`,
+      label: 'Claim Task',
+      style: ButtonStyle.Primary as ButtonStyle.Primary,
+      emoji: { name: '✋' }
+    });
     
     buttonComponents.push(
       {
