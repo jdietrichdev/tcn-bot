@@ -47,6 +47,7 @@ import {
   taskReminders,
   taskAdminUnclaim,
   taskOverview
+  registerSubs
 } from "./commands";
 
 export const testCommands = [
@@ -98,4 +99,5 @@ export const testCommands = [
   taskReminders,
   taskAdminUnclaim,
   taskOverview
+  registerSubs
 ];

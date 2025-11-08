@@ -38,6 +38,7 @@ import {
   taskReminders,
   taskAdminUnclaim,
   taskOverview
+  registerSubs,
 } from "./commands";
 
 export const tcnCommands = [
@@ -80,4 +81,5 @@ export const tcnCommands = [
   taskReminders,
   taskAdminUnclaim,
   taskOverview,
+  registerSubs,
 ];
