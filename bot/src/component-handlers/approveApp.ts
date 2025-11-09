@@ -23,17 +23,27 @@ export const approveApp = async (
   interaction: APIMessageComponentInteraction,
   config: ServerConfig
 ) => {
+  console.log(`[approveApp] Starting approval process for message: ${interaction.message.id}`);
   try {
+    console.log(`[approveApp] Extracting data from message embeds`);
     const responses = interaction.message.embeds[0];
+    console.log(`[approveApp] Embed title: ${responses.title}`);
+    console.log(`[approveApp] Embed fields count: ${responses.fields?.length}`);
     const userId = responses.fields?.splice(5, 1)[0].value;
+    console.log(`[approveApp] Extracted userId: ${userId}`);
     const thread = interaction.message.thread!.id;
+    console.log(`[approveApp] Thread ID: ${thread}`);
+    console.log(`[approveApp] Getting ticket number for guild: ${interaction.guild_id}`);
     const ticketNumber = await getTicketNumber(interaction.guild_id!);
+    console.log(`[approveApp] Ticket number: ${ticketNumber}`);
+    console.log(`[approveApp] Creating application channel`);
     const applicationChannel = await createApplicationChannel(
       interaction,
       userId!,
       ticketNumber,
       config
     );
+    console.log(`[approveApp] Application channel created: ${applicationChannel.id}`);
     delete responses.footer;
     const message = await sendMessage(
       {
@@ -68,7 +78,8 @@ export const approveApp = async (
     );
     await deleteResponse(interaction.application_id, interaction.token);
   } catch (err) {
-    console.error(`Failure approving app: ${err}`);
+    console.error(`[approveApp] Failure approving app: ${err}`);
+    console.error(`[approveApp] Stack trace:`, err instanceof Error ? err.stack : err);
     await updateResponse(interaction.application_id, interaction.token, {
       content:
         "There was an issue approving this application, if a channel has not been created please try again or reach out to admins",
@@ -111,6 +122,7 @@ const getTicketNumber = async (guildId: string) => {
 };
 
 const addTicket = async (guildId: string, ticketChannel: string, userId: string) => {
+  console.log(`[addTicket] Adding ticket for guild: ${guildId}, channel: ${ticketChannel}, user: ${userId}`);
   const ticketData = (await dynamoDbClient.send(
     new GetCommand({
       TableName: "BotTable",
@@ -119,9 +131,15 @@ const addTicket = async (guildId: string, ticketChannel: string, userId: string)
         sk: 'tickets'
       }
     })
-  )).Item!;
+  )).Item;
 
+  if (!ticketData) {
+    console.error(`[addTicket] No ticket data found for guild: ${guildId}`);
+    throw new Error(`No ticket data found for guild ${guildId}`);
+  }
 
+  console.log(`[addTicket] Current tickets count: ${ticketData.tickets?.length || 0}`);
+  ticketData.tickets = ticketData.tickets || [];
   ticketData.tickets.push({ ticketChannel, userId });
 
   await dynamoDbClient.send(
@@ -130,6 +148,7 @@ const addTicket = async (guildId: string, ticketChannel: string, userId: string)
       Item: ticketData
     })
   );
+  console.log(`[addTicket] Successfully added ticket`);
 }
 
 const createApplicationChannel = async (
@@ -138,12 +157,22 @@ const createApplicationChannel = async (
   ticketNumber: number,
   config: ServerConfig
 ) => {
+  console.log(`[createApplicationChannel] Creating channel for user: ${userId}, ticket: ${ticketNumber}`);
   const username = interaction.message.embeds[0].title?.split(" ")[2];
+  console.log(`[createApplicationChannel] Extracted username: ${username}`);
+  if (!username) {
+    console.error(`[createApplicationChannel] Failed to extract username from embed title: ${interaction.message.embeds[0].title}`);
+  }
+  console.log(`[createApplicationChannel] Building channel name with username: '${username}'`);
+  const sanitizedUsername = username
+    ?.toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "") || "unknown";
+  const channelName = `\u{1F39F}-${ticketNumber}-${sanitizedUsername}`;
+  console.log(`[createApplicationChannel] Channel name: ${channelName}`);
+
   const channel = await createChannel(
     {
-      name: `\u{1F39F}-${ticketNumber}-${username
-        ?.toLowerCase()
-        .replace(/[^a-z0-9_-]/g, "")}`,
+      name: channelName,
       type: ChannelType.GuildText,
       topic: `Application channel for ${username}:${userId}`,
       parent_id: config.APPLICATION_CATEGORY,
@@ -188,5 +217,6 @@ const createApplicationChannel = async (
     },
     interaction.guild_id!
   );
+  console.log(`[createApplicationChannel] Channel created successfully: ${channel.id}`);
   return channel;
 };
