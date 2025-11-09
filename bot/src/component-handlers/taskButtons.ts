@@ -7,15 +7,65 @@ import { GetCommand, UpdateCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 const updateTaskMessage = async (
   interaction: APIMessageComponentInteraction, 
   taskId: string, 
-  guildId: string
+  guildId: string,
+  actionType: 'claim' | 'complete' | 'unclaim' | 'approve' | 'overview' = 'overview'
 ) => {
   if (!interaction.message) return;
   
-  const isOverview = interaction.message.embeds?.[0]?.title?.includes('✦ TASK OVERVIEW ✦');
+  let targetResponse: any;
+  const originalUpdateResponse = updateResponse;
+  const mockUpdateResponse = async (appId: string, token: string, data: any) => {
+    targetResponse = data;
+  };
   
-  if (isOverview) {
-    const { handleTaskOverview } = await import('../command-handlers/taskOverview');
-    const tempInteraction = {
+  (updateResponse as any) = mockUpdateResponse;
+  
+  if (actionType === 'claim') {
+    const claimInteraction = {
+      ...interaction,
+      type: 2,
+      data: {
+        name: 'task-claim',
+        options: [{ name: 'task', value: taskId, type: 3 }]
+      }
+    };
+    const { handleTaskClaim } = await import('../command-handlers/taskClaim');
+    await handleTaskClaim(claimInteraction as any);
+  } else if (actionType === 'complete') {
+    const completeInteraction = {
+      ...interaction,
+      type: 2,
+      data: {
+        name: 'task-complete',
+        options: [{ name: 'task', value: taskId, type: 3 }]
+      }
+    };
+    const { handleTaskComplete } = await import('../command-handlers/taskComplete');
+    await handleTaskComplete(completeInteraction as any);
+  } else if (actionType === 'unclaim') {
+    const unclaimInteraction = {
+      ...interaction,
+      type: 2,
+      data: {
+        name: 'task-unclaim',
+        options: [{ name: 'task', value: taskId, type: 3 }]
+      }
+    };
+    const { handleTaskUnclaim } = await import('../command-handlers/taskUnclaim');
+    await handleTaskUnclaim(unclaimInteraction as any);
+  } else if (actionType === 'approve') {
+    const approveInteraction = {
+      ...interaction,
+      type: 2,
+      data: {
+        name: 'task-approve',
+        options: [{ name: 'task', value: taskId, type: 3 }]
+      }
+    };
+    const { handleTaskApprove } = await import('../command-handlers/taskApprove');
+    await handleTaskApprove(approveInteraction as any);
+  } else {
+    const overviewInteraction = {
       ...interaction,
       type: 2,
       data: {
@@ -23,63 +73,18 @@ const updateTaskMessage = async (
         options: [{ name: 'task', value: taskId, type: 3 }]
       }
     };
-    
-    let overviewResponse: any;
-    const originalUpdateResponse = updateResponse;
-    const mockUpdateResponse = async (appId: string, token: string, data: any) => {
-      overviewResponse = data;
-    };
-    
-    (updateResponse as any) = mockUpdateResponse;
-    await handleTaskOverview(tempInteraction as any);
-    (updateResponse as any) = originalUpdateResponse;
-    
-    if (overviewResponse) {
-      await updateMessage(
-        interaction.message.channel_id,
-        interaction.message.id,
-        overviewResponse
-      );
-    }
-  } else {
-    const { GetCommand } = await import('@aws-sdk/lib-dynamodb');
-    const task = await dynamoDbClient.send(
-      new GetCommand({
-        TableName: 'BotTable',
-        Key: { pk: guildId, sk: `task#${taskId}` }
-      })
+    const { handleTaskOverview } = await import('../command-handlers/taskOverview');
+    await handleTaskOverview(overviewInteraction as any);
+  }
+  
+  (updateResponse as any) = originalUpdateResponse;
+  
+  if (targetResponse) {
+    await updateMessage(
+      interaction.message.channel_id,
+      interaction.message.id,
+      targetResponse
     );
-
-    if (task.Item) {
-      const { handleTaskCreate } = await import('../command-handlers/taskCreate');
-      const { handleTaskOverview } = await import('../command-handlers/taskOverview');
-      const tempInteraction = {
-        ...interaction,
-        type: 2,
-        data: {
-          name: 'task-overview',
-          options: [{ name: 'task', value: taskId, type: 3 }]
-        }
-      };
-      
-      let overviewResponse: any;
-      const originalUpdateResponse = updateResponse;
-      const mockUpdateResponse = async (appId: string, token: string, data: any) => {
-        overviewResponse = data;
-      };
-      
-      (updateResponse as any) = mockUpdateResponse;
-      await handleTaskOverview(tempInteraction as any);
-      (updateResponse as any) = originalUpdateResponse;
-      
-      if (overviewResponse) {
-        await updateMessage(
-          interaction.message.channel_id,
-          interaction.message.id,
-          overviewResponse
-        );
-      }
-    }
   }
 };
 
@@ -122,11 +127,20 @@ export const handleTaskButtonInteraction = async (
           options: [{ name: 'task', value: taskId, type: 3 }]
         }
       };
-      const { handleTaskClaim } = await import('../command-handlers/taskClaim');
-      await handleTaskClaim(claimInteraction as any);
       
       if (isTaskMessage) {
-        await updateTaskMessage(interaction, taskId, guildId);
+        const originalUpdateResponse = updateResponse;
+        const mockUpdateResponse = async () => {};
+        (updateResponse as any) = mockUpdateResponse;
+        
+        const { handleTaskClaim } = await import('../command-handlers/taskClaim');
+        await handleTaskClaim(claimInteraction as any);
+        
+        (updateResponse as any) = originalUpdateResponse;
+        await updateTaskMessage(interaction, taskId, guildId, 'claim');
+      } else {
+        const { handleTaskClaim } = await import('../command-handlers/taskClaim');
+        await handleTaskClaim(claimInteraction as any);
       }
       
       const { refreshTaskListMessages } = await import('./taskListButton');
@@ -141,11 +155,20 @@ export const handleTaskButtonInteraction = async (
           options: [{ name: 'task', value: taskId, type: 3 }]
         }
       };
-      const { handleTaskComplete } = await import('../command-handlers/taskComplete');
-      await handleTaskComplete(completeInteraction as any);
       
       if (isTaskMessage) {
-        await updateTaskMessage(interaction, taskId, guildId);
+        const originalUpdateResponse = updateResponse;
+        const mockUpdateResponse = async () => {}; 
+        (updateResponse as any) = mockUpdateResponse;
+        
+        const { handleTaskComplete } = await import('../command-handlers/taskComplete');
+        await handleTaskComplete(completeInteraction as any);
+        
+        (updateResponse as any) = originalUpdateResponse;
+        await updateTaskMessage(interaction, taskId, guildId, 'complete');
+      } else {
+        const { handleTaskComplete } = await import('../command-handlers/taskComplete');
+        await handleTaskComplete(completeInteraction as any);
       }
       
       const { refreshTaskListMessages } = await import('./taskListButton');
@@ -160,11 +183,20 @@ export const handleTaskButtonInteraction = async (
           options: [{ name: 'task', value: taskId, type: 3 }]
         }
       };
-      const { handleTaskUnclaim } = await import('../command-handlers/taskUnclaim');
-      await handleTaskUnclaim(unclaimInteraction as any);
       
       if (isTaskMessage) {
-        await updateTaskMessage(interaction, taskId, guildId);
+        const originalUpdateResponse = updateResponse;
+        const mockUpdateResponse = async () => {};
+        (updateResponse as any) = mockUpdateResponse;
+        
+        const { handleTaskUnclaim } = await import('../command-handlers/taskUnclaim');
+        await handleTaskUnclaim(unclaimInteraction as any);
+        
+        (updateResponse as any) = originalUpdateResponse;
+        await updateTaskMessage(interaction, taskId, guildId, 'unclaim');
+      } else {
+        const { handleTaskUnclaim } = await import('../command-handlers/taskUnclaim');
+        await handleTaskUnclaim(unclaimInteraction as any);
       }
       
       const { refreshTaskListMessages } = await import('./taskListButton');
@@ -179,11 +211,20 @@ export const handleTaskButtonInteraction = async (
           options: [{ name: 'task', value: taskId, type: 3 }]
         }
       };
-      const { handleTaskApprove } = await import('../command-handlers/taskApprove');
-      await handleTaskApprove(approveInteraction as any);
       
       if (isTaskMessage) {
-        await updateTaskMessage(interaction, taskId, guildId);
+        const originalUpdateResponse = updateResponse;
+        const mockUpdateResponse = async () => {}; 
+        (updateResponse as any) = mockUpdateResponse;
+        
+        const { handleTaskApprove } = await import('../command-handlers/taskApprove');
+        await handleTaskApprove(approveInteraction as any);
+        
+        (updateResponse as any) = originalUpdateResponse;
+        await updateTaskMessage(interaction, taskId, guildId, 'approve');
+      } else {
+        const { handleTaskApprove } = await import('../command-handlers/taskApprove');
+        await handleTaskApprove(approveInteraction as any);
       }
       
       const { refreshTaskListMessages } = await import('./taskListButton');
