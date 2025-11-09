@@ -72,11 +72,24 @@ export const proxy = async (
      body.data.custom_id.startsWith("task_list_prev_") ||
      body.data.custom_id.startsWith("task_list_next_") ||
      body.data.custom_id.startsWith("task_list_last_") ||
-     body.data.custom_id.startsWith("task_list_page_"))
+     body.data.custom_id.startsWith("task_list_page_") ||
+     body.data.custom_id === "task_refresh_list")
   ) {
-    console.log("Task list pagination button clicked");
+    console.log("Task list pagination/refresh button clicked");
     const { handleTaskListPagination } = await import("./component-handlers/taskListButton");
     response = await handleTaskListPagination(body as APIMessageComponentInteraction, body.data.custom_id);
+  } else if (
+    body.type === InteractionType.MessageComponent &&
+    (body.data.custom_id.startsWith("task_claim_") ||
+     body.data.custom_id.startsWith("task_complete_") ||
+     body.data.custom_id.startsWith("task_unclaim_") ||
+     body.data.custom_id.startsWith("task_approve_") ||
+     body.data.custom_id === "task_refresh_dashboard")
+  ) {
+    console.log("Task action button clicked");
+    const { handleTaskButtonInteraction } = await import("./component-handlers/taskButtons");
+    const taskResponse = await handleTaskButtonInteraction(body as APIMessageComponentInteraction);
+    response = taskResponse || { type: InteractionResponseType.DeferredMessageUpdate };
   } else if (
     body.type === InteractionType.MessageComponent &&
     body.data.custom_id.startsWith("roster_show_")
@@ -84,14 +97,6 @@ export const proxy = async (
     console.log("Roster show pagination button clicked");
     const { handleRosterShowPagination } = await import("./component-handlers/rosterShowButton");
     response = await handleRosterShowPagination(body as APIMessageComponentInteraction);
-  } else if (
-    body.type === InteractionType.MessageComponent &&
-    body.data.custom_id.startsWith("task_")
-  ) {
-    console.log("Task button clicked");
-    const { handleTaskButtonInteraction } = await import("./component-handlers/taskButtons");
-    const taskResponse = await handleTaskButtonInteraction(body as APIMessageComponentInteraction);
-    response = taskResponse || { type: InteractionResponseType.DeferredMessageUpdate };
   } else {
     await eventClient.send(
       new PutEventsCommand({

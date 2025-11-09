@@ -29,27 +29,22 @@ interface TaskListCacheData {
 const formatTaskAssignments = (task: any): string => {
   const parts: string[] = [];
   
-  // Add claimed by if present
   if (task.claimedBy) {
     parts.push(`👤 <@${task.claimedBy}>`);
   }
   
-  // Handle multiple role assignments (new format)
   if (task.assignedRoleIds && Array.isArray(task.assignedRoleIds) && task.assignedRoleIds.length > 0) {
     const roleList = task.assignedRoleIds.map((id: string) => `<@&${id}>`).join(', ');
     parts.push(`🎭 ${roleList}`);
   }
-  // Handle single role assignment (legacy format)
   else if (task.assignedRole) {
     parts.push(`🎭 <@&${task.assignedRole}>`);
   }
   
-  // Handle multiple user assignments (new format)
   if (task.assignedUserIds && Array.isArray(task.assignedUserIds) && task.assignedUserIds.length > 0) {
     const userList = task.assignedUserIds.map((id: string) => `<@${id}>`).join(', ');
     parts.push(`👥 ${userList}`);
   }
-  // Handle single user assignment (legacy format)
   else if (task.assignedTo) {
     parts.push(`👥 <@${task.assignedTo}>`);
   }
@@ -101,6 +96,35 @@ export const handleTaskListPagination = async (
   interaction: APIMessageComponentInteraction,
   customId: string
 ) => {
+  if (customId === 'task_refresh_list') {
+    console.log('Task list refresh button clicked');
+    setImmediate(async () => {
+      try {
+        const fakeInteraction = {
+          ...interaction,
+          type: 2,
+          data: {
+            name: 'task-list',
+            options: []
+          }
+        };
+        
+        const { handleTaskList } = await import('../command-handlers/taskList');
+        await handleTaskList(fakeInteraction as any);
+      } catch (error) {
+        console.error('Error in refresh operation:', error);
+        const { updateResponse } = await import('../adapters/discord-adapter');
+        await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
+          content: '❌ Failed to refresh task list. Please try again.',
+        });
+      }
+    });
+    
+    return {
+      type: InteractionResponseType.DeferredMessageUpdate
+    };
+  }
+
   const parts = customId.split('_');
   const action = parts[2];
   const originalInteractionId = parts[3];
@@ -527,7 +551,7 @@ export const refreshTaskListMessages = async (guildId: string) => {
           
           await updateMessage(cacheData.channelId, cacheData.messageId, {
             embeds: [embed],
-            components: [] // No pagination buttons needed
+            components: [] 
           });
         } else {
           const priorityEmoji = { high: '🔴', medium: '🟡', low: '🟢' };
