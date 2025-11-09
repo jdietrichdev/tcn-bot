@@ -48,7 +48,8 @@ export const handleTaskClaim = async (
     }
 
     const allowsMultipleClaims = (task.assignedRoleIds && task.assignedRoleIds.length > 0) || 
-                                (task.assignedUserIds && task.assignedUserIds.length > 0);
+                                (task.assignedUserIds && task.assignedUserIds.length > 0) ||
+                                task.assignedRole;
     
     if (!allowsMultipleClaims && task.status !== 'pending') {
       const statusMessages = {

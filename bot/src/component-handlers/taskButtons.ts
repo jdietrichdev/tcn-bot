@@ -3,17 +3,62 @@ import { updateResponse, updateMessage } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { GetCommand, UpdateCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 
+
+const updateTaskOverviewMessage = async (
+  interaction: APIMessageComponentInteraction, 
+  taskId: string, 
+  guildId: string
+) => {
+  if (!interaction.message) return;
+  const { handleTaskOverview } = await import('../command-handlers/taskOverview');
+  const tempInteraction = {
+    ...interaction,
+    type: 2,
+    data: {
+      name: 'task-overview',
+      options: [{ name: 'task', value: taskId, type: 3 }]
+    }
+  };
+  
+  let overviewResponse: any;
+  const originalUpdateResponse = updateResponse;
+  const mockUpdateResponse = async (appId: string, token: string, data: any) => {
+    overviewResponse = data;
+  };
+  
+  (updateResponse as any) = mockUpdateResponse;
+  await handleTaskOverview(tempInteraction as any);
+  (updateResponse as any) = originalUpdateResponse;
+  
+  if (overviewResponse) {
+    await updateMessage(
+      interaction.message.channel_id,
+      interaction.message.id,
+      overviewResponse
+    );
+  }
+};
+
 export const handleTaskButtonInteraction = async (
   interaction: APIMessageComponentInteraction
 ) => {
   const customId = interaction.data.custom_id;
   const guildId = interaction.guild_id!;
   const userId = interaction.member?.user?.id || interaction.user?.id!;
+  
+  const isTaskOverview = interaction.message?.embeds?.[0]?.title?.includes('TASK OVERVIEW');
 
   try {
-    await updateResponse(interaction.application_id, interaction.token, {
-      content: '⏳ Processing...',
-    });
+    if (isTaskOverview) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: '⏳ Processing...',
+        flags: 64
+      });
+    } else {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: '⏳ Processing...',
+      });
+    }
 
     const taskIdMatch = customId.match(/^task_\w+_(.+)$/);
     const taskId = taskIdMatch ? taskIdMatch[1] : null;
@@ -30,6 +75,10 @@ export const handleTaskButtonInteraction = async (
       const { handleTaskClaim } = await import('../command-handlers/taskClaim');
       await handleTaskClaim(claimInteraction as any);
       
+      if (isTaskOverview) {
+        await updateTaskOverviewMessage(interaction, taskId, guildId);
+      }
+      
       const { refreshTaskListMessages } = await import('./taskListButton');
       await refreshTaskListMessages(guildId);
 
@@ -44,6 +93,10 @@ export const handleTaskButtonInteraction = async (
       };
       const { handleTaskComplete } = await import('../command-handlers/taskComplete');
       await handleTaskComplete(completeInteraction as any);
+      
+      if (isTaskOverview) {
+        await updateTaskOverviewMessage(interaction, taskId, guildId);
+      }
       
       const { refreshTaskListMessages } = await import('./taskListButton');
       await refreshTaskListMessages(guildId);
@@ -60,6 +113,10 @@ export const handleTaskButtonInteraction = async (
       const { handleTaskUnclaim } = await import('../command-handlers/taskUnclaim');
       await handleTaskUnclaim(unclaimInteraction as any);
       
+      if (isTaskOverview) {
+        await updateTaskOverviewMessage(interaction, taskId, guildId);
+      }
+      
       const { refreshTaskListMessages } = await import('./taskListButton');
       await refreshTaskListMessages(guildId);
 
@@ -74,6 +131,10 @@ export const handleTaskButtonInteraction = async (
       };
       const { handleTaskApprove } = await import('../command-handlers/taskApprove');
       await handleTaskApprove(approveInteraction as any);
+      
+      if (isTaskOverview) {
+        await updateTaskOverviewMessage(interaction, taskId, guildId);
+      }
       
       const { refreshTaskListMessages } = await import('./taskListButton');
       await refreshTaskListMessages(guildId);
