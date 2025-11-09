@@ -10,65 +10,83 @@ const updateTaskMessage = async (
   guildId: string,
   actionType: 'claim' | 'complete' | 'unclaim' | 'approve'
 ) => {
-  if (!interaction.message) return null;
+  if (!interaction.message) {
+    throw new Error('No message found in interaction');
+  }
   
-  let targetResponse: any;
+  let targetResponse: any = null;
+  let responseReceived = false;
   const originalUpdateResponse = updateResponse;
+  
   const mockUpdateResponse = async (appId: string, token: string, data: any) => {
     targetResponse = data;
+    responseReceived = true;
   };
   
   (updateResponse as any) = mockUpdateResponse;
   
-  if (actionType === 'claim') {
-    const claimInteraction = {
-      ...interaction,
-      type: 2,
-      data: {
-        name: 'task-claim',
-        options: [{ name: 'task', value: taskId, type: 3 }]
-      }
-    };
-    const { handleTaskClaim } = await import('../command-handlers/taskClaim');
-    await handleTaskClaim(claimInteraction as any);
-  } else if (actionType === 'complete') {
-    const completeInteraction = {
-      ...interaction,
-      type: 2,
-      data: {
-        name: 'task-complete',
-        options: [{ name: 'task', value: taskId, type: 3 }]
-      }
-    };
-    const { handleTaskComplete } = await import('../command-handlers/taskComplete');
-    await handleTaskComplete(completeInteraction as any);
-  } else if (actionType === 'unclaim') {
-    const unclaimInteraction = {
-      ...interaction,
-      type: 2,
-      data: {
-        name: 'task-unclaim',
-        options: [{ name: 'task', value: taskId, type: 3 }]
-      }
-    };
-    const { handleTaskUnclaim } = await import('../command-handlers/taskUnclaim');
-    await handleTaskUnclaim(unclaimInteraction as any);
-  } else if (actionType === 'approve') {
-    const approveInteraction = {
-      ...interaction,
-      type: 2,
-      data: {
-        name: 'task-approve',
-        options: [{ name: 'task', value: taskId, type: 3 }]
-      }
-    };
-    const { handleTaskApprove } = await import('../command-handlers/taskApprove');
-    await handleTaskApprove(approveInteraction as any);
-  } else {
-    throw new Error(`Unknown action type: ${actionType}`);
+  try {
+    if (actionType === 'claim') {
+      const claimInteraction = {
+        ...interaction,
+        type: 2,
+        data: {
+          name: 'task-claim',
+          options: [{ name: 'task', value: taskId, type: 3 }]
+        }
+      };
+      const { handleTaskClaim } = await import('../command-handlers/taskClaim');
+      await handleTaskClaim(claimInteraction as any);
+    } else if (actionType === 'complete') {
+      const completeInteraction = {
+        ...interaction,
+        type: 2,
+        data: {
+          name: 'task-complete',
+          options: [{ name: 'task', value: taskId, type: 3 }]
+        }
+      };
+      const { handleTaskComplete } = await import('../command-handlers/taskComplete');
+      await handleTaskComplete(completeInteraction as any);
+    } else if (actionType === 'unclaim') {
+      const unclaimInteraction = {
+        ...interaction,
+        type: 2,
+        data: {
+          name: 'task-unclaim',
+          options: [{ name: 'task', value: taskId, type: 3 }]
+        }
+      };
+      const { handleTaskUnclaim } = await import('../command-handlers/taskUnclaim');
+      await handleTaskUnclaim(unclaimInteraction as any);
+    } else if (actionType === 'approve') {
+      const approveInteraction = {
+        ...interaction,
+        type: 2,
+        data: {
+          name: 'task-approve',
+          options: [{ name: 'task', value: taskId, type: 3 }]
+        }
+      };
+      const { handleTaskApprove } = await import('../command-handlers/taskApprove');
+      await handleTaskApprove(approveInteraction as any);
+    } else {
+      throw new Error(`Unknown action type: ${actionType}`);
+    }
+
+    let attempts = 0;
+    while (!responseReceived && attempts < 10) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+      attempts++;
+    }
+    
+  } finally {
+    (updateResponse as any) = originalUpdateResponse;
   }
   
-  (updateResponse as any) = originalUpdateResponse;
+  if (!targetResponse) {
+    throw new Error(`Command handler for ${actionType} did not provide a response after waiting`);
+  }
   
   return targetResponse;
 };
@@ -94,16 +112,36 @@ export const handleTaskButtonInteraction = async (
   try {
     if (customId.startsWith('task_claim_') && taskId) {
       if (isTaskMessage) {
-        const responseData = await updateTaskMessage(interaction, taskId, guildId, 'claim');
-        
-        import('./taskListButton').then(({ refreshTaskListMessages }) => {
-          refreshTaskListMessages(guildId).catch(console.error);
-        });
-        
-        return {
-          type: InteractionResponseType.UpdateMessage,
-          data: responseData
-        };
+        try {
+          const responseData = await updateTaskMessage(interaction, taskId, guildId, 'claim');
+          
+          import('./taskListButton').then(({ refreshTaskListMessages }) => {
+            refreshTaskListMessages(guildId).catch(console.error);
+          });
+          
+          return {
+            type: InteractionResponseType.UpdateMessage,
+            data: responseData
+          };
+        } catch (error) {
+          console.error('Error updating task message:', error);
+          const claimInteraction = {
+            ...interaction,
+            type: 2,
+            data: {
+              name: 'task-claim',
+              options: [{ name: 'task', value: taskId, type: 3 }]
+            }
+          };
+          const { handleTaskClaim } = await import('../command-handlers/taskClaim');
+          const result = await handleTaskClaim(claimInteraction as any);
+          
+          import('./taskListButton').then(({ refreshTaskListMessages }) => {
+            refreshTaskListMessages(guildId).catch(console.error);
+          });
+          
+          return result;
+        }
       } else {
         const claimInteraction = {
           ...interaction,
@@ -125,16 +163,36 @@ export const handleTaskButtonInteraction = async (
 
     } else if (customId.startsWith('task_complete_') && taskId) {
       if (isTaskMessage) {
-        const responseData = await updateTaskMessage(interaction, taskId, guildId, 'complete');
-        
-        import('./taskListButton').then(({ refreshTaskListMessages }) => {
-          refreshTaskListMessages(guildId).catch(console.error);
-        });
-        
-        return {
-          type: InteractionResponseType.UpdateMessage,
-          data: responseData
-        };
+        try {
+          const responseData = await updateTaskMessage(interaction, taskId, guildId, 'complete');
+          
+          import('./taskListButton').then(({ refreshTaskListMessages }) => {
+            refreshTaskListMessages(guildId).catch(console.error);
+          });
+          
+          return {
+            type: InteractionResponseType.UpdateMessage,
+            data: responseData
+          };
+        } catch (error) {
+          console.error('Error updating task message:', error);
+          const completeInteraction = {
+            ...interaction,
+            type: 2,
+            data: {
+              name: 'task-complete',
+              options: [{ name: 'task', value: taskId, type: 3 }]
+            }
+          };
+          const { handleTaskComplete } = await import('../command-handlers/taskComplete');
+          const result = await handleTaskComplete(completeInteraction as any);
+          
+          import('./taskListButton').then(({ refreshTaskListMessages }) => {
+            refreshTaskListMessages(guildId).catch(console.error);
+          });
+          
+          return result;
+        }
       } else {
         const completeInteraction = {
           ...interaction,
@@ -156,16 +214,36 @@ export const handleTaskButtonInteraction = async (
 
     } else if (customId.startsWith('task_unclaim_') && taskId) {
       if (isTaskMessage) {
-        const responseData = await updateTaskMessage(interaction, taskId, guildId, 'unclaim');
-        
-        import('./taskListButton').then(({ refreshTaskListMessages }) => {
-          refreshTaskListMessages(guildId).catch(console.error);
-        });
-        
-        return {
-          type: InteractionResponseType.UpdateMessage,
-          data: responseData
-        };
+        try {
+          const responseData = await updateTaskMessage(interaction, taskId, guildId, 'unclaim');
+          
+          import('./taskListButton').then(({ refreshTaskListMessages }) => {
+            refreshTaskListMessages(guildId).catch(console.error);
+          });
+          
+          return {
+            type: InteractionResponseType.UpdateMessage,
+            data: responseData
+          };
+        } catch (error) {
+          console.error('Error updating task message:', error);
+          const unclaimInteraction = {
+            ...interaction,
+            type: 2,
+            data: {
+              name: 'task-unclaim',
+              options: [{ name: 'task', value: taskId, type: 3 }]
+            }
+          };
+          const { handleTaskUnclaim } = await import('../command-handlers/taskUnclaim');
+          const result = await handleTaskUnclaim(unclaimInteraction as any);
+          
+          import('./taskListButton').then(({ refreshTaskListMessages }) => {
+            refreshTaskListMessages(guildId).catch(console.error);
+          });
+          
+          return result;
+        }
       } else {
         const unclaimInteraction = {
           ...interaction,
@@ -187,16 +265,36 @@ export const handleTaskButtonInteraction = async (
 
     } else if (customId.startsWith('task_approve_') && taskId) {
       if (isTaskMessage) {
-        const responseData = await updateTaskMessage(interaction, taskId, guildId, 'approve');
-        
-        import('./taskListButton').then(({ refreshTaskListMessages }) => {
-          refreshTaskListMessages(guildId).catch(console.error);
-        });
-        
-        return {
-          type: InteractionResponseType.UpdateMessage,
-          data: responseData
-        };
+        try {
+          const responseData = await updateTaskMessage(interaction, taskId, guildId, 'approve');
+          
+          import('./taskListButton').then(({ refreshTaskListMessages }) => {
+            refreshTaskListMessages(guildId).catch(console.error);
+          });
+          
+          return {
+            type: InteractionResponseType.UpdateMessage,
+            data: responseData
+          };
+        } catch (error) {
+          console.error('Error updating task message:', error);
+          const approveInteraction = {
+            ...interaction,
+            type: 2,
+            data: {
+              name: 'task-approve',
+              options: [{ name: 'task', value: taskId, type: 3 }]
+            }
+          };
+          const { handleTaskApprove } = await import('../command-handlers/taskApprove');
+          const result = await handleTaskApprove(approveInteraction as any);
+          
+          import('./taskListButton').then(({ refreshTaskListMessages }) => {
+            refreshTaskListMessages(guildId).catch(console.error);
+          });
+          
+          return result;
+        }
       } else {
         const approveInteraction = {
           ...interaction,
