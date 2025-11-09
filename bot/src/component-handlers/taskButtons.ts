@@ -15,7 +15,7 @@ const performTaskAction = async (
       new GetCommand({
         TableName: 'BotTable',
         Key: {
-          pk: `guild#${guildId}`,
+          pk: guildId,
           sk: `task#${taskId}`,
         },
       })
@@ -38,7 +38,7 @@ const performTaskAction = async (
       new UpdateCommand({
         TableName: 'BotTable',
         Key: {
-          pk: `guild#${guildId}`,
+          pk: guildId,
           sk: `task#${taskId}`,
         },
         UpdateExpression: 'SET #status = :status, claimedBy = :claimedBy, claimedAt = :claimedAt',
@@ -57,7 +57,7 @@ const performTaskAction = async (
       new UpdateCommand({
         TableName: 'BotTable',
         Key: {
-          pk: `guild#${guildId}`,
+          pk: guildId,
           sk: `task#${taskId}`,
         },
         UpdateExpression: 'SET #status = :status, completedAt = :completedAt',
@@ -75,7 +75,7 @@ const performTaskAction = async (
       new UpdateCommand({
         TableName: 'BotTable',
         Key: {
-          pk: `guild#${guildId}`,
+          pk: guildId,
           sk: `task#${taskId}`,
         },
         UpdateExpression: 'SET #status = :status REMOVE claimedBy, claimedAt',
@@ -92,7 +92,7 @@ const performTaskAction = async (
       new UpdateCommand({
         TableName: 'BotTable',
         Key: {
-          pk: `guild#${guildId}`,
+          pk: guildId,
           sk: `task#${taskId}`,
         },
         UpdateExpression: 'SET #status = :status, approvedAt = :approvedAt, approvedBy = :approvedBy',
@@ -112,7 +112,7 @@ const performTaskAction = async (
     new GetCommand({
       TableName: 'BotTable',
       Key: {
-        pk: `guild#${guildId}`,
+  pk: guildId,
         sk: `task#${taskId}`,
       },
     })
