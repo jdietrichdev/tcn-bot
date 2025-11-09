@@ -4,91 +4,225 @@ import { dynamoDbClient } from '../clients/dynamodb-client';
 import { GetCommand, UpdateCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 
 
-const updateTaskMessage = async (
+const performTaskAction = async (
   interaction: APIMessageComponentInteraction, 
   taskId: string, 
   guildId: string,
   actionType: 'claim' | 'complete' | 'unclaim' | 'approve'
 ) => {
-  if (!interaction.message) {
-    throw new Error('No message found in interaction');
-  }
+  const userId = interaction.member?.user?.id || interaction.user?.id!;
   
-  let targetResponse: any = null;
-  let responseReceived = false;
-  const originalUpdateResponse = updateResponse;
-  
-  const mockUpdateResponse = async (appId: string, token: string, data: any) => {
-    targetResponse = data;
-    responseReceived = true;
-  };
-  
-  (updateResponse as any) = mockUpdateResponse;
-  
-  try {
-    if (actionType === 'claim') {
-      const claimInteraction = {
-        ...interaction,
-        type: 2,
-        data: {
-          name: 'task-claim',
-          options: [{ name: 'task', value: taskId, type: 3 }]
-        }
+  if (actionType === 'claim') {
+    const getTaskResult = await dynamoDbClient.send(
+      new GetCommand({
+        TableName: 'BotTable',
+        Key: {
+          pk: `guild#${guildId}`,
+          sk: `task#${taskId}`,
+        },
+      })
+    );
+
+    if (!getTaskResult.Item) {
+      return {
+        content: '❌ Task not found.',
       };
-      const { handleTaskClaim } = await import('../command-handlers/taskClaim');
-      await handleTaskClaim(claimInteraction as any);
-    } else if (actionType === 'complete') {
-      const completeInteraction = {
-        ...interaction,
-        type: 2,
-        data: {
-          name: 'task-complete',
-          options: [{ name: 'task', value: taskId, type: 3 }]
-        }
-      };
-      const { handleTaskComplete } = await import('../command-handlers/taskComplete');
-      await handleTaskComplete(completeInteraction as any);
-    } else if (actionType === 'unclaim') {
-      const unclaimInteraction = {
-        ...interaction,
-        type: 2,
-        data: {
-          name: 'task-unclaim',
-          options: [{ name: 'task', value: taskId, type: 3 }]
-        }
-      };
-      const { handleTaskUnclaim } = await import('../command-handlers/taskUnclaim');
-      await handleTaskUnclaim(unclaimInteraction as any);
-    } else if (actionType === 'approve') {
-      const approveInteraction = {
-        ...interaction,
-        type: 2,
-        data: {
-          name: 'task-approve',
-          options: [{ name: 'task', value: taskId, type: 3 }]
-        }
-      };
-      const { handleTaskApprove } = await import('../command-handlers/taskApprove');
-      await handleTaskApprove(approveInteraction as any);
-    } else {
-      throw new Error(`Unknown action type: ${actionType}`);
     }
 
-    let attempts = 0;
-    while (!responseReceived && attempts < 10) {
-      await new Promise(resolve => setTimeout(resolve, 50));
-      attempts++;
+    const task = getTaskResult.Item;
+    if (task.status === 'claimed' && task.claimedBy && !task.multipleClaimsAllowed) {
+      return {
+        content: '❌ This task has already been claimed.',
+      };
     }
+
+    await dynamoDbClient.send(
+      new UpdateCommand({
+        TableName: 'BotTable',
+        Key: {
+          pk: `guild#${guildId}`,
+          sk: `task#${taskId}`,
+        },
+        UpdateExpression: 'SET #status = :status, claimedBy = :claimedBy, claimedAt = :claimedAt',
+        ExpressionAttributeNames: {
+          '#status': 'status',
+        },
+        ExpressionAttributeValues: {
+          ':status': 'claimed',
+          ':claimedBy': userId,
+          ':claimedAt': new Date().toISOString(),
+        },
+      })
+    );
+  } else if (actionType === 'complete') {
+    await dynamoDbClient.send(
+      new UpdateCommand({
+        TableName: 'BotTable',
+        Key: {
+          pk: `guild#${guildId}`,
+          sk: `task#${taskId}`,
+        },
+        UpdateExpression: 'SET #status = :status, completedAt = :completedAt',
+        ExpressionAttributeNames: {
+          '#status': 'status',
+        },
+        ExpressionAttributeValues: {
+          ':status': 'completed',
+          ':completedAt': new Date().toISOString(),
+        },
+      })
+    );
+  } else if (actionType === 'unclaim') {
+    await dynamoDbClient.send(
+      new UpdateCommand({
+        TableName: 'BotTable',
+        Key: {
+          pk: `guild#${guildId}`,
+          sk: `task#${taskId}`,
+        },
+        UpdateExpression: 'SET #status = :status REMOVE claimedBy, claimedAt',
+        ExpressionAttributeNames: {
+          '#status': 'status',
+        },
+        ExpressionAttributeValues: {
+          ':status': 'pending',
+        },
+      })
+    );
+  } else if (actionType === 'approve') {
+    await dynamoDbClient.send(
+      new UpdateCommand({
+        TableName: 'BotTable',
+        Key: {
+          pk: `guild#${guildId}`,
+          sk: `task#${taskId}`,
+        },
+        UpdateExpression: 'SET #status = :status, approvedAt = :approvedAt, approvedBy = :approvedBy',
+        ExpressionAttributeNames: {
+          '#status': 'status',
+        },
+        ExpressionAttributeValues: {
+          ':status': 'approved',
+          ':approvedAt': new Date().toISOString(),
+          ':approvedBy': userId,
+        },
+      })
+    );
+  }
+
+  const getTaskResult = await dynamoDbClient.send(
+    new GetCommand({
+      TableName: 'BotTable',
+      Key: {
+        pk: `guild#${guildId}`,
+        sk: `task#${taskId}`,
+      },
+    })
+  );
+
+  if (!getTaskResult.Item) {
+    return {
+      content: '❌ Task not found.',
+    };
+  }
+
+  const task = getTaskResult.Item;
+  
+  let title = '';
+  let color = 0;
+  
+  switch (actionType) {
+    case 'claim':
+      title = '✦ TASK CLAIMED ✦';
+      color = 0x00FF00;
+      break;
+    case 'complete':
+      title = '✦ TASK COMPLETED ✦';
+      color = 0x0099FF;
+      break;
+    case 'unclaim':
+      title = '✦ TASK UNCLAIMED ✦';
+      color = 0xFF9900;
+      break;
+    case 'approve':
+      title = '✦ TASK APPROVED ✦';
+      color = 0x9900FF;
+      break;
+  }
+
+  const roleDisplay = task.assignedRole ? `<@&${task.assignedRole}>` : 'Any';
+  const userDisplay = task.assignedUser ? `<@${task.assignedUser}>` : 'Anyone';
+  const claimedDisplay = task.claimedBy ? `<@${task.claimedBy}>` : 'None';
+  const multiClaimEnabled = task.multipleClaimsAllowed || false;
+
+  const embed = {
+    title: title,
+    color: color,
+    fields: [
+      {
+        name: '📋 Task Details',
+        value: `**Title:** ${task.title}\n**Description:** ${task.description || 'No description provided'}`,
+        inline: false,
+      },
+      {
+        name: '👥 Assignment Details',
+        value: `**Assigned Role:** ${roleDisplay}\n**Assigned User:** ${userDisplay}\n**Claimed By:** ${claimedDisplay}`,
+        inline: false,
+      },
+      {
+        name: '📊 Status Information',
+        value: `**Status:** \`${task.status || 'pending'}\`\n**Priority:** \`${task.priority || 'normal'}\`\n**Created:** <t:${Math.floor(new Date(task.createdAt).getTime() / 1000)}:f>`,
+        inline: false,
+      },
+    ],
+    footer: {
+      text: `Task ID: ${taskId} | Multiple Claims: ${multiClaimEnabled ? 'Enabled' : 'Disabled'}`,
+    },
+  };
+
+  const buttons = [];
+  
+  if (task.status === 'pending' && !task.claimedBy) {
+    buttons.push({
+      type: ComponentType.Button,
+      style: ButtonStyle.Success,
+      label: 'Claim Task',
+      custom_id: `task_claim_${taskId}`,
+    });
+  } else if (task.status === 'claimed') {
+    buttons.push({
+      type: ComponentType.Button,
+      style: ButtonStyle.Primary,
+      label: 'Mark Complete',
+      custom_id: `task_complete_${taskId}`,
+    });
     
-  } finally {
-    (updateResponse as any) = originalUpdateResponse;
+    if (task.claimedBy === userId || multiClaimEnabled) {
+      buttons.push({
+        type: ComponentType.Button,
+        style: ButtonStyle.Secondary,
+        label: 'Unclaim',
+        custom_id: `task_unclaim_${taskId}`,
+      });
+    }
+  } else if (task.status === 'completed') {
+    buttons.push({
+      type: ComponentType.Button,
+      style: ButtonStyle.Success,
+      label: 'Approve',
+      custom_id: `task_approve_${taskId}`,
+    });
   }
-  
-  if (!targetResponse) {
-    throw new Error(`Command handler for ${actionType} did not provide a response after waiting`);
-  }
-  
-  return targetResponse;
+
+  const components = buttons.length > 0 ? [{
+    type: ComponentType.ActionRow,
+    components: buttons,
+  }] : [];
+
+  return {
+    embeds: [embed],
+    components: components,
+  };
 };
 
 export const handleTaskButtonInteraction = async (
@@ -113,7 +247,7 @@ export const handleTaskButtonInteraction = async (
     if (customId.startsWith('task_claim_') && taskId) {
       if (isTaskMessage) {
         try {
-          const responseData = await updateTaskMessage(interaction, taskId, guildId, 'claim');
+          const responseData = await performTaskAction(interaction, taskId, guildId, 'claim');
           
           import('./taskListButton').then(({ refreshTaskListMessages }) => {
             refreshTaskListMessages(guildId).catch(console.error);
@@ -164,7 +298,7 @@ export const handleTaskButtonInteraction = async (
     } else if (customId.startsWith('task_complete_') && taskId) {
       if (isTaskMessage) {
         try {
-          const responseData = await updateTaskMessage(interaction, taskId, guildId, 'complete');
+          const responseData = await performTaskAction(interaction, taskId, guildId, 'complete');
           
           import('./taskListButton').then(({ refreshTaskListMessages }) => {
             refreshTaskListMessages(guildId).catch(console.error);
@@ -215,7 +349,7 @@ export const handleTaskButtonInteraction = async (
     } else if (customId.startsWith('task_unclaim_') && taskId) {
       if (isTaskMessage) {
         try {
-          const responseData = await updateTaskMessage(interaction, taskId, guildId, 'unclaim');
+          const responseData = await performTaskAction(interaction, taskId, guildId, 'unclaim');
           
           import('./taskListButton').then(({ refreshTaskListMessages }) => {
             refreshTaskListMessages(guildId).catch(console.error);
@@ -266,7 +400,7 @@ export const handleTaskButtonInteraction = async (
     } else if (customId.startsWith('task_approve_') && taskId) {
       if (isTaskMessage) {
         try {
-          const responseData = await updateTaskMessage(interaction, taskId, guildId, 'approve');
+          const responseData = await performTaskAction(interaction, taskId, guildId, 'approve');
           
           import('./taskListButton').then(({ refreshTaskListMessages }) => {
             refreshTaskListMessages(guildId).catch(console.error);
