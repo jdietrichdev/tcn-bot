@@ -28,6 +28,26 @@ export const handleAutocomplete = async (
         return await autocomplete.handleRosterDelete(interaction);
       case "cwl-response":
         return await autocomplete.handleCwlResponse(interaction);
+      case "task-claim":
+        return await autocomplete.handleTaskClaim(interaction);
+      case "task-complete":
+        return await autocomplete.handleTaskComplete(interaction);
+      case "task-approve":
+        return await autocomplete.handleTaskApprove(interaction);
+      case "task-unclaim":
+        return await autocomplete.handleTaskUnclaim(interaction);
+      case "task-delete":
+        return await autocomplete.handleTaskDelete(interaction);
+      case "task-notify":
+        return await autocomplete.handleTaskNotify(interaction);
+      case "task-set-due-date":
+        return await autocomplete.handleTaskSetDueDate(interaction);
+      case "task-assign":
+        return await autocomplete.handleTaskAssign(interaction);
+      case "task-admin-unclaim":
+        return await autocomplete.handleTaskAdminUnclaim(interaction);
+      case "task-overview":
+        return await autocomplete.handleTaskOverview(interaction);
       default:
         console.log("Autocomplete not found, no response needed");
         throw new Error("No autocomplete process defined");

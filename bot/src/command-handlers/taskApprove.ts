@@ -1,0 +1,210 @@
+import { 
+  APIChatInputApplicationCommandInteraction, 
+  APIApplicationCommandInteractionDataStringOption,
+  APIEmbed,
+  ComponentType,
+  ButtonStyle
+} from 'discord-api-types/v10';
+import { updateResponse } from '../adapters/discord-adapter';
+import { dynamoDbClient } from '../clients/dynamodb-client';
+import { GetCommand, DeleteCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+
+export const handleTaskApprove = async (
+  interaction: APIChatInputApplicationCommandInteraction
+) => {
+  try {
+    const taskOption = interaction.data.options?.find(
+      (opt) => opt.name === 'task'
+    ) as APIApplicationCommandInteractionDataStringOption;
+
+    if (!taskOption) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: '❌ Task selection is required.',
+      });
+      return;
+    }
+
+    const taskId = taskOption.value;
+    const guildId = interaction.guild_id!;
+    const userId = interaction.member?.user?.id || interaction.user?.id;
+    const username = interaction.member?.user?.username || interaction.user?.username;
+
+    const getResult = await dynamoDbClient.send(
+      new GetCommand({
+        TableName: 'BotTable',
+        Key: {
+          pk: guildId,
+          sk: `task#${taskId}`,
+        },
+      })
+    );
+
+    const task = getResult.Item;
+    if (!task) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: '❌ Task not found. It may have been deleted.',
+      });
+      return;
+    }
+
+    if (task.status !== 'completed') {
+      const statusMessages = {
+        pending: '❌ This task needs to be completed before it can be approved.',
+        claimed: '❌ This task is still being worked on and cannot be approved yet.',
+        approved: '❌ This task has already been approved.',
+      };
+      
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: statusMessages[task.status as keyof typeof statusMessages] || '❌ This task cannot be approved.',
+      });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    
+    await dynamoDbClient.send(
+      new PutCommand({
+        TableName: 'BotTable',
+        Item: {
+          pk: guildId,
+          sk: `analytics#task#${taskId}#${now}`,
+          type: 'completed_task',
+          taskId: taskId,
+          title: task.title,
+          description: task.description,
+          priority: task.priority,
+          assignedTo: task.assignedTo,
+          createdBy: task.createdBy,
+          claimedBy: task.claimedBy,
+          completedBy: task.completedBy,
+          createdAt: task.createdAt,
+          claimedAt: task.claimedAt,
+          completedAt: task.completedAt,
+          approvedAt: now,
+          approvedBy: userId,
+        },
+      })
+    );
+    
+    await dynamoDbClient.send(
+      new DeleteCommand({
+        TableName: 'BotTable',
+        Key: {
+          pk: guildId,
+          sk: `task#${taskId}`,
+        },
+      })
+    );
+
+    const claimedAt = task.claimedAt ? new Date(task.claimedAt) : null;
+    const completedAt = task.completedAt ? new Date(task.completedAt) : null;
+    let durationText = 'Unknown';
+    
+    if (claimedAt && completedAt) {
+      const durationMs = completedAt.getTime() - claimedAt.getTime();
+      const durationDays = Math.floor(durationMs / (1000 * 60 * 60 * 24));
+      const durationHours = Math.floor((durationMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      
+      if (durationDays > 0) {
+        durationText = `${durationDays} day${durationDays !== 1 ? 's' : ''}`;
+        if (durationHours > 0) durationText += `, ${durationHours}h`;
+      } else if (durationHours > 0) {
+        durationText = `${durationHours} hour${durationHours !== 1 ? 's' : ''}`;
+      } else {
+        durationText = '< 1 hour';
+      }
+    }
+
+    const priorityEmoji = {
+      high: '🔴',
+      medium: '🟡',
+      low: '🟢'
+    };
+
+    const embed: APIEmbed = {
+      title: '👑 ✦ TASK APPROVED ✦ ✅',
+      description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n` +
+                  `> ${task.description || '*No description provided*'}`,
+      fields: [
+        {
+          name: '📝 **Completion Summary**',
+          value: task.completionNotes ? `\`\`\`\n${task.completionNotes}\n\`\`\`` : '`No completion notes provided`',
+          inline: false
+        },
+        {
+          name: '👥 **Team Involvement**',
+          value: [
+            `**Creator:** <@${task.createdBy}>`,
+            `**Completed by:** <@${task.completedBy}>`,
+            `**Approved by:** <@${userId}>`
+          ].join('\n'),
+          inline: true
+        },
+        {
+          name: '⏱️ **Timeline**',
+          value: [
+            `**Created:** <t:${Math.floor(new Date(task.createdAt).getTime() / 1000)}:R>`,
+            task.claimedAt ? `**Claimed:** <t:${Math.floor(new Date(task.claimedAt).getTime() / 1000)}:R>` : '',
+            task.completedAt ? `**Completed:** <t:${Math.floor(new Date(task.completedAt).getTime() / 1000)}:R>` : '',
+            `**Approved:** <t:${Math.floor(new Date(now).getTime() / 1000)}:R>`
+          ].filter(Boolean).join('\n'),
+          inline: true
+        },
+        {
+          name: '📊 **Performance**',
+          value: `**Duration:** \`${durationText}\`\n**Priority:** ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} \`${task.priority.toUpperCase()}\``,
+          inline: false
+        },
+        {
+          name: '🎉 **Task Complete!**',
+          value: '```\n✅ Task has been approved\n🗑️ Removed from active board\n📈 Added to analytics\n```',
+          inline: false
+        }
+      ],
+      color: 0xffd700,
+      footer: {
+        text: `Task Management System • Successfully completed and archived`,
+      },
+      timestamp: now
+    };
+
+    const components = [{
+      type: ComponentType.ActionRow as ComponentType.ActionRow,
+      components: [
+        {
+          type: ComponentType.Button as ComponentType.Button,
+          custom_id: 'task_list_approved',
+          label: 'View Approved Tasks',
+          style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+          emoji: { name: '✅' }
+        },
+        {
+          type: ComponentType.Button as ComponentType.Button,
+          custom_id: 'task_list_pending',
+          label: 'Pending Approvals',
+          style: ButtonStyle.Primary as ButtonStyle.Primary,
+          emoji: { name: '⏳' }
+        },
+        {
+          type: ComponentType.Button as ComponentType.Button,
+          label: 'Open Dashboard',
+          style: ButtonStyle.Link as ButtonStyle.Link,
+          url: `${process.env.DASHBOARD_URL || 'https://d19x3gu4qo04f3.cloudfront.net'}/tasks`
+        }
+      ]
+    }];
+
+    await updateResponse(interaction.application_id, interaction.token, {
+      embeds: [embed],
+      components
+    });
+
+    console.log(`Task ${taskId} approved by ${username} (${userId})`);
+
+  } catch (err) {
+    console.error('Failed to approve task:', err);
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: '❌ Failed to approve task. Please try again or contact an admin.',
+    });
+  }
+};

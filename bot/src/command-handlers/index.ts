@@ -72,6 +72,34 @@ export const handleCommand = async (
         return await commands.handleExportRosters(event.detail);
       case "cwl-response":
         return await commands.handleCwlResponseCommand(event.detail);
+      case "task-create":
+        return await commands.handleTaskCreate(event.detail);
+      case "task-claim":
+        return await commands.handleTaskClaim(event.detail);
+      case "task-complete":
+        return await commands.handleTaskComplete(event.detail);
+      case "task-list":
+        return await commands.handleTaskList(event.detail);
+      case "task-dashboard":
+        return await commands.handleTaskDashboard(event.detail);
+      case "task-unclaim":
+        return await commands.handleTaskUnclaim(event.detail);
+      case "task-approve":
+        return await commands.handleTaskApprove(event.detail);
+      case "task-delete":
+        return await commands.handleTaskDelete(event.detail);
+      case "task-notify":
+        return await commands.handleTaskNotify(event.detail);
+      case "task-set-due-date":
+        return await commands.handleTaskSetDueDate(event.detail);
+      case "task-assign":
+        return await commands.handleTaskAssign(event.detail);
+      case "task-reminders":
+        return await commands.handleTaskReminders(event.detail);
+      case "task-admin-unclaim":
+        return await commands.handleTaskAdminUnclaim(event.detail);
+      case "task-overview":
+        return await commands.handleTaskOverview(event.detail);
       case "register-subs":
         return await commands.handleRegisterSubsCommand(event.detail);
       default:

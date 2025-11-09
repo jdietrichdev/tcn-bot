@@ -658,6 +658,220 @@ export const cwlResponse = new SlashCommandBuilder()
       .setAutocomplete(true);
   });
 
+// Task Management Commands
+export const taskCreate = new SlashCommandBuilder()
+  .setName("task-create")
+  .setDescription("Create a new task")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("title")
+      .setDescription("Title of the task")
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("description")
+      .setDescription("Detailed description of the task")
+      .setRequired(false);
+  })
+  .addRoleOption((option) => {
+    return option
+      .setName("assigned-role")
+      .setDescription("Role that can claim this task")
+      .setRequired(false);
+  })
+  .addUserOption((option) => {
+    return option
+      .setName("assign-user")
+      .setDescription("User to assign this task to (optional)")
+      .setRequired(false);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("priority")
+      .setDescription("Priority level of the task")
+      .setRequired(false)
+      .setChoices([
+        { name: "Low", value: "low" },
+        { name: "Medium", value: "medium" },
+        { name: "High", value: "high" },
+      ]);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("due-date")
+      .setDescription("Due date for the task (YYYY-MM-DD)")
+      .setRequired(false);
+  });
+
+export const taskClaim = new SlashCommandBuilder()
+  .setName("task-claim")
+  .setDescription("Claim a task to work on")
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to claim")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const taskComplete = new SlashCommandBuilder()
+  .setName("task-complete")
+  .setDescription("Mark your claimed task as completed")
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to mark as completed")
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("notes")
+      .setDescription("Completion notes or comments")
+      .setRequired(false);
+  });
+
+export const taskApprove = new SlashCommandBuilder()
+  .setName("task-approve")
+  .setDescription("Approve a completed task and remove it from the board")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to approve")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const taskList = new SlashCommandBuilder()
+  .setName("task-list")
+  .setDescription("List all tasks with optional filtering")
+  .addStringOption((option) => {
+    return option
+      .setName("status")
+      .setDescription("Filter by task status")
+      .setRequired(false)
+      .setChoices([
+        { name: "Pending", value: "pending" },
+        { name: "Claimed", value: "claimed" },
+        { name: "Completed", value: "completed" },
+      ]);
+  })
+  .addRoleOption((option) => {
+    return option
+      .setName("role")
+      .setDescription("Filter by assigned role")
+      .setRequired(false);
+  })
+  .addUserOption((option) => {
+    return option
+      .setName("user")
+      .setDescription("Filter by user (claimed by or created by)")
+      .setRequired(false);
+  });
+
+export const taskUnclaim = new SlashCommandBuilder()
+  .setName("task-unclaim")
+  .setDescription("Unclaim a task you previously claimed")
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to unclaim")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const taskDelete = new SlashCommandBuilder()
+  .setName("task-delete")
+  .setDescription("Delete a task permanently")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to delete")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const taskDashboard = new SlashCommandBuilder()
+  .setName("task-dashboard")
+  .setDescription("Get a link to the task management dashboard");
+
+export const taskNotify = new SlashCommandBuilder()
+  .setName("task-notify")
+  .setDescription("Send task notifications and ping assigned roles")
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to notify about")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const taskSetDueDate = new SlashCommandBuilder()
+  .setName("task-set-due-date")
+  .setDescription("Set or update the due date for a task")
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to set due date for")
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName("due_date")
+      .setDescription("Due date (YYYY-MM-DD format, e.g., 2025-11-15)")
+      .setRequired(true);
+  });
+
+export const taskAssign = new SlashCommandBuilder()
+  .setName("task-assign")
+  .setDescription("Assign a task to a specific user")
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to assign")
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addUserOption((option) => {
+    return option
+      .setName("user")
+      .setDescription("User to assign the task to")
+      .setRequired(true);
+  });
+
+export const taskReminders = new SlashCommandBuilder()
+  .setName("task-reminders")
+  .setDescription("Send task summaries to all assignees showing their pending and claimed tasks")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
+export const taskAdminUnclaim = new SlashCommandBuilder()
+  .setName("task-admin-unclaim")
+  .setDescription("Admin command to forcibly unclaim a task from a user")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to unclaim from the current user")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const taskOverview = new SlashCommandBuilder()
+  .setName("task-overview")
+  .setDescription("View detailed information about a specific task")
+  .addStringOption((option) => {
+    return option
+      .setName("task")
+      .setDescription("Task to view details for")
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
 export const registerSubs = new SlashCommandBuilder()
   .setName('register-subs')
   .setDescription('Register player substitutions between clans')

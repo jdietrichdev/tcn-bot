@@ -68,6 +68,17 @@ export const proxy = async (
     response = await handleUnrosteredPagination(body as APIMessageComponentInteraction, body.data.custom_id);
   } else if (
     body.type === InteractionType.MessageComponent &&
+    (body.data.custom_id.startsWith("task_list_first_") ||
+     body.data.custom_id.startsWith("task_list_prev_") ||
+     body.data.custom_id.startsWith("task_list_next_") ||
+     body.data.custom_id.startsWith("task_list_last_") ||
+     body.data.custom_id.startsWith("task_list_page_"))
+  ) {
+    console.log("Task list pagination button clicked");
+    const { handleTaskListPagination } = await import("./component-handlers/taskListButton");
+    response = await handleTaskListPagination(body as APIMessageComponentInteraction, body.data.custom_id);
+  } else if (
+    body.type === InteractionType.MessageComponent &&
     body.data.custom_id.startsWith("roster_show_")
   ) {
     console.log("Roster show pagination button clicked");
@@ -87,13 +98,68 @@ export const proxy = async (
       })
     );
     
-    const publicCommands = ['unrostered', 'announceRoster', 'create-roster', 'roster-add', 'roster-show', 'roster-remove'];
+    const publicCommands = [
+      'unrostered', 
+      'announceRoster', 
+      'create-roster', 
+      'roster-add', 
+      'roster-show', 
+      'roster-remove',
+      'task-create',
+      'task-claim',
+      'task-complete',
+      'task-approve',
+      'task-list',
+      'task-unclaim',
+      'task-delete',
+      'task-dashboard',
+      'task-notify',
+      'task-set-due-date',
+      'task-assign',
+      'task-reminders',
+      'task-admin-unclaim',
+      'task-overview'
+    ];
+    
+    const publicTaskButtons = [
+      'task_claim_',
+      'task_complete_',
+      'task_unclaim_',
+      'task_approve_',
+      'task_list_all',
+      'task_list_my',
+      'task_list_pending',
+      'task_list_claimed',
+      'task_list_completed',
+      'task_list_approved',
+      'task_list_available',
+      'task_create_new',
+      'task_refresh_list',
+      'task_refresh_dashboard'
+    ];
+    
     const isPublicCommand = body.type === InteractionType.ApplicationCommand && 
                            publicCommands.includes((body as APIChatInputApplicationCommandInteraction).data.name);
     
+    const isPublicButton = body.type === InteractionType.MessageComponent && 
+                          publicTaskButtons.some(buttonPrefix => 
+                            (body as APIMessageComponentInteraction).data.custom_id.startsWith(buttonPrefix) ||
+                            (body as APIMessageComponentInteraction).data.custom_id === buttonPrefix
+                          );
+    
+    // Debug logging
+    if (body.type === InteractionType.MessageComponent) {
+      const customId = (body as APIMessageComponentInteraction).data.custom_id;
+      console.log(`Button interaction: ${customId}, isPublic: ${isPublicButton}`);
+    }
+    if (body.type === InteractionType.ApplicationCommand) {
+      const commandName = (body as APIChatInputApplicationCommandInteraction).data.name;
+      console.log(`Slash command: ${commandName}, isPublic: ${isPublicCommand}`);
+    }
+    
     response = {
       type: InteractionResponseType.DeferredChannelMessageWithSource,
-      data: isPublicCommand ? {} : {
+      data: (isPublicCommand || isPublicButton) ? {} : {
         flags: MessageFlags.Ephemeral,
       },
     } as APIInteractionResponse;

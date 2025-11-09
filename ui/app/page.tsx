@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -7,96 +8,106 @@ export default function Home() {
         <Image
           className="dark:invert"
           src="/next.svg"
-          alt="Next.js logo"
+          alt="TCN Bot logo"
           width={180}
           height={38}
           priority
         />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+        <h1 className="text-4xl font-bold text-center sm:text-left">
+          🤖 TCN Bot Dashboard
+        </h1>
+        <p className="text-lg text-center sm:text-left text-gray-600 dark:text-gray-400">
+          Welcome to the TCN Discord Bot management dashboard. Choose a feature below to get started.
+        </p>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+          {/* Task Management */}
+          <Link 
+            href="/tasks"
+            className="group relative overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 hover:shadow-lg transition-all duration-300"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <div className="flex items-center space-x-4">
+              <div className="text-4xl">📋</div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Task Management
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  View and manage community tasks, track progress, and collaborate with team members.
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-blue-600 dark:text-blue-400 font-medium">
+              View Tasks Dashboard →
+            </div>
+          </Link>
+
+          {/* Roster Upload */}
+          <Link 
+            href="/roster-upload"
+            className="group relative overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 hover:shadow-lg transition-all duration-300"
           >
-            Read our docs
-          </a>
+            <div className="flex items-center space-x-4">
+              <div className="text-4xl">👥</div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Roster Management
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Upload and manage clan rosters, track member activities and statistics.
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-blue-600 dark:text-blue-400 font-medium">
+              Manage Rosters →
+            </div>
+          </Link>
+
+          {/* Transcript */}
+          <Link 
+            href="/transcript"
+            className="group relative overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 hover:shadow-lg transition-all duration-300"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="text-4xl">📝</div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Transcripts
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  View and manage Discord conversation transcripts and logs.
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-blue-600 dark:text-blue-400 font-medium">
+              View Transcripts →
+            </div>
+          </Link>
+
+          {/* Coming Soon */}
+          <div className="group relative overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800 p-6 opacity-60">
+            <div className="flex items-center space-x-4">
+              <div className="text-4xl">🚀</div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  More Features
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Additional bot management features coming soon...
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-gray-500 dark:text-gray-500 font-medium">
+              Coming Soon
+            </div>
+          </div>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+      
+      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+        <span>TCN Discord Bot Dashboard</span>
+        <span>•</span>
+        <span>Built with Next.js</span>
       </footer>
     </div>
   );

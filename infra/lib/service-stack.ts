@@ -1,5 +1,5 @@
 import { Construct } from "constructs";
-import { Duration, RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
+import { Duration, RemovalPolicy, Stack, StackProps, CfnOutput } from "aws-cdk-lib";
 import {
   Code,
   Function as Lambda,
@@ -43,6 +43,7 @@ export class ServiceStack extends Stack {
   private proxy: Lambda;
   private handler: Lambda;
   private scheduled: Lambda;
+  private taskApiLambda: Lambda;
   readonly rosterBucket: Bucket;
   readonly transcriptBucket: Bucket;
 
@@ -135,7 +136,7 @@ export class ServiceStack extends Stack {
             source: "tcn-bot-scheduled",
             "detail-type": "Generate Recruiter Score",
             detail: {
-              guildId: "1111490767991615518",
+              guildId: "1021786969077973022",
             },
           }),
         }),
@@ -154,7 +155,7 @@ export class ServiceStack extends Stack {
             source: "tcn-bot-scheduled",
             "detail-type": "Rank Proposal Reminder",
             detail: {
-              guildId: "1111490767991615518",
+              guildId: "1021786969077973022",
             },
           }),
         }),
@@ -169,7 +170,25 @@ export class ServiceStack extends Stack {
             source: "tcn-bot-scheduled",
             "detail-type": "Applicant Leave Check",
             detail: {
-              guildId: "1111490767991615518"
+              guildId: "1021786969077973022"
+            }
+          })
+        })
+      ]
+    })
+
+    new Rule(this, 'daily-task-reminders', {
+      schedule: Schedule.cron({
+        minute: "0",
+        hour: "9", // 9 AM UTC (adjust as needed for your timezone)
+      }),
+      targets: [
+        new LambdaFunction(this.scheduled, {
+          event: RuleTargetInput.fromObject({
+            source: "tcn-bot-scheduled",
+            "detail-type": "Daily Task Reminders",
+            detail: {
+              guildId: "1021786969077973022"
             }
           })
         })
@@ -249,6 +268,41 @@ export class ServiceStack extends Stack {
         accessLogDestination: new LogGroupLogDestination(accessLogs),
         accessLogFormat: AccessLogFormat.jsonWithStandardFields(),
       },
+    });
+
+    this.taskApiLambda = new Lambda(this, "task-api", {
+      functionName: "task-api",
+      runtime: Runtime.NODEJS_22_X,
+      handler: "taskApi.taskApi",
+      code: Code.fromAsset("../bot/dist"),
+      logRetention: RetentionDays.ONE_MONTH,
+      environment: {
+        REGION: props.env!.region!,
+      },
+      timeout: Duration.seconds(30),
+    });
+    props.botTable.grantReadWriteData(this.taskApiLambda);
+
+    const taskApiGateway = new LambdaRestApi(this, "task-api-gateway", {
+      restApiName: "TaskApi",
+      handler: this.taskApiLambda,
+      deployOptions: {
+        stageName: "prod",
+        accessLogDestination: new LogGroupLogDestination(accessLogs),
+        accessLogFormat: AccessLogFormat.jsonWithStandardFields(),
+      },
+      defaultCorsPreflightOptions: {
+        allowOrigins: ["*"],
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowHeaders: ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token"],
+      },
+    });
+
+    // Output the Task API Gateway URL
+    new CfnOutput(this, "TaskApiUrl", {
+      value: taskApiGateway.url,
+      description: "Task API Gateway URL",
+      exportName: "TaskApiUrl",
     });
 
     const botProcessor = new Lambda(this, "bot-processor", {
