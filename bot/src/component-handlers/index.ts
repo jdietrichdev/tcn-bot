@@ -28,7 +28,18 @@ export const handleComponent = async (
 ): Promise<any> => {
   const customId = interaction.data.custom_id;
   console.log(`[handleComponent] Received custom_id: ${customId}`);
-  if (customId === "approveApp") {
+  
+  if (customId.startsWith("task_")) {
+    if (customId.startsWith("task_list_first_") ||
+        customId.startsWith("task_list_prev_") ||
+        customId.startsWith("task_list_next_") ||
+        customId.startsWith("task_list_last_") ||
+        customId.startsWith("task_list_page_")) {
+      return await handleTaskListPagination(interaction, customId);
+    } else {
+      return await handleTaskButtonInteraction(interaction);
+    }
+  } else if (customId === "approveApp") {
     await approveApp(interaction, getConfig(interaction.guild_id!));
   } else if (customId === "messageRecruit") {
     await messageRecruit(interaction);
@@ -58,16 +69,6 @@ export const handleComponent = async (
     await nominationResults(interaction);
   } else if (customId.startsWith("answer")) {
     await answerQuestion(interaction);
-  } else if (customId.startsWith("task_")) {
-    if (customId.startsWith("task_list_first_") ||
-        customId.startsWith("task_list_prev_") ||
-        customId.startsWith("task_list_next_") ||
-        customId.startsWith("task_list_last_") ||
-        customId.startsWith("task_list_page_")) {
-      return await handleTaskListPagination(interaction, customId);
-    } else {
-      return await handleTaskButtonInteraction(interaction);
-    }
   } else if (customId.startsWith("unrostered_")) {
     return await handleUnrosteredPagination(interaction, customId);
   } else if (customId.startsWith("approve_sub_") || customId.startsWith("deny_sub_")) {
