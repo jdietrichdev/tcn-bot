@@ -84,6 +84,14 @@ export const proxy = async (
     console.log("Roster show pagination button clicked");
     const { handleRosterShowPagination } = await import("./component-handlers/rosterShowButton");
     response = await handleRosterShowPagination(body as APIMessageComponentInteraction);
+  } else if (
+    body.type === InteractionType.MessageComponent &&
+    body.data.custom_id.startsWith("task_")
+  ) {
+    console.log("Task button clicked");
+    const { handleTaskButtonInteraction } = await import("./component-handlers/taskButtons");
+    const taskResponse = await handleTaskButtonInteraction(body as APIMessageComponentInteraction);
+    response = taskResponse || { type: InteractionResponseType.DeferredMessageUpdate };
   } else {
     await eventClient.send(
       new PutEventsCommand({
