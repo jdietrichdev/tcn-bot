@@ -255,7 +255,7 @@ export const handleTaskButtonInteraction = async (
   try {
     if (customId.startsWith('task_claim_')) {
       if (isTaskMessage) {
-        const deferResponse = async () => {
+        setImmediate(async () => {
           try {
             const responseData = await performTaskAction(interaction, taskId, guildId, 'claim');
             await updateResponse(process.env.APPLICATION_ID!, interaction.token, responseData);
@@ -269,9 +269,7 @@ export const handleTaskButtonInteraction = async (
               content: '❌ Failed to claim task. Please try again.',
             });
           }
-        };
-        
-        deferResponse();
+        });
         
         return {
           type: InteractionResponseType.DeferredMessageUpdate
@@ -290,7 +288,7 @@ export const handleTaskButtonInteraction = async (
       }
     } else if (customId.startsWith('task_complete_')) {
       if (isTaskMessage) {
-        const deferResponse = async () => {
+        setImmediate(async () => {
           try {
             const responseData = await performTaskAction(interaction, taskId, guildId, 'complete');
             await updateResponse(process.env.APPLICATION_ID!, interaction.token, responseData);
@@ -304,9 +302,7 @@ export const handleTaskButtonInteraction = async (
               content: '❌ Failed to complete task. Please try again.',
             });
           }
-        };
-        
-        deferResponse();
+        });
         
         return {
           type: InteractionResponseType.DeferredMessageUpdate
@@ -325,7 +321,7 @@ export const handleTaskButtonInteraction = async (
       }
     } else if (customId.startsWith('task_unclaim_')) {
       if (isTaskMessage) {
-        const deferResponse = async () => {
+        setImmediate(async () => {
           try {
             const responseData = await performTaskAction(interaction, taskId, guildId, 'unclaim');
             await updateResponse(process.env.APPLICATION_ID!, interaction.token, responseData);
@@ -339,9 +335,7 @@ export const handleTaskButtonInteraction = async (
               content: '❌ Failed to unclaim task. Please try again.',
             });
           }
-        };
-        
-        deferResponse();
+        });
         
         return {
           type: InteractionResponseType.DeferredMessageUpdate
@@ -360,7 +354,7 @@ export const handleTaskButtonInteraction = async (
       }
     } else if (customId.startsWith('task_approve_')) {
       if (isTaskMessage) {
-        const deferResponse = async () => {
+        setImmediate(async () => {
           try {
             const responseData = await performTaskAction(interaction, taskId, guildId, 'approve');
             await updateResponse(process.env.APPLICATION_ID!, interaction.token, responseData);
@@ -374,9 +368,7 @@ export const handleTaskButtonInteraction = async (
               content: '❌ Failed to approve task. Please try again.',
             });
           }
-        };
-        
-        deferResponse();
+        });
         
         return {
           type: InteractionResponseType.DeferredMessageUpdate

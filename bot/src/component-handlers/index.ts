@@ -66,7 +66,7 @@ export const handleComponent = async (
         customId.startsWith("task_list_page_")) {
       return await handleTaskListPagination(interaction, customId);
     } else {
-      await handleTaskButtonInteraction(interaction);
+      return await handleTaskButtonInteraction(interaction);
     }
   } else if (customId.startsWith("unrostered_")) {
     return await handleUnrosteredPagination(interaction, customId);
