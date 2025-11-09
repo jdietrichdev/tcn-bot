@@ -12,6 +12,32 @@ import { dynamoDbClient } from '../clients/dynamodb-client';
 import { QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { storeCacheInDynamoDB } from '../component-handlers/taskListButton';
 
+const formatTaskAssignments = (task: any): string => {
+  const parts: string[] = [];
+  
+  if (task.claimedBy) {
+    parts.push(`👤 <@${task.claimedBy}>`);
+  }
+  
+  if (task.assignedRoleIds && Array.isArray(task.assignedRoleIds) && task.assignedRoleIds.length > 0) {
+    const roleList = task.assignedRoleIds.map((id: string) => `<@&${id}>`).join(', ');
+    parts.push(`🎭 ${roleList}`);
+  }
+  else if (task.assignedRole) {
+    parts.push(`🎭 <@&${task.assignedRole}>`);
+  }
+  
+  if (task.assignedTo && Array.isArray(task.assignedTo) && task.assignedTo.length > 0) {
+    const userList = task.assignedTo.map((id: string) => `<@${id}>`).join(', ');
+    parts.push(`👥 ${userList}`);
+  }
+  else if (task.assignedTo) {
+    parts.push(`👥 <@${task.assignedTo}>`);
+  }
+  
+  return parts.length > 0 ? `\n    ${parts.join(' • ')}` : '';
+};
+
 export const handleTaskList = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
@@ -149,11 +175,9 @@ export const handleTaskList = async (
       const priority = priorityEmoji[task.priority as keyof typeof priorityEmoji] || '⚪';
       const status = statusEmoji[task.status as keyof typeof statusEmoji] || '❓';
       const dueDate = task.dueDate ? ` (Due: ${task.dueDate})` : '';
-      const claimedBy = task.claimedBy ? ` - <@${task.claimedBy}>` : '';
-      const assignedRole = task.assignedRole ? ` - <@&${task.assignedRole}>` : '';
-      const assignedTo = task.assignedTo ? ` - <@${task.assignedTo}>` : '';
+      const assignments = formatTaskAssignments(task);
       
-      return `${priority}${status} **${task.title}**${dueDate}${claimedBy}${assignedRole}${assignedTo}`;
+      return `${priority}${status} **${task.title}**${dueDate}${assignments}`;
     }).join('\n');
 
     const embed: APIEmbed = {

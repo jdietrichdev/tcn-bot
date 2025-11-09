@@ -126,14 +126,11 @@ export const proxy = async (
       'task_complete_',
       'task_unclaim_',
       'task_approve_',
-      'task_list_all',
-      'task_list_my',
-      'task_list_pending',
-      'task_list_claimed',
-      'task_list_completed',
-      'task_list_approved',
-      'task_list_available',
-      'task_create_new',
+      'task_list_first_',
+      'task_list_prev_',
+      'task_list_next_',
+      'task_list_last_',
+      'task_list_page_',
       'task_refresh_list',
       'task_refresh_dashboard'
     ];
@@ -147,7 +144,6 @@ export const proxy = async (
                             (body as APIMessageComponentInteraction).data.custom_id === buttonPrefix
                           );
     
-    // Debug logging
     if (body.type === InteractionType.MessageComponent) {
       const customId = (body as APIMessageComponentInteraction).data.custom_id;
       console.log(`Button interaction: ${customId}, isPublic: ${isPublicButton}`);

@@ -16,7 +16,7 @@ interface RosterShowCacheData {
 }
 
 export const storeCacheInDynamoDB = async (interactionId: string, data: RosterShowCacheData) => {
-  const ttl = Math.floor(Date.now() / 1000) + 900; // 15 minutes from now
+  const ttl = Math.floor(Date.now() / 1000) + 900;
   
   await dynamoDbClient.send(
     new PutCommand({

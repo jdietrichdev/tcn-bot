@@ -6,7 +6,8 @@ import {
   InteractionResponseType 
 } from 'discord-api-types/v10';
 import { dynamoDbClient } from '../clients/dynamodb-client';
-import { PutCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
+import { PutCommand, GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { updateMessage } from '../adapters/discord-adapter';
 
 interface TaskListCacheData {
   tasks: any[];
@@ -24,6 +25,37 @@ interface TaskListCacheData {
     approved: number;
   };
 }
+
+const formatTaskAssignments = (task: any): string => {
+  const parts: string[] = [];
+  
+  // Add claimed by if present
+  if (task.claimedBy) {
+    parts.push(`👤 <@${task.claimedBy}>`);
+  }
+  
+  // Handle multiple role assignments (new format)
+  if (task.assignedRoleIds && Array.isArray(task.assignedRoleIds) && task.assignedRoleIds.length > 0) {
+    const roleList = task.assignedRoleIds.map((id: string) => `<@&${id}>`).join(', ');
+    parts.push(`🎭 ${roleList}`);
+  }
+  // Handle single role assignment (legacy format)
+  else if (task.assignedRole) {
+    parts.push(`🎭 <@&${task.assignedRole}>`);
+  }
+  
+  // Handle multiple user assignments (new format)
+  if (task.assignedUserIds && Array.isArray(task.assignedUserIds) && task.assignedUserIds.length > 0) {
+    const userList = task.assignedUserIds.map((id: string) => `<@${id}>`).join(', ');
+    parts.push(`👥 ${userList}`);
+  }
+  // Handle single user assignment (legacy format)
+  else if (task.assignedTo) {
+    parts.push(`👥 <@${task.assignedTo}>`);
+  }
+  
+  return parts.length > 0 ? `\n    ↳ ${parts.join(' • ')}` : '';
+};
 
 export const storeCacheInDynamoDB = async (interactionId: string, data: TaskListCacheData) => {
   const ttl = Math.floor(Date.now() / 1000) + (15 * 60);
@@ -140,11 +172,9 @@ export const handleTaskListPagination = async (
       const priority = priorityEmoji[task.priority as keyof typeof priorityEmoji] || '⚪';
       const status = statusEmoji[task.status as keyof typeof statusEmoji] || '❓';
       const dueDate = task.dueDate ? ` (Due: ${task.dueDate})` : '';
-      const claimedBy = task.claimedBy ? ` - <@${task.claimedBy}>` : '';
-      const assignedRole = task.assignedRole ? ` - <@&${task.assignedRole}>` : '';
-      const assignedTo = task.assignedTo ? ` - <@${task.assignedTo}>` : '';
+      const assignments = formatTaskAssignments(task);
       
-      return `${priority}${status} **${task.title}**${dueDate}${claimedBy}${assignedRole}${assignedTo}`;
+      return `${priority}${status} **${task.title}**${dueDate}${assignments}`;
     }).join('\n');
 
     const embed: APIEmbed = {
@@ -351,4 +381,327 @@ export const handleTaskListFilterButton = async (
     type: InteractionResponseType.DeferredChannelMessageWithSource,
     data: {}
   };
+};
+
+export const refreshTaskListMessages = async (guildId: string) => {
+  console.log(`Refreshing task list messages for guild: ${guildId}`);
+  
+  try {
+    const cacheResult = await dynamoDbClient.send(
+      new QueryCommand({
+        TableName: 'BotTable',
+        KeyConditionExpression: 'pk = :pk',
+        ExpressionAttributeValues: {
+          ':pk': 'task-list-cache'
+        }
+      })
+    );
+    
+    if (!cacheResult.Items || cacheResult.Items.length === 0) {
+      console.log('No task list cache entries found');
+      return;
+    }
+    
+    console.log(`Found ${cacheResult.Items.length} task list cache entries to refresh`);
+    
+    const taskResult = await dynamoDbClient.send(
+      new QueryCommand({
+        TableName: 'BotTable',
+        KeyConditionExpression: 'pk = :pk AND begins_with(sk, :sk)',
+        ExpressionAttributeValues: {
+          ':pk': guildId,
+          ':sk': 'task#',
+        },
+      })
+    );
+    
+    const allTasks = taskResult.Items || [];
+    
+    const allTaskCounts = {
+      pending: allTasks.filter(task => task.status === 'pending').length,
+      claimed: allTasks.filter(task => task.status === 'claimed').length,
+      completed: allTasks.filter(task => task.status === 'completed').length,
+      approved: allTasks.filter(task => task.status === 'approved').length,
+    };
+    
+    for (const item of cacheResult.Items) {
+      const interactionId = item.sk;
+      const cacheData = item.data as TaskListCacheData;
+      
+      try {
+        if (!cacheData.messageId || !cacheData.channelId) {
+          console.log(`Skipping cache entry ${interactionId} - missing messageId or channelId`);
+          continue;
+        }
+        
+        console.log(`Processing cache entry: interaction=${interactionId}, messageId=${cacheData.messageId}, channelId=${cacheData.channelId}`);
+        
+        let filteredTasks = allTasks;
+        
+        if (cacheData.filters.status) {
+          filteredTasks = filteredTasks.filter(task => task.status === cacheData.filters.status);
+        }
+        
+        if (cacheData.filters.role) {
+          filteredTasks = filteredTasks.filter(task => {
+            if (task.assignedRoleIds && Array.isArray(task.assignedRoleIds)) {
+              return task.assignedRoleIds.includes(cacheData.filters.role);
+            }
+            return task.assignedRole === cacheData.filters.role;
+          });
+        }
+        
+        if (cacheData.filters.user) {
+          filteredTasks = filteredTasks.filter(task => {
+            if (task.assignedUserIds && Array.isArray(task.assignedUserIds)) {
+              if (task.assignedUserIds.includes(cacheData.filters.user)) return true;
+            }
+            if (task.assignedTo === cacheData.filters.user) return true;
+            
+            if (task.claimedBy === cacheData.filters.user) return true;
+            
+            return false;
+          });
+        }
+        
+        cacheData.tasks = filteredTasks;
+        cacheData.allTaskCounts = allTaskCounts;
+        
+        const tasksPerPage = 8;
+        const pages: any[][] = [];
+        for (let i = 0; i < filteredTasks.length; i += tasksPerPage) {
+          pages.push(filteredTasks.slice(i, i + tasksPerPage));
+        }
+        
+        if (pages.length === 0) {
+          const embed: APIEmbed = {
+            title: `📋 ✦ TASK BOARD${cacheData.filters.status || cacheData.filters.role || cacheData.filters.user ? ' (FILTERED)' : ''} ✦ 📝`,
+            description: '`No tasks found matching the current filters.`',
+            color: 0x5865F2,
+            fields: [
+              {
+                name: `📊 **Task Statistics${cacheData.filters.status || cacheData.filters.role || cacheData.filters.user ? ' (Filtered)' : ''}**`,
+                value: [
+                  `**📬 Pending:** \`${allTaskCounts.pending}\``,
+                  `**📪 In Progress:** \`${allTaskCounts.claimed}\``,
+                  `**✅ Completed:** \`${allTaskCounts.completed}\``,
+                  `**☑️ Approved:** \`${allTaskCounts.approved}\``
+                ].join('\n'),
+                inline: true
+              },
+              {
+                name: '📖 **Status Legend**',
+                value: [
+                  '**Priorities:**',
+                  '🔴 `High Priority`',
+                  '🟡 `Medium Priority`',
+                  '🟢 `Low Priority`',
+                  '',
+                  '**Statuses:**',
+                  '📬 `Pending`',
+                  '📪 `Claimed`',
+                  '✅ `Ready for Review`',
+                  '☑️ `Approved`'
+                ].join('\n'),
+                inline: true
+              }
+            ],
+            footer: {
+              text: `Page 1 of 1  •  0 tasks displayed`,
+            },
+            timestamp: new Date().toISOString()
+          };
+          
+          if (cacheData.filters.status || cacheData.filters.role || cacheData.filters.user) {
+            const filterInfo = [];
+            if (cacheData.filters.status) filterInfo.push(`Status: ${cacheData.filters.status}`);
+            if (cacheData.filters.role) filterInfo.push(`Role: <@&${cacheData.filters.role}>`);
+            if (cacheData.filters.user) filterInfo.push(`User: <@${cacheData.filters.user}>`);
+            
+            embed.fields!.unshift({
+              name: '🔍 Active Filters',
+              value: filterInfo.join(', '),
+              inline: false
+            });
+          }
+          
+          await updateMessage(cacheData.channelId, cacheData.messageId, {
+            embeds: [embed],
+            components: [] // No pagination buttons needed
+          });
+        } else {
+          const priorityEmoji = { high: '🔴', medium: '🟡', low: '🟢' };
+          const statusEmoji = {
+            pending: '📬', 
+            claimed: '📪',
+            completed: '✅',
+            approved: '☑️'
+          };
+
+          const taskList = pages[0].map((task: any, index: number) => {
+            const priority = priorityEmoji[task.priority as keyof typeof priorityEmoji] || '⚪';
+            const status = statusEmoji[task.status as keyof typeof statusEmoji] || '❓';
+            const dueDate = task.dueDate ? ` (Due: ${task.dueDate})` : '';
+            const assignments = formatTaskAssignments(task);
+            
+            return `${priority}${status} **${task.title}**${dueDate}${assignments}`;
+          }).join('\n');
+
+          const embed: APIEmbed = {
+            title: `📋 ✦ TASK BOARD${cacheData.filters.status || cacheData.filters.role || cacheData.filters.user ? ' (FILTERED)' : ''} ✦ 📝`,
+            description: (() => {
+              const filterParts = [];
+              if (cacheData.filters.status) filterParts.push(`Status: ${cacheData.filters.status}`);
+              if (cacheData.filters.role) filterParts.push(`Role: <@&${cacheData.filters.role}>`);
+              if (cacheData.filters.user) filterParts.push(`User: <@${cacheData.filters.user}>`);
+              
+              const isFiltered = filterParts.length > 0;
+              const filterDescription = isFiltered ? ` (${filterParts.join(', ')})` : '';
+              
+              if (isFiltered) {
+                return `Showing ${filteredTasks.length} task${filteredTasks.length === 1 ? '' : 's'} matching filters${filterDescription}\n\n${taskList || '`No tasks found matching the current filters.`'}`;
+              }
+              return taskList || '`No tasks found matching the current filters.`';
+            })(),
+            color: 0x5865F2,
+            fields: [
+              {
+                name: `📊 **Task Statistics${cacheData.filters.status || cacheData.filters.role || cacheData.filters.user ? ' (Filtered)' : ''}**`,
+                value: [
+                  `**📬 Pending:** \`${allTaskCounts.pending}\``,
+                  `**📪 In Progress:** \`${allTaskCounts.claimed}\``,
+                  `**✅ Completed:** \`${allTaskCounts.completed}\``,
+                  `**☑️ Approved:** \`${allTaskCounts.approved}\``
+                ].join('\n'),
+                inline: true
+              },
+              {
+                name: '📖 **Status Legend**',
+                value: [
+                  '**Priorities:**',
+                  '🔴 `High Priority`',
+                  '🟡 `Medium Priority`',
+                  '🟢 `Low Priority`',
+                  '',
+                  '**Statuses:**',
+                  '📬 `Pending`',
+                  '📪 `Claimed`',
+                  '✅ `Ready for Review`',
+                  '☑️ `Approved`'
+                ].join('\n'),
+                inline: true
+              }
+            ],
+            footer: {
+              text: `Page 1 of ${pages.length}  •  ${filteredTasks.length} task${filteredTasks.length !== 1 ? 's' : ''} displayed`,
+            },
+            timestamp: new Date().toISOString()
+          };
+
+          if (cacheData.filters.status || cacheData.filters.role || cacheData.filters.user) {
+            const filterInfo = [];
+            if (cacheData.filters.status) filterInfo.push(`Status: ${cacheData.filters.status}`);
+            if (cacheData.filters.role) filterInfo.push(`Role: <@&${cacheData.filters.role}>`);
+            if (cacheData.filters.user) filterInfo.push(`User: <@${cacheData.filters.user}>`);
+            
+            embed.fields!.unshift({
+              name: '🔍 Active Filters',
+              value: filterInfo.join(', '),
+              inline: false
+            });
+          }
+
+          const createComponents = (currentPage: number) => {
+            const components = [];
+            
+            if (pages.length > 1) {
+              components.push({
+                type: ComponentType.ActionRow,
+                components: [
+                  {
+                    type: ComponentType.Button,
+                    custom_id: `task_list_first_${interactionId}`,
+                    emoji: { name: '⏮️' },
+                    style: ButtonStyle.Secondary,
+                    disabled: currentPage === 0
+                  },
+                  {
+                    type: ComponentType.Button,
+                    custom_id: `task_list_prev_${interactionId}`,
+                    emoji: { name: '◀️' },
+                    style: ButtonStyle.Primary,
+                    disabled: currentPage === 0
+                  },
+                  {
+                    type: ComponentType.Button,
+                    custom_id: `task_list_page_${interactionId}`,
+                    label: `${currentPage + 1} / ${pages.length}`,
+                    style: ButtonStyle.Secondary,
+                    disabled: true
+                  },
+                  {
+                    type: ComponentType.Button,
+                    custom_id: `task_list_next_${interactionId}`,
+                    emoji: { name: '▶️' },
+                    style: ButtonStyle.Primary,
+                    disabled: currentPage === pages.length - 1
+                  },
+                  {
+                    type: ComponentType.Button,
+                    custom_id: `task_list_last_${interactionId}`,
+                    emoji: { name: '⏭️' },
+                    style: ButtonStyle.Secondary,
+                    disabled: currentPage === pages.length - 1
+                  }
+                ]
+              });
+            }
+
+            components.push({
+              type: ComponentType.ActionRow,
+              components: [
+                {
+                  type: ComponentType.Button,
+                  custom_id: 'task_create_new',
+                  label: 'Create Task',
+                  style: ButtonStyle.Success,
+                  emoji: { name: '➕' }
+                },
+                {
+                  type: ComponentType.Button,
+                  custom_id: 'task_refresh_list',
+                  label: 'Refresh',
+                  style: ButtonStyle.Secondary,
+                  emoji: { name: '🔄' }
+                },
+                {
+                  type: ComponentType.Button,
+                  label: 'Open Dashboard',
+                  style: ButtonStyle.Link,
+                  url: `${process.env.DASHBOARD_URL || 'https://d19x3gu4qo04f3.cloudfront.net'}/tasks`
+                }
+              ]
+            });
+
+            return components as any;
+          };
+          
+          await updateMessage(cacheData.channelId, cacheData.messageId, {
+            embeds: [embed],
+            components: createComponents(0)
+          });
+        }
+        
+        await storeCacheInDynamoDB(interactionId, cacheData);
+        
+        console.log(`Updated task list message in channel ${cacheData.channelId}`);
+      } catch (error) {
+        console.error(`Failed to refresh task list message for interaction ${interactionId}:`, error);
+      }
+    }
+    
+    console.log(`Task list refresh completed for guild ${guildId}`);
+  } catch (error) {
+    console.error('Failed to refresh task list messages:', error);
+  }
 };

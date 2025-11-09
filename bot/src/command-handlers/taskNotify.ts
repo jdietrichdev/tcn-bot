@@ -105,12 +105,27 @@ export const handleTaskNotify = async (
       urgencyLevel = '📋 **NEEDS ATTENTION**';
     }
 
-    let pingText = '';
-    if (task.assignedRole) {
-      pingText = `<@&${task.assignedRole}> `;
-    } else if (task.status === 'completed') {
-      pingText = '**@admin** ';
-    }
+    const generatePingText = () => {
+      const allPings = [];
+      
+      if (task.assignedRoleIds && Array.isArray(task.assignedRoleIds)) {
+        allPings.push(...task.assignedRoleIds.map((id: string) => `<@&${id}>`));
+      } else if (task.assignedRole) {
+        allPings.push(`<@&${task.assignedRole}>`);
+      }
+      
+      if (task.assignedUserIds && Array.isArray(task.assignedUserIds)) {
+        allPings.push(...task.assignedUserIds.map((id: string) => `<@${id}>`));
+      }
+      
+      if (allPings.length === 0 && task.status === 'completed') {
+        return '**@admin** ';
+      }
+      
+      return allPings.length > 0 ? `${allPings.join(' ')} ` : '';
+    };
+
+    const pingText = generatePingText();
 
     const embed: APIEmbed = {
       title: notificationType,

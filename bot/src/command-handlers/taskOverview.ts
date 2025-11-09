@@ -9,6 +9,26 @@ import { updateResponse } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { GetCommand } from '@aws-sdk/lib-dynamodb';
 
+const formatAssignmentDetails = (task: any) => {
+  let roleDisplay = '`Anyone can claim`';
+  if (task.assignedRoleIds && Array.isArray(task.assignedRoleIds) && task.assignedRoleIds.length > 0) {
+    const roleList = task.assignedRoleIds.map((id: string) => `<@&${id}>`).join(', ');
+    roleDisplay = roleList;
+  } else if (task.assignedRole) {
+    roleDisplay = `<@&${task.assignedRole}>`;
+  }
+  
+  let userDisplay = '`Not assigned to specific user`';
+  if (task.assignedTo && Array.isArray(task.assignedTo) && task.assignedTo.length > 0) {
+    const userList = task.assignedTo.map((id: string) => `<@${id}>`).join(', ');
+    userDisplay = userList;
+  } else if (task.assignedTo) {
+    userDisplay = `<@${task.assignedTo}>`;
+  }
+  
+  return { roleDisplay, userDisplay };
+};
+
 export const handleTaskOverview = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
@@ -91,8 +111,8 @@ export const handleTaskOverview = async (
         {
           name: '👥 **Assignment & Access**',
           value: [
-            `**Assigned Role:** ${task.assignedRole ? `<@&${task.assignedRole}>` : '`Anyone can claim`'}`,
-            `**Assigned User:** ${task.assignedTo ? `<@${task.assignedTo}>` : '`Not assigned to specific user`'}`,
+            `**Assigned Role:** ${formatAssignmentDetails(task).roleDisplay}`,
+            `**Assigned User:** ${formatAssignmentDetails(task).userDisplay}`,
             `**Currently Claimed:** ${task.claimedBy ? `<@${task.claimedBy}>` : '`No one`'}`
           ].join('\n'),
           inline: false

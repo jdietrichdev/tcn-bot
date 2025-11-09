@@ -1,5 +1,5 @@
-import { APIMessageComponentInteraction, InteractionResponseType } from 'discord-api-types/v10';
-import { updateResponse } from '../adapters/discord-adapter';
+import { APIMessageComponentInteraction, InteractionResponseType, APIEmbed, ComponentType, ButtonStyle } from 'discord-api-types/v10';
+import { updateResponse, updateMessage } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { GetCommand, UpdateCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 
@@ -29,6 +29,9 @@ export const handleTaskButtonInteraction = async (
       };
       const { handleTaskClaim } = await import('../command-handlers/taskClaim');
       await handleTaskClaim(claimInteraction as any);
+      
+      const { refreshTaskListMessages } = await import('./taskListButton');
+      await refreshTaskListMessages(guildId);
 
     } else if (customId.startsWith('task_complete_') && taskId) {
       const completeInteraction = {
@@ -41,6 +44,9 @@ export const handleTaskButtonInteraction = async (
       };
       const { handleTaskComplete } = await import('../command-handlers/taskComplete');
       await handleTaskComplete(completeInteraction as any);
+      
+      const { refreshTaskListMessages } = await import('./taskListButton');
+      await refreshTaskListMessages(guildId);
 
     } else if (customId.startsWith('task_unclaim_') && taskId) {
       const unclaimInteraction = {
@@ -53,6 +59,9 @@ export const handleTaskButtonInteraction = async (
       };
       const { handleTaskUnclaim } = await import('../command-handlers/taskUnclaim');
       await handleTaskUnclaim(unclaimInteraction as any);
+      
+      const { refreshTaskListMessages } = await import('./taskListButton');
+      await refreshTaskListMessages(guildId);
 
     } else if (customId.startsWith('task_approve_') && taskId) {
       const approveInteraction = {
@@ -65,6 +74,9 @@ export const handleTaskButtonInteraction = async (
       };
       const { handleTaskApprove } = await import('../command-handlers/taskApprove');
       await handleTaskApprove(approveInteraction as any);
+      
+      const { refreshTaskListMessages } = await import('./taskListButton');
+      await refreshTaskListMessages(guildId);
 
     } else if (customId === 'task_list_all') {
       const listInteraction = {
@@ -166,6 +178,9 @@ export const handleTaskButtonInteraction = async (
       };
       const { handleTaskList } = await import('../command-handlers/taskList');
       await handleTaskList(listInteraction as any);
+      
+      const { refreshTaskListMessages } = await import('./taskListButton');
+      await refreshTaskListMessages(guildId);
 
     } else if (customId === 'task_refresh_dashboard') {
       const dashboardInteraction = {

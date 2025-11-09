@@ -47,7 +47,10 @@ export const handleTaskClaim = async (
       return;
     }
 
-    if (task.status !== 'pending') {
+    const allowsMultipleClaims = (task.assignedRoleIds && task.assignedRoleIds.length > 0) || 
+                                (task.assignedUserIds && task.assignedUserIds.length > 0);
+    
+    if (!allowsMultipleClaims && task.status !== 'pending') {
       const statusMessages = {
         claimed: `❌ This task has already been claimed by <@${task.claimedBy}>.`,
         completed: `❌ This task has been completed by <@${task.completedBy}>.`,
@@ -60,23 +63,45 @@ export const handleTaskClaim = async (
       return;
     }
 
-    if (task.assignedRole) {
+    let hasPermission = false;
+    
+    if (task.assignedRoleIds && Array.isArray(task.assignedRoleIds)) {
       const userRoles = interaction.member?.roles || [];
-      const hasRequiredRole = userRoles.includes(task.assignedRole);
+      hasPermission = task.assignedRoleIds.some(roleId => userRoles.includes(roleId));
+    } else if (task.assignedRole) {
+      const userRoles = interaction.member?.roles || [];
+      hasPermission = userRoles.includes(task.assignedRole);
+    }
+    
+    if (!hasPermission && task.assignedUserIds && Array.isArray(task.assignedUserIds)) {
+      hasPermission = task.assignedUserIds.includes(userId);
+    } else if (!hasPermission && task.assignedTo) {
+      hasPermission = task.assignedTo === userId;
+    }
+    
+    if ((task.assignedRoleIds || task.assignedUserIds || task.assignedRole || task.assignedTo) && !hasPermission) {
+      const assignmentInfo = [];
+      if (task.assignedRoleIds && task.assignedRoleIds.length > 0) {
+        assignmentInfo.push(`Roles: ${task.assignedRoleIds.map((id: string) => `<@&${id}>`).join(', ')}`);
+      }
+      if (task.assignedUserIds && task.assignedUserIds.length > 0) {
+        assignmentInfo.push(`Users: ${task.assignedUserIds.map((id: string) => `<@${id}>`).join(', ')}`);
+      }
       
-      if (!hasRequiredRole) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: `❌ This task is restricted to: ${assignmentInfo.join(' | ')}. Only assigned members can claim this task.`,
+      });
+      return;
+    }
+    
+    if (allowsMultipleClaims && task.claimedBy) {
+      const claimedByArray = Array.isArray(task.claimedBy) ? task.claimedBy : [task.claimedBy];
+      if (claimedByArray.includes(userId)) {
         await updateResponse(interaction.application_id, interaction.token, {
-          content: `❌ This task is restricted to users with the <@&${task.assignedRole}> role. Only members with this role can claim this task.`,
+          content: '❌ You have already claimed this task.',
         });
         return;
       }
-    }
-
-    if (task.assignedTo && task.assignedTo !== userId) {
-      await updateResponse(interaction.application_id, interaction.token, {
-        content: `❌ This task has been assigned to <@${task.assignedTo}>. Only they can claim this task.`,
-      });
-      return;
     }
 
 

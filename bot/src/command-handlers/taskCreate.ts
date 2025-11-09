@@ -12,6 +12,24 @@ import { dynamoDbClient } from '../clients/dynamodb-client';
 import { PutCommand } from '@aws-sdk/lib-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
 
+function extractRoleIds(text: string): string[] {
+  const mentions = text.match(/<@&(\d+)>/g);
+  if (!mentions) return [];
+  return mentions.map((mention) => {
+    const match = mention.match(/\d+/);
+    return match ? match[0] : '';
+  }).filter(Boolean);
+}
+
+function extractUserIds(text: string): string[] {
+  const mentions = text.match(/<@!?(\d+)>/g);
+  if (!mentions) return [];
+  return mentions.map((mention) => {
+    const match = mention.match(/\d+/);
+    return match ? match[0] : '';
+  }).filter(Boolean);
+}
+
 export const handleTaskCreate = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
@@ -24,9 +42,13 @@ export const handleTaskCreate = async (
       (opt) => opt.name === 'description'
     ) as APIApplicationCommandInteractionDataStringOption;
     
-    const assignedRoleOption = interaction.data.options?.find(
-      (opt) => opt.name === 'assigned-role'
-    ) as APIApplicationCommandInteractionDataRoleOption;
+    const assignedRolesOption = interaction.data.options?.find(
+      (opt) => opt.name === 'assigned-roles'
+    ) as APIApplicationCommandInteractionDataStringOption;
+    
+    const assignUsersOption = interaction.data.options?.find(
+      (opt) => opt.name === 'assign-users'
+    ) as APIApplicationCommandInteractionDataStringOption;
     
     const priorityOption = interaction.data.options?.find(
       (opt) => opt.name === 'priority'
@@ -35,10 +57,6 @@ export const handleTaskCreate = async (
     const dueDateOption = interaction.data.options?.find(
       (opt) => opt.name === 'due-date'
     ) as APIApplicationCommandInteractionDataStringOption;
-    
-    const assignToOption = interaction.data.options?.find(
-      (opt) => opt.name === 'assign-user'
-    ) as APIApplicationCommandInteractionDataUserOption;
 
     if (!titleOption) {
       await updateResponse(interaction.application_id, interaction.token, {
@@ -48,11 +66,11 @@ export const handleTaskCreate = async (
     }
 
     const title = titleOption.value;
-    const description = descriptionOption?.value;
-    const assignedRole = assignedRoleOption?.value;
+    const description = descriptionOption?.value || '';
+    const assignedRoleIds = assignedRolesOption ? extractRoleIds(assignedRolesOption.value) : [];
+    const assignedUserIds = assignUsersOption ? extractUserIds(assignUsersOption.value) : [];
     const priority = priorityOption?.value || 'medium';
     const dueDate = dueDateOption?.value;
-    const assignTo = assignToOption?.value;
     const guildId = interaction.guild_id!;
     const createdBy = interaction.member?.user?.id || interaction.user?.id;
 
@@ -66,9 +84,8 @@ export const handleTaskCreate = async (
     const taskId = `task-${uuidv4()}`;
     const now = new Date().toISOString();
 
-    const assignmentInfo = assignTo ? {
-      assignedTo: assignTo,
-    } : {};
+    const shouldAutoAssign = assignedUserIds.length > 0;
+    const taskStatus = shouldAutoAssign ? 'claimed' : 'pending';
 
     const taskItem = {
       pk: guildId,
@@ -76,13 +93,17 @@ export const handleTaskCreate = async (
       taskId,
       title,
       description,
-      assignedRole,
+      assignedRoleIds: assignedRoleIds.length > 0 ? assignedRoleIds : undefined,
+      assignedUserIds: assignedUserIds.length > 0 ? assignedUserIds : undefined,
       priority,
       dueDate,
-      status: 'pending',
+      status: taskStatus,
       createdBy,
       createdAt: now,
-      ...assignmentInfo
+      ...(shouldAutoAssign && { 
+        claimedBy: assignedUserIds,
+        claimedAt: now
+      })
     };
 
     await dynamoDbClient.send(
@@ -112,12 +133,23 @@ export const handleTaskCreate = async (
       approved: 'APPROVED'
     };
 
+    const getAssignmentDisplay = () => {
+      const parts = [];
+      if (assignedRoleIds.length > 0) {
+        parts.push(`**Roles:** ${assignedRoleIds.map(id => `<@&${id}>`).join(', ')}`);
+      }
+      if (assignedUserIds.length > 0) {
+        parts.push(`**Users:** ${assignedUserIds.map(id => `<@${id}>`).join(', ')}`);
+      }
+      return parts.length > 0 ? parts.join('\n') : '`Anyone can claim`';
+    };
+
     const taskFields = [
       {
         name: '📊 **Task Details**',
         value: [
           `**Priority:** ${priorityEmoji[priority as keyof typeof priorityEmoji]} \`${priority.toUpperCase()}\``,
-          `**Assigned To:** ${assignedRole ? `<@&${assignedRole}>` : '`Anyone can claim`'}`,
+          `**Assigned To:**\n${getAssignmentDisplay()}`,
           `**Due Date:** ${dueDate ? `📅 \`${dueDate}\`` : '`No due date set`'}`
         ].join('\n'),
         inline: false
@@ -134,18 +166,10 @@ export const handleTaskCreate = async (
       },
       {
         name: '📋 **Status**',
-        value: `\`${statusEmoji['pending']} ${statusText['pending']}\``,
+        value: `\`${statusEmoji[taskStatus as keyof typeof statusEmoji]} ${statusText[taskStatus as keyof typeof statusText]}\``,
         inline: true
       }
     ];
-
-    if (assignTo) {
-      taskFields.splice(3, 0, {
-        name: '👥 **Assigned User**',
-        value: `<@${assignTo}>`,
-        inline: true
-      });
-    }
 
     const embed: APIEmbed = {
       title: '🎯 ✦ TASK CREATED ✦',
@@ -154,11 +178,24 @@ export const handleTaskCreate = async (
       fields: taskFields,
       color: priority === 'high' ? 0xff4444 : priority === 'medium' ? 0xffaa00 : 0x00ff00,
       footer: {
-        text: `Task Management System • ${assignTo ? 'Task assigned to user - ready to be claimed' : 'Ready to be claimed'}`,
+        text: `Task Management System • ${shouldAutoAssign ? 'Task auto-assigned and claimed' : 'Ready to be claimed'}`,
         icon_url: 'https://cdn.discordapp.com/emojis/1234567890123456789.png'
       },
       timestamp: now
     };
+
+    const generatePingText = () => {
+      const allPings = [];
+      if (assignedRoleIds.length > 0) {
+        allPings.push(...assignedRoleIds.map(id => `<@&${id}>`));
+      }
+      if (assignedUserIds.length > 0) {
+        allPings.push(...assignedUserIds.map(id => `<@${id}>`));
+      }
+      return allPings.length > 0 ? `📢 **Task Assignment Notification:** ${allPings.join(' ')}` : null;
+    };
+
+    const pingText = generatePingText();
 
     const buttonComponents = [];
     
@@ -192,6 +229,7 @@ export const handleTaskCreate = async (
     }];
 
     await updateResponse(interaction.application_id, interaction.token, {
+      content: pingText || undefined,
       embeds: [embed],
       components
     });

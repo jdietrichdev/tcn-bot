@@ -675,16 +675,16 @@ export const taskCreate = new SlashCommandBuilder()
       .setDescription("Detailed description of the task")
       .setRequired(false);
   })
-  .addRoleOption((option) => {
+  .addStringOption((option) => {
     return option
-      .setName("assigned-role")
-      .setDescription("Role that can claim this task")
+      .setName("assigned-roles")
+      .setDescription("Roles that can claim this task (mention multiple: @role1 @role2)")
       .setRequired(false);
   })
-  .addUserOption((option) => {
+  .addStringOption((option) => {
     return option
-      .setName("assign-user")
-      .setDescription("User to assign this task to (optional)")
+      .setName("assign-users")
+      .setDescription("Users to assign this task to (mention multiple: @user1 @user2)")
       .setRequired(false);
   })
   .addStringOption((option) => {
