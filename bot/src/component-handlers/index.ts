@@ -40,7 +40,6 @@ export const handleComponent = async (
       return await handleTaskButtonInteraction(interaction);
     }
   } else if (customId === "approveApp") {
-    await approveApp(interaction, getConfig(interaction.guild_id!));
   } else if (customId === "messageRecruit") {
     await messageRecruit(interaction);
   } else if (customId === "closeRecruit") {
