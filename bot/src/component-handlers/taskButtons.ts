@@ -1,5 +1,4 @@
 import { APIMessageComponentInteraction, InteractionResponseType, ComponentType, ButtonStyle } from 'discord-api-types/v10';
-import { updateResponse } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 
@@ -257,126 +256,138 @@ export const handleTaskButtonInteraction = async (
       if (isTaskMessage) {
         try {
           const responseData = await performTaskAction(interaction, taskId, guildId, 'claim');
-          await updateResponse(process.env.APPLICATION_ID!, interaction.token, responseData);
-
-          import('./taskListButton').then(({ refreshTaskListMessages }) => {
+          void import('./taskListButton').then(({ refreshTaskListMessages }) => {
             refreshTaskListMessages(guildId).catch(console.error);
           });
+
+          return {
+            type: InteractionResponseType.UpdateMessage,
+            data: responseData,
+          };
         } catch (error) {
           console.error('Error in claim operation:', error);
-          await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
-            content: '❌ Failed to claim task. Please try again.',
-          });
+          return {
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+              content: '❌ Failed to claim task. Please try again.',
+              flags: 64,
+            },
+          };
         }
-
-        return {
-          type: InteractionResponseType.DeferredMessageUpdate
-        };
-      } else {
-        const claimInteraction = {
-          ...interaction,
-          type: 2,
-          data: {
-            name: 'task-claim',
-            options: [{ name: 'task', value: taskId, type: 3 }]
-          }
-        };
-        const { handleTaskClaim } = await import('../command-handlers/taskClaim');
-        return await handleTaskClaim(claimInteraction as any);
       }
+
+      const claimInteraction = {
+        ...interaction,
+        type: 2,
+        data: {
+          name: 'task-claim',
+          options: [{ name: 'task', value: taskId, type: 3 }],
+        },
+      };
+      const { handleTaskClaim } = await import('../command-handlers/taskClaim');
+      return await handleTaskClaim(claimInteraction as any);
     } else if (customId.startsWith('task_complete_')) {
       if (isTaskMessage) {
         try {
           const responseData = await performTaskAction(interaction, taskId, guildId, 'complete');
-          await updateResponse(process.env.APPLICATION_ID!, interaction.token, responseData);
-
-          import('./taskListButton').then(({ refreshTaskListMessages }) => {
+          void import('./taskListButton').then(({ refreshTaskListMessages }) => {
             refreshTaskListMessages(guildId).catch(console.error);
           });
+
+          return {
+            type: InteractionResponseType.UpdateMessage,
+            data: responseData,
+          };
         } catch (error) {
           console.error('Error in complete operation:', error);
-          await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
-            content: '❌ Failed to complete task. Please try again.',
-          });
+          return {
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+              content: '❌ Failed to complete task. Please try again.',
+              flags: 64,
+            },
+          };
         }
-
-        return {
-          type: InteractionResponseType.DeferredMessageUpdate
-        };
-      } else {
-        const completeInteraction = {
-          ...interaction,
-          type: 2,
-          data: {
-            name: 'task-complete',
-            options: [{ name: 'task', value: taskId, type: 3 }]
-          }
-        };
-        const { handleTaskComplete } = await import('../command-handlers/taskComplete');
-        return await handleTaskComplete(completeInteraction as any);
       }
+
+      const completeInteraction = {
+        ...interaction,
+        type: 2,
+        data: {
+          name: 'task-complete',
+          options: [{ name: 'task', value: taskId, type: 3 }],
+        },
+      };
+      const { handleTaskComplete } = await import('../command-handlers/taskComplete');
+      return await handleTaskComplete(completeInteraction as any);
     } else if (customId.startsWith('task_unclaim_')) {
       if (isTaskMessage) {
         try {
           const responseData = await performTaskAction(interaction, taskId, guildId, 'unclaim');
-          await updateResponse(process.env.APPLICATION_ID!, interaction.token, responseData);
-
-          import('./taskListButton').then(({ refreshTaskListMessages }) => {
+          void import('./taskListButton').then(({ refreshTaskListMessages }) => {
             refreshTaskListMessages(guildId).catch(console.error);
           });
+
+          return {
+            type: InteractionResponseType.UpdateMessage,
+            data: responseData,
+          };
         } catch (error) {
           console.error('Error in unclaim operation:', error);
-          await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
-            content: '❌ Failed to unclaim task. Please try again.',
-          });
+          return {
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+              content: '❌ Failed to unclaim task. Please try again.',
+              flags: 64,
+            },
+          };
         }
-
-        return {
-          type: InteractionResponseType.DeferredMessageUpdate
-        };
-      } else {
-        const unclaimInteraction = {
-          ...interaction,
-          type: 2,
-          data: {
-            name: 'task-unclaim',
-            options: [{ name: 'task', value: taskId, type: 3 }]
-          }
-        };
-        const { handleTaskUnclaim } = await import('../command-handlers/taskUnclaim');
-        return await handleTaskUnclaim(unclaimInteraction as any);
       }
+
+      const unclaimInteraction = {
+        ...interaction,
+        type: 2,
+        data: {
+          name: 'task-unclaim',
+          options: [{ name: 'task', value: taskId, type: 3 }],
+        },
+      };
+      const { handleTaskUnclaim } = await import('../command-handlers/taskUnclaim');
+      return await handleTaskUnclaim(unclaimInteraction as any);
     } else if (customId.startsWith('task_approve_')) {
       if (isTaskMessage) {
         try {
           const responseData = await performTaskAction(interaction, taskId, guildId, 'approve');
-          await updateResponse(process.env.APPLICATION_ID!, interaction.token, responseData);
-
-          import('./taskListButton').then(({ refreshTaskListMessages }) => {
+          void import('./taskListButton').then(({ refreshTaskListMessages }) => {
             refreshTaskListMessages(guildId).catch(console.error);
           });
+
+          return {
+            type: InteractionResponseType.UpdateMessage,
+            data: responseData,
+          };
         } catch (error) {
           console.error('Error in approve operation:', error);
-          await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
-            content: '❌ Failed to approve task. Please try again.',
-          });
+          return {
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+              content: '❌ Failed to approve task. Please try again.',
+              flags: 64,
+            },
+          };
         }
-
-        return {
-          type: InteractionResponseType.DeferredMessageUpdate
-        };
-      } else {
-        const approveInteraction = {
-          ...interaction,
-          type: 2,
-          data: {
-            name: 'task-approve',
-            options: [{ name: 'task', value: taskId, type: 3 }]
-          }
-        };
-        const { handleTaskApprove } = await import('../command-handlers/taskApprove');
-        return await handleTaskApprove(approveInteraction as any);
       }
+
+      const approveInteraction = {
+        ...interaction,
+        type: 2,
+        data: {
+          name: 'task-approve',
+          options: [{ name: 'task', value: taskId, type: 3 }],
+        },
+      };
+      const { handleTaskApprove } = await import('../command-handlers/taskApprove');
+      return await handleTaskApprove(approveInteraction as any);
     }
 
     return {
