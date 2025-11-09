@@ -114,12 +114,13 @@ export const handleTaskButtonInteraction = async (
           }
         };
         const { handleTaskClaim } = await import('../command-handlers/taskClaim');
-        await handleTaskClaim(claimInteraction as any);
+        const result = await handleTaskClaim(claimInteraction as any);
         
         import('./taskListButton').then(({ refreshTaskListMessages }) => {
           refreshTaskListMessages(guildId).catch(console.error);
         });
-        return;
+        
+        return result;
       }
 
     } else if (customId.startsWith('task_complete_') && taskId) {
@@ -144,12 +145,13 @@ export const handleTaskButtonInteraction = async (
           }
         };
         const { handleTaskComplete } = await import('../command-handlers/taskComplete');
-        await handleTaskComplete(completeInteraction as any);
+        const result = await handleTaskComplete(completeInteraction as any);
         
         import('./taskListButton').then(({ refreshTaskListMessages }) => {
           refreshTaskListMessages(guildId).catch(console.error);
         });
-        return;
+        
+        return result;
       }
 
     } else if (customId.startsWith('task_unclaim_') && taskId) {
@@ -174,12 +176,13 @@ export const handleTaskButtonInteraction = async (
           }
         };
         const { handleTaskUnclaim } = await import('../command-handlers/taskUnclaim');
-        await handleTaskUnclaim(unclaimInteraction as any);
+        const result = await handleTaskUnclaim(unclaimInteraction as any);
         
         import('./taskListButton').then(({ refreshTaskListMessages }) => {
           refreshTaskListMessages(guildId).catch(console.error);
         });
-        return;
+        
+        return result;
       }
 
     } else if (customId.startsWith('task_approve_') && taskId) {
@@ -204,12 +207,13 @@ export const handleTaskButtonInteraction = async (
           }
         };
         const { handleTaskApprove } = await import('../command-handlers/taskApprove');
-        await handleTaskApprove(approveInteraction as any);
+        const result = await handleTaskApprove(approveInteraction as any);
         
         import('./taskListButton').then(({ refreshTaskListMessages }) => {
           refreshTaskListMessages(guildId).catch(console.error);
         });
-        return;
+        
+        return result;
       }
 
     } else if (customId === 'task_list_all') {
@@ -222,8 +226,8 @@ export const handleTaskButtonInteraction = async (
         }
       };
       const { handleTaskList } = await import('../command-handlers/taskList');
-      await handleTaskList(listInteraction as any);
-      return;
+      const result = await handleTaskList(listInteraction as any);
+      return result;
 
     } else if (customId === 'task_list_my') {
       const listInteraction = {
@@ -235,8 +239,8 @@ export const handleTaskButtonInteraction = async (
         }
       };
       const { handleTaskList } = await import('../command-handlers/taskList');
-      await handleTaskList(listInteraction as any);
-      return;
+      const result = await handleTaskList(listInteraction as any);
+      return result;
 
     } else if (customId === 'task_list_pending') {
       const listInteraction = {
@@ -248,8 +252,8 @@ export const handleTaskButtonInteraction = async (
         }
       };
       const { handleTaskList } = await import('../command-handlers/taskList');
-      await handleTaskList(listInteraction as any);
-      return;
+      const result = await handleTaskList(listInteraction as any);
+      return result;
 
     } else if (customId === 'task_list_claimed') {
       const listInteraction = {
@@ -261,8 +265,8 @@ export const handleTaskButtonInteraction = async (
         }
       };
       const { handleTaskList } = await import('../command-handlers/taskList');
-      await handleTaskList(listInteraction as any);
-      return;
+      const result = await handleTaskList(listInteraction as any);
+      return result;
 
     } else if (customId === 'task_list_completed') {
       const listInteraction = {
@@ -274,8 +278,8 @@ export const handleTaskButtonInteraction = async (
         }
       };
       const { handleTaskList } = await import('../command-handlers/taskList');
-      await handleTaskList(listInteraction as any);
-      return;
+      const result = await handleTaskList(listInteraction as any);
+      return result;
 
     } else if (customId === 'task_list_approved') {
       const listInteraction = {
@@ -287,8 +291,8 @@ export const handleTaskButtonInteraction = async (
         }
       };
       const { handleTaskList } = await import('../command-handlers/taskList');
-      await handleTaskList(listInteraction as any);
-      return;
+      const result = await handleTaskList(listInteraction as any);
+      return result;
 
     } else if (customId === 'task_list_available') {
       const listInteraction = {
@@ -300,8 +304,8 @@ export const handleTaskButtonInteraction = async (
         }
       };
       const { handleTaskList } = await import('../command-handlers/taskList');
-      await handleTaskList(listInteraction as any);
-      return;
+      const result = await handleTaskList(listInteraction as any);
+      return result;
 
     } else if (customId === 'task_create' || customId === 'task_create_new') {
       return {
@@ -322,12 +326,13 @@ export const handleTaskButtonInteraction = async (
         }
       };
       const { handleTaskList } = await import('../command-handlers/taskList');
-      await handleTaskList(listInteraction as any);
+      const result = await handleTaskList(listInteraction as any);
       
       import('./taskListButton').then(({ refreshTaskListMessages }) => {
         refreshTaskListMessages(guildId).catch(console.error);
       });
-      return;
+      
+      return result;
 
     } else if (customId === 'task_refresh_dashboard') {
       const dashboardInteraction = {
@@ -339,8 +344,8 @@ export const handleTaskButtonInteraction = async (
         }
       };
       const { handleTaskDashboard } = await import('../command-handlers/taskDashboard');
-      await handleTaskDashboard(dashboardInteraction as any);
-      return;
+      const result = await handleTaskDashboard(dashboardInteraction as any);
+      return result;
 
     } else {
       return {
