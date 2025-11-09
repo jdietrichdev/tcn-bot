@@ -255,22 +255,20 @@ export const handleTaskButtonInteraction = async (
   try {
     if (customId.startsWith('task_claim_')) {
       if (isTaskMessage) {
-        setImmediate(async () => {
-          try {
-            const responseData = await performTaskAction(interaction, taskId, guildId, 'claim');
-            await updateResponse(process.env.APPLICATION_ID!, interaction.token, responseData);
-            
-            import('./taskListButton').then(({ refreshTaskListMessages }) => {
-              refreshTaskListMessages(guildId).catch(console.error);
-            });
-          } catch (error) {
-            console.error('Error in claim operation:', error);
-            await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
-              content: '❌ Failed to claim task. Please try again.',
-            });
-          }
-        });
-        
+        try {
+          const responseData = await performTaskAction(interaction, taskId, guildId, 'claim');
+          await updateResponse(process.env.APPLICATION_ID!, interaction.token, responseData);
+
+          import('./taskListButton').then(({ refreshTaskListMessages }) => {
+            refreshTaskListMessages(guildId).catch(console.error);
+          });
+        } catch (error) {
+          console.error('Error in claim operation:', error);
+          await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
+            content: '❌ Failed to claim task. Please try again.',
+          });
+        }
+
         return {
           type: InteractionResponseType.DeferredMessageUpdate
         };
@@ -288,22 +286,20 @@ export const handleTaskButtonInteraction = async (
       }
     } else if (customId.startsWith('task_complete_')) {
       if (isTaskMessage) {
-        setImmediate(async () => {
-          try {
-            const responseData = await performTaskAction(interaction, taskId, guildId, 'complete');
-            await updateResponse(process.env.APPLICATION_ID!, interaction.token, responseData);
-            
-            import('./taskListButton').then(({ refreshTaskListMessages }) => {
-              refreshTaskListMessages(guildId).catch(console.error);
-            });
-          } catch (error) {
-            console.error('Error in complete operation:', error);
-            await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
-              content: '❌ Failed to complete task. Please try again.',
-            });
-          }
-        });
-        
+        try {
+          const responseData = await performTaskAction(interaction, taskId, guildId, 'complete');
+          await updateResponse(process.env.APPLICATION_ID!, interaction.token, responseData);
+
+          import('./taskListButton').then(({ refreshTaskListMessages }) => {
+            refreshTaskListMessages(guildId).catch(console.error);
+          });
+        } catch (error) {
+          console.error('Error in complete operation:', error);
+          await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
+            content: '❌ Failed to complete task. Please try again.',
+          });
+        }
+
         return {
           type: InteractionResponseType.DeferredMessageUpdate
         };
@@ -321,22 +317,20 @@ export const handleTaskButtonInteraction = async (
       }
     } else if (customId.startsWith('task_unclaim_')) {
       if (isTaskMessage) {
-        setImmediate(async () => {
-          try {
-            const responseData = await performTaskAction(interaction, taskId, guildId, 'unclaim');
-            await updateResponse(process.env.APPLICATION_ID!, interaction.token, responseData);
-            
-            import('./taskListButton').then(({ refreshTaskListMessages }) => {
-              refreshTaskListMessages(guildId).catch(console.error);
-            });
-          } catch (error) {
-            console.error('Error in unclaim operation:', error);
-            await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
-              content: '❌ Failed to unclaim task. Please try again.',
-            });
-          }
-        });
-        
+        try {
+          const responseData = await performTaskAction(interaction, taskId, guildId, 'unclaim');
+          await updateResponse(process.env.APPLICATION_ID!, interaction.token, responseData);
+
+          import('./taskListButton').then(({ refreshTaskListMessages }) => {
+            refreshTaskListMessages(guildId).catch(console.error);
+          });
+        } catch (error) {
+          console.error('Error in unclaim operation:', error);
+          await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
+            content: '❌ Failed to unclaim task. Please try again.',
+          });
+        }
+
         return {
           type: InteractionResponseType.DeferredMessageUpdate
         };
@@ -354,22 +348,20 @@ export const handleTaskButtonInteraction = async (
       }
     } else if (customId.startsWith('task_approve_')) {
       if (isTaskMessage) {
-        setImmediate(async () => {
-          try {
-            const responseData = await performTaskAction(interaction, taskId, guildId, 'approve');
-            await updateResponse(process.env.APPLICATION_ID!, interaction.token, responseData);
-            
-            import('./taskListButton').then(({ refreshTaskListMessages }) => {
-              refreshTaskListMessages(guildId).catch(console.error);
-            });
-          } catch (error) {
-            console.error('Error in approve operation:', error);
-            await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
-              content: '❌ Failed to approve task. Please try again.',
-            });
-          }
-        });
-        
+        try {
+          const responseData = await performTaskAction(interaction, taskId, guildId, 'approve');
+          await updateResponse(process.env.APPLICATION_ID!, interaction.token, responseData);
+
+          import('./taskListButton').then(({ refreshTaskListMessages }) => {
+            refreshTaskListMessages(guildId).catch(console.error);
+          });
+        } catch (error) {
+          console.error('Error in approve operation:', error);
+          await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
+            content: '❌ Failed to approve task. Please try again.',
+          });
+        }
+
         return {
           type: InteractionResponseType.DeferredMessageUpdate
         };

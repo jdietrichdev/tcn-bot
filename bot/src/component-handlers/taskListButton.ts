@@ -125,6 +125,66 @@ export const handleTaskListPagination = async (
     };
   }
 
+  // Handle create task button
+  if (customId === 'task_create_new') {
+    console.log('Task create button clicked');
+    setImmediate(async () => {
+      try {
+        const fakeInteraction = {
+          ...interaction,
+          type: 2,
+          data: {
+            name: 'task-create',
+            options: []
+          }
+        };
+        
+        const { handleTaskCreate } = await import('../command-handlers/taskCreate');
+        await handleTaskCreate(fakeInteraction as any);
+      } catch (error) {
+        console.error('Error in create task operation:', error);
+        const { updateResponse } = await import('../adapters/discord-adapter');
+        await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
+          content: '❌ Failed to create task. Please try again.',
+        });
+      }
+    });
+    
+    return {
+      type: InteractionResponseType.DeferredMessageUpdate
+    };
+  }
+
+  // Handle view all tasks button
+  if (customId === 'task_list_all') {
+    console.log('View all tasks button clicked');
+    setImmediate(async () => {
+      try {
+        const fakeInteraction = {
+          ...interaction,
+          type: 2,
+          data: {
+            name: 'task-list',
+            options: []
+          }
+        };
+        
+        const { handleTaskList } = await import('../command-handlers/taskList');
+        await handleTaskList(fakeInteraction as any);
+      } catch (error) {
+        console.error('Error in view all tasks operation:', error);
+        const { updateResponse } = await import('../adapters/discord-adapter');
+        await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
+          content: '❌ Failed to load task list. Please try again.',
+        });
+      }
+    });
+    
+    return {
+      type: InteractionResponseType.DeferredMessageUpdate
+    };
+  }
+
   const parts = customId.split('_');
   const action = parts[2];
   const originalInteractionId = parts[3];

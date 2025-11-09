@@ -73,11 +73,14 @@ export const proxy = async (
      body.data.custom_id.startsWith("task_list_next_") ||
      body.data.custom_id.startsWith("task_list_last_") ||
      body.data.custom_id.startsWith("task_list_page_") ||
-     body.data.custom_id === "task_refresh_list")
+     body.data.custom_id === "task_refresh_list" ||
+     body.data.custom_id === "task_create_new" ||
+     body.data.custom_id === "task_list_all")
   ) {
-    console.log("Task list pagination/refresh button clicked");
+    console.log("Task list pagination/refresh/create button clicked");
     const { handleTaskListPagination } = await import("./component-handlers/taskListButton");
-    response = await handleTaskListPagination(body as APIMessageComponentInteraction, body.data.custom_id);
+    const taskListResponse = await handleTaskListPagination(body as APIMessageComponentInteraction, body.data.custom_id);
+    response = taskListResponse || { type: InteractionResponseType.DeferredMessageUpdate };
   } else if (
     body.type === InteractionType.MessageComponent &&
     (body.data.custom_id.startsWith("task_claim_") ||
