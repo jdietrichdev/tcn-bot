@@ -8,9 +8,9 @@ const updateTaskMessage = async (
   interaction: APIMessageComponentInteraction, 
   taskId: string, 
   guildId: string,
-  actionType: 'claim' | 'complete' | 'unclaim' | 'approve' | 'overview' = 'overview'
+  actionType: 'claim' | 'complete' | 'unclaim' | 'approve'
 ) => {
-  if (!interaction.message) return;
+  if (!interaction.message) return null;
   
   let targetResponse: any;
   const originalUpdateResponse = updateResponse;
@@ -65,27 +65,12 @@ const updateTaskMessage = async (
     const { handleTaskApprove } = await import('../command-handlers/taskApprove');
     await handleTaskApprove(approveInteraction as any);
   } else {
-    const overviewInteraction = {
-      ...interaction,
-      type: 2,
-      data: {
-        name: 'task-overview',
-        options: [{ name: 'task', value: taskId, type: 3 }]
-      }
-    };
-    const { handleTaskOverview } = await import('../command-handlers/taskOverview');
-    await handleTaskOverview(overviewInteraction as any);
+    throw new Error(`Unknown action type: ${actionType}`);
   }
   
   (updateResponse as any) = originalUpdateResponse;
   
-  if (targetResponse) {
-    await updateMessage(
-      interaction.message.channel_id,
-      interaction.message.id,
-      targetResponse
-    );
-  }
+  return targetResponse;
 };
 
 export const handleTaskButtonInteraction = async (
@@ -103,132 +88,129 @@ export const handleTaskButtonInteraction = async (
                        embedTitle.includes('✦ TASK UNCLAIMED ✦') ||
                        embedTitle.includes('✦ TASK APPROVED ✦');
 
+  const taskIdMatch = customId.match(/^task_\w+_(.+)$/);
+  const taskId = taskIdMatch ? taskIdMatch[1] : null;
+
   try {
-    if (isTaskMessage) {
-      await updateResponse(interaction.application_id, interaction.token, {
-        content: '⏳ Processing...',
-        flags: 64
-      });
-    } else {
-      await updateResponse(interaction.application_id, interaction.token, {
-        content: '⏳ Processing...',
-      });
-    }
-
-    const taskIdMatch = customId.match(/^task_\w+_(.+)$/);
-    const taskId = taskIdMatch ? taskIdMatch[1] : null;
-
     if (customId.startsWith('task_claim_') && taskId) {
-      const claimInteraction = {
-        ...interaction,
-        type: 2,
-        data: {
-          name: 'task-claim',
-          options: [{ name: 'task', value: taskId, type: 3 }]
-        }
-      };
-      
       if (isTaskMessage) {
-        const originalUpdateResponse = updateResponse;
-        const mockUpdateResponse = async () => {};
-        (updateResponse as any) = mockUpdateResponse;
+        const responseData = await updateTaskMessage(interaction, taskId, guildId, 'claim');
         
-        const { handleTaskClaim } = await import('../command-handlers/taskClaim');
-        await handleTaskClaim(claimInteraction as any);
+        import('./taskListButton').then(({ refreshTaskListMessages }) => {
+          refreshTaskListMessages(guildId).catch(console.error);
+        });
         
-        (updateResponse as any) = originalUpdateResponse;
-        await updateTaskMessage(interaction, taskId, guildId, 'claim');
+        return {
+          type: InteractionResponseType.UpdateMessage,
+          data: responseData
+        };
       } else {
+        const claimInteraction = {
+          ...interaction,
+          type: 2,
+          data: {
+            name: 'task-claim',
+            options: [{ name: 'task', value: taskId, type: 3 }]
+          }
+        };
         const { handleTaskClaim } = await import('../command-handlers/taskClaim');
         await handleTaskClaim(claimInteraction as any);
+        
+        import('./taskListButton').then(({ refreshTaskListMessages }) => {
+          refreshTaskListMessages(guildId).catch(console.error);
+        });
+        return;
       }
-      
-      const { refreshTaskListMessages } = await import('./taskListButton');
-      await refreshTaskListMessages(guildId);
 
     } else if (customId.startsWith('task_complete_') && taskId) {
-      const completeInteraction = {
-        ...interaction,
-        type: 2,
-        data: {
-          name: 'task-complete',
-          options: [{ name: 'task', value: taskId, type: 3 }]
-        }
-      };
-      
       if (isTaskMessage) {
-        const originalUpdateResponse = updateResponse;
-        const mockUpdateResponse = async () => {}; 
-        (updateResponse as any) = mockUpdateResponse;
+        const responseData = await updateTaskMessage(interaction, taskId, guildId, 'complete');
         
-        const { handleTaskComplete } = await import('../command-handlers/taskComplete');
-        await handleTaskComplete(completeInteraction as any);
+        import('./taskListButton').then(({ refreshTaskListMessages }) => {
+          refreshTaskListMessages(guildId).catch(console.error);
+        });
         
-        (updateResponse as any) = originalUpdateResponse;
-        await updateTaskMessage(interaction, taskId, guildId, 'complete');
+        return {
+          type: InteractionResponseType.UpdateMessage,
+          data: responseData
+        };
       } else {
+        const completeInteraction = {
+          ...interaction,
+          type: 2,
+          data: {
+            name: 'task-complete',
+            options: [{ name: 'task', value: taskId, type: 3 }]
+          }
+        };
         const { handleTaskComplete } = await import('../command-handlers/taskComplete');
         await handleTaskComplete(completeInteraction as any);
+        
+        import('./taskListButton').then(({ refreshTaskListMessages }) => {
+          refreshTaskListMessages(guildId).catch(console.error);
+        });
+        return;
       }
-      
-      const { refreshTaskListMessages } = await import('./taskListButton');
-      await refreshTaskListMessages(guildId);
 
     } else if (customId.startsWith('task_unclaim_') && taskId) {
-      const unclaimInteraction = {
-        ...interaction,
-        type: 2,
-        data: {
-          name: 'task-unclaim',
-          options: [{ name: 'task', value: taskId, type: 3 }]
-        }
-      };
-      
       if (isTaskMessage) {
-        const originalUpdateResponse = updateResponse;
-        const mockUpdateResponse = async () => {};
-        (updateResponse as any) = mockUpdateResponse;
+        const responseData = await updateTaskMessage(interaction, taskId, guildId, 'unclaim');
         
-        const { handleTaskUnclaim } = await import('../command-handlers/taskUnclaim');
-        await handleTaskUnclaim(unclaimInteraction as any);
+        import('./taskListButton').then(({ refreshTaskListMessages }) => {
+          refreshTaskListMessages(guildId).catch(console.error);
+        });
         
-        (updateResponse as any) = originalUpdateResponse;
-        await updateTaskMessage(interaction, taskId, guildId, 'unclaim');
+        return {
+          type: InteractionResponseType.UpdateMessage,
+          data: responseData
+        };
       } else {
+        const unclaimInteraction = {
+          ...interaction,
+          type: 2,
+          data: {
+            name: 'task-unclaim',
+            options: [{ name: 'task', value: taskId, type: 3 }]
+          }
+        };
         const { handleTaskUnclaim } = await import('../command-handlers/taskUnclaim');
         await handleTaskUnclaim(unclaimInteraction as any);
+        
+        import('./taskListButton').then(({ refreshTaskListMessages }) => {
+          refreshTaskListMessages(guildId).catch(console.error);
+        });
+        return;
       }
-      
-      const { refreshTaskListMessages } = await import('./taskListButton');
-      await refreshTaskListMessages(guildId);
 
     } else if (customId.startsWith('task_approve_') && taskId) {
-      const approveInteraction = {
-        ...interaction,
-        type: 2,
-        data: {
-          name: 'task-approve',
-          options: [{ name: 'task', value: taskId, type: 3 }]
-        }
-      };
-      
       if (isTaskMessage) {
-        const originalUpdateResponse = updateResponse;
-        const mockUpdateResponse = async () => {}; 
-        (updateResponse as any) = mockUpdateResponse;
+        const responseData = await updateTaskMessage(interaction, taskId, guildId, 'approve');
         
-        const { handleTaskApprove } = await import('../command-handlers/taskApprove');
-        await handleTaskApprove(approveInteraction as any);
+        import('./taskListButton').then(({ refreshTaskListMessages }) => {
+          refreshTaskListMessages(guildId).catch(console.error);
+        });
         
-        (updateResponse as any) = originalUpdateResponse;
-        await updateTaskMessage(interaction, taskId, guildId, 'approve');
+        return {
+          type: InteractionResponseType.UpdateMessage,
+          data: responseData
+        };
       } else {
+        const approveInteraction = {
+          ...interaction,
+          type: 2,
+          data: {
+            name: 'task-approve',
+            options: [{ name: 'task', value: taskId, type: 3 }]
+          }
+        };
         const { handleTaskApprove } = await import('../command-handlers/taskApprove');
         await handleTaskApprove(approveInteraction as any);
+        
+        import('./taskListButton').then(({ refreshTaskListMessages }) => {
+          refreshTaskListMessages(guildId).catch(console.error);
+        });
+        return;
       }
-      
-      const { refreshTaskListMessages } = await import('./taskListButton');
-      await refreshTaskListMessages(guildId);
 
     } else if (customId === 'task_list_all') {
       const listInteraction = {
@@ -241,6 +223,7 @@ export const handleTaskButtonInteraction = async (
       };
       const { handleTaskList } = await import('../command-handlers/taskList');
       await handleTaskList(listInteraction as any);
+      return;
 
     } else if (customId === 'task_list_my') {
       const listInteraction = {
@@ -253,6 +236,7 @@ export const handleTaskButtonInteraction = async (
       };
       const { handleTaskList } = await import('../command-handlers/taskList');
       await handleTaskList(listInteraction as any);
+      return;
 
     } else if (customId === 'task_list_pending') {
       const listInteraction = {
@@ -265,6 +249,7 @@ export const handleTaskButtonInteraction = async (
       };
       const { handleTaskList } = await import('../command-handlers/taskList');
       await handleTaskList(listInteraction as any);
+      return;
 
     } else if (customId === 'task_list_claimed') {
       const listInteraction = {
@@ -277,6 +262,7 @@ export const handleTaskButtonInteraction = async (
       };
       const { handleTaskList } = await import('../command-handlers/taskList');
       await handleTaskList(listInteraction as any);
+      return;
 
     } else if (customId === 'task_list_completed') {
       const listInteraction = {
@@ -289,6 +275,7 @@ export const handleTaskButtonInteraction = async (
       };
       const { handleTaskList } = await import('../command-handlers/taskList');
       await handleTaskList(listInteraction as any);
+      return;
 
     } else if (customId === 'task_list_approved') {
       const listInteraction = {
@@ -301,6 +288,7 @@ export const handleTaskButtonInteraction = async (
       };
       const { handleTaskList } = await import('../command-handlers/taskList');
       await handleTaskList(listInteraction as any);
+      return;
 
     } else if (customId === 'task_list_available') {
       const listInteraction = {
@@ -313,11 +301,16 @@ export const handleTaskButtonInteraction = async (
       };
       const { handleTaskList } = await import('../command-handlers/taskList');
       await handleTaskList(listInteraction as any);
+      return;
 
     } else if (customId === 'task_create' || customId === 'task_create_new') {
-      await updateResponse(interaction.application_id, interaction.token, {
-        content: '💡 **Create New Task**: Use the `/task-create` slash command to create a new task!\n\n📝 *Example: `/task-create title:Update Discord Bot description:Add new features`*',
-      });
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: '💡 **Create New Task**: Use the `/task-create` slash command to create a new task!\n\n📝 *Example: `/task-create title:Update Discord Bot description:Add new features`*',
+          flags: 64
+        }
+      };
 
     } else if (customId === 'task_refresh_list') {
       const listInteraction = {
@@ -331,8 +324,10 @@ export const handleTaskButtonInteraction = async (
       const { handleTaskList } = await import('../command-handlers/taskList');
       await handleTaskList(listInteraction as any);
       
-      const { refreshTaskListMessages } = await import('./taskListButton');
-      await refreshTaskListMessages(guildId);
+      import('./taskListButton').then(({ refreshTaskListMessages }) => {
+        refreshTaskListMessages(guildId).catch(console.error);
+      });
+      return;
 
     } else if (customId === 'task_refresh_dashboard') {
       const dashboardInteraction = {
@@ -345,17 +340,26 @@ export const handleTaskButtonInteraction = async (
       };
       const { handleTaskDashboard } = await import('../command-handlers/taskDashboard');
       await handleTaskDashboard(dashboardInteraction as any);
+      return;
 
     } else {
-      await updateResponse(interaction.application_id, interaction.token, {
-        content: '❌ **Unknown Task Button**: This button interaction is not recognized.\n\n🔧 *Please report this issue to an admin.*',
-      });
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: '❌ **Unknown Task Button**: This button interaction is not recognized.\n\n🔧 *Please report this issue to an admin.*',
+          flags: 64
+        }
+      };
     }
 
   } catch (error) {
     console.error('Error handling task button interaction:', error);
-    await updateResponse(interaction.application_id, interaction.token, {
-      content: '❌ **Error**: Something went wrong while processing your button click.\n\n🔄 *Please try again or use the corresponding slash command.*',
-    });
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        content: '❌ **Error**: Something went wrong while processing your button click.\n\n🔄 *Please try again or use the corresponding slash command.*',
+        flags: 64
+      }
+    };
   }
 };
