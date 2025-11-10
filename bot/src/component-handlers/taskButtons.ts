@@ -28,32 +28,34 @@ const performTaskAction = async (
     }
 
     const task = getTaskResult.Item;
-    const canClaim = !(task.status === 'claimed' && task.claimedBy && !task.multipleClaimsAllowed);
 
-    if (canClaim) {
-      await dynamoDbClient.send(
-        new UpdateCommand({
-          TableName: 'BotTable',
-          Key: {
-            pk: guildId,
-            sk: `task#${taskId}`,
-          },
-          UpdateExpression: 'SET #status = :status, claimedBy = :claimedBy, claimedAt = :claimedAt',
-          ExpressionAttributeNames: {
-            '#status': 'status',
-          },
-          ExpressionAttributeValues: {
-            ':status': 'claimed',
-            ':claimedBy': userId,
-            ':claimedAt': new Date().toISOString(),
-          },
-        })
-      );
-    } else {
+    // Allow claiming if:
+    // 1. Task is pending (not claimed)
+    // 2. Task allows multiple claims
+    if (task.status !== 'pending' && !task.multipleClaimsAllowed) {
       return {
         content: '❌ This task has already been claimed.',
       };
     }
+
+    await dynamoDbClient.send(
+      new UpdateCommand({
+        TableName: 'BotTable',
+        Key: {
+          pk: guildId,
+          sk: `task#${taskId}`,
+        },
+        UpdateExpression: 'SET #status = :status, claimedBy = :claimedBy, claimedAt = :claimedAt',
+        ExpressionAttributeNames: {
+          '#status': 'status',
+        },
+        ExpressionAttributeValues: {
+          ':status': 'claimed',
+          ':claimedBy': userId,
+          ':claimedAt': new Date().toISOString(),
+        },
+      })
+    );
   } else if (actionType === 'complete') {
     await dynamoDbClient.send(
       new UpdateCommand({
