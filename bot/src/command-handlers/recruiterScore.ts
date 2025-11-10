@@ -99,39 +99,49 @@ const getCandidatesMessages = async (
     new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000)
   );
   for (const message of messages) {
-    if (message.type === MessageType.Default && message.message_reference) {
+    if (message.type !== MessageType.Default || message.author.bot) {
+      continue;
+    }
+
+    const isCandidateForward = Boolean(message.message_reference);
+    if (isCandidateForward) {
       totals.candidateForwards++;
-      const forwarderStats = ensureRecruiterRecord(
-        scoreMap,
+    }
+
+    const forwarderStats = ensureRecruiterRecord(
+      scoreMap,
+      message.author.id,
+      resolveUserDisplayName(
         message.author.id,
-        resolveUserDisplayName(
-          message.author.id,
-          message.author.username,
-          message.author.global_name ?? undefined
-        )
+        message.author.username,
+        message.author.global_name ?? undefined
+      )
+    );
+    forwarderStats.messages++;
+    totals.messages++;
+
+    if (
+      isCandidateForward &&
+      message.reactions?.some((reaction) => reaction.emoji.name === `✉️`)
+    ) {
+      const userReactions = await getMessageReaction(
+        message.channel_id,
+        message.id,
+        `✉️`
       );
-      forwarderStats.messages++;
-      totals.messages++;
-      if (message.reactions?.some((reaction) => reaction.emoji.name === `✉️`)) {
-        const userReactions = await getMessageReaction(
-          message.channel_id,
-          message.id,
-          `✉️`
-        );
-        for (const user of userReactions) {
-          if (user.id !== message.author.id && !user.bot) {
-            const stats = ensureRecruiterRecord(
-              scoreMap,
+      for (const user of userReactions) {
+        if (user.id !== message.author.id && !user.bot) {
+          const stats = ensureRecruiterRecord(
+            scoreMap,
+            user.id,
+            resolveUserDisplayName(
               user.id,
-              resolveUserDisplayName(
-                user.id,
-                user.username,
-                user.global_name ?? undefined
-              )
-            );
-            stats.messages++;
-            totals.messages++;
-          }
+              user.username,
+              user.global_name ?? undefined
+            )
+          );
+          stats.messages++;
+          totals.messages++;
         }
       }
     }
@@ -326,6 +336,8 @@ const mergeRecruitmentPoints = async (
   totals.fcPosts = 0;
   totals.points = 0;
 
+  const processedUsers = new Set<string>();
+
   for (const item of pointsItems) {
     const record = ensureRecruiterRecord(
       scoreMap,
@@ -334,11 +346,20 @@ const mergeRecruitmentPoints = async (
     );
     record.ticketMessages = item.ticketMessages ?? 0;
     record.fcPosts = item.fcPosts ?? 0;
-    record.points =
-      item.points ?? record.ticketMessages + record.fcPosts;
+    const basePoints = item.points ?? record.ticketMessages + record.fcPosts;
+    record.points = basePoints + record.messages;
 
     totals.ticketMessages += record.ticketMessages;
     totals.fcPosts += record.fcPosts;
+    totals.points += record.points;
+    processedUsers.add(record.userId);
+  }
+
+  for (const record of scoreMap.values()) {
+    if (processedUsers.has(record.userId)) {
+      continue;
+    }
+    record.points = record.messages;
     totals.points += record.points;
   }
 };
