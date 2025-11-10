@@ -168,7 +168,7 @@ export const handleTaskListPagination = async (
             options: []
           }
         };
-        
+
         const { handleTaskList } = await import('../command-handlers/taskList');
         await handleTaskList(fakeInteraction as any);
       } catch (error) {
@@ -179,9 +179,10 @@ export const handleTaskListPagination = async (
         });
       }
     });
-    
+
     return {
-      type: InteractionResponseType.DeferredMessageUpdate
+      type: InteractionResponseType.DeferredChannelMessageWithSource,
+      data: {}
     };
   }
 

@@ -198,15 +198,42 @@ export const handleTaskCreate = async (
     const pingText = generatePingText();
 
     const buttonComponents = [];
-    
-    buttonComponents.push({
-      type: ComponentType.Button as ComponentType.Button,
-      custom_id: `task_claim_${taskId}`,
-      label: 'Claim Task',
-      style: ButtonStyle.Primary as ButtonStyle.Primary,
-      emoji: { name: '✋' }
-    });
-    
+
+    if (taskStatus === 'pending') {
+      buttonComponents.push({
+        type: ComponentType.Button as ComponentType.Button,
+        custom_id: `task_claim_${taskId}`,
+        label: 'Claim Task',
+        style: ButtonStyle.Success as ButtonStyle.Success,
+        emoji: { name: '✋' }
+      });
+    } else if (taskStatus === 'claimed') {
+      buttonComponents.push({
+        type: ComponentType.Button as ComponentType.Button,
+        custom_id: `task_complete_${taskId}`,
+        label: 'Mark Complete',
+        style: ButtonStyle.Primary as ButtonStyle.Primary,
+        emoji: { name: '✅' }
+      });
+
+      const multiClaimEnabled = (taskItem as any).multipleClaimsAllowed || false;
+      const userId = interaction.member?.user?.id || interaction.user?.id!;
+      const isClaimedByUser = taskItem.claimedBy && (
+        (Array.isArray(taskItem.claimedBy) && taskItem.claimedBy.includes(userId)) ||
+        (!Array.isArray(taskItem.claimedBy) && taskItem.claimedBy === userId)
+      );
+
+      if (!multiClaimEnabled || isClaimedByUser) {
+        buttonComponents.push({
+          type: ComponentType.Button as ComponentType.Button,
+          custom_id: `task_unclaim_${taskId}`,
+          label: 'Unclaim',
+          style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+          emoji: { name: '↩️' }
+        });
+      }
+    }
+
     buttonComponents.push(
       {
         type: ComponentType.Button as ComponentType.Button,
