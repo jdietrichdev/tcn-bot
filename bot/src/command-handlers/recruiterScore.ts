@@ -10,25 +10,53 @@ import {
   sendMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
+import {
+  fetchRecruitmentPoints,
+  getRecruitmentTrackerState,
+  incrementRecruitmentPoints,
+  upsertRecruitmentTrackerState,
+  RecruitmentTrackerState,
+} from "../util/recruitmentTracker";
 
 export const handleRecruiterScore = async (
   input: APIChatInputApplicationCommandInteraction | string
 ) => {
   try {
-    const config = getConfig(
-      typeof input === "string" ? input : input.guild_id!
-    );
-    const scoreMap = new Map<string, Record<string, number>>();
-    const totals = {
+    const guildId = typeof input === "string" ? input : input.guild_id!;
+    const config = getConfig(guildId);
+    const scoreMap = new Map<string, RecruiterScoreRow>();
+    const totals: ScoreTotals = {
       candidateForwards: 0,
       messages: 0,
       clanPosts: 0,
+      ticketMessages: 0,
+      fcPosts: 0,
+      points: 0,
     };
 
     await getCandidatesMessages(scoreMap, totals, config);
-    await getClanPostsMessages(scoreMap, totals, config);
 
-    console.log(JSON.stringify(Object.fromEntries(scoreMap)));
+    const trackerState = await getRecruitmentTrackerState(guildId);
+    const clanMessageState = await getClanPostsMessages(
+      scoreMap,
+      totals,
+      config,
+      guildId,
+      trackerState
+    );
+
+    if (
+      clanMessageState.lastFcMessageId &&
+      clanMessageState.lastFcMessageId !== trackerState.lastFcMessageId
+    ) {
+      await upsertRecruitmentTrackerState(guildId, {
+        lastFcMessageId: clanMessageState.lastFcMessageId,
+      });
+    }
+
+    await mergeRecruitmentPoints(scoreMap, totals, guildId);
+
+    console.log(JSON.stringify(Array.from(scoreMap.values())));
     const embed = buildEmbed(scoreMap, totals, config);
     await sendMessage(
       {
@@ -62,8 +90,8 @@ export const handleRecruiterScore = async (
 };
 
 const getCandidatesMessages = async (
-  scoreMap: Map<string, Record<string, number>>,
-  totals: Record<string, number>,
+  scoreMap: Map<string, RecruiterScoreRow>,
+  totals: ScoreTotals,
   config: ServerConfig
 ) => {
   const messages = await getChannelMessages(
@@ -73,12 +101,16 @@ const getCandidatesMessages = async (
   for (const message of messages) {
     if (message.type === MessageType.Default && message.message_reference) {
       totals.candidateForwards++;
-      const forwarderStats = scoreMap.get(message.author.username) || {
-        messages: 0,
-        clanPosts: 0,
-      };
+      const forwarderStats = ensureRecruiterRecord(
+        scoreMap,
+        message.author.id,
+        resolveUserDisplayName(
+          message.author.id,
+          message.author.username,
+          message.author.global_name ?? undefined
+        )
+      );
       forwarderStats.messages++;
-      scoreMap.set(message.author.username, forwarderStats);
       totals.messages++;
       if (message.reactions?.some((reaction) => reaction.emoji.name === `✉️`)) {
         const userReactions = await getMessageReaction(
@@ -87,16 +119,17 @@ const getCandidatesMessages = async (
           `✉️`
         );
         for (const user of userReactions) {
-          if (
-            user.username !== message.author.username &&
-            !user.bot
-          ) {
-            const stats = scoreMap.get(user.username) || {
-              messages: 0,
-              clanPosts: 0,
-            };
+          if (user.id !== message.author.id && !user.bot) {
+            const stats = ensureRecruiterRecord(
+              scoreMap,
+              user.id,
+              resolveUserDisplayName(
+                user.id,
+                user.username,
+                user.global_name ?? undefined
+              )
+            );
             stats.messages++;
-            scoreMap.set(user.username, stats);
             totals.messages++;
           }
         }
@@ -106,14 +139,22 @@ const getCandidatesMessages = async (
 };
 
 const getClanPostsMessages = async (
-  scoreMap: Map<string, Record<string, number>>,
-  totals: Record<string, number>,
-  config: ServerConfig
-) => {
+  scoreMap: Map<string, RecruiterScoreRow>,
+  totals: ScoreTotals,
+  config: ServerConfig,
+  guildId: string,
+  trackerState: RecruitmentTrackerState
+): Promise<{ lastFcMessageId?: string }> => {
   const messages = await getChannelMessages(
     config.CLAN_POSTS_CHANNEL,
     new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000)
   );
+  const lastProcessedId = trackerState.lastFcMessageId
+    ? BigInt(trackerState.lastFcMessageId)
+    : null;
+  let maxProcessedId = lastProcessedId;
+  const fcPostCounts = new Map<string, { username: string; count: number }>();
+
   for (const message of messages) {
     if (
       message.type === MessageType.Default &&
@@ -123,32 +164,89 @@ const getClanPostsMessages = async (
       !message.message_reference &&
       message.embeds.length !== 0
     ) {
-      const user = message.embeds[0].title!.split(" ")[0];
-      const stats = scoreMap.get(user) || {
-        messages: 0,
-        clanPosts: 0,
-      };
+      const stats = ensureRecruiterRecord(
+        scoreMap,
+        message.author.id,
+        resolveUserDisplayName(
+          message.author.id,
+          message.author.username,
+          message.author.global_name ?? undefined
+        )
+      );
       stats.clanPosts++;
-      scoreMap.set(user, stats);
       totals.clanPosts++;
+
+      const messageIdBigInt = BigInt(message.id);
+      const isNewMessage =
+        lastProcessedId === null || messageIdBigInt > lastProcessedId;
+
+      if (isNewMessage) {
+        const existing = fcPostCounts.get(message.author.id) || {
+          username: resolveUserDisplayName(
+            message.author.id,
+            message.author.username,
+            message.author.global_name ?? undefined
+          ),
+          count: 0,
+        };
+        existing.username = resolveUserDisplayName(
+          message.author.id,
+          message.author.username,
+          message.author.global_name ?? undefined
+        );
+        existing.count++;
+        fcPostCounts.set(message.author.id, existing);
+
+        if (!maxProcessedId || messageIdBigInt > maxProcessedId) {
+          maxProcessedId = messageIdBigInt;
+        }
+      }
     }
   }
+
+  if (fcPostCounts.size > 0) {
+    await Promise.all(
+      Array.from(fcPostCounts.entries()).map(([userId, details]) =>
+        incrementRecruitmentPoints(guildId, userId, details.username, {
+          fcPosts: details.count,
+        })
+      )
+    );
+  }
+
+  return {
+    lastFcMessageId:
+      maxProcessedId && maxProcessedId !== lastProcessedId
+        ? maxProcessedId.toString()
+        : trackerState.lastFcMessageId,
+  };
 };
 
 const buildEmbed = (
-  scoreMap: Map<string, Record<string, number>>,
-  totals: Record<string, number>,
+  scoreMap: Map<string, RecruiterScoreRow>,
+  totals: ScoreTotals,
   config: ServerConfig
 ) => {
+  const sortedScores = Array.from(scoreMap.values()).sort((a, b) => {
+    if (b.points !== a.points) {
+      return b.points - a.points;
+    }
+    return b.messages - a.messages;
+  });
+
   return {
     title: "Recruiter Scoring for Last Week",
     description: `Scores based on <#${config.RECRUITMENT_OPP_CHANNEL}> and <#${config.CLAN_POSTS_CHANNEL}>`,
-    fields: Array.from(scoreMap, ([key, value]) => {
+    fields: sortedScores.map((value) => {
       return {
-        name: `**${key}**`,
+        name: `**${value.username}**`,
         value: [
-          `Messages: ${value.messages}`,
-          `Clan Posts: ${value.clanPosts}`,
+          `User: <@${value.userId}>`,
+          `Recruitment Points: ${value.points}`,
+          `Ticket Msg Points: ${value.ticketMessages}`,
+          `FC Post Points: ${value.fcPosts}`,
+          `Messages (7d): ${value.messages}`,
+          `Clan Posts (7d): ${value.clanPosts}`,
         ].join("\n"),
       };
     }),
@@ -158,7 +256,89 @@ const buildEmbed = (
         `Candidate Forwards: ${totals.candidateForwards}`,
         `Messages Sent: ${totals.messages}`,
         `Clan Posts: ${totals.clanPosts}`,
+        `Ticket Msg Points: ${totals.ticketMessages}`,
+        `FC Post Points: ${totals.fcPosts}`,
+        `Total Recruitment Points: ${totals.points}`,
       ].join("\n"),
     },
   } as APIEmbed;
+};
+
+interface RecruiterScoreRow {
+  userId: string;
+  username: string;
+  messages: number;
+  clanPosts: number;
+  ticketMessages: number;
+  fcPosts: number;
+  points: number;
+}
+
+interface ScoreTotals {
+  candidateForwards: number;
+  messages: number;
+  clanPosts: number;
+  ticketMessages: number;
+  fcPosts: number;
+  points: number;
+}
+
+const ensureRecruiterRecord = (
+  scoreMap: Map<string, RecruiterScoreRow>,
+  userId: string,
+  username: string
+): RecruiterScoreRow => {
+  const existing = scoreMap.get(userId);
+  if (existing) {
+    if (username && existing.username !== username) {
+      existing.username = username;
+    }
+    return existing;
+  }
+
+  const record: RecruiterScoreRow = {
+    userId,
+    username,
+    messages: 0,
+    clanPosts: 0,
+    ticketMessages: 0,
+    fcPosts: 0,
+    points: 0,
+  };
+  scoreMap.set(userId, record);
+  return record;
+};
+
+const resolveUserDisplayName = (
+  userId: string,
+  username?: string,
+  globalName?: string
+) => username ?? globalName ?? userId;
+
+const mergeRecruitmentPoints = async (
+  scoreMap: Map<string, RecruiterScoreRow>,
+  totals: ScoreTotals,
+  guildId: string
+) => {
+  const pointsItems = await fetchRecruitmentPoints(guildId);
+
+  totals.ticketMessages = 0;
+  totals.fcPosts = 0;
+  totals.points = 0;
+
+  for (const item of pointsItems) {
+    const record = ensureRecruiterRecord(
+      scoreMap,
+      item.userId,
+      item.username ?? item.userId
+    );
+    record.ticketMessages = item.ticketMessages ?? 0;
+    record.fcPosts = item.fcPosts ?? 0;
+    record.points =
+      item.points ?? record.ticketMessages + record.fcPosts;
+
+    totals.ticketMessages += record.ticketMessages;
+    totals.fcPosts += record.fcPosts;
+    totals.points += record.points;
+  }
 };

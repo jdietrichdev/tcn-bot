@@ -21,6 +21,12 @@ import { s3Client } from "../clients/s3-client";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { isActorRecruiter } from "./utils";
+import {
+  incrementRecruitmentPoints,
+  recordTicketRecruiterStats,
+  TicketRecruiterMessage,
+} from "../util/recruitmentTracker";
 
 export const confirmDelete = async (
   interaction: APIMessageComponentInteraction
@@ -46,11 +52,63 @@ export const confirmDelete = async (
         message.type !== 6
       );
     });
-    const transcript = await createTranscript(
+    const {
+      embed: transcript,
+      participantMap,
+      applicantId,
+      applicantUsername,
+    } = await createTranscript(
       interaction,
       messages,
       eventMessages
     );
+
+    const recruiterMessages = await collectRecruiterMessages(
+      interaction,
+      participantMap
+    );
+
+    if (recruiterMessages.length > 0) {
+      await Promise.all(
+        recruiterMessages.map((entry) =>
+          incrementRecruitmentPoints(
+            interaction.guild_id!,
+            entry.userId,
+            entry.username,
+            {
+              ticketMessages: entry.count,
+            }
+          )
+        )
+      );
+    }
+
+    const totalParticipantMessages = Array.from(participantMap.values()).reduce(
+      (sum, details) => sum + details.count,
+      0
+    );
+
+    await recordTicketRecruiterStats(interaction.guild_id!, {
+      ticketChannelId: interaction.channel.id,
+      ticketChannelName:
+        "name" in interaction.channel && interaction.channel.name
+          ? interaction.channel.name
+          : undefined,
+      ticketNumber:
+        "name" in interaction.channel && interaction.channel.name
+          ? interaction.channel.name.split("-")[1]
+          : undefined,
+      transcriptId,
+      applicantId,
+      applicantUsername,
+      recruiterMessages,
+      totalParticipantMessages,
+      closedBy: interaction.member!.user.id,
+      closedByUsername: interaction.member!.user.username ??
+        interaction.member!.user.id,
+      closedAt: new Date().toISOString(),
+    });
+
     await sendMessage(
       {
         embeds: [transcript],
@@ -81,24 +139,79 @@ export const confirmDelete = async (
   }
 };
 
+interface ParticipantDetails {
+  count: number;
+  username: string;
+}
+
+const collectRecruiterMessages = async (
+  interaction: APIMessageComponentInteraction,
+  participantMap: Map<string, ParticipantDetails>
+): Promise<TicketRecruiterMessage[]> => {
+  const config = getConfig(interaction.guild_id!);
+
+  const recruiterChecks = await Promise.all(
+    Array.from(participantMap.entries()).map(async ([userId, details]) => {
+      try {
+        const isRecruiter = await isActorRecruiter(
+          interaction.guild_id!,
+          userId,
+          config
+        );
+
+        if (!isRecruiter) {
+          return null;
+        }
+
+        return {
+          userId,
+          username: details.username,
+          count: details.count,
+        } as TicketRecruiterMessage;
+      } catch (error) {
+        console.error(
+          `Failed to determine recruiter status for ${userId}: ${error}`
+        );
+        return null;
+      }
+    })
+  );
+
+  return recruiterChecks.filter(
+    (entry): entry is TicketRecruiterMessage => entry !== null
+  );
+};
+
 const createTranscript = async (
   interaction: APIMessageComponentInteraction,
   messages: APIMessage[],
   eventMessages: APIMessage[]
-): Promise<APIEmbed> => {
+): Promise<{
+  embed: APIEmbed;
+  participantMap: Map<string, ParticipantDetails>;
+  applicantId: string;
+  applicantUsername: string;
+}> => {
   const applicationChannel =
     interaction.channel as APIGuildTextChannel<GuildTextChannelType>;
   const applicantId = applicationChannel.topic!.split(":")[1];
   const applicant = await getUser(applicantId);
-  const participantMap = new Map<string, number>();
+  const participantMap = new Map<string, ParticipantDetails>();
   for (const message of messages) {
     const author = message.author.id;
     if (!message.author.bot) {
-      const score = participantMap.get(author) ?? 0;
-      participantMap.set(author, score + 1);
+      const existing = participantMap.get(author) ?? {
+        count: 0,
+        username: message.author.username,
+      };
+      participantMap.set(author, {
+        count: existing.count + 1,
+        username: message.author.username ?? existing.username,
+      });
     }
   }
   return {
+    embed: {
     title: `Clan application for ${applicant.username}`,
     fields: [
       {
@@ -143,11 +256,15 @@ const createTranscript = async (
       {
         name: "Participants",
         value: Array.from(participantMap, ([key, value]) => {
-          return `${value} messages from <@${key}>`;
+          return `${value.count} messages from <@${key}>`;
         }).join("\n"),
         inline: false,
       },
     ],
+    },
+    participantMap,
+    applicantId,
+    applicantUsername: applicant.username,
   };
 };
 
