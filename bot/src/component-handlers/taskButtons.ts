@@ -28,7 +28,9 @@ const performTaskAction = async (
     }
 
     const task = getTaskResult.Item;
-    if (task.status === 'claimed' && task.claimedBy && !task.multipleClaimsAllowed) {
+    const canClaim = !(task.status === 'claimed' && task.claimedBy && !task.multipleClaimsAllowed);
+
+    if (!canClaim) {
       return {
         content: '❌ This task has already been claimed.',
       };
