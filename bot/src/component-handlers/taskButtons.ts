@@ -11,6 +11,8 @@ const performTaskAction = async (
   const userId = interaction.member?.user?.id || interaction.user?.id!;
   
   if (actionType === 'claim') {
+    console.log(`Attempting to claim task ${taskId} for user ${userId}`);
+
     const getTaskResult = await dynamoDbClient.send(
       new GetCommand({
         TableName: 'BotTable',
@@ -22,22 +24,25 @@ const performTaskAction = async (
     );
 
     if (!getTaskResult.Item) {
+      console.log(`Task ${taskId} not found`);
       return {
         content: '❌ Task not found.',
       };
     }
 
     const task = getTaskResult.Item;
+    console.log(`Task ${taskId} status: ${task.status}, multipleClaimsAllowed: ${task.multipleClaimsAllowed}, claimedBy: ${task.claimedBy}`);
 
-    // Allow claiming if:
-    // 1. Task is pending (not claimed)
-    // 2. Task allows multiple claims
-    if (task.status !== 'pending' && !task.multipleClaimsAllowed) {
+
+    const allowsMultiple = task.multipleClaimsAllowed === true;
+    if (task.status !== 'pending' && !allowsMultiple) {
+      console.log(`Task ${taskId} cannot be claimed - status: ${task.status}, allowsMultiple: ${allowsMultiple}`);
       return {
         content: '❌ This task has already been claimed.',
       };
     }
 
+    console.log(`Claiming task ${taskId} for user ${userId}`);
     await dynamoDbClient.send(
       new UpdateCommand({
         TableName: 'BotTable',
@@ -56,6 +61,8 @@ const performTaskAction = async (
         },
       })
     );
+
+    console.log(`Successfully claimed task ${taskId}`);
   } else if (actionType === 'complete') {
     await dynamoDbClient.send(
       new UpdateCommand({
@@ -258,26 +265,26 @@ export const handleTaskButtonInteraction = async (
   try {
     if (customId.startsWith('task_claim_')) {
       if (isTaskMessage) {
-        try {
-          const responseData = await performTaskAction(interaction, taskId, guildId, 'claim');
-          void import('./taskListButton').then(({ refreshTaskListMessages }) => {
-            refreshTaskListMessages(guildId).catch(console.error);
-          });
+        const responseData = await performTaskAction(interaction, taskId, guildId, 'claim');
 
-          return {
-            type: InteractionResponseType.UpdateMessage,
-            data: responseData,
-          };
-        } catch (error) {
-          console.error('Error in claim operation:', error);
+        if (responseData.content) {
           return {
             type: InteractionResponseType.ChannelMessageWithSource,
             data: {
-              content: '❌ Failed to claim task. Please try again.',
+              content: responseData.content,
               flags: 64,
             },
           };
         }
+
+        void import('./taskListButton').then(({ refreshTaskListMessages }) => {
+          refreshTaskListMessages(guildId).catch(console.error);
+        });
+
+        return {
+          type: InteractionResponseType.UpdateMessage,
+          data: responseData,
+        };
       }
 
       const claimInteraction = {
