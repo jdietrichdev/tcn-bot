@@ -1,6 +1,7 @@
 import {
   APIChatInputApplicationCommandInteraction,
   APIEmbed,
+  APIMessage,
   MessageType,
 } from "discord-api-types/v10";
 import { getConfig, ServerConfig } from "../util/serverConfig";
@@ -166,14 +167,7 @@ const getClanPostsMessages = async (
   const fcPostCounts = new Map<string, { username: string; count: number }>();
 
   for (const message of messages) {
-    if (
-      message.type === MessageType.Default &&
-      message.content.startsWith(
-        "https://discord.com/channels/236523452230533121/1058589765508800644"
-      ) &&
-      !message.message_reference &&
-      message.embeds.length !== 0
-    ) {
+    if (isFcPostMessage(message)) {
       const stats = ensureRecruiterRecord(
         scoreMap,
         message.author.id,
@@ -230,6 +224,47 @@ const getClanPostsMessages = async (
         ? maxProcessedId.toString()
         : trackerState.lastFcMessageId,
   };
+};
+
+const isFcPostMessage = (message: APIMessage): boolean => {
+  if (message.type !== MessageType.Default) {
+    return false;
+  }
+
+  if (message.author.bot) {
+    return false;
+  }
+
+  if (message.message_reference) {
+    return false;
+  }
+
+  const content = message.content?.trim();
+  if (!content) {
+    return false;
+  }
+
+  if (content.startsWith("https://discord.com/channels/236523452230533121/1058589765508800644")) {
+    return true;
+  }
+
+  if (/^(✅|❌|🎟)\s*[-:]/i.test(content)) {
+    return true;
+  }
+
+  if (/^fc\s*(trial|result)/i.test(content)) {
+    return true;
+  }
+
+  if (/^trial\s*result/i.test(content)) {
+    return true;
+  }
+
+  if (/^base\s*1/i.test(content)) {
+    return true;
+  }
+
+  return false;
 };
 
 const buildEmbed = (
