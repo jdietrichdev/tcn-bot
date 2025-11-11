@@ -305,10 +305,9 @@ export const handleTaskButtonInteraction = async (
             refreshTaskListMessages(guildId).catch(console.error);
           });
 
-          return {
-            type: InteractionResponseType.UpdateMessage,
-            data: responseData,
-          };
+          const { updateResponse } = await import('../adapters/discord-adapter');
+          await updateResponse(interaction.application_id, interaction.token, responseData);
+          return;
         } catch (error) {
           console.error('Error in complete operation:', error);
           return {
@@ -339,10 +338,9 @@ export const handleTaskButtonInteraction = async (
             refreshTaskListMessages(guildId).catch(console.error);
           });
 
-          return {
-            type: InteractionResponseType.UpdateMessage,
-            data: responseData,
-          };
+          const { updateResponse } = await import('../adapters/discord-adapter');
+          await updateResponse(interaction.application_id, interaction.token, responseData);
+          return;
         } catch (error) {
           console.error('Error in unclaim operation:', error);
           return {

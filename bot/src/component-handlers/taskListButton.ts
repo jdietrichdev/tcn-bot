@@ -114,7 +114,7 @@ export const handleTaskListPagination = async (
       } catch (error) {
         console.error('Error in refresh operation:', error);
         const { updateResponse } = await import('../adapters/discord-adapter');
-        await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
+  await updateResponse(interaction.application_id, interaction.token, {
           content: '❌ Failed to refresh task list. Please try again.',
         });
       }
@@ -464,7 +464,7 @@ export const handleTaskListFilterButton = async (
 
   return {
     type: InteractionResponseType.DeferredChannelMessageWithSource,
-    data: {}
+    data: { flags: 64 }
   };
 };
 
