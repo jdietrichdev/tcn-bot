@@ -87,11 +87,20 @@ export const handleTaskListPagination = async (
 ): Promise<any> => {
   // Handle refresh
   if (customId === 'task_refresh_list') {
-    const { updateResponse } = await import('../adapters/discord-adapter');
-    await updateResponse(interaction.application_id, interaction.token, {
-      content: '🔄 Refreshing task list...',
-      flags: 64
-    });
+    try {
+      const fakeInteraction = {
+        ...interaction,
+        type: 2,
+        data: {
+          name: 'task-list',
+          options: []
+        }
+      };
+      const { handleTaskList } = await import('../command-handlers/taskList');
+      await handleTaskList(fakeInteraction as any);
+    } catch (error) {
+      console.error('Error in refresh operation:', error);
+    }
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
@@ -103,11 +112,20 @@ export const handleTaskListPagination = async (
 
   // Handle create
   if (customId === 'task_create_new') {
-    const { updateResponse } = await import('../adapters/discord-adapter');
-    await updateResponse(interaction.application_id, interaction.token, {
-      content: '✨ Opening task creation modal...',
-      flags: 64
-    });
+    try {
+      const fakeInteraction = {
+        ...interaction,
+        type: 2,
+        data: {
+          name: 'task-create',
+          options: []
+        }
+      };
+      const { handleTaskCreate } = await import('../command-handlers/taskCreate');
+      await handleTaskCreate(fakeInteraction as any);
+    } catch (error) {
+      console.error('Error in create operation:', error);
+    }
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
@@ -119,15 +137,78 @@ export const handleTaskListPagination = async (
 
   // Handle view all
   if (customId === 'task_list_all') {
-    const { updateResponse } = await import('../adapters/discord-adapter');
-    await updateResponse(interaction.application_id, interaction.token, {
-      content: '📋 Loading all tasks...',
-      flags: 64
-    });
+    try {
+      const fakeInteraction = {
+        ...interaction,
+        type: 2,
+        data: {
+          name: 'task-list',
+          options: []
+        }
+      };
+      const { handleTaskList } = await import('../command-handlers/taskList');
+      await handleTaskList(fakeInteraction as any);
+    } catch (error) {
+      console.error('Error in view all operation:', error);
+    }
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
         content: '📋 All tasks loaded!',
+        flags: 64
+      }
+    };
+  }
+
+  // Handle my tasks
+  if (customId === 'task_list_my') {
+    try {
+      const fakeInteraction = {
+        ...interaction,
+        type: 2,
+        data: {
+          name: 'task-list',
+          options: [
+            { name: 'filter', value: 'my', type: 3 }
+          ]
+        }
+      };
+      const { handleTaskList } = await import('../command-handlers/taskList');
+      await handleTaskList(fakeInteraction as any);
+    } catch (error) {
+      console.error('Error in my tasks operation:', error);
+    }
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        content: '👤 Your tasks loaded!',
+        flags: 64
+      }
+    };
+  }
+
+  // Handle completed tasks
+  if (customId === 'task_list_completed') {
+    try {
+      const fakeInteraction = {
+        ...interaction,
+        type: 2,
+        data: {
+          name: 'task-list',
+          options: [
+            { name: 'status', value: 'completed', type: 3 }
+          ]
+        }
+      };
+      const { handleTaskList } = await import('../command-handlers/taskList');
+      await handleTaskList(fakeInteraction as any);
+    } catch (error) {
+      console.error('Error in completed tasks operation:', error);
+    }
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        content: '✅ Completed tasks loaded!',
         flags: 64
       }
     };

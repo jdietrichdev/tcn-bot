@@ -359,12 +359,6 @@ export const handleTaskButtonInteraction = async (
   }
 
   try {
-    // Handle task list pagination buttons first
-    if (customId.startsWith('task_list_')) {
-      const { handleTaskListPagination } = await import('./taskListButton');
-      return await handleTaskListPagination(interaction, customId);
-    }
-
     if (customId.startsWith('task_claim_')) {
       if (isTaskMessage) {
         const responseData = await performTaskAction(interaction, taskId, guildId, 'claim');
