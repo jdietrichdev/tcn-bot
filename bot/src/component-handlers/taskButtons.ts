@@ -474,11 +474,23 @@ export const handleTaskButtonInteraction = async (
       const { handleTaskUnclaim } = await import('../command-handlers/taskUnclaim');
       return await handleTaskUnclaim(unclaimInteraction as any);
     } else if (customId.startsWith('task_approve_')) {
+      console.log(`Entered task_approve_ block for task ${taskId}`);
       console.log(`Processing approve action for task ${taskId}, isTaskMessage: ${isTaskMessage}`);
       if (isTaskMessage) {
-        console.log(`Approving task ${taskId} from individual task embed`);
-        const responseData = await performTaskAction(interaction, taskId, guildId, 'approve');
-
+        console.log(`Taking isTaskMessage true path for task ${taskId}`);
+        // Double check: Only show approve button on public messages
+        const isEphemeral = interaction.message?.flags === 64;
+        if (isEphemeral) {
+          console.log('Approve button pressed on ephemeral message.');
+          return {
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+              content: '❌ Approval actions must be performed on public messages.',
+              flags: 64,
+            },
+          };
+        }
+        const responseData = await performTaskAction(interaction, taskId!, guildId, 'approve');
         if (responseData.content) {
           console.log(`Approve failed with error: ${responseData.content}`);
           return {
@@ -489,24 +501,32 @@ export const handleTaskButtonInteraction = async (
             },
           };
         }
-
         console.log(`Action button 'approve' completed for task ${taskId}, refreshing task list messages`);
         void import('./taskListButton').then(({ refreshTaskListMessages }) => {
           refreshTaskListMessages(guildId).catch(console.error);
         });
-
         console.log('Approve responseData:', JSON.stringify(responseData, null, 2));
-
-        return {
-          type: InteractionResponseType.UpdateMessage,
-          data: {
-            embeds: responseData.embeds || [],
-            components: responseData.components || [],
-          },
-        };
+        // Try to update message, fallback if update fails
+        try {
+          return {
+            type: InteractionResponseType.UpdateMessage,
+            data: {
+              embeds: responseData.embeds || [],
+              components: responseData.components || [],
+            },
+          };
+        } catch (err) {
+          console.error('UpdateMessage failed, sending fallback confirmation:', err);
+          return {
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+              content: '☑️ Task approved successfully.',
+              flags: 64,
+            },
+          };
+        }
       }
 
-      console.log(`Approving task ${taskId} from task list - falling back to command handler`);
       const approveInteraction = {
         ...interaction,
         type: 2,
@@ -518,16 +538,8 @@ export const handleTaskButtonInteraction = async (
       const { handleTaskApprove } = await import('../command-handlers/taskApprove');
       return await handleTaskApprove(approveInteraction as any);
     }
-
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        content: '❌ Unknown button interaction.',
-        flags: 64,
-      },
-    };
-  } catch (error) {
-    console.error('Error handling task button interaction:', error);
+  } catch (err) {
+    console.error(`Error handling task button interaction: ${err}`);
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
