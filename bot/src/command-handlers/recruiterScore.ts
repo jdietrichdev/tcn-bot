@@ -24,6 +24,7 @@ const MAIL_REACTION_EMOJI = "✉️";
 const MAIL_REACTION_QUERY = encodeURIComponent(MAIL_REACTION_EMOJI);
 const CANDIDATE_FORWARD_POINT_VALUE = 1;
 const CANDIDATE_DM_POINT_VALUE = 1;
+const LEADERBOARD_EMBED_COLOR = 0x5865f2;
 
 export const handleRecruiterScore = async (
   input: APIChatInputApplicationCommandInteraction | string
@@ -31,45 +32,9 @@ export const handleRecruiterScore = async (
   try {
     const guildId = typeof input === "string" ? input : input.guild_id!;
     const config = getConfig(guildId);
-    const scoreMap = new Map<string, RecruiterScoreRow>();
-    const totals: ScoreTotals = {
-      ticketsClosed: 0,
-      messages: 0,
-      fcPostsWeek: 0,
-      ticketMessages: 0,
-      fcPosts: 0,
-      points: 0,
-      candidateForwards: 0,
-      candidateDms: 0,
-      candidateForwardPoints: 0,
-      candidateDmPoints: 0,
-    };
+    const dataset = await compileRecruiterScoreData(guildId, config);
 
-    await applyRecentTicketStats(scoreMap, totals, guildId);
-    await collectCandidateChannelActivity(scoreMap, totals, config);
-
-    const trackerState = await getRecruitmentTrackerState(guildId);
-    const fcMessageState = await getFcPostsMessages(
-      scoreMap,
-      totals,
-      config,
-      guildId,
-      trackerState
-    );
-
-    if (
-      fcMessageState.lastFcMessageId &&
-      fcMessageState.lastFcMessageId !== trackerState.lastFcMessageId
-    ) {
-      await upsertRecruitmentTrackerState(guildId, {
-        lastFcMessageId: fcMessageState.lastFcMessageId,
-      });
-    }
-
-    await mergeRecruitmentPoints(scoreMap, totals, guildId);
-
-    console.log(JSON.stringify(Array.from(scoreMap.values())));
-    const embed = buildEmbed(scoreMap, totals, config);
+    const embed = buildRecruiterScoreEmbed(dataset.scores, dataset.totals, config);
     await sendMessage(
       {
         embeds: [embed],
@@ -98,6 +63,27 @@ export const handleRecruiterScore = async (
     } else {
       throw new Error("Failure generating recruitment score");
     }
+  }
+};
+
+export const handleRecruiterLeaderboard = async (
+  interaction: APIChatInputApplicationCommandInteraction
+) => {
+  try {
+    const guildId = interaction.guild_id!;
+    const config = getConfig(guildId);
+    const dataset = await compileRecruiterScoreData(guildId, config);
+    const embed = buildRecruiterLeaderboardEmbed(dataset.scores);
+
+    await updateResponse(interaction.application_id, interaction.token, {
+      embeds: [embed],
+    });
+  } catch (err) {
+    console.error(`Failed to generate recruiter leaderboard: ${err}`);
+    await updateResponse(interaction.application_id, interaction.token, {
+      content:
+        "There was a failure generating the recruiter leaderboard, please try again or contact admins for assistance",
+    });
   }
 };
 
@@ -150,10 +136,10 @@ const collectCandidateChannelActivity = async (
           message.author.global_name ?? undefined
         )
       );
-      forwarder.candidateForwards++;
-      totals.candidateForwards++;
-          forwarder.candidateForwardPoints += CANDIDATE_FORWARD_POINT_VALUE;
-          totals.candidateForwardPoints += CANDIDATE_FORWARD_POINT_VALUE;
+    forwarder.candidateForwards++;
+    totals.candidateForwards++;
+    forwarder.candidateForwardPoints += CANDIDATE_FORWARD_POINT_VALUE;
+    totals.candidateForwardPoints += CANDIDATE_FORWARD_POINT_VALUE;
     }
 
     const mailReaction = message.reactions?.find(
@@ -190,6 +176,60 @@ const collectCandidateChannelActivity = async (
       totals.candidateDmPoints += CANDIDATE_DM_POINT_VALUE;
     }
   }
+};
+
+interface RecruiterScoreDataset {
+  scores: RecruiterScoreRow[];
+  totals: ScoreTotals;
+}
+
+const compileRecruiterScoreData = async (
+  guildId: string,
+  config: ServerConfig
+): Promise<RecruiterScoreDataset> => {
+  const scoreMap = new Map<string, RecruiterScoreRow>();
+  const totals: ScoreTotals = {
+    ticketsClosed: 0,
+    messages: 0,
+    fcPostsWeek: 0,
+    ticketMessages: 0,
+    fcPosts: 0,
+    points: 0,
+    candidateForwards: 0,
+    candidateDms: 0,
+    candidateForwardPoints: 0,
+    candidateDmPoints: 0,
+  };
+
+  await applyRecentTicketStats(scoreMap, totals, guildId);
+  await collectCandidateChannelActivity(scoreMap, totals, config);
+
+  const trackerState = await getRecruitmentTrackerState(guildId);
+  const fcMessageState = await getFcPostsMessages(
+    scoreMap,
+    totals,
+    config,
+    guildId,
+    trackerState
+  );
+
+  if (
+    fcMessageState.lastFcMessageId &&
+    fcMessageState.lastFcMessageId !== trackerState.lastFcMessageId
+  ) {
+    await upsertRecruitmentTrackerState(guildId, {
+      lastFcMessageId: fcMessageState.lastFcMessageId,
+    });
+  }
+
+  await mergeRecruitmentPoints(scoreMap, totals, guildId);
+
+  const scores = sortRecruiterScores(scoreMap);
+
+  return {
+    scores,
+    totals,
+  };
 };
 
 const getFcPostsMessages = async (
@@ -311,56 +351,186 @@ const isFcPostMessage = (message: APIMessage): boolean => {
   return false;
 };
 
-const buildEmbed = (
-  scoreMap: Map<string, RecruiterScoreRow>,
+const buildRecruiterScoreEmbed = (
+  scores: RecruiterScoreRow[],
   totals: ScoreTotals,
   config: ServerConfig
-) => {
-  const sortedScores = Array.from(scoreMap.values()).sort((a, b) => {
+): APIEmbed => {
+  const description = [
+    "Weekly activity snapshot covering closed application tickets, FC posts, candidate forwards, and ✉️ DMs.",
+    `Data sources: <#${config.CLAN_POSTS_CHANNEL}>, <#${config.RECRUITMENT_OPP_CHANNEL}>`,
+  ].join("\n");
+
+  return {
+    title: "Recruiter Scoreboard • Last 7 Days",
+    description,
+    color: LEADERBOARD_EMBED_COLOR,
+    fields: [
+      {
+        name: "Top Recruiters",
+        value: formatRecruiterScoreTable(scores.slice(0, 10)),
+        inline: false,
+      },
+      {
+        name: "Totals",
+        value: formatTotalsSummary(totals),
+        inline: false,
+      },
+    ],
+    footer: {
+      text: "Points combine ticket, FC, candidate forward, and DM activity",
+    },
+    timestamp: new Date().toISOString(),
+  };
+};
+
+export const buildRecruiterLeaderboardEmbed = (
+  scores: RecruiterScoreRow[]
+): APIEmbed => {
+  const topScores = scores.slice(0, 20);
+  const description = formatRecruiterLeaderboard(topScores);
+
+  return {
+    title: "Recruiter Leaderboard",
+    description,
+    color: LEADERBOARD_EMBED_COLOR,
+    footer: {
+      text: "Run /recruiter-score for the full activity breakdown",
+    },
+    timestamp: new Date().toISOString(),
+  };
+};
+
+const RANK_MEDALS = ["🥇", "🥈", "🥉"] as const;
+
+const sortRecruiterScores = (
+  scoreMap: Map<string, RecruiterScoreRow>
+): RecruiterScoreRow[] => {
+  return Array.from(scoreMap.values()).sort((a, b) => {
     if (b.points !== a.points) {
       return b.points - a.points;
     }
     return b.messages - a.messages;
   });
+};
 
-  return {
-    title: "Recruiter Scoring for Last Week",
-  description: `Scores based on closed application tickets and FC posts in <#${config.CLAN_POSTS_CHANNEL}>`,
-    fields: sortedScores.map((value) => {
-      return {
-        name: `**${value.username}**`,
-        value: [
-          `User: <@${value.userId}>`,
-          `Recruitment Points: ${value.points}`,
-          `Ticket Msg Points: ${value.ticketMessages}`,
-          `FC Post Points: ${value.fcPosts}`,
-          `Ticket Msgs (7d): ${value.messages}`,
-          `FC Posts (7d): ${value.fcPostsWeek}`,
-          `Candidate Forwards (7d): ${value.candidateForwards}`,
-          `Candidate DM Reactions (7d): ${value.candidateDms}`,
-          `Candidate Points (7d): ${
-            value.candidateForwardPoints + value.candidateDmPoints
-          }`,
-        ].join("\n"),
-      };
-    }),
-    footer: {
-      text: [
-        "TOTALS:",
-  `Tickets Closed (7d): ${totals.ticketsClosed}`,
-        `Ticket Messages (7d): ${totals.messages}`,
-  `FC Posts (7d): ${totals.fcPostsWeek}`,
-        `Candidate Forwards: ${totals.candidateForwards}`,
-        `Candidate DM Reactions: ${totals.candidateDms}`,
-        `Candidate Points (7d): ${
-          totals.candidateForwardPoints + totals.candidateDmPoints
-        }`,
-        `Ticket Msg Points: ${totals.ticketMessages}`,
-        `FC Post Points: ${totals.fcPosts}`,
-        `Total Recruitment Points: ${totals.points}`,
-      ].join("\n"),
-    },
-  } as APIEmbed;
+const formatRecruiterScoreTable = (scores: RecruiterScoreRow[]): string => {
+  if (scores.length === 0) {
+    return "_No recruiter activity recorded in the last 7 days._";
+  }
+
+  const headers = [
+    "#",
+    "Recruiter",
+    "Pts",
+    "Ticket",
+    "FC",
+    "Cand",
+    "Fwd",
+    "DM",
+    "Msgs",
+  ];
+
+  const rows = scores.map((score, index) => {
+    const medal = RANK_MEDALS[index] ?? "";
+    const candidatePoints =
+      score.candidateForwardPoints + score.candidateDmPoints;
+    return [
+      String(index + 1),
+      truncateDisplayName(
+        medal ? `${medal} ${score.username}` : score.username,
+        24
+      ),
+      formatNumber(score.points),
+      formatNumber(score.ticketMessages),
+      formatNumber(score.fcPosts),
+      formatNumber(candidatePoints),
+      score.candidateForwards.toString(),
+      score.candidateDms.toString(),
+      score.messages.toString(),
+    ];
+  });
+
+  const colWidths = headers.map((header, columnIndex) => {
+    return Math.max(
+      header.length,
+      ...rows.map((row) => row[columnIndex].length)
+    );
+  });
+
+  const numericColumns = new Set([2, 3, 4, 5, 6, 7, 8]);
+
+  const formatRow = (row: string[]) =>
+    row
+      .map((value, index) =>
+        alignCell(value, colWidths[index], numericColumns.has(index))
+      )
+      .join(" ");
+
+  const lines = [
+    formatRow(headers),
+    formatRow(headers.map((header, index) => "-".repeat(colWidths[index]))),
+    ...rows.map(formatRow),
+  ];
+
+  return ["```text", ...lines, "```"].join("\n");
+};
+
+const formatTotalsSummary = (totals: ScoreTotals): string => {
+  const candidatePoints =
+    totals.candidateForwardPoints + totals.candidateDmPoints;
+
+  const lines = [
+    `• Tickets Closed: **${totals.ticketsClosed}**`,
+    `• Ticket Messages: **${totals.messages}**`,
+    `• FC Posts Logged: **${totals.fcPostsWeek}**`,
+    `• Candidate Forwards: **${totals.candidateForwards}**`,
+    `• Candidate ✉️ Reactions: **${totals.candidateDms}**`,
+    `• Ticket Msg Points: **${formatNumber(totals.ticketMessages)}**`,
+    `• FC Post Points: **${formatNumber(totals.fcPosts)}**`,
+    `• Candidate Points: **${formatNumber(candidatePoints)}**`,
+    `• Total Recruitment Points: **${formatNumber(totals.points)}**`,
+  ];
+
+  return lines.join("\n");
+};
+
+const formatRecruiterLeaderboard = (
+  scores: RecruiterScoreRow[]
+): string => {
+  if (scores.length === 0) {
+    return "*No recruiter activity recorded in the last 7 days.*";
+  }
+
+  return scores
+    .map((score, index) => {
+      const medal = RANK_MEDALS[index] ?? `#${index + 1}`;
+      return `${medal} <@${score.userId}> — **${formatNumber(
+        score.points
+      )}** pts`;
+    })
+    .join("\n");
+};
+
+const alignCell = (value: string, width: number, rightAlign: boolean) => {
+  return rightAlign ? value.padStart(width) : value.padEnd(width);
+};
+
+const truncateDisplayName = (value: string, maxLength: number) => {
+  if (value.length <= maxLength) {
+    return value;
+  }
+  return `${value.slice(0, maxLength - 1)}…`;
+};
+
+const formatNumber = (value: number): string => {
+  if (Number.isNaN(value)) {
+    return "0";
+  }
+  if (Number.isInteger(value)) {
+    return value.toString();
+  }
+  return value.toFixed(1);
 };
 
 interface RecruiterScoreRow {
