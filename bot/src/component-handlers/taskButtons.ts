@@ -2,6 +2,7 @@ import { APIMessageComponentInteraction, InteractionResponseType, ComponentType,
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { updateResponse } from '../adapters/discord-adapter';
+import { handleTaskList } from '../command-handlers/taskList';
 
 const performTaskAction = async (
   interaction: APIMessageComponentInteraction, 
@@ -348,7 +349,9 @@ export const handleTaskButtonInteraction = async (
   const customId = interaction.data.custom_id;
   const guildId = interaction.guild_id!;
   const userId = interaction.member?.user?.id || interaction.user?.id!;
-  
+
+  console.log(`Handling button interaction: customId=${customId}, guildId=${guildId}, userId=${userId}`);
+
   const embedTitle = interaction.message?.embeds?.[0]?.title || '';
   console.log(`Checking embed title: "${embedTitle}" for task message detection`);
   const isTaskMessage = embedTitle.includes('✦ TASK') ||
@@ -360,14 +363,62 @@ export const handleTaskButtonInteraction = async (
   const taskIdMatch = customId.match(/^task_\w+_(.+)$/);
   const taskId = taskIdMatch ? taskIdMatch[1] : null;
 
-  if (!taskId) {
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
+  // Handle navigation buttons
+  // Handle navigation buttons
+  if (customId === 'task_list_my') {
+    console.log('Handling My Tasks navigation button');
+    const mockInteraction = {
+      ...interaction,
       data: {
-        content: '❌ Invalid task ID.',
-        flags: 64,
-      },
-    };
+        ...interaction.data,
+        options: [
+          { name: 'user', value: userId }
+        ]
+      }
+    } as any;
+    await handleTaskList(mockInteraction);
+  } else if (customId === 'task_list_completed') {
+    console.log('Handling View Completed Tasks navigation button');
+    const mockInteraction = {
+      ...interaction,
+      data: {
+        ...interaction.data,
+        options: [
+          { name: 'status', value: 'completed' }
+        ]
+      }
+    } as any;
+    await handleTaskList(mockInteraction);
+    console.log('View Completed Tasks button response type:', InteractionResponseType.ChannelMessageWithSource, 'ephemeral:', true);
+    return;
+    console.log('My Tasks button response type:', InteractionResponseType.ChannelMessageWithSource, 'ephemeral:', true);
+    return;
+  if (customId === 'task_list_my') {
+    console.log('Handling My Tasks navigation button');
+    const mockInteraction = {
+      ...interaction,
+      data: {
+        ...interaction.data,
+        options: [
+          { name: 'user', value: userId }
+        ]
+      }
+    } as any;
+    await handleTaskList(mockInteraction);
+    return;
+  } else if (customId === 'task_list_completed') {
+    console.log('Handling View Completed Tasks navigation button');
+    const mockInteraction = {
+      ...interaction,
+      data: {
+        ...interaction.data,
+        options: [
+          { name: 'status', value: 'completed' }
+        ]
+      }
+    } as any;
+    await handleTaskList(mockInteraction);
+    return;
   }
 
   try {
@@ -376,6 +427,15 @@ export const handleTaskButtonInteraction = async (
     if (customId.startsWith('task_claim_')) {
       console.log(`Processing claim action for task ${taskId}`);
       if (isTaskMessage) {
+        if (!taskId) {
+          return {
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+              content: '❌ Invalid task ID.',
+              flags: 64,
+            },
+          };
+        }
         const responseData = await performTaskAction(interaction, taskId, guildId, 'claim');
 
         if (responseData.content) {
@@ -399,18 +459,24 @@ export const handleTaskButtonInteraction = async (
         return;
       }
 
-      const claimInteraction = {
-        ...interaction,
-        type: 2,
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          name: 'task-claim',
-          options: [{ name: 'task', value: taskId, type: 3 }],
+          content: '❌ This button can only be used on task messages.',
+          flags: 64,
         },
       };
-      const { handleTaskClaim } = await import('../command-handlers/taskClaim');
-      return await handleTaskClaim(claimInteraction as any);
     } else if (customId.startsWith('task_complete_')) {
       if (isTaskMessage) {
+        if (!taskId) {
+          return {
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+              content: '❌ Invalid task ID.',
+              flags: 64,
+            },
+          };
+        }
         const responseData = await performTaskAction(interaction, taskId, guildId, 'complete');
 
         if (responseData.content) {
@@ -431,18 +497,24 @@ export const handleTaskButtonInteraction = async (
         return;
       }
 
-      const completeInteraction = {
-        ...interaction,
-        type: 2,
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          name: 'task-complete',
-          options: [{ name: 'task', value: taskId, type: 3 }],
+          content: '❌ This button can only be used on task messages.',
+          flags: 64,
         },
       };
-      const { handleTaskComplete } = await import('../command-handlers/taskComplete');
-      return await handleTaskComplete(completeInteraction as any);
     } else if (customId.startsWith('task_unclaim_')) {
       if (isTaskMessage) {
+        if (!taskId) {
+          return {
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+              content: '❌ Invalid task ID.',
+              flags: 64,
+            },
+          };
+        }
         const responseData = await performTaskAction(interaction, taskId, guildId, 'unclaim');
 
         if (responseData.content) {
@@ -463,16 +535,13 @@ export const handleTaskButtonInteraction = async (
         return;
       }
 
-      const unclaimInteraction = {
-        ...interaction,
-        type: 2,
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          name: 'task-unclaim',
-          options: [{ name: 'task', value: taskId, type: 3 }],
+          content: '❌ This button can only be used on task messages.',
+          flags: 64,
         },
       };
-      const { handleTaskUnclaim } = await import('../command-handlers/taskUnclaim');
-      return await handleTaskUnclaim(unclaimInteraction as any);
     } else if (customId.startsWith('task_approve_')) {
       console.log(`Entered task_approve_ block for task ${taskId}`);
       console.log(`Processing approve action for task ${taskId}, isTaskMessage: ${isTaskMessage}`);
@@ -510,16 +579,13 @@ export const handleTaskButtonInteraction = async (
         return;
       }
 
-      const approveInteraction = {
-        ...interaction,
-        type: 2,
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          name: 'task-approve',
-          options: [{ name: 'task', value: taskId, type: 3 }],
+          content: '❌ This button can only be used on task messages.',
+          flags: 64,
         },
       };
-      const { handleTaskApprove } = await import('../command-handlers/taskApprove');
-      return await handleTaskApprove(approveInteraction as any);
     }
   } catch (err) {
     console.error(`Error handling task button interaction: ${err}`);
@@ -531,4 +597,13 @@ export const handleTaskButtonInteraction = async (
       },
     };
   }
+
+  // If no matching custom_id was found
+  return {
+    type: InteractionResponseType.ChannelMessageWithSource,
+    data: {
+      content: '❌ Unknown button interaction.',
+      flags: 64,
+    },
+  };
 };

@@ -140,6 +140,7 @@ export const handleTaskListPagination = async (
   // Handle my tasks
   if (customId === 'task_list_my') {
     console.log(`Handling task_list_my button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
+    console.log(`Handling task_list_my button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
     // Navigation button should send ephemeral message
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
@@ -152,6 +153,7 @@ export const handleTaskListPagination = async (
 
   // Handle completed tasks
   if (customId === 'task_list_completed') {
+    console.log(`Handling task_list_completed button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
     console.log(`Handling task_list_completed button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
     // Navigation button should send ephemeral message
     return {
