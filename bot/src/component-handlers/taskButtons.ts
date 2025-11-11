@@ -165,7 +165,7 @@ const performTaskAction = async (
       whatNextMessage = '```\n• Task is back to pending status\n• Anyone can now claim it\n• View task list to see available tasks\n```';
       break;
     case 'approve':
-      title = '✅ ✦ TASK APPROVED ✦ ⭐';
+      title = '☑️ ✦ TASK APPROVED ✦ ☑️';
       color = 0x9900ff; // Purple
       statusMessage = '`☑️ APPROVED`';
       whatNextMessage = '```\n• Task has been completed successfully\n• Removed from active task board\n• Contributors can claim new tasks\n```';
@@ -497,7 +497,10 @@ export const handleTaskButtonInteraction = async (
         });
 
         console.log(`Returning UpdateMessage for approve action`);
-        console.log(`Response data contains:`, JSON.stringify(responseData, null, 2).substring(0, 200));
+        console.log(`Full response data:`, JSON.stringify({
+          type: InteractionResponseType.UpdateMessage,
+          data: responseData
+        }, null, 2));
         return {
           type: InteractionResponseType.UpdateMessage,
           data: responseData,

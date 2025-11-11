@@ -126,13 +126,15 @@ export const handleTaskListPagination = async (
   // Handle view all
   if (customId === 'task_list_all') {
     console.log(`Handling task_list_all button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
-    return {
+    const response = {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
         content: '📋 Use `/task-list` to view all tasks!',
         flags: 64
       }
     };
+    console.log(`Returning ephemeral response for task_list_all:`, JSON.stringify(response, null, 2));
+    return response;
   }
 
   // Handle my tasks
