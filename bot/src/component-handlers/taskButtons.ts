@@ -490,6 +490,7 @@ export const handleTaskButtonInteraction = async (
             },
           };
         }
+        console.log('Approving task from individual task embed');
         const responseData = await performTaskAction(interaction, taskId!, guildId, 'approve');
         if (responseData.content) {
           console.log(`Approve failed with error: ${responseData.content}`);
@@ -505,26 +506,8 @@ export const handleTaskButtonInteraction = async (
         void import('./taskListButton').then(({ refreshTaskListMessages }) => {
           refreshTaskListMessages(guildId).catch(console.error);
         });
-        console.log('Approve responseData:', JSON.stringify(responseData, null, 2));
-        // Try to update message, fallback if update fails
-        try {
-          return {
-            type: InteractionResponseType.UpdateMessage,
-            data: {
-              embeds: responseData.embeds || [],
-              components: responseData.components || [],
-            },
-          };
-        } catch (err) {
-          console.error('UpdateMessage failed, sending fallback confirmation:', err);
-          return {
-            type: InteractionResponseType.ChannelMessageWithSource,
-            data: {
-              content: '☑️ Task approved successfully.',
-              flags: 64,
-            },
-          };
-        }
+        await updateResponse(interaction.application_id, interaction.token, responseData);
+        return;
       }
 
       const approveInteraction = {
