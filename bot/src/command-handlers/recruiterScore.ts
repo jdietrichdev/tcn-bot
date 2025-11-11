@@ -35,7 +35,7 @@ export const handleRecruiterScore = async (
     const totals: ScoreTotals = {
       ticketsClosed: 0,
       messages: 0,
-      clanPosts: 0,
+      fcPostsWeek: 0,
       ticketMessages: 0,
       fcPosts: 0,
       points: 0,
@@ -49,7 +49,7 @@ export const handleRecruiterScore = async (
     await collectCandidateChannelActivity(scoreMap, totals, config);
 
     const trackerState = await getRecruitmentTrackerState(guildId);
-    const clanMessageState = await getClanPostsMessages(
+    const fcMessageState = await getFcPostsMessages(
       scoreMap,
       totals,
       config,
@@ -58,11 +58,11 @@ export const handleRecruiterScore = async (
     );
 
     if (
-      clanMessageState.lastFcMessageId &&
-      clanMessageState.lastFcMessageId !== trackerState.lastFcMessageId
+      fcMessageState.lastFcMessageId &&
+      fcMessageState.lastFcMessageId !== trackerState.lastFcMessageId
     ) {
       await upsertRecruitmentTrackerState(guildId, {
-        lastFcMessageId: clanMessageState.lastFcMessageId,
+        lastFcMessageId: fcMessageState.lastFcMessageId,
       });
     }
 
@@ -192,7 +192,7 @@ const collectCandidateChannelActivity = async (
   }
 };
 
-const getClanPostsMessages = async (
+const getFcPostsMessages = async (
   scoreMap: Map<string, RecruiterScoreRow>,
   totals: ScoreTotals,
   config: ServerConfig,
@@ -220,8 +220,8 @@ const getClanPostsMessages = async (
           message.author.global_name ?? undefined
         )
       );
-      stats.clanPosts++;
-      totals.clanPosts++;
+  stats.fcPostsWeek++;
+  totals.fcPostsWeek++;
 
       const messageIdBigInt = BigInt(message.id);
       const isNewMessage =
@@ -325,7 +325,7 @@ const buildEmbed = (
 
   return {
     title: "Recruiter Scoring for Last Week",
-  description: `Scores based on closed application tickets and <#${config.CLAN_POSTS_CHANNEL}>`,
+  description: `Scores based on closed application tickets and FC posts in <#${config.CLAN_POSTS_CHANNEL}>`,
     fields: sortedScores.map((value) => {
       return {
         name: `**${value.username}**`,
@@ -335,7 +335,7 @@ const buildEmbed = (
           `Ticket Msg Points: ${value.ticketMessages}`,
           `FC Post Points: ${value.fcPosts}`,
           `Ticket Msgs (7d): ${value.messages}`,
-          `Clan Posts (7d): ${value.clanPosts}`,
+          `FC Posts (7d): ${value.fcPostsWeek}`,
           `Candidate Forwards (7d): ${value.candidateForwards}`,
           `Candidate DM Reactions (7d): ${value.candidateDms}`,
           `Candidate Points (7d): ${
@@ -349,7 +349,7 @@ const buildEmbed = (
         "TOTALS:",
   `Tickets Closed (7d): ${totals.ticketsClosed}`,
         `Ticket Messages (7d): ${totals.messages}`,
-        `Clan Posts: ${totals.clanPosts}`,
+  `FC Posts (7d): ${totals.fcPostsWeek}`,
         `Candidate Forwards: ${totals.candidateForwards}`,
         `Candidate DM Reactions: ${totals.candidateDms}`,
         `Candidate Points (7d): ${
@@ -367,7 +367,7 @@ interface RecruiterScoreRow {
   userId: string;
   username: string;
   messages: number;
-  clanPosts: number;
+  fcPostsWeek: number;
   candidateForwards: number;
   candidateDms: number;
   candidateForwardPoints: number;
@@ -380,7 +380,7 @@ interface RecruiterScoreRow {
 interface ScoreTotals {
   ticketsClosed: number;
   messages: number;
-  clanPosts: number;
+  fcPostsWeek: number;
   candidateForwards: number;
   candidateDms: number;
   candidateForwardPoints: number;
@@ -407,7 +407,7 @@ const ensureRecruiterRecord = (
     userId,
     username,
     messages: 0,
-    clanPosts: 0,
+    fcPostsWeek: 0,
     candidateForwards: 0,
     candidateDms: 0,
     candidateForwardPoints: 0,
