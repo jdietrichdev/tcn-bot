@@ -1,5 +1,8 @@
 import {
+  APIActionRowComponent,
+  APIButtonComponentWithCustomId,
   APIEmbed,
+  APIMessageActionRowComponent,
   ButtonStyle,
   ComponentType,
 } from "discord-api-types/v10";
@@ -246,51 +249,68 @@ export const createRecruiterScoreComponents = (
   sessionId: string,
   totalPages: number,
   currentPage: number
-) => {
+): APIActionRowComponent<APIMessageActionRowComponent>[] => {
   if (totalPages <= 1) {
     return [];
   }
 
+  const buttons: APIButtonComponentWithCustomId[] = [
+    {
+      type: ComponentType.Button,
+      custom_id: `recruiter_score_first_${sessionId}`,
+      emoji: { name: "⏮️" },
+      style: ButtonStyle.Secondary,
+      disabled: currentPage === 0,
+    },
+    {
+      type: ComponentType.Button,
+      custom_id: `recruiter_score_prev_${sessionId}`,
+      emoji: { name: "◀️" },
+      style: ButtonStyle.Primary,
+      disabled: currentPage === 0,
+    },
+    {
+      type: ComponentType.Button,
+      custom_id: `recruiter_score_page_${sessionId}`,
+      label: `${currentPage + 1} / ${totalPages}`,
+      style: ButtonStyle.Secondary,
+      disabled: true,
+    },
+    {
+      type: ComponentType.Button,
+      custom_id: `recruiter_score_next_${sessionId}`,
+      emoji: { name: "▶️" },
+      style: ButtonStyle.Primary,
+      disabled: currentPage === totalPages - 1,
+    },
+    {
+      type: ComponentType.Button,
+      custom_id: `recruiter_score_last_${sessionId}`,
+      emoji: { name: "⏭️" },
+      style: ButtonStyle.Secondary,
+      disabled: currentPage === totalPages - 1,
+    },
+  ];
+
   return [
     {
-      type: ComponentType.ActionRow as ComponentType.ActionRow,
-      components: [
-        {
-          type: ComponentType.Button as ComponentType.Button,
-          custom_id: `recruiter_score_first_${sessionId}`,
-          emoji: { name: "⏮️" },
-          style: ButtonStyle.Secondary as ButtonStyle.Secondary,
-          disabled: currentPage === 0,
-        },
-        {
-          type: ComponentType.Button as ComponentType.Button,
-          custom_id: `recruiter_score_prev_${sessionId}`,
-          emoji: { name: "◀️" },
-          style: ButtonStyle.Primary as ButtonStyle.Primary,
-          disabled: currentPage === 0,
-        },
-        {
-          type: ComponentType.Button as ComponentType.Button,
-          custom_id: `recruiter_score_page_${sessionId}`,
-          label: `${currentPage + 1} / ${totalPages}`,
-          style: ButtonStyle.Secondary as ButtonStyle.Secondary,
-          disabled: true,
-        },
-        {
-          type: ComponentType.Button as ComponentType.Button,
-          custom_id: `recruiter_score_next_${sessionId}`,
-          emoji: { name: "▶️" },
-          style: ButtonStyle.Primary as ButtonStyle.Primary,
-          disabled: currentPage === totalPages - 1,
-        },
-        {
-          type: ComponentType.Button as ComponentType.Button,
-          custom_id: `recruiter_score_last_${sessionId}`,
-          emoji: { name: "⏭️" },
-          style: ButtonStyle.Secondary as ButtonStyle.Secondary,
-          disabled: currentPage === totalPages - 1,
-        },
-      ],
+      type: ComponentType.ActionRow,
+      components: buttons,
     },
   ];
 };
+
+export const getRecruiterLeaderboardComponents = (): APIActionRowComponent<APIMessageActionRowComponent>[] => [
+  {
+    type: ComponentType.ActionRow,
+    components: [
+      {
+        type: ComponentType.Button,
+        custom_id: "recruiter_leaderboard_refresh",
+        style: ButtonStyle.Primary,
+        emoji: { name: "🔄" },
+        label: "Refresh",
+      },
+    ],
+  },
+];

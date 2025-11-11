@@ -35,8 +35,8 @@ import {
   buildRecruiterTotalsEmbed,
   createRecruiterScoreComponents,
   formatRecruiterLeaderboard,
+  getRecruiterLeaderboardComponents,
 } from "../util/recruiterScoreDisplay";
-import { storeRecruiterScoreCache } from "../component-handlers/recruiterScorePaginator";
 
 const MAIL_REACTION_QUERY = encodeURIComponent(MAIL_REACTION_EMOJI);
 
@@ -93,6 +93,7 @@ export const handleRecruiterLeaderboard = async (
 
     await updateResponse(interaction.application_id, interaction.token, {
       embeds: [embed],
+      components: getRecruiterLeaderboardComponents(),
     });
   } catch (err) {
     console.error(`Failed to generate recruiter leaderboard: ${err}`);
@@ -125,29 +126,13 @@ const publishRecruiterScoreMessage = async (
   );
   const components = createRecruiterScoreComponents(sessionId, totalPages, 0);
 
-  const message = await sendMessage(
+  await sendMessage(
     {
       embeds: [embed],
       components,
     },
     channelId
   );
-
-  try {
-    await storeRecruiterScoreCache(sessionId, {
-      scores: dataset.scores,
-      totals: dataset.totals,
-      context,
-      pageSize: SCORE_PAGE_SIZE,
-      totalPages,
-      channelId,
-      messageId: message.id,
-    });
-  } catch (error) {
-    console.error(
-      `Failed to cache recruiter score pagination state for channel ${channelId}: ${error}`
-    );
-  }
 };
 
 export const buildRecruiterLeaderboardEmbed = (
@@ -263,7 +248,7 @@ interface RecruiterScoreDataset {
   totals: ScoreTotals;
 }
 
-const compileRecruiterScoreData = async (
+export const compileRecruiterScoreData = async (
   guildId: string,
   config: ServerConfig
 ): Promise<RecruiterScoreDataset> => {
