@@ -146,10 +146,10 @@ const performTaskAction = async (
 
   switch (actionType) {
     case 'claim':
-      title = '🎉 ✦ TASK CLAIMED ✦ 🎯';
-      color = 0x00ff00; // Green
-      statusMessage = '`✅ CLAIMED`';
-      whatNextMessage = '```\n• Task is now in progress\n• Complete when finished\n• Can be unclaimed if needed\n• Check dashboard for status\n```';
+      title = '🚀 ✦ TASK CLAIMED ✦';
+      color = 0x0099ff; // Blue
+      statusMessage = '`🔄 IN PROGRESS`';
+      whatNextMessage = '```\n• Work on the task requirements\n• Use /task-complete when finished\n• Add completion notes if needed\n```';
       break;
     case 'complete':
       title = '🎉 ✦ TASK COMPLETED ✦ 🏆';
@@ -177,42 +177,87 @@ const performTaskAction = async (
     low: '🟢'
   };
 
-  const embed = {
-    title: title,
-    description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n> ${task.description || '*No description provided*'}`,
-    fields: [
-      {
-        name: '📝 **Completion Notes**',
-        value: actionType === 'complete' ? '`No additional notes provided`' : actionType === 'approve' ? '`Task approved successfully`' : '`-`',
-        inline: false
-      },
-      {
-        name: `👤 **${actionType === 'claim' ? 'Claimed' : actionType === 'complete' ? 'Completed' : actionType === 'unclaim' ? 'Unclaimed' : 'Approved'} By**`,
-        value: `<@${userId}>`,
-        inline: true
-      },
-      {
-        name: '⏰ **Timestamp**',
-        value: `<t:${Math.floor(new Date(now).getTime() / 1000)}:R>`,
-        inline: true
-      },
-      {
-        name: '📋 **Status**',
-        value: statusMessage,
-        inline: true
-      },
-      {
-        name: '⚡ **What\'s Next?**',
-        value: whatNextMessage,
-        inline: false
-      }
-    ],
-    color: color,
-    footer: {
-      text: `Task Management System • ${actionType.charAt(0).toUpperCase() + actionType.slice(1)}`,
-    },
-    timestamp: now
-  };
+  let embed;
+
+  switch (actionType) {
+    case 'claim':
+      embed = {
+        title: title,
+        description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n> ${task.description || '*No description provided*'}`,
+        fields: [
+          {
+            name: '📊 **Task Information**',
+            value: [
+              `**Priority:** ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} \`${task.priority.toUpperCase()}\``,
+              `**Due Date:** ${task.dueDate ? `📅 \`${task.dueDate}\`` : '`No due date set`'}`,
+              `**Status:** ${statusMessage}`
+            ].join('\n'),
+            inline: false
+          },
+          {
+            name: '👤 **Claimed By**',
+            value: `<@${userId}>`,
+            inline: true
+          },
+          {
+            name: '⏰ **Claimed At**',
+            value: `<t:${Math.floor(new Date(now).getTime() / 1000)}:R>`,
+            inline: true
+          },
+          {
+            name: '📝 **Next Steps**',
+            value: whatNextMessage,
+            inline: false
+          }
+        ],
+        color: color,
+        footer: {
+          text: `Task Management System • Now in progress`,
+        },
+        timestamp: now
+      };
+      break;
+    case 'complete':
+    case 'unclaim':
+    case 'approve':
+      embed = {
+        title: title,
+        description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n> ${task.description || '*No description provided*'}`,
+        fields: [
+          {
+            name: '📝 **Completion Notes**',
+            value: actionType === 'complete' ? '`No additional notes provided`' : actionType === 'approve' ? '`Task approved successfully`' : '`-`',
+            inline: false
+          },
+          {
+            name: `👤 **${actionType === 'complete' ? 'Completed' : actionType === 'unclaim' ? 'Unclaimed' : 'Approved'} By**`,
+            value: `<@${userId}>`,
+            inline: true
+          },
+          {
+            name: '⏰ **Timestamp**',
+            value: `<t:${Math.floor(new Date(now).getTime() / 1000)}:R>`,
+            inline: true
+          },
+          {
+            name: '📋 **Status**',
+            value: statusMessage,
+            inline: true
+          },
+          {
+            name: '⚡ **What\'s Next?**',
+            value: whatNextMessage,
+            inline: false
+          }
+        ],
+        color: color,
+        footer: {
+          text: `Task Management System • ${actionType.charAt(0).toUpperCase() + actionType.slice(1)}`,
+        },
+        timestamp: now
+      };
+      break;
+  }
 
   const multiClaimEnabled = task.multipleClaimsAllowed || false;
 
@@ -314,6 +359,12 @@ export const handleTaskButtonInteraction = async (
   }
 
   try {
+    // Handle task list pagination buttons first
+    if (customId.startsWith('task_list_')) {
+      const { handleTaskListPagination } = await import('./taskListButton');
+      return await handleTaskListPagination(interaction, customId);
+    }
+
     if (customId.startsWith('task_claim_')) {
       if (isTaskMessage) {
         const responseData = await performTaskAction(interaction, taskId, guildId, 'claim');
@@ -332,9 +383,10 @@ export const handleTaskButtonInteraction = async (
           refreshTaskListMessages(guildId).catch(console.error);
         });
 
-        const { updateResponse } = await import('../adapters/discord-adapter');
-        await updateResponse(interaction.application_id, interaction.token, responseData);
-        return;
+        return {
+          type: InteractionResponseType.UpdateMessage,
+          data: responseData,
+        };
       }
 
       const claimInteraction = {
