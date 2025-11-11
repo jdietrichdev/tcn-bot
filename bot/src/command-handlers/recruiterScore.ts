@@ -4,6 +4,7 @@ import {
   APIMessage,
   MessageType,
 } from "discord-api-types/v10";
+import { v4 as uuidv4 } from "uuid";
 import { getConfig, ServerConfig } from "../util/serverConfig";
 import {
   getChannelMessages,
@@ -19,12 +20,25 @@ import {
   upsertRecruitmentTrackerState,
   RecruitmentTrackerState,
 } from "../util/recruitmentTracker";
+import {
+  MAIL_REACTION_EMOJI,
+  CANDIDATE_FORWARD_POINT_VALUE,
+  CANDIDATE_DM_POINT_VALUE,
+  RecruiterScoreRow,
+  ScoreTotals,
+  LEADERBOARD_EMBED_COLOR,
+} from "../util/recruiterScoreShared";
+import {
+  SCORE_PAGE_SIZE,
+  RecruiterScoreDisplayContext,
+  buildRecruiterScorePageEmbed,
+  buildRecruiterTotalsEmbed,
+  createRecruiterScoreComponents,
+  formatRecruiterLeaderboard,
+} from "../util/recruiterScoreDisplay";
+import { storeRecruiterScoreCache } from "../component-handlers/recruiterScorePaginator";
 
-const MAIL_REACTION_EMOJI = "✉️";
 const MAIL_REACTION_QUERY = encodeURIComponent(MAIL_REACTION_EMOJI);
-const CANDIDATE_FORWARD_POINT_VALUE = 1;
-const CANDIDATE_DM_POINT_VALUE = 1;
-const LEADERBOARD_EMBED_COLOR = 0x5865f2;
 
 export const handleRecruiterScore = async (
   input: APIChatInputApplicationCommandInteraction | string
@@ -33,24 +47,26 @@ export const handleRecruiterScore = async (
     const guildId = typeof input === "string" ? input : input.guild_id!;
     const config = getConfig(guildId);
     const dataset = await compileRecruiterScoreData(guildId, config);
+    const displayContext: RecruiterScoreDisplayContext = {
+      recruitmentOppChannelId: config.RECRUITMENT_OPP_CHANNEL,
+      clanPostsChannelId: config.CLAN_POSTS_CHANNEL,
+      generatedAt: new Date().toISOString(),
+    };
 
-    const embed = buildRecruiterScoreEmbed(dataset.scores, dataset.totals, config);
-    await sendMessage(
-      {
-        embeds: [embed],
-      },
-      config.RECRUITER_CHANNEL
+    await publishRecruiterScoreMessage(
+      config.RECRUITER_CHANNEL,
+      dataset,
+      displayContext
     );
     if (typeof input !== "string") {
       await updateResponse(input.application_id, input.token, {
         content: `Information has been compiled and sent to <#${config.RECRUITER_CHANNEL}>`,
       });
     } else {
-      await sendMessage(
-        {
-          embeds: [embed],
-        },
-        config.RECRUITMENT_LEADERBOARD_CHANNEL
+      await publishRecruiterScoreMessage(
+        config.RECRUITMENT_LEADERBOARD_CHANNEL,
+        dataset,
+        displayContext
       );
     }
   } catch (err) {
@@ -85,6 +101,70 @@ export const handleRecruiterLeaderboard = async (
         "There was a failure generating the recruiter leaderboard, please try again or contact admins for assistance",
     });
   }
+};
+
+const publishRecruiterScoreMessage = async (
+  channelId: string,
+  dataset: RecruiterScoreDataset,
+  context: RecruiterScoreDisplayContext
+) => {
+  const scorePages = Math.max(
+    1,
+    Math.ceil(dataset.scores.length / SCORE_PAGE_SIZE)
+  );
+  const totalPages = scorePages + 1;
+  const sessionId = uuidv4();
+
+  const embed = buildRecruiterScorePageEmbed(
+    dataset.scores,
+    dataset.totals,
+    context,
+    0,
+    totalPages,
+    SCORE_PAGE_SIZE
+  );
+  const components = createRecruiterScoreComponents(sessionId, totalPages, 0);
+
+  const message = await sendMessage(
+    {
+      embeds: [embed],
+      components,
+    },
+    channelId
+  );
+
+  try {
+    await storeRecruiterScoreCache(sessionId, {
+      scores: dataset.scores,
+      totals: dataset.totals,
+      context,
+      pageSize: SCORE_PAGE_SIZE,
+      totalPages,
+      channelId,
+      messageId: message.id,
+    });
+  } catch (error) {
+    console.error(
+      `Failed to cache recruiter score pagination state for channel ${channelId}: ${error}`
+    );
+  }
+};
+
+export const buildRecruiterLeaderboardEmbed = (
+  scores: RecruiterScoreRow[]
+): APIEmbed => {
+  const topScores = scores.slice(0, 20);
+  const description = formatRecruiterLeaderboard(topScores);
+
+  return {
+    title: "Recruiter Leaderboard",
+    description,
+    color: LEADERBOARD_EMBED_COLOR,
+    footer: {
+      text: "Run /recruiter-score for the full activity breakdown",
+    },
+    timestamp: new Date().toISOString(),
+  };
 };
 
 const applyRecentTicketStats = async (
@@ -351,58 +431,6 @@ const isFcPostMessage = (message: APIMessage): boolean => {
   return false;
 };
 
-const buildRecruiterScoreEmbed = (
-  scores: RecruiterScoreRow[],
-  totals: ScoreTotals,
-  config: ServerConfig
-): APIEmbed => {
-  const description = [
-    "Weekly activity snapshot covering closed application tickets, FC posts, candidate forwards, and ✉️ DMs.",
-    `Data sources: <#${config.CLAN_POSTS_CHANNEL}>, <#${config.RECRUITMENT_OPP_CHANNEL}>`,
-  ].join("\n");
-
-  return {
-    title: "Recruiter Scoreboard • Last 7 Days",
-    description,
-    color: LEADERBOARD_EMBED_COLOR,
-    fields: [
-      {
-        name: "Top Recruiters",
-        value: formatRecruiterScoreTable(scores.slice(0, 10)),
-        inline: false,
-      },
-      {
-        name: "Totals",
-        value: formatTotalsSummary(totals),
-        inline: false,
-      },
-    ],
-    footer: {
-      text: "Points combine ticket, FC, candidate forward, and DM activity",
-    },
-    timestamp: new Date().toISOString(),
-  };
-};
-
-export const buildRecruiterLeaderboardEmbed = (
-  scores: RecruiterScoreRow[]
-): APIEmbed => {
-  const topScores = scores.slice(0, 20);
-  const description = formatRecruiterLeaderboard(topScores);
-
-  return {
-    title: "Recruiter Leaderboard",
-    description,
-    color: LEADERBOARD_EMBED_COLOR,
-    footer: {
-      text: "Run /recruiter-score for the full activity breakdown",
-    },
-    timestamp: new Date().toISOString(),
-  };
-};
-
-const RANK_MEDALS = ["🥇", "🥈", "🥉"] as const;
-
 const sortRecruiterScores = (
   scoreMap: Map<string, RecruiterScoreRow>
 ): RecruiterScoreRow[] => {
@@ -413,152 +441,6 @@ const sortRecruiterScores = (
     return b.messages - a.messages;
   });
 };
-
-const formatRecruiterScoreTable = (scores: RecruiterScoreRow[]): string => {
-  if (scores.length === 0) {
-    return "_No recruiter activity recorded in the last 7 days._";
-  }
-
-  const headers = [
-    "#",
-    "Recruiter",
-    "Pts",
-    "Ticket",
-    "FC",
-    "Cand",
-    "Fwd",
-    "DM",
-    "Msgs",
-  ];
-
-  const rows = scores.map((score, index) => {
-    const medal = RANK_MEDALS[index] ?? "";
-    const candidatePoints =
-      score.candidateForwardPoints + score.candidateDmPoints;
-    return [
-      String(index + 1),
-      truncateDisplayName(
-        medal ? `${medal} ${score.username}` : score.username,
-        24
-      ),
-      formatNumber(score.points),
-      formatNumber(score.ticketMessages),
-      formatNumber(score.fcPosts),
-      formatNumber(candidatePoints),
-      score.candidateForwards.toString(),
-      score.candidateDms.toString(),
-      score.messages.toString(),
-    ];
-  });
-
-  const colWidths = headers.map((header, columnIndex) => {
-    return Math.max(
-      header.length,
-      ...rows.map((row) => row[columnIndex].length)
-    );
-  });
-
-  const numericColumns = new Set([2, 3, 4, 5, 6, 7, 8]);
-
-  const formatRow = (row: string[]) =>
-    row
-      .map((value, index) =>
-        alignCell(value, colWidths[index], numericColumns.has(index))
-      )
-      .join(" ");
-
-  const lines = [
-    formatRow(headers),
-    formatRow(headers.map((header, index) => "-".repeat(colWidths[index]))),
-    ...rows.map(formatRow),
-  ];
-
-  return ["```text", ...lines, "```"].join("\n");
-};
-
-const formatTotalsSummary = (totals: ScoreTotals): string => {
-  const candidatePoints =
-    totals.candidateForwardPoints + totals.candidateDmPoints;
-
-  const lines = [
-    `• Tickets Closed: **${totals.ticketsClosed}**`,
-    `• Ticket Messages: **${totals.messages}**`,
-    `• FC Posts Logged: **${totals.fcPostsWeek}**`,
-    `• Candidate Forwards: **${totals.candidateForwards}**`,
-    `• Candidate ✉️ Reactions: **${totals.candidateDms}**`,
-    `• Ticket Msg Points: **${formatNumber(totals.ticketMessages)}**`,
-    `• FC Post Points: **${formatNumber(totals.fcPosts)}**`,
-    `• Candidate Points: **${formatNumber(candidatePoints)}**`,
-    `• Total Recruitment Points: **${formatNumber(totals.points)}**`,
-  ];
-
-  return lines.join("\n");
-};
-
-const formatRecruiterLeaderboard = (
-  scores: RecruiterScoreRow[]
-): string => {
-  if (scores.length === 0) {
-    return "*No recruiter activity recorded in the last 7 days.*";
-  }
-
-  return scores
-    .map((score, index) => {
-      const medal = RANK_MEDALS[index] ?? `#${index + 1}`;
-      return `${medal} <@${score.userId}> — **${formatNumber(
-        score.points
-      )}** pts`;
-    })
-    .join("\n");
-};
-
-const alignCell = (value: string, width: number, rightAlign: boolean) => {
-  return rightAlign ? value.padStart(width) : value.padEnd(width);
-};
-
-const truncateDisplayName = (value: string, maxLength: number) => {
-  if (value.length <= maxLength) {
-    return value;
-  }
-  return `${value.slice(0, maxLength - 1)}…`;
-};
-
-const formatNumber = (value: number): string => {
-  if (Number.isNaN(value)) {
-    return "0";
-  }
-  if (Number.isInteger(value)) {
-    return value.toString();
-  }
-  return value.toFixed(1);
-};
-
-interface RecruiterScoreRow {
-  userId: string;
-  username: string;
-  messages: number;
-  fcPostsWeek: number;
-  candidateForwards: number;
-  candidateDms: number;
-  candidateForwardPoints: number;
-  candidateDmPoints: number;
-  ticketMessages: number;
-  fcPosts: number;
-  points: number;
-}
-
-interface ScoreTotals {
-  ticketsClosed: number;
-  messages: number;
-  fcPostsWeek: number;
-  candidateForwards: number;
-  candidateDms: number;
-  candidateForwardPoints: number;
-  candidateDmPoints: number;
-  ticketMessages: number;
-  fcPosts: number;
-  points: number;
-}
 
 const ensureRecruiterRecord = (
   scoreMap: Map<string, RecruiterScoreRow>,

@@ -22,6 +22,7 @@ import { handleUnrosteredPagination } from "./unrosteredButton";
 import { handleTaskButtonInteraction } from "./taskButtons";
 import { handleTaskListPagination } from "./taskListButton";
 import { handleSubsApproval } from "./subsApproval";
+import { handleRecruiterScorePagination } from "./recruiterScorePaginator";
 
 export const handleComponent = async (
   interaction: APIMessageComponentInteraction
@@ -70,6 +71,8 @@ export const handleComponent = async (
     }
   } else if (customId.startsWith("unrostered_")) {
     return await handleUnrosteredPagination(interaction, customId);
+  } else if (customId.startsWith("recruiter_score_")) {
+    return await handleRecruiterScorePagination(interaction, customId);
   } else if (customId.startsWith("approve_sub_") || customId.startsWith("deny_sub_")) {
     console.log(`[handleComponent] Routing to handleSubsApproval for: ${customId}`);
     await handleSubsApproval(interaction);
