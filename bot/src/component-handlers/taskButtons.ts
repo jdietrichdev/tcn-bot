@@ -137,60 +137,87 @@ const performTaskAction = async (
 
   const task = getTaskResult.Item;
   
+  const now = new Date().toISOString();
+
   let title = '';
   let color = 0;
-  
+  let statusMessage = '';
+  let whatNextMessage = '';
+
   switch (actionType) {
     case 'claim':
-      title = '✦ TASK CLAIMED ✦';
-      color = 0x00FF00; // Green
+      title = '🎉 ✦ TASK CLAIMED ✦ 🎯';
+      color = 0x00ff00; // Green
+      statusMessage = '`✅ CLAIMED`';
+      whatNextMessage = '```\n• Task is now in progress\n• Complete when finished\n• Can be unclaimed if needed\n• Check dashboard for status\n```';
       break;
     case 'complete':
-      title = '✦ TASK COMPLETED ✦';
-      color = 0x0099FF; // Blue
+      title = '🎉 ✦ TASK COMPLETED ✦ 🏆';
+      color = 0x00ff00; // Green
+      statusMessage = '`✅ AWAITING APPROVAL`';
+      whatNextMessage = '```\n• Task is ready for admin review\n• Will be removed from board once approved\n• Check dashboard for approval status\n```';
       break;
     case 'unclaim':
-      title = '✦ TASK UNCLAIMED ✦';
-      color = 0xFF9900; // Orange
+      title = '🔄 ✦ TASK UNCLAIMED ✦ 🔄';
+      color = 0xff9900; // Orange
+      statusMessage = '`📬 PENDING`';
+      whatNextMessage = '```\n• Task is back to pending status\n• Anyone can now claim it\n• View task list to see available tasks\n```';
       break;
     case 'approve':
-      title = '✦ TASK APPROVED ✦';
-      color = 0x9900FF; // Purple
+      title = '✅ ✦ TASK APPROVED ✦ ⭐';
+      color = 0x9900ff; // Purple
+      statusMessage = '`☑️ APPROVED`';
+      whatNextMessage = '```\n• Task has been completed successfully\n• Removed from active task board\n• Contributors can claim new tasks\n```';
       break;
   }
 
-  const roleDisplay = task.assignedRole ? `<@&${task.assignedRole}>` : 'Any';
-  const userDisplay = task.assignedUser ? `<@${task.assignedUser}>` : 'Anyone';
-  const claimedDisplay = task.claimedBy ? `<@${task.claimedBy}>` : 'None';
-  const multiClaimEnabled = task.multipleClaimsAllowed || false;
+  const priorityEmoji = {
+    high: '🔴',
+    medium: '🟡',
+    low: '🟢'
+  };
 
   const embed = {
     title: title,
-    color: color,
+    description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n> ${task.description || '*No description provided*'}`,
     fields: [
       {
-        name: '📋 Task Details',
-        value: `**Title:** ${task.title}\n**Description:** ${task.description || 'No description provided'}`,
-        inline: false,
+        name: '📝 **Completion Notes**',
+        value: actionType === 'complete' ? '`No additional notes provided`' : actionType === 'approve' ? '`Task approved successfully`' : '`-`',
+        inline: false
       },
       {
-        name: '👥 Assignment Details',
-        value: `**Assigned Role:** ${roleDisplay}\n**Assigned User:** ${userDisplay}\n**Claimed By:** ${claimedDisplay}`,
-        inline: false,
+        name: `👤 **${actionType === 'claim' ? 'Claimed' : actionType === 'complete' ? 'Completed' : actionType === 'unclaim' ? 'Unclaimed' : 'Approved'} By**`,
+        value: `<@${userId}>`,
+        inline: true
       },
       {
-        name: '📊 Status Information',
-        value: `**Status:** \`${task.status || 'pending'}\`\n**Priority:** \`${task.priority || 'normal'}\`\n**Created:** <t:${Math.floor(new Date(task.createdAt).getTime() / 1000)}:f>`,
-        inline: false,
+        name: '⏰ **Timestamp**',
+        value: `<t:${Math.floor(new Date(now).getTime() / 1000)}:R>`,
+        inline: true
       },
+      {
+        name: '📋 **Status**',
+        value: statusMessage,
+        inline: true
+      },
+      {
+        name: '⚡ **What\'s Next?**',
+        value: whatNextMessage,
+        inline: false
+      }
     ],
+    color: color,
     footer: {
-      text: `Task ID: ${taskId} | Multiple Claims: ${multiClaimEnabled ? 'Enabled' : 'Disabled'}`,
+      text: `Task Management System • ${actionType.charAt(0).toUpperCase() + actionType.slice(1)}`,
     },
+    timestamp: now
   };
 
+  const multiClaimEnabled = task.multipleClaimsAllowed || false;
+
   const buttons = [];
-  
+
   if (task.status === 'pending' && !task.claimedBy) {
     buttons.push({
       type: ComponentType.Button,
@@ -205,7 +232,7 @@ const performTaskAction = async (
       label: 'Mark Complete',
       custom_id: `task_complete_${taskId}`,
     });
-    
+
     if (task.claimedBy === userId || multiClaimEnabled) {
       buttons.push({
         type: ComponentType.Button,
@@ -228,9 +255,35 @@ const performTaskAction = async (
     components: buttons,
   }] as any : [];
 
+  const buttonsRow = buttons.length > 0 ? [{
+    type: ComponentType.ActionRow,
+    components: [
+      {
+        type: ComponentType.Button,
+        custom_id: 'task_list_my',
+        label: 'My Tasks',
+        style: ButtonStyle.Secondary,
+        emoji: { name: '👤' }
+      },
+      {
+        type: ComponentType.Button,
+        custom_id: 'task_list_completed',
+        label: 'View Completed Tasks',
+        style: ButtonStyle.Secondary,
+        emoji: { name: '📋' }
+      },
+      {
+        type: ComponentType.Button,
+        style: ButtonStyle.Link,
+        url: `${process.env.DASHBOARD_URL || 'https://d19x3gu4qo04f3.cloudfront.net'}/tasks`,
+        label: 'Open Dashboard'
+      }
+    ]
+  }] : [];
+
   return {
     embeds: [embed],
-    components: components,
+    components: [...components, ...buttonsRow],
   };
 };
 
@@ -242,12 +295,10 @@ export const handleTaskButtonInteraction = async (
   const userId = interaction.member?.user?.id || interaction.user?.id!;
   
   const embedTitle = interaction.message?.embeds?.[0]?.title || '';
-  const isTaskMessage = embedTitle.includes('✦ TASK OVERVIEW ✦') ||
-                       embedTitle.includes('✦ TASK CREATED ✦') ||
-                       embedTitle.includes('✦ TASK CLAIMED ✦') ||
-                       embedTitle.includes('✦ TASK COMPLETED ✦') ||
-                       embedTitle.includes('✦ TASK UNCLAIMED ✦') ||
-                       embedTitle.includes('✦ TASK APPROVED ✦');
+  const isTaskMessage = embedTitle.includes('✦ TASK') ||
+                        embedTitle.includes('🎉 ✦ TASK') ||
+                        embedTitle.includes('🔄 ✦ TASK') ||
+                        embedTitle.includes('✅ ✦ TASK');
 
   const taskIdMatch = customId.match(/^task_\w+_(.+)$/);
   const taskId = taskIdMatch ? taskIdMatch[1] : null;
