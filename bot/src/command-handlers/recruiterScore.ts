@@ -22,6 +22,8 @@ import {
 
 const MAIL_REACTION_EMOJI = "✉️";
 const MAIL_REACTION_QUERY = encodeURIComponent(MAIL_REACTION_EMOJI);
+const CANDIDATE_FORWARD_POINT_VALUE = 1;
+const CANDIDATE_DM_POINT_VALUE = 1;
 
 export const handleRecruiterScore = async (
   input: APIChatInputApplicationCommandInteraction | string
@@ -39,6 +41,8 @@ export const handleRecruiterScore = async (
       points: 0,
       candidateForwards: 0,
       candidateDms: 0,
+      candidateForwardPoints: 0,
+      candidateDmPoints: 0,
     };
 
     await applyRecentTicketStats(scoreMap, totals, guildId);
@@ -148,6 +152,8 @@ const collectCandidateChannelActivity = async (
       );
       forwarder.candidateForwards++;
       totals.candidateForwards++;
+          forwarder.candidateForwardPoints += CANDIDATE_FORWARD_POINT_VALUE;
+          totals.candidateForwardPoints += CANDIDATE_FORWARD_POINT_VALUE;
     }
 
     const mailReaction = message.reactions?.find(
@@ -180,6 +186,8 @@ const collectCandidateChannelActivity = async (
       );
       dmCredit.candidateDms++;
       totals.candidateDms++;
+      dmCredit.candidateDmPoints += CANDIDATE_DM_POINT_VALUE;
+      totals.candidateDmPoints += CANDIDATE_DM_POINT_VALUE;
     }
   }
 };
@@ -330,6 +338,9 @@ const buildEmbed = (
           `Clan Posts (7d): ${value.clanPosts}`,
           `Candidate Forwards (7d): ${value.candidateForwards}`,
           `Candidate DM Reactions (7d): ${value.candidateDms}`,
+          `Candidate Points (7d): ${
+            value.candidateForwardPoints + value.candidateDmPoints
+          }`,
         ].join("\n"),
       };
     }),
@@ -341,6 +352,9 @@ const buildEmbed = (
         `Clan Posts: ${totals.clanPosts}`,
         `Candidate Forwards: ${totals.candidateForwards}`,
         `Candidate DM Reactions: ${totals.candidateDms}`,
+        `Candidate Points (7d): ${
+          totals.candidateForwardPoints + totals.candidateDmPoints
+        }`,
         `Ticket Msg Points: ${totals.ticketMessages}`,
         `FC Post Points: ${totals.fcPosts}`,
         `Total Recruitment Points: ${totals.points}`,
@@ -356,6 +370,8 @@ interface RecruiterScoreRow {
   clanPosts: number;
   candidateForwards: number;
   candidateDms: number;
+  candidateForwardPoints: number;
+  candidateDmPoints: number;
   ticketMessages: number;
   fcPosts: number;
   points: number;
@@ -367,6 +383,8 @@ interface ScoreTotals {
   clanPosts: number;
   candidateForwards: number;
   candidateDms: number;
+  candidateForwardPoints: number;
+  candidateDmPoints: number;
   ticketMessages: number;
   fcPosts: number;
   points: number;
@@ -392,6 +410,8 @@ const ensureRecruiterRecord = (
     clanPosts: 0,
     candidateForwards: 0,
     candidateDms: 0,
+    candidateForwardPoints: 0,
+    candidateDmPoints: 0,
     ticketMessages: 0,
     fcPosts: 0,
     points: 0,
@@ -428,7 +448,9 @@ const mergeRecruitmentPoints = async (
     record.ticketMessages = item.ticketMessages ?? 0;
     record.fcPosts = item.fcPosts ?? 0;
     const basePoints = item.points ?? record.ticketMessages + record.fcPosts;
-    record.points = basePoints + record.messages;
+    const candidatePoints =
+      record.candidateForwardPoints + record.candidateDmPoints;
+    record.points = basePoints + record.messages + candidatePoints;
 
     totals.ticketMessages += record.ticketMessages;
     totals.fcPosts += record.fcPosts;
@@ -440,7 +462,9 @@ const mergeRecruitmentPoints = async (
     if (processedUsers.has(record.userId)) {
       continue;
     }
-    record.points = record.messages;
+    const candidatePoints =
+      record.candidateForwardPoints + record.candidateDmPoints;
+    record.points = record.messages + candidatePoints;
     totals.points += record.points;
   }
 };

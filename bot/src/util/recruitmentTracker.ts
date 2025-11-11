@@ -244,3 +244,25 @@ export const fetchTicketRecruiterStats = async (
 
   return items;
 };
+
+export const getTicketRecruiterStatsRecord = async (
+  guildId: string,
+  ticketChannelId: string
+): Promise<TicketStatsRecord | undefined> => {
+  const response = await dynamoDbClient.send(
+    new GetCommand({
+      TableName: "BotTable",
+      Key: {
+        pk: guildId,
+        sk: `${TICKET_STATS_PREFIX}${ticketChannelId}`,
+      },
+    })
+  );
+
+  if (!response.Item) {
+    return undefined;
+  }
+
+  const { pk, sk, ...record } = response.Item as TicketStatsItem;
+  return record;
+};

@@ -26,6 +26,7 @@ import {
   incrementRecruitmentPoints,
   recordTicketRecruiterStats,
   TicketRecruiterMessage,
+  getTicketRecruiterStatsRecord,
 } from "../util/recruitmentTracker";
 
 export const confirmDelete = async (
@@ -33,6 +34,10 @@ export const confirmDelete = async (
 ) => {
   try {
     const config = getConfig(interaction.guild_id!);
+    const existingStats = await getTicketRecruiterStatsRecord(
+      interaction.guild_id!,
+      interaction.channel.id
+    );
     const transcriptId = uuidv4();
     const messages = await getChannelMessages(interaction.channel.id);
     messages.reverse();
@@ -68,7 +73,7 @@ export const confirmDelete = async (
       participantMap
     );
 
-    if (recruiterMessages.length > 0) {
+    if (!existingStats && recruiterMessages.length > 0) {
       await Promise.all(
         recruiterMessages.map((entry) =>
           incrementRecruitmentPoints(
