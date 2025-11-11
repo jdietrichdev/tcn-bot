@@ -57,6 +57,11 @@ export interface RecruitmentPointsItem {
   updatedAt?: string;
 }
 
+interface TicketStatsItem extends TicketStatsRecord {
+  pk: string;
+  sk: string;
+}
+
 export const getRecruitmentTrackerState = async (
   guildId: string
 ): Promise<RecruitmentTrackerState> => {
@@ -195,6 +200,41 @@ export const fetchRecruitmentPoints = async (
 
     if (response.Items) {
       items.push(...(response.Items as RecruitmentPointsItem[]));
+    }
+
+    ExclusiveStartKey = response.LastEvaluatedKey as
+      | Record<string, any>
+      | undefined;
+  } while (ExclusiveStartKey);
+
+  return items;
+};
+
+export const fetchTicketRecruiterStats = async (
+  guildId: string,
+  since: Date
+): Promise<TicketStatsRecord[]> => {
+  const items: TicketStatsRecord[] = [];
+  let ExclusiveStartKey: Record<string, any> | undefined;
+  const sinceIso = since.toISOString();
+
+  do {
+    const response = await dynamoDbClient.send(
+      new QueryCommand({
+        TableName: "BotTable",
+        KeyConditionExpression: "pk = :pk AND begins_with(sk, :prefix)",
+        FilterExpression: "closedAt >= :since",
+        ExpressionAttributeValues: {
+          ":pk": guildId,
+          ":prefix": TICKET_STATS_PREFIX,
+          ":since": sinceIso,
+        },
+        ExclusiveStartKey,
+      })
+    );
+
+    if (response.Items) {
+      items.push(...(response.Items as TicketStatsItem[]));
     }
 
     ExclusiveStartKey = response.LastEvaluatedKey as

@@ -77,6 +77,7 @@ export const confirmDelete = async (
             entry.username,
             {
               ticketMessages: entry.count,
+              points: entry.count * 0.1,
             }
           )
         )

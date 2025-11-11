@@ -15,9 +15,13 @@ import {
   fetchRecruitmentPoints,
   getRecruitmentTrackerState,
   incrementRecruitmentPoints,
+  fetchTicketRecruiterStats,
   upsertRecruitmentTrackerState,
   RecruitmentTrackerState,
 } from "../util/recruitmentTracker";
+
+const MAIL_REACTION_EMOJI = "✉️";
+const MAIL_REACTION_QUERY = encodeURIComponent(MAIL_REACTION_EMOJI);
 
 export const handleRecruiterScore = async (
   input: APIChatInputApplicationCommandInteraction | string
@@ -27,15 +31,18 @@ export const handleRecruiterScore = async (
     const config = getConfig(guildId);
     const scoreMap = new Map<string, RecruiterScoreRow>();
     const totals: ScoreTotals = {
-      candidateForwards: 0,
+      ticketsClosed: 0,
       messages: 0,
       clanPosts: 0,
       ticketMessages: 0,
       fcPosts: 0,
       points: 0,
+      candidateForwards: 0,
+      candidateDms: 0,
     };
 
-    await getCandidatesMessages(scoreMap, totals, config);
+    await applyRecentTicketStats(scoreMap, totals, guildId);
+    await collectCandidateChannelActivity(scoreMap, totals, config);
 
     const trackerState = await getRecruitmentTrackerState(guildId);
     const clanMessageState = await getClanPostsMessages(
@@ -90,61 +97,89 @@ export const handleRecruiterScore = async (
   }
 };
 
-const getCandidatesMessages = async (
+const applyRecentTicketStats = async (
+  scoreMap: Map<string, RecruiterScoreRow>,
+  totals: ScoreTotals,
+  guildId: string
+) => {
+  const since = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000);
+  const ticketStats = await fetchTicketRecruiterStats(guildId, since);
+
+  totals.ticketsClosed += ticketStats.length;
+
+  for (const record of ticketStats) {
+    for (const participant of record.recruiterMessages) {
+      const stats = ensureRecruiterRecord(
+        scoreMap,
+        participant.userId,
+        participant.username
+      );
+      stats.messages += participant.count;
+      totals.messages += participant.count;
+    }
+  }
+};
+
+const collectCandidateChannelActivity = async (
   scoreMap: Map<string, RecruiterScoreRow>,
   totals: ScoreTotals,
   config: ServerConfig
 ) => {
+  const since = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000);
   const messages = await getChannelMessages(
     config.RECRUITMENT_OPP_CHANNEL,
-    new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000)
+    since
   );
+
   for (const message of messages) {
-    if (message.type !== MessageType.Default || message.author.bot) {
+    if (message.author.bot) {
       continue;
     }
 
-    const isCandidateForward = Boolean(message.message_reference);
-    if (isCandidateForward) {
+    if (message.message_reference) {
+      const forwarder = ensureRecruiterRecord(
+        scoreMap,
+        message.author.id,
+        resolveUserDisplayName(
+          message.author.id,
+          message.author.username,
+          message.author.global_name ?? undefined
+        )
+      );
+      forwarder.candidateForwards++;
       totals.candidateForwards++;
     }
 
-    const forwarderStats = ensureRecruiterRecord(
-      scoreMap,
-      message.author.id,
-      resolveUserDisplayName(
-        message.author.id,
-        message.author.username,
-        message.author.global_name ?? undefined
-      )
+    const mailReaction = message.reactions?.find(
+      (reaction) => reaction.emoji?.name === MAIL_REACTION_EMOJI
     );
-    forwarderStats.messages++;
-    totals.messages++;
 
-    if (
-      isCandidateForward &&
-      message.reactions?.some((reaction) => reaction.emoji.name === `✉️`)
-    ) {
-      const userReactions = await getMessageReaction(
-        message.channel_id,
-        message.id,
-        `✉️`
-      );
-      for (const user of userReactions) {
-        if (user.id !== message.author.id && !user.bot) {
-          const stats = ensureRecruiterRecord(
-            scoreMap,
-            user.id,
-            resolveUserDisplayName(
-              user.id,
-              user.username,
-              user.global_name ?? undefined
-            )
-          );
-          stats.messages++;
-          totals.messages++;
-        }
+    if (!mailReaction) {
+      continue;
+    }
+
+    const reactors = await getMessageReaction(
+      config.RECRUITMENT_OPP_CHANNEL,
+      message.id,
+      MAIL_REACTION_QUERY
+    );
+
+    for (const reactor of reactors) {
+      if (reactor.bot || reactor.id === config.BOT_ID) {
+        continue;
       }
+
+      const dmCredit = ensureRecruiterRecord(
+        scoreMap,
+        reactor.id,
+        resolveUserDisplayName(
+          reactor.id,
+          reactor.username,
+          reactor.global_name ?? undefined
+        )
+      );
+      dmCredit.candidateDms++;
+      totals.candidateDms++;
     }
   }
 };
@@ -213,6 +248,7 @@ const getClanPostsMessages = async (
       Array.from(fcPostCounts.entries()).map(([userId, details]) =>
         incrementRecruitmentPoints(guildId, userId, details.username, {
           fcPosts: details.count,
+          points: details.count * 2,
         })
       )
     );
@@ -281,7 +317,7 @@ const buildEmbed = (
 
   return {
     title: "Recruiter Scoring for Last Week",
-    description: `Scores based on <#${config.RECRUITMENT_OPP_CHANNEL}> and <#${config.CLAN_POSTS_CHANNEL}>`,
+  description: `Scores based on closed application tickets and <#${config.CLAN_POSTS_CHANNEL}>`,
     fields: sortedScores.map((value) => {
       return {
         name: `**${value.username}**`,
@@ -290,17 +326,21 @@ const buildEmbed = (
           `Recruitment Points: ${value.points}`,
           `Ticket Msg Points: ${value.ticketMessages}`,
           `FC Post Points: ${value.fcPosts}`,
-          `Messages (7d): ${value.messages}`,
+          `Ticket Msgs (7d): ${value.messages}`,
           `Clan Posts (7d): ${value.clanPosts}`,
+          `Candidate Forwards (7d): ${value.candidateForwards}`,
+          `Candidate DM Reactions (7d): ${value.candidateDms}`,
         ].join("\n"),
       };
     }),
     footer: {
       text: [
         "TOTALS:",
-        `Candidate Forwards: ${totals.candidateForwards}`,
-        `Messages Sent: ${totals.messages}`,
+  `Tickets Closed (7d): ${totals.ticketsClosed}`,
+        `Ticket Messages (7d): ${totals.messages}`,
         `Clan Posts: ${totals.clanPosts}`,
+        `Candidate Forwards: ${totals.candidateForwards}`,
+        `Candidate DM Reactions: ${totals.candidateDms}`,
         `Ticket Msg Points: ${totals.ticketMessages}`,
         `FC Post Points: ${totals.fcPosts}`,
         `Total Recruitment Points: ${totals.points}`,
@@ -314,15 +354,19 @@ interface RecruiterScoreRow {
   username: string;
   messages: number;
   clanPosts: number;
+  candidateForwards: number;
+  candidateDms: number;
   ticketMessages: number;
   fcPosts: number;
   points: number;
 }
 
 interface ScoreTotals {
-  candidateForwards: number;
+  ticketsClosed: number;
   messages: number;
   clanPosts: number;
+  candidateForwards: number;
+  candidateDms: number;
   ticketMessages: number;
   fcPosts: number;
   points: number;
@@ -346,6 +390,8 @@ const ensureRecruiterRecord = (
     username,
     messages: 0,
     clanPosts: 0,
+    candidateForwards: 0,
+    candidateDms: 0,
     ticketMessages: 0,
     fcPosts: 0,
     points: 0,
