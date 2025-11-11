@@ -463,10 +463,13 @@ export const handleTaskButtonInteraction = async (
       const { handleTaskUnclaim } = await import('../command-handlers/taskUnclaim');
       return await handleTaskUnclaim(unclaimInteraction as any);
     } else if (customId.startsWith('task_approve_')) {
+      console.log(`Processing approve action for task ${taskId}, isTaskMessage: ${isTaskMessage}`);
       if (isTaskMessage) {
+        console.log(`Approving task ${taskId} from individual task embed`);
         const responseData = await performTaskAction(interaction, taskId, guildId, 'approve');
 
         if (responseData.content) {
+          console.log(`Approve failed with error: ${responseData.content}`);
           return {
             type: InteractionResponseType.ChannelMessageWithSource,
             data: {
@@ -476,21 +479,19 @@ export const handleTaskButtonInteraction = async (
           };
         }
 
-        void import('./taskListButton').then(({ refreshTaskListMessages }) => {
-          refreshTaskListMessages(guildId).catch(console.error);
-        });
-
         console.log(`Action button 'approve' completed for task ${taskId}, refreshing task list messages`);
         void import('./taskListButton').then(({ refreshTaskListMessages }) => {
           refreshTaskListMessages(guildId).catch(console.error);
         });
 
+        console.log(`Returning UpdateMessage for approve action`);
         return {
           type: InteractionResponseType.UpdateMessage,
           data: responseData,
         };
       }
 
+      console.log(`Approving task ${taskId} from task list - falling back to command handler`);
       const approveInteraction = {
         ...interaction,
         type: 2,
