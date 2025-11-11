@@ -29,16 +29,17 @@ export const handleComponent = async (
   const customId = interaction.data.custom_id;
   console.log(`[handleComponent] Received custom_id: ${customId}`);
   
-  if (customId.startsWith("task_")) {
-    if (customId.startsWith("task_list_first_") ||
-        customId.startsWith("task_list_prev_") ||
-        customId.startsWith("task_list_next_") ||
-        customId.startsWith("task_list_last_") ||
-        customId.startsWith("task_list_page_")) {
-      return await handleTaskListPagination(interaction, customId);
-    } else {
-      return await handleTaskButtonInteraction(interaction);
-    }
+  if (customId.startsWith("task_list_first_") ||
+      customId.startsWith("task_list_prev_") ||
+      customId.startsWith("task_list_next_") ||
+      customId.startsWith("task_list_last_") ||
+      customId.startsWith("task_list_page_") ||
+      customId === "task_refresh_list" ||
+      customId === "task_create_new" ||
+      customId === "task_list_all") {
+    await handleTaskListPagination(interaction, customId);
+  } else if (customId.startsWith("task_")) {
+    await handleTaskButtonInteraction(interaction);
   } else if (customId === "approveApp") {
     console.log(`[handleComponent] Handling approveApp for message: ${interaction.message.id}`);
     await approveApp(interaction, getConfig(interaction.guild_id!));
