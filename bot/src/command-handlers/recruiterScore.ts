@@ -397,6 +397,10 @@ const isFcPostMessage = (message: APIMessage): boolean => {
     return true;
   }
 
+  if (/^#\d{17,20}/.test(content)) {
+    return true;
+  }
+
   if (/^(✅|❌|🎟)\s*[-:]/i.test(content)) {
     return true;
   }
