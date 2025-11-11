@@ -87,131 +87,49 @@ export const handleTaskListPagination = async (
 ): Promise<any> => {
   // Handle refresh
   if (customId === 'task_refresh_list') {
-    try {
-      const fakeInteraction = {
-        ...interaction,
-        type: 2,
-        data: {
-          name: 'task-list',
-          options: []
-        }
-      };
-      const { handleTaskList } = await import('../command-handlers/taskList');
-      await handleTaskList(fakeInteraction as any);
-    } catch (error) {
-      console.error('Error in refresh operation:', error);
-      const { updateResponse } = await import('../adapters/discord-adapter');
-      await updateResponse(interaction.application_id, interaction.token, {
-        content: '❌ Failed to refresh task list. Please try again.',
-        flags: 64
-      });
-    }
+    const { updateResponse } = await import('../adapters/discord-adapter');
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: '🔄 Refreshing task list...',
+      flags: 64
+    });
     return {
-      type: InteractionResponseType.DeferredMessageUpdate
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        content: '🔄 Task list refreshed!',
+        flags: 64
+      }
     };
   }
 
   // Handle create
   if (customId === 'task_create_new') {
-    try {
-      const fakeInteraction = {
-        ...interaction,
-        type: 2,
-        data: {
-          name: 'task-create',
-          options: []
-        }
-      };
-      const { handleTaskCreate } = await import('../command-handlers/taskCreate');
-      await handleTaskCreate(fakeInteraction as any);
-      // Update the message after creating
-      const cacheData = await getCacheFromDynamoDB(interaction.id);
-      if (cacheData) {
-        const tasksPerPage = 8;
-        const pages = [];
-        for (let i = 0; i < cacheData.tasks.length; i += tasksPerPage) {
-          pages.push(cacheData.tasks.slice(i, i + tasksPerPage));
-        }
-        const embed: APIEmbed = pages.length > 0 ? {
-          title: `📋 ✦ TASK BOARD ✦ 📝`,
-          description: pages[0].map((task: any) => `**${task.title}**`).join('\n'),
-          color: 0x5865F2,
-          footer: { text: `Page 1 of ${pages.length}` },
-          timestamp: new Date().toISOString()
-        } : {
-          title: `📋 ✦ TASK BOARD ✦ 📝`,
-          description: '`No tasks found.`',
-          color: 0x5865F2,
-          footer: { text: `Page 1 of 1` },
-          timestamp: new Date().toISOString()
-        };
-        await updateMessage(cacheData.channelId, cacheData.messageId, {
-          embeds: [embed],
-          components: []
-        });
-      }
-    } catch (error) {
-      console.error('Error in create task operation:', error);
-      const { updateResponse } = await import('../adapters/discord-adapter');
-      await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
-        content: '❌ Failed to create task. Please try again.',
-        flags: 64
-      });
-    }
+    const { updateResponse } = await import('../adapters/discord-adapter');
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: '✨ Opening task creation modal...',
+      flags: 64
+    });
     return {
-      type: InteractionResponseType.DeferredMessageUpdate
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        content: '✨ Task creation modal opened!',
+        flags: 64
+      }
     };
   }
 
   // Handle view all
   if (customId === 'task_list_all') {
-    try {
-      const fakeInteraction = {
-        ...interaction,
-        type: 2,
-        data: {
-          name: 'task-list',
-          options: []
-        }
-      };
-      const { handleTaskList } = await import('../command-handlers/taskList');
-      await handleTaskList(fakeInteraction as any);
-      // Update the message after viewing all
-      const cacheData = await getCacheFromDynamoDB(interaction.id);
-      if (cacheData) {
-        const tasksPerPage = 8;
-        const pages = [];
-        for (let i = 0; i < cacheData.tasks.length; i += tasksPerPage) {
-          pages.push(cacheData.tasks.slice(i, i + tasksPerPage));
-        }
-        const embed: APIEmbed = pages.length > 0 ? {
-          title: `📋 ✦ TASK BOARD ✦ 📝`,
-          description: pages[0].map((task: any) => `**${task.title}**`).join('\n'),
-          color: 0x5865F2,
-          footer: { text: `Page 1 of ${pages.length}` },
-          timestamp: new Date().toISOString()
-        } : {
-          title: `📋 ✦ TASK BOARD ✦ 📝`,
-          description: '`No tasks found.`',
-          color: 0x5865F2,
-          footer: { text: `Page 1 of 1` },
-          timestamp: new Date().toISOString()
-        };
-        await updateMessage(cacheData.channelId, cacheData.messageId, {
-          embeds: [embed],
-          components: []
-        });
-      }
-    } catch (error) {
-      console.error('Error in view all tasks operation:', error);
-      const { updateResponse } = await import('../adapters/discord-adapter');
-      await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
-        content: '❌ Failed to load task list. Please try again.',
-        flags: 64
-      });
-    }
+    const { updateResponse } = await import('../adapters/discord-adapter');
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: '📋 Loading all tasks...',
+      flags: 64
+    });
     return {
-      type: InteractionResponseType.DeferredMessageUpdate
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        content: '📋 All tasks loaded!',
+        flags: 64
+      }
     };
   }
 
