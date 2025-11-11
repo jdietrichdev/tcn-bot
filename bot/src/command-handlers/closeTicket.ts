@@ -23,6 +23,7 @@ import {
   recordTicketRecruiterStats,
   TicketRecruiterMessage,
 } from "../util/recruitmentTracker";
+import { ensureArchiveCapacity } from "../util/ticketDeletion";
 
 export const closeTicket = async (
   interaction: APIApplicationCommandInteraction
@@ -42,6 +43,9 @@ export const closeTicket = async (
         const userId = (interaction.channel as APITextChannel).topic!.split(
           ":"
         )[1];
+        await ensureArchiveCapacity(interaction.guild_id!, config, {
+          triggeredById: interaction.member?.user.id,
+        });
         await moveChannel(channelId, config.ARCHIVE_CATEGORY);
         await updateChannelPermissions(channelId, userId, {
           type: OverwriteType.Member,
@@ -54,6 +58,9 @@ export const closeTicket = async (
           },
           channelId
         );
+        await ensureArchiveCapacity(interaction.guild_id!, config, {
+          triggeredById: interaction.member?.user.id,
+        });
       } else {
         await sendMessage(
           {
