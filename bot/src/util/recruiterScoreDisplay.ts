@@ -25,71 +25,33 @@ export interface RecruiterScoreDisplayContext {
 
 export const buildRecruiterScorePageEmbed = (
   allScores: RecruiterScoreRow[],
-  totals: ScoreTotals,
-  context: RecruiterScoreDisplayContext,
-  pageIndex: number,
-  totalPages: number,
-  pageSize: number
-): APIEmbed => {
-  const start = pageIndex * pageSize;
-  const end = Math.min(start + pageSize, allScores.length);
-  const pageScores = allScores.slice(start, end);
-  const hasScores = allScores.length > 0;
+  return scores
+    .map((score, index) => {
+      const rank = startIndex + index + 1;
+      const prefix = RANK_MEDALS[startIndex + index] ?? `#${rank}`;
+      const candidatePoints =
+        score.candidateForwardPoints + score.candidateDmPoints;
+      const ticketPoints =
+        score.ticketMessages * TICKET_MESSAGE_POINT_VALUE;
 
-  const description = [
-    "Weekly activity snapshot covering closed application tickets, FC posts, candidate forwards, and ✉️ DMs.",
-    `Data sources: <#${context.clanPostsChannelId}>, <#${context.recruitmentOppChannelId}>`,
-    "",
-    "Use ⏮️ ◀️ ▶️ ⏭️ to page through rankings. Totals summary on the final page.",
-  ].join("\n");
+      const headerLine = `${prefix} ${truncateDisplayName(
+        score.username,
+        28
+      )} — **${formatNumber(score.points)} pts**`;
 
-  const table = hasScores
-    ? formatRecruiterScoreTable(pageScores, start)
-    : "_No recruiter activity recorded in the last 7 days._";
+      const detailLine = [
+        `🎫 \`${formatNumber(ticketPoints)}\``,
+        `📣 \`${formatNumber(score.fcPosts)}\``,
+        `👥 \`${formatNumber(candidatePoints)}\``,
+        `📦 \`${score.candidateForwards}\``,
+        `✉️ \`${score.candidateDms}\``,
+        `💬 \`${score.messages}\``,
+      ].join(" • ");
 
-  return {
-    title: "Recruiter Scoreboard • Last 7 Days",
-    description,
-    color: LEADERBOARD_EMBED_COLOR,
-    fields: [
-      {
-        name: hasScores
-          ? `Recruiter Rankings • Ranks ${start + 1}-${end}`
-          : "Recruiter Rankings",
-        value: table,
-        inline: false,
-      },
-    ],
-    footer: {
-      text: `Page ${pageIndex + 1} of ${totalPages}`,
-    },
-    timestamp: context.generatedAt,
-  };
-};
-
-export const buildRecruiterTotalsEmbed = (
-  totals: ScoreTotals,
-  context: RecruiterScoreDisplayContext,
-  pageIndex: number,
-  totalPages: number
-): APIEmbed => {
-  const candidatePoints =
-    totals.candidateForwardPoints + totals.candidateDmPoints;
-  const ticketMessagePoints =
-    totals.ticketMessages * TICKET_MESSAGE_POINT_VALUE;
-  const averageMessagesPerTicket =
-    totals.ticketsClosed > 0
-      ? totals.messages / totals.ticketsClosed
-      : 0;
-  const fcWeekPoints = totals.fcPostsWeek * 2;
-
-  return {
-    title: "Recruitment Totals Overview",
+      return `${headerLine}\n${detailLine}`;
+    })
+    .join("\n\n");
     description: [
-      "Weekly aggregate metrics across tickets, FC posts, and candidate outreach.",
-      `Data sources: <#${context.clanPostsChannelId}>, <#${context.recruitmentOppChannelId}>`,
-    ].join("\n"),
-    color: LEADERBOARD_EMBED_COLOR,
     fields: [
       {
         name: "Candidate Stats",
