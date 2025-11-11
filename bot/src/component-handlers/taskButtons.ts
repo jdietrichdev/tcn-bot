@@ -495,13 +495,14 @@ export const handleTaskButtonInteraction = async (
           refreshTaskListMessages(guildId).catch(console.error);
         });
 
-        console.log(`Returning UpdateMessage for approve action`);
-        console.log(`Response data keys:`, Object.keys(responseData));
-        console.log(`Response data embeds length:`, responseData.embeds?.length);
-        console.log(`Response data components length:`, responseData.components?.length);
+        console.log('Approve responseData:', JSON.stringify(responseData, null, 2));
+
         return {
           type: InteractionResponseType.UpdateMessage,
-          data: responseData,
+          data: {
+            embeds: responseData.embeds || [],
+            components: responseData.components || [],
+          },
         };
       }
 
