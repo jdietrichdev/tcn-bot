@@ -271,7 +271,17 @@ const performTaskAction = async (
       label: 'Claim Task',
       custom_id: `task_claim_${taskId}`,
     });
-  } else if (task.status === 'claimed') {
+  } else if (task.status === 'claimed' && multiClaimEnabled) {
+    // Allow additional claims on multi-claim tasks
+    buttons.push({
+      type: ComponentType.Button,
+      style: ButtonStyle.Success,
+      label: 'Claim Task',
+      custom_id: `task_claim_${taskId}`,
+    });
+  }
+
+  if (task.status === 'claimed') {
     buttons.push({
       type: ComponentType.Button,
       style: ButtonStyle.Primary,
@@ -341,10 +351,12 @@ export const handleTaskButtonInteraction = async (
   const userId = interaction.member?.user?.id || interaction.user?.id!;
   
   const embedTitle = interaction.message?.embeds?.[0]?.title || '';
+  console.log(`Checking embed title: "${embedTitle}" for task message detection`);
   const isTaskMessage = embedTitle.includes('✦ TASK') ||
                         embedTitle.includes('🎉 ✦ TASK') ||
                         embedTitle.includes('🔄 ✦ TASK') ||
                         embedTitle.includes('✅ ✦ TASK');
+  console.log(`isTaskMessage result: ${isTaskMessage}`);
 
   const taskIdMatch = customId.match(/^task_\w+_(.+)$/);
   const taskId = taskIdMatch ? taskIdMatch[1] : null;

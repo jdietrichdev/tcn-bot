@@ -87,25 +87,11 @@ export const handleTaskListPagination = async (
 ): Promise<any> => {
   // Handle refresh
   if (customId === 'task_refresh_list') {
-    console.log(`Handling task_refresh_list button for user ${interaction.member?.user?.id || interaction.user?.id} - should update embed`);
-    try {
-      const fakeInteraction = {
-        ...interaction,
-        type: 2,
-        data: {
-          name: 'task-list',
-          options: []
-        }
-      };
-      const { handleTaskList } = await import('../command-handlers/taskList');
-      await handleTaskList(fakeInteraction as any);
-    } catch (error) {
-      console.error('Error in refresh operation:', error);
-    }
+    console.log(`Handling task_refresh_list button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
-        content: '🔄 Task list refreshed!',
+        content: '🔄 Use `/task-list` to refresh and view the latest tasks!',
         flags: 64
       }
     };
@@ -139,25 +125,11 @@ export const handleTaskListPagination = async (
 
   // Handle view all
   if (customId === 'task_list_all') {
-    console.log(`Handling task_list_all button for user ${interaction.member?.user?.id || interaction.user?.id} - should update embed`);
-    try {
-      const fakeInteraction = {
-        ...interaction,
-        type: 2,
-        data: {
-          name: 'task-list',
-          options: []
-        }
-      };
-      const { handleTaskList } = await import('../command-handlers/taskList');
-      await handleTaskList(fakeInteraction as any);
-    } catch (error) {
-      console.error('Error in view all operation:', error);
-    }
+    console.log(`Handling task_list_all button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
-        content: '📋 All tasks loaded!',
+        content: '📋 Use `/task-list` to view all tasks!',
         flags: 64
       }
     };
