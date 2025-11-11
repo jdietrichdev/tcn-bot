@@ -272,7 +272,6 @@ const performTaskAction = async (
       custom_id: `task_claim_${taskId}`,
     });
   } else if (task.status === 'claimed' && multiClaimEnabled) {
-    // Allow additional claims on multi-claim tasks
     buttons.push({
       type: ComponentType.Button,
       style: ButtonStyle.Success,
@@ -311,7 +310,7 @@ const performTaskAction = async (
     components: buttons,
   }] as any : [];
 
-  const buttonsRow = buttons.length > 0 ? [{
+  const buttonsRow = [{
     type: ComponentType.ActionRow,
     components: [
       {
@@ -335,7 +334,7 @@ const performTaskAction = async (
         label: 'Open Dashboard'
       }
     ]
-  }] : [];
+  }];
 
   return {
     embeds: [embed],
