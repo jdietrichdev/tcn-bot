@@ -497,10 +497,9 @@ export const handleTaskButtonInteraction = async (
         });
 
         console.log(`Returning UpdateMessage for approve action`);
-        console.log(`Full response data:`, JSON.stringify({
-          type: InteractionResponseType.UpdateMessage,
-          data: responseData
-        }, null, 2));
+        console.log(`Response data keys:`, Object.keys(responseData));
+        console.log(`Response data embeds length:`, responseData.embeds?.length);
+        console.log(`Response data components length:`, responseData.components?.length);
         return {
           type: InteractionResponseType.UpdateMessage,
           data: responseData,
