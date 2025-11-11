@@ -1,6 +1,7 @@
 import { APIMessageComponentInteraction, InteractionResponseType, ComponentType, ButtonStyle } from 'discord-api-types/v10';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { updateResponse } from '../adapters/discord-adapter';
 
 const performTaskAction = async (
   interaction: APIMessageComponentInteraction, 
@@ -359,7 +360,10 @@ export const handleTaskButtonInteraction = async (
   }
 
   try {
+    console.log(`Handling task button: ${customId}, isTaskMessage: ${isTaskMessage}, taskId: ${taskId}`);
+
     if (customId.startsWith('task_claim_')) {
+      console.log(`Processing claim action for task ${taskId}`);
       if (isTaskMessage) {
         const responseData = await performTaskAction(interaction, taskId, guildId, 'claim');
 
@@ -373,14 +377,15 @@ export const handleTaskButtonInteraction = async (
           };
         }
 
+        console.log(`Action button 'claim' completed for task ${taskId}, refreshing task list messages`);
+        console.log(`Action button 'complete' completed for task ${taskId}, refreshing task list messages`);
+        console.log(`Action button 'unclaim' completed for task ${taskId}, refreshing task list messages`);
         void import('./taskListButton').then(({ refreshTaskListMessages }) => {
           refreshTaskListMessages(guildId).catch(console.error);
         });
 
-        return {
-          type: InteractionResponseType.UpdateMessage,
-          data: responseData,
-        };
+        await updateResponse(interaction.application_id, interaction.token, responseData);
+        return;
       }
 
       const claimInteraction = {
@@ -411,10 +416,8 @@ export const handleTaskButtonInteraction = async (
           refreshTaskListMessages(guildId).catch(console.error);
         });
 
-        return {
-          type: InteractionResponseType.UpdateMessage,
-          data: responseData,
-        };
+        await updateResponse(interaction.application_id, interaction.token, responseData);
+        return;
       }
 
       const completeInteraction = {
@@ -445,10 +448,8 @@ export const handleTaskButtonInteraction = async (
           refreshTaskListMessages(guildId).catch(console.error);
         });
 
-        return {
-          type: InteractionResponseType.UpdateMessage,
-          data: responseData,
-        };
+        await updateResponse(interaction.application_id, interaction.token, responseData);
+        return;
       }
 
       const unclaimInteraction = {
@@ -475,6 +476,11 @@ export const handleTaskButtonInteraction = async (
           };
         }
 
+        void import('./taskListButton').then(({ refreshTaskListMessages }) => {
+          refreshTaskListMessages(guildId).catch(console.error);
+        });
+
+        console.log(`Action button 'approve' completed for task ${taskId}, refreshing task list messages`);
         void import('./taskListButton').then(({ refreshTaskListMessages }) => {
           refreshTaskListMessages(guildId).catch(console.error);
         });

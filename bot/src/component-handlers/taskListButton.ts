@@ -87,6 +87,7 @@ export const handleTaskListPagination = async (
 ): Promise<any> => {
   // Handle refresh
   if (customId === 'task_refresh_list') {
+    console.log(`Handling task_refresh_list button for user ${interaction.member?.user?.id || interaction.user?.id} - should update embed`);
     try {
       const fakeInteraction = {
         ...interaction,
@@ -112,6 +113,7 @@ export const handleTaskListPagination = async (
 
   // Handle create
   if (customId === 'task_create_new') {
+    console.log(`Handling task_create_new button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
     try {
       const fakeInteraction = {
         ...interaction,
@@ -137,6 +139,7 @@ export const handleTaskListPagination = async (
 
   // Handle view all
   if (customId === 'task_list_all') {
+    console.log(`Handling task_list_all button for user ${interaction.member?.user?.id || interaction.user?.id} - should update embed`);
     try {
       const fakeInteraction = {
         ...interaction,
@@ -162,15 +165,12 @@ export const handleTaskListPagination = async (
 
   // Handle my tasks
   if (customId === 'task_list_my') {
-    const { updateResponse } = await import('../adapters/discord-adapter');
-    await updateResponse(interaction.application_id, interaction.token, {
-      content: '👤 Loading your tasks...',
-      flags: 64
-    });
+    console.log(`Handling task_list_my button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
+    // Navigation button should send ephemeral message
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
-        content: '👤 Your tasks loaded!',
+        content: '👤 Use `/task-list user:@me` to view your tasks!',
         flags: 64
       }
     };
@@ -178,15 +178,12 @@ export const handleTaskListPagination = async (
 
   // Handle completed tasks
   if (customId === 'task_list_completed') {
-    const { updateResponse } = await import('../adapters/discord-adapter');
-    await updateResponse(interaction.application_id, interaction.token, {
-      content: '✅ Loading completed tasks...',
-      flags: 64
-    });
+    console.log(`Handling task_list_completed button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
+    // Navigation button should send ephemeral message
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
-        content: '✅ Completed tasks loaded!',
+        content: '✅ Use `/task-list status:completed` to view completed tasks!',
         flags: 64
       }
     };
