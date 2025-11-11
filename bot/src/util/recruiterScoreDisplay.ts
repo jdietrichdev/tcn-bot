@@ -25,33 +25,67 @@ export interface RecruiterScoreDisplayContext {
 
 export const buildRecruiterScorePageEmbed = (
   allScores: RecruiterScoreRow[],
-  return scores
-    .map((score, index) => {
-      const rank = startIndex + index + 1;
-      const prefix = RANK_MEDALS[startIndex + index] ?? `#${rank}`;
-      const candidatePoints =
-        score.candidateForwardPoints + score.candidateDmPoints;
-      const ticketPoints =
-        score.ticketMessages * TICKET_MESSAGE_POINT_VALUE;
+  _totals: ScoreTotals,
+  context: RecruiterScoreDisplayContext,
+  pageIndex: number,
+  totalPages: number,
+  pageSize: number
+): APIEmbed => {
+  const start = pageIndex * pageSize;
+  const end = Math.min(start + pageSize, allScores.length);
+  const pageScores = allScores.slice(start, end);
+  const hasScores = allScores.length > 0;
 
-      const headerLine = `${prefix} ${truncateDisplayName(
-        score.username,
-        28
-      )} — **${formatNumber(score.points)} pts**`;
+  const description =
+    "Use ⏮️ ◀️ ▶️ ⏭️ to page through rankings. Totals summary on the final page.";
 
-      const detailLine = [
-        `🎫 \`${formatNumber(ticketPoints)}\``,
-        `📣 \`${formatNumber(score.fcPosts)}\``,
-        `👥 \`${formatNumber(candidatePoints)}\``,
-        `📦 \`${score.candidateForwards}\``,
-        `✉️ \`${score.candidateDms}\``,
-        `💬 \`${score.messages}\``,
-      ].join(" • ");
+  const table = hasScores
+    ? formatRecruiterScoreTable(pageScores, start)
+    : "_No recruiter activity recorded in the last 7 days._";
 
-      return `${headerLine}\n${detailLine}`;
-    })
-    .join("\n\n");
+  return {
+    title: "Recruiter Scoreboard • Last 7 Days",
+    description,
+    color: LEADERBOARD_EMBED_COLOR,
+    fields: [
+      {
+        name: hasScores
+          ? `Recruiter Rankings • Ranks ${start + 1}-${end}`
+          : "Recruiter Rankings",
+        value: table,
+        inline: false,
+      },
+    ],
+    footer: {
+      text: `Page ${pageIndex + 1} of ${totalPages}`,
+    },
+    timestamp: context.generatedAt,
+  };
+};
+
+export const buildRecruiterTotalsEmbed = (
+  totals: ScoreTotals,
+  context: RecruiterScoreDisplayContext,
+  pageIndex: number,
+  totalPages: number
+): APIEmbed => {
+  const candidatePoints =
+    totals.candidateForwardPoints + totals.candidateDmPoints;
+  const ticketMessagePoints =
+    totals.ticketMessages * TICKET_MESSAGE_POINT_VALUE;
+  const averageMessagesPerTicket =
+    totals.ticketsClosed > 0
+      ? totals.messages / totals.ticketsClosed
+      : 0;
+  const fcWeekPoints = totals.fcPostsWeek * 2;
+
+  return {
+    title: "Recruitment Totals Overview",
     description: [
+      "Weekly aggregate metrics across tickets, FC posts, and candidate outreach.",
+      `Data sources: <#${context.clanPostsChannelId}>, <#${context.recruitmentOppChannelId}>`,
+    ].join("\n"),
+    color: LEADERBOARD_EMBED_COLOR,
     fields: [
       {
         name: "Candidate Stats",
@@ -110,67 +144,32 @@ export const formatRecruiterScoreTable = (
     return "_No recruiter activity recorded in the last 7 days._";
   }
 
-  const headers = [
-    "#",
-    "Recruiter",
-    "Pts",
-    "TktPts",
-    "FC",
-    "Cand",
-    "Fwd",
-    "DM",
-    "Msgs",
-  ];
+  return scores
+    .map((score, index) => {
+      const rank = startIndex + index + 1;
+      const prefix = RANK_MEDALS[startIndex + index] ?? `#${rank}`;
+      const candidatePoints =
+        score.candidateForwardPoints + score.candidateDmPoints;
+      const ticketPoints =
+        score.ticketMessages * TICKET_MESSAGE_POINT_VALUE;
 
-  const rows = scores.map((score, index) => {
-    const medal = RANK_MEDALS[startIndex + index] ?? "";
-    const candidatePoints =
-      score.candidateForwardPoints + score.candidateDmPoints;
-    const ticketPoints =
-      score.ticketMessages * TICKET_MESSAGE_POINT_VALUE;
-    return [
-      String(startIndex + index + 1),
-      truncateDisplayName(
-        medal ? `${medal} ${score.username}` : score.username,
-        24
-      ),
-      formatNumber(score.points),
-      formatNumber(ticketPoints),
-      formatNumber(score.fcPosts),
-      formatNumber(candidatePoints),
-      score.candidateForwards.toString(),
-      score.candidateDms.toString(),
-      score.messages.toString(),
-    ];
-  });
+      const headerLine = `${prefix} ${truncateDisplayName(
+        score.username,
+        28
+      )} — **${formatNumber(score.points)} pts**`;
 
-  const colWidths = headers.map((header, columnIndex) => {
-    return Math.max(
-      header.length,
-      ...rows.map((row) => row[columnIndex].length)
-    );
-  });
+      const detailLine = [
+        `🎫 \`${formatNumber(ticketPoints)}\` ticket pts`,
+        `📣 \`${formatNumber(score.fcPosts)}\` FC`,
+        `👥 \`${formatNumber(candidatePoints)}\` candidate pts`,
+        `📦 \`${score.candidateForwards}\` forwards`,
+        `✉️ \`${score.candidateDms}\` DMs`,
+        `💬 \`${score.messages}\` msgs`,
+      ].join(" • ");
 
-  const numericColumns = new Set([2, 3, 4, 5, 6, 7, 8]);
-
-  const formatRow = (row: string[]) =>
-    row
-      .map((value, index) =>
-        alignCell(value, colWidths[index], numericColumns.has(index))
-      )
-      .join(" ");
-
-  const lines = [
-    formatRow(headers),
-    formatRow(headers.map((header, index) => "-".repeat(colWidths[index]))),
-    ...rows.map(formatRow),
-  ];
-
-  return ["```text", ...lines, "```"].join("\n");
-};
-
-const alignCell = (value: string, width: number, rightAlign: boolean) => {
-  return rightAlign ? value.padStart(width) : value.padEnd(width);
+      return `${headerLine}\n${detailLine}`;
+    })
+    .join("\n\n");
 };
 
 const truncateDisplayName = (value: string, maxLength: number) => {
