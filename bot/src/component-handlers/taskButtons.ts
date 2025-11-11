@@ -364,7 +364,6 @@ export const handleTaskButtonInteraction = async (
   const taskId = taskIdMatch ? taskIdMatch[1] : null;
 
   // Handle navigation buttons
-  // Handle navigation buttons
   if (customId === 'task_list_my') {
     console.log('Handling My Tasks navigation button');
     const mockInteraction = {
@@ -377,6 +376,14 @@ export const handleTaskButtonInteraction = async (
       }
     } as any;
     await handleTaskList(mockInteraction);
+    console.log('My Tasks button response type:', InteractionResponseType.ChannelMessageWithSource, 'ephemeral:', true);
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        content: '👤 Use `/task-list user:@me` to view your tasks!',
+        flags: 64
+      }
+    };
   } else if (customId === 'task_list_completed') {
     console.log('Handling View Completed Tasks navigation button');
     const mockInteraction = {
@@ -390,35 +397,13 @@ export const handleTaskButtonInteraction = async (
     } as any;
     await handleTaskList(mockInteraction);
     console.log('View Completed Tasks button response type:', InteractionResponseType.ChannelMessageWithSource, 'ephemeral:', true);
-    return;
-    console.log('My Tasks button response type:', InteractionResponseType.ChannelMessageWithSource, 'ephemeral:', true);
-    return;
-  if (customId === 'task_list_my') {
-    console.log('Handling My Tasks navigation button');
-    const mockInteraction = {
-      ...interaction,
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
       data: {
-        ...interaction.data,
-        options: [
-          { name: 'user', value: userId }
-        ]
+        content: '✅ Use `/task-list status:completed` to view completed tasks!',
+        flags: 64
       }
-    } as any;
-    await handleTaskList(mockInteraction);
-    return;
-  } else if (customId === 'task_list_completed') {
-    console.log('Handling View Completed Tasks navigation button');
-    const mockInteraction = {
-      ...interaction,
-      data: {
-        ...interaction.data,
-        options: [
-          { name: 'status', value: 'completed' }
-        ]
-      }
-    } as any;
-    await handleTaskList(mockInteraction);
-    return;
+    };
   }
 
   try {
