@@ -332,10 +332,9 @@ export const handleTaskButtonInteraction = async (
           refreshTaskListMessages(guildId).catch(console.error);
         });
 
-        return {
-          type: InteractionResponseType.UpdateMessage,
-          data: responseData,
-        };
+        const { updateResponse } = await import('../adapters/discord-adapter');
+        await updateResponse(interaction.application_id, interaction.token, responseData);
+        return;
       }
 
       const claimInteraction = {
@@ -350,25 +349,26 @@ export const handleTaskButtonInteraction = async (
       return await handleTaskClaim(claimInteraction as any);
     } else if (customId.startsWith('task_complete_')) {
       if (isTaskMessage) {
-        try {
-          const responseData = await performTaskAction(interaction, taskId, guildId, 'complete');
-          void import('./taskListButton').then(({ refreshTaskListMessages }) => {
-            refreshTaskListMessages(guildId).catch(console.error);
-          });
+        const responseData = await performTaskAction(interaction, taskId, guildId, 'complete');
 
-          const { updateResponse } = await import('../adapters/discord-adapter');
-          await updateResponse(interaction.application_id, interaction.token, responseData);
-          return;
-        } catch (error) {
-          console.error('Error in complete operation:', error);
+        if (responseData.content) {
           return {
             type: InteractionResponseType.ChannelMessageWithSource,
             data: {
-              content: '❌ Failed to complete task. Please try again.',
+              content: responseData.content,
               flags: 64,
             },
           };
         }
+
+        void import('./taskListButton').then(({ refreshTaskListMessages }) => {
+          refreshTaskListMessages(guildId).catch(console.error);
+        });
+
+        return {
+          type: InteractionResponseType.UpdateMessage,
+          data: responseData,
+        };
       }
 
       const completeInteraction = {
@@ -383,25 +383,26 @@ export const handleTaskButtonInteraction = async (
       return await handleTaskComplete(completeInteraction as any);
     } else if (customId.startsWith('task_unclaim_')) {
       if (isTaskMessage) {
-        try {
-          const responseData = await performTaskAction(interaction, taskId, guildId, 'unclaim');
-          void import('./taskListButton').then(({ refreshTaskListMessages }) => {
-            refreshTaskListMessages(guildId).catch(console.error);
-          });
+        const responseData = await performTaskAction(interaction, taskId, guildId, 'unclaim');
 
-          const { updateResponse } = await import('../adapters/discord-adapter');
-          await updateResponse(interaction.application_id, interaction.token, responseData);
-          return;
-        } catch (error) {
-          console.error('Error in unclaim operation:', error);
+        if (responseData.content) {
           return {
             type: InteractionResponseType.ChannelMessageWithSource,
             data: {
-              content: '❌ Failed to unclaim task. Please try again.',
+              content: responseData.content,
               flags: 64,
             },
           };
         }
+
+        void import('./taskListButton').then(({ refreshTaskListMessages }) => {
+          refreshTaskListMessages(guildId).catch(console.error);
+        });
+
+        return {
+          type: InteractionResponseType.UpdateMessage,
+          data: responseData,
+        };
       }
 
       const unclaimInteraction = {
@@ -416,26 +417,26 @@ export const handleTaskButtonInteraction = async (
       return await handleTaskUnclaim(unclaimInteraction as any);
     } else if (customId.startsWith('task_approve_')) {
       if (isTaskMessage) {
-        try {
-          const responseData = await performTaskAction(interaction, taskId, guildId, 'approve');
-          void import('./taskListButton').then(({ refreshTaskListMessages }) => {
-            refreshTaskListMessages(guildId).catch(console.error);
-          });
+        const responseData = await performTaskAction(interaction, taskId, guildId, 'approve');
 
-          return {
-            type: InteractionResponseType.UpdateMessage,
-            data: responseData,
-          };
-        } catch (error) {
-          console.error('Error in approve operation:', error);
+        if (responseData.content) {
           return {
             type: InteractionResponseType.ChannelMessageWithSource,
             data: {
-              content: '❌ Failed to approve task. Please try again.',
+              content: responseData.content,
               flags: 64,
             },
           };
         }
+
+        void import('./taskListButton').then(({ refreshTaskListMessages }) => {
+          refreshTaskListMessages(guildId).catch(console.error);
+        });
+
+        return {
+          type: InteractionResponseType.UpdateMessage,
+          data: responseData,
+        };
       }
 
       const approveInteraction = {

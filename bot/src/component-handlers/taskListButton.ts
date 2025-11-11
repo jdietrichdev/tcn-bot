@@ -103,6 +103,7 @@ export const handleTaskListPagination = async (
       const { updateResponse } = await import('../adapters/discord-adapter');
       await updateResponse(interaction.application_id, interaction.token, {
         content: '❌ Failed to refresh task list. Please try again.',
+        flags: 64
       });
     }
     return {
@@ -154,6 +155,7 @@ export const handleTaskListPagination = async (
       const { updateResponse } = await import('../adapters/discord-adapter');
       await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
         content: '❌ Failed to create task. Please try again.',
+        flags: 64
       });
     }
     return {
@@ -205,6 +207,7 @@ export const handleTaskListPagination = async (
       const { updateResponse } = await import('../adapters/discord-adapter');
       await updateResponse(process.env.APPLICATION_ID!, interaction.token, {
         content: '❌ Failed to load task list. Please try again.',
+        flags: 64
       });
     }
     return {
