@@ -38,24 +38,31 @@ export const buildRecruiterScorePageEmbed = (
 
   const description =
     "Use ⏮️ ◀️ ▶️ ⏭️ to page through rankings. Totals summary on the final page.";
+  const formattedRows = hasScores ? formatRecruiterScoreTable(pageScores, start) : [];
 
-  const table = hasScores
-    ? formatRecruiterScoreTable(pageScores, start)
-    : "_No recruiter activity recorded in the last 7 days._";
+  const fieldTitleBase = hasScores
+    ? `Recruiter Rankings • Ranks ${start + 1}-${end}`
+    : "Recruiter Rankings";
+
+  const rankingFields = hasScores
+    ? chunkEntries(formattedRows).map((value, index) => ({
+        name: index === 0 ? fieldTitleBase : `${fieldTitleBase} (cont.)`,
+        value,
+        inline: false,
+      }))
+    : [
+        {
+          name: fieldTitleBase,
+          value: "_No recruiter activity recorded in the last 7 days._",
+          inline: false,
+        },
+      ];
 
   return {
     title: "Recruiter Scoreboard • Last 7 Days",
     description,
     color: LEADERBOARD_EMBED_COLOR,
-    fields: [
-      {
-        name: hasScores
-          ? `Recruiter Rankings • Ranks ${start + 1}-${end}`
-          : "Recruiter Rankings",
-        value: table,
-        inline: false,
-      },
-    ],
+    fields: rankingFields,
     footer: {
       text: `Page ${pageIndex + 1} of ${totalPages}`,
     },
@@ -139,37 +146,66 @@ export const buildRecruiterTotalsEmbed = (
 export const formatRecruiterScoreTable = (
   scores: RecruiterScoreRow[],
   startIndex = 0
-): string => {
+): string[] => {
   if (scores.length === 0) {
-    return "_No recruiter activity recorded in the last 7 days._";
+    return [];
   }
 
-  return scores
-    .map((score, index) => {
-      const rank = startIndex + index + 1;
-      const prefix = RANK_MEDALS[startIndex + index] ?? `#${rank}`;
-      const candidatePoints =
-        score.candidateForwardPoints + score.candidateDmPoints;
-      const ticketPoints =
-        score.ticketMessages * TICKET_MESSAGE_POINT_VALUE;
+  return scores.map((score, index) => {
+    const rank = startIndex + index + 1;
+    const prefix = RANK_MEDALS[startIndex + index] ?? `#${rank}`;
+    const candidatePoints =
+      score.candidateForwardPoints + score.candidateDmPoints;
+    const ticketPoints =
+      score.ticketMessages * TICKET_MESSAGE_POINT_VALUE;
 
-      const headerLine = `${prefix} ${truncateDisplayName(
-        score.username,
-        28
-      )} — **${formatNumber(score.points)} pts**`;
+    const headerLine = `${prefix} ${truncateDisplayName(
+      score.username,
+      28
+    )} — **${formatNumber(score.points)} pts**`;
 
-      const detailLine = [
-        `🎫 \`${formatNumber(ticketPoints)}\` ticket pts`,
-        `📣 \`${formatNumber(score.fcPosts)}\` FC`,
-        `👥 \`${formatNumber(candidatePoints)}\` candidate pts`,
-        `📦 \`${score.candidateForwards}\` forwards`,
-        `✉️ \`${score.candidateDms}\` DMs`,
-        `💬 \`${score.messages}\` msgs`,
-      ].join(" • ");
+    const detailLine = [
+      `🎫 \`${formatNumber(ticketPoints)}\``,
+      `📣 \`${formatNumber(score.fcPosts)}\``,
+      `👥 \`${formatNumber(candidatePoints)}\``,
+      `📦 \`${score.candidateForwards}\``,
+      `✉️ \`${score.candidateDms}\``,
+      `💬 \`${score.messages}\``,
+    ].join(" • ");
 
-      return `${headerLine}\n${detailLine}`;
-    })
-    .join("\n\n");
+    return `${headerLine}\n${detailLine}`;
+  });
+};
+
+const chunkEntries = (entries: string[]): string[] => {
+  const chunks: string[] = [];
+  let current = "";
+
+  for (const entry of entries) {
+    const sanitizedEntry = entry.trim();
+    if (!sanitizedEntry) {
+      continue;
+    }
+
+    if (current.length === 0) {
+      current = sanitizedEntry;
+      continue;
+    }
+
+    const candidate = `${current}\n\n${sanitizedEntry}`;
+    if (candidate.length <= 1024) {
+      current = candidate;
+    } else {
+      chunks.push(current);
+      current = sanitizedEntry;
+    }
+  }
+
+  if (current.length > 0) {
+    chunks.push(current);
+  }
+
+  return chunks;
 };
 
 const truncateDisplayName = (value: string, maxLength: number) => {
