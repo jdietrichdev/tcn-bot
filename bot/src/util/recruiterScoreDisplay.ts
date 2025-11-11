@@ -154,8 +154,6 @@ export const formatRecruiterScoreTable = (
   return scores.map((score, index) => {
     const rank = startIndex + index + 1;
     const prefix = RANK_MEDALS[startIndex + index] ?? `#${rank}`;
-    const candidatePoints =
-      score.candidateForwardPoints + score.candidateDmPoints;
     const ticketPoints =
       score.ticketMessages * TICKET_MESSAGE_POINT_VALUE;
 
@@ -167,10 +165,12 @@ export const formatRecruiterScoreTable = (
     const detailLine = [
       `🎫 \`${formatNumber(ticketPoints)}\``,
       `📣 \`${formatNumber(score.fcPosts)}\``,
-      `👥 \`${formatNumber(candidatePoints)}\``,
-      `📦 \`${score.candidateForwards}\``,
-      `✉️ \`${score.candidateDms}\``,
-      `💬 \`${score.messages}\``,
+      `📦 \`${score.candidateForwards} (${formatNumber(
+        score.candidateForwardPoints
+      )} pts)\``,
+      `✉️ \`${score.candidateDms} (${formatNumber(
+        score.candidateDmPoints
+      )} pts)\``,
     ].join(" • ");
 
     return `${headerLine}\n${detailLine}`;

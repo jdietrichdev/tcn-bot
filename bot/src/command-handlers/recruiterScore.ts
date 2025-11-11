@@ -487,7 +487,7 @@ const mergeRecruitmentPoints = async (
     const basePoints = item.points ?? record.ticketMessages + record.fcPosts;
     const candidatePoints =
       record.candidateForwardPoints + record.candidateDmPoints;
-    record.points = basePoints + record.messages + candidatePoints;
+    record.points = basePoints + candidatePoints;
 
     totals.ticketMessages += record.ticketMessages;
     totals.fcPosts += record.fcPosts;
@@ -501,7 +501,7 @@ const mergeRecruitmentPoints = async (
     }
     const candidatePoints =
       record.candidateForwardPoints + record.candidateDmPoints;
-    record.points = record.messages + candidatePoints;
+    record.points = record.ticketMessages + record.fcPosts + candidatePoints;
     totals.points += record.points;
   }
 };

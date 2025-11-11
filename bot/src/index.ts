@@ -81,18 +81,26 @@ export const proxy = async (
     response = (await handleRosterShowPagination(body)) as APIInteractionResponse;
   } else if (
     body.type === InteractionType.MessageComponent &&
-    body.data.custom_id.startsWith("recruiter_score_")
+    (body.data.custom_id.startsWith("recruiter_score_") ||
+      body.data.custom_id === "recruiter_leaderboard_refresh")
   ) {
-    console.log("Recruiter score pagination button clicked");
-    const { handleRecruiterScorePagination } = await import("./component-handlers/recruiterScoreButton");
-    response = (await handleRecruiterScorePagination(body, body.data.custom_id)) as APIInteractionResponse;
-  } else if (
-    body.type === InteractionType.MessageComponent &&
-    body.data.custom_id === "recruiter_leaderboard_refresh"
-  ) {
-    console.log("Recruiter leaderboard refresh button clicked");
-    const { handleRecruiterLeaderboardRefresh } = await import("./component-handlers/recruiterLeaderboard");
-    response = (await handleRecruiterLeaderboardRefresh(body)) as APIInteractionResponse;
+    console.log("Recruiter score/leaderboard button clicked (deferred)");
+    await eventClient.send(
+      new PutEventsCommand({
+        Entries: [
+          {
+            Detail: event.body!,
+            DetailType: "Bot Event Received",
+            Source: "tcn-bot-event",
+            EventBusName: "tcn-bot-events",
+          },
+        ],
+      })
+    );
+
+    response = {
+      type: InteractionResponseType.DeferredMessageUpdate,
+    };
   } else {
     await eventClient.send(
       new PutEventsCommand({
