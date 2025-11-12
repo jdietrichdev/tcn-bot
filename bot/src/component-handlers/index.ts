@@ -29,15 +29,29 @@ export const handleComponent = async (
   const customId = interaction.data.custom_id;
   console.log(`[handleComponent] Received custom_id: ${customId}`);
   
-  if (customId.startsWith("task_list_first_") ||
-      customId.startsWith("task_list_prev_") ||
-      customId.startsWith("task_list_next_") ||
-      customId.startsWith("task_list_last_") ||
-      customId.startsWith("task_list_page_") ||
-      customId === "task_refresh_list" ||
-      customId === "task_create_new") {
+  // Route task board navigation and pagination first so they don't fall through to other handlers.
+  if (
+    customId === "task_list_all" ||
+    customId === "task_list_my" ||
+    customId === "task_list_completed"
+  ) {
+    console.log("[handleComponent] Routing to handleTaskButtonInteraction for task list navigation button");
+    return await handleTaskButtonInteraction(interaction);
+  }
+
+  if (
+    customId.startsWith("task_list_first_") ||
+    customId.startsWith("task_list_prev_") ||
+    customId.startsWith("task_list_next_") ||
+    customId.startsWith("task_list_last_") ||
+    customId.startsWith("task_list_page_") ||
+    customId === "task_refresh_list" ||
+    customId === "task_create_new"
+  ) {
+    console.log("[handleComponent] Routing to handleTaskListPagination for task list pagination/refresh");
     return await handleTaskListPagination(interaction, customId);
   } else if (customId.startsWith("task_")) {
+    console.log("[handleComponent] Routing to handleTaskButtonInteraction for task_* button");
     return await handleTaskButtonInteraction(interaction);
   } else if (customId === "approveApp") {
     console.log(`[handleComponent] Handling approveApp for message: ${interaction.message.id}`);
