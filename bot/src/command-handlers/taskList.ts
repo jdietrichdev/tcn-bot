@@ -160,11 +160,21 @@ export const generateTaskListResponse = async (
     return `${priority}${status} **${task.title}**${dueDate}${assignments}`;
   }).join('\n');
 
+  // Add validation and truncation for embed description
+  const truncateEmbedDescription = (description: string, maxLength: number): string => {
+    if (description.length > maxLength) {
+      return description.slice(0, maxLength - 3) + '...';
+    }
+    return description;
+  };
+
+  // Validate and truncate embed description
+  const embedDescription = taskList || '`No tasks found matching the current filters.`';
+  const truncatedDescription = truncateEmbedDescription(embedDescription, 4096); // Discord's max description length is 4096
+
   const embed: APIEmbed = {
     title: `📋 ✦ TASK BOARD${isFiltered ? ' (FILTERED)' : ''} ✦ 📝`,
-    description: isFiltered
-      ? `Showing ${tasks.length} task${tasks.length === 1 ? '' : 's'} matching filters${filterDescription}\n\n${taskList || '`No tasks found matching the current filters.`'}`
-      : taskList || '`No tasks found matching the current filters.`',
+    description: truncatedDescription,
     color: 0x5865F2,
     fields: [
       {
