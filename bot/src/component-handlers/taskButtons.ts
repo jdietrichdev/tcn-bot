@@ -35,54 +35,187 @@ const performTaskAction = async (
     const task = getTaskResult.Item;
     console.log(`Task ${taskId} status: ${task.status}, multipleClaimsAllowed: ${task.multipleClaimsAllowed}, claimedBy: ${task.claimedBy}`);
 
-
     const allowsMultiple = task.multipleClaimsAllowed === true;
-    if (task.status !== 'pending' && !allowsMultiple) {
-      console.log(`Task ${taskId} cannot be claimed - status: ${task.status}, allowsMultiple: ${allowsMultiple}`);
-      return {
-        content: '❌ This task has already been claimed.',
-      };
-    }
 
-    console.log(`Claiming task ${taskId} for user ${userId}`);
-    await dynamoDbClient.send(
-      new UpdateCommand({
-        TableName: 'BotTable',
-        Key: {
-          pk: guildId,
-          sk: `task#${taskId}`,
-        },
-        UpdateExpression: 'SET #status = :status, claimedBy = :claimedBy, claimedAt = :claimedAt',
-        ExpressionAttributeNames: {
-          '#status': 'status',
-        },
-        ExpressionAttributeValues: {
-          ':status': 'claimed',
-          ':claimedBy': userId,
-          ':claimedAt': new Date().toISOString(),
-        },
-      })
-    );
+    // Multiple-claim logic:
+    // - If multipleClaimsAllowed is false: preserve original single-claim behavior.
+    // - If true: allow multiple users to claim by tracking them in claimedByUsers[]
+    //   while keeping status 'claimed'.
+    if (!allowsMultiple) {
+      if (task.status !== 'pending') {
+        console.log(`Task ${taskId} cannot be claimed - status: ${task.status}, allowsMultiple: ${allowsMultiple}`);
+        return {
+          content: '❌ This task has already been claimed.',
+        };
+      }
+
+      console.log(`Claiming task ${taskId} for user ${userId} (single-claim mode)`);
+      await dynamoDbClient.send(
+        new UpdateCommand({
+          TableName: 'BotTable',
+          Key: {
+            pk: guildId,
+            sk: `task#${taskId}`,
+          },
+          UpdateExpression: 'SET #status = :status, claimedBy = :claimedBy, claimedAt = :claimedAt',
+          ExpressionAttributeNames: {
+            '#status': 'status',
+          },
+          ExpressionAttributeValues: {
+            ':status': 'claimed',
+            ':claimedBy': userId,
+            ':claimedAt': new Date().toISOString(),
+          },
+        })
+      );
+    } else {
+      const existingClaimants: string[] = Array.isArray(task.claimedByUsers)
+        ? task.claimedByUsers
+        : (task.claimedBy ? [task.claimedBy] : []);
+
+      if (existingClaimants.includes(userId)) {
+        console.log(`User ${userId} already claimed multi-claim task ${taskId}`);
+        return {
+          content: '✅ You have already claimed this task.',
+        };
+      }
+
+      const updatedClaimants = [...existingClaimants, userId];
+
+      console.log(`Adding user ${userId} to claimedByUsers for multi-claim task ${taskId}`);
+      await dynamoDbClient.send(
+        new UpdateCommand({
+          TableName: 'BotTable',
+          Key: {
+            pk: guildId,
+            sk: `task#${taskId}`,
+          },
+          UpdateExpression: 'SET #status = :status, claimedByUsers = :claimedByUsers, claimedAt = if_not_exists(claimedAt, :claimedAt)',
+          ExpressionAttributeNames: {
+            '#status': 'status',
+          },
+          ExpressionAttributeValues: {
+            ':status': 'claimed',
+            ':claimedByUsers': updatedClaimants,
+            ':claimedAt': new Date().toISOString(),
+          },
+        })
+      );
+    }
 
     console.log(`Successfully claimed task ${taskId}`);
   } else if (actionType === 'complete') {
-    await dynamoDbClient.send(
-      new UpdateCommand({
+    const getTaskBeforeComplete = await dynamoDbClient.send(
+      new GetCommand({
         TableName: 'BotTable',
         Key: {
           pk: guildId,
           sk: `task#${taskId}`,
         },
-        UpdateExpression: 'SET #status = :status, completedAt = :completedAt',
-        ExpressionAttributeNames: {
-          '#status': 'status',
-        },
-        ExpressionAttributeValues: {
-          ':status': 'completed',
-          ':completedAt': new Date().toISOString(),
-        },
       })
     );
+
+    if (!getTaskBeforeComplete.Item) {
+      return {
+        content: '❌ Task not found.',
+      };
+    }
+
+    const taskBefore = getTaskBeforeComplete.Item;
+    const allowsMultiple = taskBefore.multipleClaimsAllowed === true;
+    const claimedByUsers: string[] = Array.isArray(taskBefore.claimedByUsers)
+      ? taskBefore.claimedByUsers
+      : (taskBefore.claimedBy ? [taskBefore.claimedBy] : []);
+
+    // For multi-claim tasks, we require ALL claimants to mark complete.
+    // We track per-user completions in completedByUsers[].
+    if (allowsMultiple) {
+      if (!claimedByUsers.includes(userId)) {
+        return {
+          content: '❌ You must claim this task before marking it complete.',
+        };
+      }
+
+      const existingCompleted: string[] = Array.isArray(taskBefore.completedByUsers)
+        ? taskBefore.completedByUsers
+        : [];
+
+      if (existingCompleted.includes(userId)) {
+        return {
+          content: '✅ You have already marked your part as complete.',
+        };
+      }
+
+      const updatedCompleted = [...existingCompleted, userId];
+
+      const allCompleted = claimedByUsers.length > 0 &&
+        claimedByUsers.every((id) => updatedCompleted.includes(id));
+
+      if (allCompleted) {
+        // Everyone who claimed has completed: mark task as completed.
+        await dynamoDbClient.send(
+          new UpdateCommand({
+            TableName: 'BotTable',
+            Key: {
+              pk: guildId,
+              sk: `task#${taskId}`,
+            },
+            UpdateExpression:
+              'SET #status = :status, completedAt = :completedAt, completedByUsers = :completedByUsers',
+            ExpressionAttributeNames: {
+              '#status': 'status',
+            },
+            ExpressionAttributeValues: {
+              ':status': 'completed',
+              ':completedAt': new Date().toISOString(),
+              ':completedByUsers': updatedCompleted,
+            },
+          })
+        );
+      } else {
+        // Not all claimants are done yet: only update completedByUsers.
+        await dynamoDbClient.send(
+          new UpdateCommand({
+            TableName: 'BotTable',
+            Key: {
+              pk: guildId,
+              sk: `task#${taskId}`,
+            },
+            UpdateExpression:
+              'SET completedByUsers = :completedByUsers',
+            ExpressionAttributeValues: {
+              ':completedByUsers': updatedCompleted,
+            },
+          })
+        );
+
+        return {
+          content:
+            `✅ Marked your part as complete.\n` +
+            `⏳ Waiting on ${claimedByUsers.length - updatedCompleted.length} remaining claimant(s) before the task is fully completed.`,
+        };
+      }
+    } else {
+      // Single-claim behavior unchanged: one completion flips the task.
+      await dynamoDbClient.send(
+        new UpdateCommand({
+          TableName: 'BotTable',
+          Key: {
+            pk: guildId,
+            sk: `task#${taskId}`,
+          },
+          UpdateExpression: 'SET #status = :status, completedAt = :completedAt, completedBy = :completedBy',
+          ExpressionAttributeNames: {
+            '#status': 'status',
+          },
+          ExpressionAttributeValues: {
+            ':status': 'completed',
+            ':completedAt': new Date().toISOString(),
+            ':completedBy': userId,
+          },
+        })
+      );
+    }
   } else if (actionType === 'unclaim') {
     await dynamoDbClient.send(
       new UpdateCommand({
@@ -261,18 +394,20 @@ const performTaskAction = async (
       break;
   }
 
-  const multiClaimEnabled = task.multipleClaimsAllowed || false;
+  const multiClaimEnabled = task.multipleClaimsAllowed === true;
+  const claimedByUsers: string[] = Array.isArray(task.claimedByUsers)
+    ? task.claimedByUsers
+    : (task.claimedBy ? [task.claimedBy] : []);
 
-  const buttons = [];
+  const buttons: any[] = [];
 
-  if (task.status === 'pending' && !task.claimedBy) {
-    buttons.push({
-      type: ComponentType.Button,
-      style: ButtonStyle.Success,
-      label: 'Claim Task',
-      custom_id: `task_claim_${taskId}`,
-    });
-  } else if (task.status === 'claimed' && multiClaimEnabled) {
+  // Claim button:
+  // - Single-claim tasks: show if pending and no one has claimed.
+  // - Multi-claim tasks: always show while status is pending/claimed to let additional eligible users join.
+  if (
+    (task.status === 'pending' && !task.claimedBy && !multiClaimEnabled) ||
+    (multiClaimEnabled && (task.status === 'pending' || task.status === 'claimed'))
+  ) {
     buttons.push({
       type: ComponentType.Button,
       style: ButtonStyle.Success,
@@ -281,15 +416,26 @@ const performTaskAction = async (
     });
   }
 
+  // Complete button:
+  // - For single-claim: only the sole claimant can complete.
+  // - For multi-claim: only users in claimedByUsers can complete.
   if (task.status === 'claimed') {
-    buttons.push({
-      type: ComponentType.Button,
-      style: ButtonStyle.Primary,
-      label: 'Mark Complete',
-      custom_id: `task_complete_${taskId}`,
-    });
+    const isSingleClaimOwner = !multiClaimEnabled && task.claimedBy === userId;
+    const isMultiClaimParticipant = multiClaimEnabled && claimedByUsers.includes(userId);
 
-    if (task.claimedBy === userId || multiClaimEnabled) {
+    if (isSingleClaimOwner || isMultiClaimParticipant) {
+      buttons.push({
+        type: ComponentType.Button,
+        style: ButtonStyle.Primary,
+        label: 'Mark Complete',
+        custom_id: `task_complete_${taskId}`,
+      });
+    }
+
+    // Unclaim:
+    // - Single-claim: sole claimant can unclaim.
+    // - Multi-claim: each participant can unclaim themselves.
+    if (isSingleClaimOwner || isMultiClaimParticipant) {
       buttons.push({
         type: ComponentType.Button,
         style: ButtonStyle.Secondary,
