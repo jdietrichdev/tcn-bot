@@ -316,6 +316,13 @@ const performTaskAction = async (
     components: [
       {
         type: ComponentType.Button,
+        custom_id: 'task_list_all',
+        label: 'All Tasks',
+        style: ButtonStyle.Secondary,
+        emoji: { name: '📝' }
+      },
+      {
+        type: ComponentType.Button,
         custom_id: 'task_list_my',
         label: 'My Tasks',
         style: ButtonStyle.Secondary,
