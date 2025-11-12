@@ -14,7 +14,7 @@ const performTaskAction = async (
 
   try {
     if (actionType === 'claim') {
-      console.log(`Attempting to claim task ${taskId} for user ${userId}`);
+      console.log(`[DEBUG] Attempting to claim task ${taskId} for user ${userId}`);
 
       const getTaskResult = await dynamoDbClient.send(
         new GetCommand({
@@ -27,20 +27,20 @@ const performTaskAction = async (
       );
 
       if (!getTaskResult.Item) {
-        console.log(`Task ${taskId} not found`);
+        console.log(`[DEBUG] Task ${taskId} not found`);
         return { success: false, error: '❌ Task not found.' };
       }
 
       const task = getTaskResult.Item;
-      console.log(`Task ${taskId} status: ${task.status}, multipleClaimsAllowed: ${task.multipleClaimsAllowed}, claimedBy: ${task.claimedBy}`);
+      console.log(`[DEBUG] Task ${taskId} status: ${task.status}, multipleClaimsAllowed: ${task.multipleClaimsAllowed}, claimedBy: ${task.claimedBy}`);
 
       const allowsMultiple = task.multipleClaimsAllowed === true;
       if (task.status !== 'pending' && !allowsMultiple) {
-        console.log(`Task ${taskId} cannot be claimed - status: ${task.status}, allowsMultiple: ${allowsMultiple}`);
+        console.log(`[DEBUG] Task ${taskId} cannot be claimed - status: ${task.status}, allowsMultiple: ${allowsMultiple}`);
         return { success: false, error: '❌ This task has already been claimed.' };
       }
 
-      console.log(`Claiming task ${taskId} for user ${userId}`);
+      console.log(`[DEBUG] Claiming task ${taskId} for user ${userId}`);
       await dynamoDbClient.send(
         new UpdateCommand({
           TableName: 'BotTable',
@@ -60,7 +60,7 @@ const performTaskAction = async (
         })
       );
 
-      console.log(`Successfully claimed task ${taskId}`);
+      console.log(`[DEBUG] Successfully claimed task ${taskId}`);
     } else if (actionType === 'complete') {
       await dynamoDbClient.send(
         new UpdateCommand({
@@ -119,7 +119,7 @@ const performTaskAction = async (
 
     return { success: true };
   } catch (err) {
-    console.error(`Error performing task action ${actionType} for task ${taskId}: ${err}`);
+    console.error(`[ERROR] Error performing task action ${actionType} for task ${taskId}: ${err}`);
     return { success: false, error: '❌ An error occurred while processing your request.' };
   }
 };
@@ -131,11 +131,11 @@ export const handleTaskButtonInteraction = async (
   const guildId = interaction.guild_id!;
   const userId = interaction.member?.user?.id || interaction.user?.id!;
 
-  console.log(`Handling button interaction: customId=${customId}, guildId=${guildId}, userId=${userId}`);
+  console.log(`[DEBUG] Handling button interaction: customId=${customId}, guildId=${guildId}, userId=${userId}`);
 
   // Handle navigation buttons - return ephemeral task list responses
   if (customId === 'task_list_my') {
-    console.log('Handling My Tasks navigation button');
+    console.log('[DEBUG] Handling My Tasks navigation button');
     const { embeds, components } = await generateTaskListResponse(guildId, undefined, undefined, userId);
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
@@ -146,7 +146,7 @@ export const handleTaskButtonInteraction = async (
       }
     };
   } else if (customId === 'task_list_completed') {
-    console.log('Handling View Completed Tasks navigation button');
+    console.log('[DEBUG] Handling View Completed Tasks navigation button');
     const { embeds, components } = await generateTaskListResponse(guildId, 'completed');
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
@@ -157,7 +157,7 @@ export const handleTaskButtonInteraction = async (
       }
     };
   } else if (customId === 'task_list_all') {
-    console.log('Handling List All Tasks navigation button');
+    console.log('[DEBUG] Handling List All Tasks navigation button');
     const { embeds, components } = await generateTaskListResponse(guildId);
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
@@ -205,13 +205,13 @@ export const handleTaskButtonInteraction = async (
   }
 
   try {
-    console.log(`Processing ${actionType} action for task ${taskId}`);
+    console.log(`[DEBUG] Processing ${actionType} action for task ${taskId}`);
 
     // For approve actions, check if it's on an ephemeral message
     if (actionType === 'approve') {
       const isEphemeral = interaction.message?.flags === 64;
       if (isEphemeral) {
-        console.log('Approve button pressed on ephemeral message.');
+        console.log('[DEBUG] Approve button pressed on ephemeral message.');
         return {
           type: InteractionResponseType.ChannelMessageWithSource,
           data: {
@@ -234,7 +234,7 @@ export const handleTaskButtonInteraction = async (
       };
     }
 
-    console.log(`${actionType} action completed for task ${taskId}, refreshing task list messages`);
+    console.log(`[DEBUG] ${actionType} action completed for task ${taskId}, refreshing task list messages`);
     void import('./taskListButton').then(({ refreshTaskListMessages }) => {
       refreshTaskListMessages(guildId).catch(console.error);
     });
@@ -259,7 +259,7 @@ export const handleTaskButtonInteraction = async (
       }
     };
   } catch (err) {
-    console.error(`Error handling task button interaction: ${err}`);
+    console.error(`[ERROR] Error handling task button interaction: ${err}`);
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
