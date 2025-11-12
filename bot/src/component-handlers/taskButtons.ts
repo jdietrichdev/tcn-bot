@@ -548,17 +548,18 @@ export const handleTaskButtonInteraction = async (
 
   // Handle navigation buttons via async handler (EventBridge path).
   // proxy() defers all task_list_* buttons; we must return a full response here.
+  // NOTE: These buttons are wired to the EventBridge/async handler path.
+  // proxy() currently uses DeferredMessageUpdate (type 6) for component interactions,
+  // which means this handler MUST use updateResponse() instead of returning a new response object.
   if (customId === 'task_list_all') {
     console.log('handleTaskButtonInteraction: generating /task-list (all) view from button');
     const { embeds, components } = await generateTaskListResponse(guildId);
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        embeds,
-        components,
-        flags: 64, // ephemeral, scoped to clicking user
-      },
-    };
+    await updateResponse(interaction.application_id, interaction.token, {
+      embeds,
+      components,
+    });
+    // DeferredMessageUpdate already acknowledged; nothing to return.
+    return;
   }
 
   if (customId === 'task_list_my') {
@@ -569,14 +570,11 @@ export const handleTaskButtonInteraction = async (
       undefined,      // role
       userId          // userFilter
     );
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        embeds,
-        components,
-        flags: 64,
-      },
-    };
+    await updateResponse(interaction.application_id, interaction.token, {
+      embeds,
+      components,
+    });
+    return;
   }
 
   if (customId === 'task_list_completed') {
@@ -585,14 +583,11 @@ export const handleTaskButtonInteraction = async (
       guildId,
       'completed'     // status
     );
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        embeds,
-        components,
-        flags: 64,
-      },
-    };
+    await updateResponse(interaction.application_id, interaction.token, {
+      embeds,
+      components,
+    });
+    return;
   }
 
   try {

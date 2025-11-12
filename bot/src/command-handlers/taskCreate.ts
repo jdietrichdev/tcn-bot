@@ -85,11 +85,12 @@ export const handleTaskCreate = async (
     const now = new Date().toISOString();
 
     // Multi-claim rule:
-    // - If more than one explicit assignee (user or role), allow multipleClaimsAllowed.
-    // - Otherwise default to single-claim semantics.
+    // - If any roles are assigned (even a single role), allow multiple claims.
+    // - Or if more than one explicit user is assigned, allow multiple claims.
+    // - Only a single assigned user with no roles stays single-claim.
     const multipleClaimsAllowed =
-      assignedUserIds.length > 1 ||
-      assignedRoleIds.length > 1;
+      assignedRoleIds.length > 0 ||
+      assignedUserIds.length > 1;
 
     const shouldAutoAssign = assignedUserIds.length > 0;
     const taskStatus = shouldAutoAssign ? 'claimed' : 'pending';
