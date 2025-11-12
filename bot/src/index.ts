@@ -68,12 +68,21 @@ export const proxy = async (
     response = await handleUnrosteredPagination(body as APIMessageComponentInteraction, body.data.custom_id);
   } else if (
     body.type === InteractionType.MessageComponent &&
-    (body.data.custom_id.startsWith("task_") ||
+    (
+      body.data.custom_id.startsWith("task_claim_") ||
+      body.data.custom_id.startsWith("task_complete_") ||
+      body.data.custom_id.startsWith("task_unclaim_") ||
+      body.data.custom_id.startsWith("task_approve_") ||
+      body.data.custom_id.startsWith("task_list_first_") ||
+      body.data.custom_id.startsWith("task_list_prev_") ||
+      body.data.custom_id.startsWith("task_list_next_") ||
+      body.data.custom_id.startsWith("task_list_last_") ||
+      body.data.custom_id.startsWith("task_list_page_") ||
       body.data.custom_id === "task_refresh_list" ||
-      body.data.custom_id === "task_create_new" ||
-      body.data.custom_id === "task_list_all")
+      body.data.custom_id === "task_create_new"
+    )
   ) {
-    console.log("Task management button clicked (deferred)");
+    console.log("Task management button clicked (deferred via EventBridge)");
     await eventClient.send(
       new PutEventsCommand({
         Entries: [
@@ -86,7 +95,36 @@ export const proxy = async (
         ],
       })
     );
+    // For these, we update the original message (claim/complete/etc or list pagination)
     response = { type: InteractionResponseType.DeferredMessageUpdate };
+  } else if (
+    body.type === InteractionType.MessageComponent &&
+    (
+      body.data.custom_id === "task_list_all" ||
+      body.data.custom_id === "task_list_my" ||
+      body.data.custom_id === "task_list_completed"
+    )
+  ) {
+    console.log("Task list navigation button clicked (immediate ephemeral response)");
+    await eventClient.send(
+      new PutEventsCommand({
+        Entries: [
+          {
+            Detail: event.body!,
+            DetailType: "Bot Event Received",
+            Source: "tcn-bot-event",
+            EventBusName: "tcn-bot-events",
+          },
+        ],
+      })
+    );
+    // Let the async handler generate a new ephemeral message that simulates /task-list.
+    response = {
+      type: InteractionResponseType.DeferredChannelMessageWithSource,
+      data: {
+        flags: MessageFlags.Ephemeral,
+      },
+    };
   } else if (
     body.type === InteractionType.MessageComponent &&
     body.data.custom_id.startsWith("roster_show_")
