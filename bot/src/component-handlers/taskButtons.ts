@@ -370,6 +370,7 @@ export const handleTaskButtonInteraction = async (
   const taskIdMatch = customId.match(/^task_\w+_(.+)$/);
   const taskId = taskIdMatch ? taskIdMatch[1] : null;
 
+  // Handle navigation buttons: always respond with a fresh ephemeral message
   if (customId === 'task_list_my') {
     console.log('Handling My Tasks navigation button via taskButtons.ts (ephemeral simulated /task-list user filter)');
 
@@ -385,15 +386,17 @@ export const handleTaskButtonInteraction = async (
       data: {
         embeds,
         components,
-        flags: 64 
+        flags: 64 // ephemeral
       }
     };
-  } else if (customId === 'task_list_completed') {
+  }
+
+  if (customId === 'task_list_completed') {
     console.log('Handling View Completed Tasks navigation button via taskButtons.ts (ephemeral simulated /task-list status:completed)');
 
     const { embeds, components } = await generateTaskListResponse(
       guildId,
-      'completed'         
+      'completed'         // statusFilter
     );
 
     return {
@@ -401,10 +404,12 @@ export const handleTaskButtonInteraction = async (
       data: {
         embeds,
         components,
-        flags: 64 
+        flags: 64 // ephemeral
       }
     };
-  } else if (customId === 'task_list_all') {
+  }
+
+  if (customId === 'task_list_all') {
     console.log('Handling List All Tasks navigation button via taskButtons.ts (ephemeral simulated /task-list all)');
 
     const { embeds, components } = await generateTaskListResponse(
@@ -416,7 +421,7 @@ export const handleTaskButtonInteraction = async (
       data: {
         embeds,
         components,
-        flags: 64 
+        flags: 64 // ephemeral
       }
     };
   }
