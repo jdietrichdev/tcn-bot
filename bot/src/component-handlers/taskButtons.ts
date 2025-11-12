@@ -213,14 +213,19 @@ export const handleTaskButtonInteraction = async (
       filter = undefined; // Show all tasks for admin
     }
 
+    console.log(`[DEBUG] Generating task list response for user ${userId}, filter: ${filter}, claimedBy: ${claimedBy}`);
     const { embeds, components } = await generateTaskListResponse(guildId, filter, undefined, claimedBy);
-    return {
+    console.log(`[DEBUG] Generated response with ${embeds?.length || 0} embeds and ${components?.length || 0} components`);
+
+    const updateMessage = {
       type: InteractionResponseType.UpdateMessage,
       data: {
         embeds,
         components
       }
     };
+    console.log(`[DEBUG] Returning update message response:`, JSON.stringify(updateMessage, null, 2));
+    return updateMessage;
   } catch (err) {
     console.error(`[ERROR] Error handling task button interaction: ${err}`);
     return {

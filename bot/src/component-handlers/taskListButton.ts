@@ -8,6 +8,7 @@ import {
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { PutCommand, GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { updateMessage, updateResponse } from '../adapters/discord-adapter';
+import { generateTaskListResponse } from '../command-handlers/taskList';
 
 export interface TaskListCacheData {
   tasks: any[];
@@ -125,27 +126,30 @@ export const handleTaskListPagination = async (
 
   // Handle view all
   if (customId === 'task_list_all') {
-    console.log(`Handling task_list_all button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
-    const response = {
+    console.log(`Handling task_list_all button for user ${interaction.member?.user?.id || interaction.user?.id} - generating task list response`);
+    const guildId = interaction.guild_id!;
+    const { embeds, components } = await generateTaskListResponse(guildId);
+    return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
-        content: '📋 Use `/task-list` to view all tasks!',
+        embeds,
+        components,
         flags: 64
       }
     };
-    console.log(`Returning ephemeral response for task_list_all:`, JSON.stringify(response, null, 2));
-    return response;
   }
 
   // Handle my tasks
   if (customId === 'task_list_my') {
-    console.log(`Handling task_list_my button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
-    console.log(`Handling task_list_my button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
-    // Navigation button should send ephemeral message
+    console.log(`Handling task_list_my button for user ${interaction.member?.user?.id || interaction.user?.id} - generating task list response`);
+    const guildId = interaction.guild_id!;
+    const userId = interaction.member?.user?.id || interaction.user?.id;
+    const { embeds, components } = await generateTaskListResponse(guildId, undefined, undefined, userId);
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
-        content: '👤 Use `/task-list user:@me` to view your tasks!',
+        embeds,
+        components,
         flags: 64
       }
     };
@@ -153,13 +157,14 @@ export const handleTaskListPagination = async (
 
   // Handle completed tasks
   if (customId === 'task_list_completed') {
-    console.log(`Handling task_list_completed button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
-    console.log(`Handling task_list_completed button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
-    // Navigation button should send ephemeral message
+    console.log(`Handling task_list_completed button for user ${interaction.member?.user?.id || interaction.user?.id} - generating task list response`);
+    const guildId = interaction.guild_id!;
+    const { embeds, components } = await generateTaskListResponse(guildId, 'completed');
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
-        content: '✅ Use `/task-list status:completed` to view completed tasks!',
+        embeds,
+        components,
         flags: 64
       }
     };
@@ -382,7 +387,7 @@ export const handleTaskListPagination = async (
 };
 
 export const refreshTaskListMessages = async (guildId: string) => {
-  console.log(`Refreshing task list messages for guild: ${guildId}`);
+  console.log(`[DEBUG] Refreshing task list messages for guild: ${guildId}`);
 
   const cacheResult = await dynamoDbClient.send(
     new QueryCommand({
@@ -396,11 +401,11 @@ export const refreshTaskListMessages = async (guildId: string) => {
   );
 
   if (!cacheResult.Items || cacheResult.Items.length === 0) {
-    console.log('No task list cache entries found');
+    console.log('[DEBUG] No task list cache entries found');
     return;
   }
 
-  console.log(`Found ${cacheResult.Items.length} task list cache entries to refresh`);
+  console.log(`[DEBUG] Found ${cacheResult.Items.length} task list cache entries to refresh`);
 
   const taskResult = await dynamoDbClient.send(
     new QueryCommand({
@@ -432,12 +437,15 @@ export const refreshTaskListMessages = async (guildId: string) => {
         continue;
       }
 
-      console.log(`Processing cache entry: interaction=${interactionId}, messageId=${cacheData.messageId}, channelId=${cacheData.channelId}`);
+      console.log(`[DEBUG] Processing cache entry: interaction=${interactionId}, messageId=${cacheData.messageId}, channelId=${cacheData.channelId}`);
+      console.log(`[DEBUG] Cache filters: ${JSON.stringify(cacheData.filters)}`);
 
       let filteredTasks = allTasks;
+      console.log(`[DEBUG] Total tasks before filtering: ${allTasks.length}`);
 
       if (cacheData.filters.status) {
         filteredTasks = filteredTasks.filter(task => task.status === cacheData.filters.status);
+        console.log(`[DEBUG] After status filter (${cacheData.filters.status}): ${filteredTasks.length} tasks`);
       }
 
       if (cacheData.filters.role) {
@@ -447,6 +455,7 @@ export const refreshTaskListMessages = async (guildId: string) => {
           }
           return task.assignedRole === cacheData.filters.role;
         });
+        console.log(`[DEBUG] After role filter (${cacheData.filters.role}): ${filteredTasks.length} tasks`);
       }
 
       if (cacheData.filters.user) {
@@ -460,10 +469,12 @@ export const refreshTaskListMessages = async (guildId: string) => {
 
           return false;
         });
+        console.log(`[DEBUG] After user filter (${cacheData.filters.user}): ${filteredTasks.length} tasks`);
       }
 
       cacheData.tasks = filteredTasks;
       cacheData.allTaskCounts = allTaskCounts;
+      console.log(`[DEBUG] Updated cache with ${filteredTasks.length} filtered tasks`);
 
       const tasksPerPage = 8;
       const pages: any[][] = [];
@@ -523,10 +534,12 @@ export const refreshTaskListMessages = async (guildId: string) => {
           });
         }
 
+        console.log(`[DEBUG] Updating message ${cacheData.messageId} in channel ${cacheData.channelId} with ${pages.length} pages`);
         await updateMessage(cacheData.channelId, cacheData.messageId, {
           embeds: [embed],
           components: []
         });
+        console.log(`[DEBUG] Successfully updated message ${cacheData.messageId}`);
       } else {
         const priorityEmoji = { high: '🔴', medium: '🟡', low: '🟢' };
         const statusEmoji = {
@@ -691,13 +704,16 @@ export const refreshTaskListMessages = async (guildId: string) => {
           return components;
         };
 
+        console.log(`[DEBUG] Updating message ${cacheData.messageId} in channel ${cacheData.channelId} with ${pages.length} pages and components`);
         await updateMessage(cacheData.channelId, cacheData.messageId, {
           embeds: [embed],
           components: createComponents(0) as any
         });
+        console.log(`[DEBUG] Successfully updated message ${cacheData.messageId} with components`);
       }
     } catch (error) {
-      console.error(`Error updating message ${cacheData.messageId}:`, error);
+      console.error(`[ERROR] Error updating message ${cacheData.messageId} in channel ${cacheData.channelId}:`, error);
+      console.error(`[ERROR] Cache data:`, JSON.stringify(cacheData, null, 2));
     }
   }
 };

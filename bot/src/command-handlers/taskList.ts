@@ -138,7 +138,7 @@ export const generateTaskListResponse = async (
     return { embeds: [noTasksEmbed], components };
   }
 
-  const tasksPerPage = 8;
+  const tasksPerPage = 5; // Reduced to make room for action buttons (5 rows max)
   const totalPages = Math.ceil(tasks.length / tasksPerPage);
   const currentPage = 0;
   const displayTasks = tasks.slice(0, tasksPerPage);
@@ -157,7 +157,18 @@ export const generateTaskListResponse = async (
     const dueDate = task.dueDate ? ` (Due: ${task.dueDate})` : '';
     const assignments = formatTaskAssignments(task);
 
-    return `${priority}${status} **${task.title}**${dueDate}${assignments}`;
+    // Determine available actions based on task status
+    let actions = '';
+    const taskId = task.sk.split('#')[1]; // Extract task ID from sk
+    if (task.status === 'pending') {
+      actions = ' `[Claim]`';
+    } else if (task.status === 'claimed' && task.claimedBy === userFilter) {
+      actions = ' `[Complete]` `[Unclaim]`';
+    } else if (task.status === 'completed') {
+      actions = ' `[Approve]`';
+    }
+
+    return `${priority}${status} **${task.title}**${dueDate}${assignments}${actions}`;
   }).join('\n');
 
   const embed: APIEmbed = {
@@ -216,6 +227,57 @@ export const generateTaskListResponse = async (
   }
 
   const components = [];
+
+  // Add action buttons for each displayed task
+  displayTasks.forEach((task: any, index: number) => {
+    const taskId = task.sk.split('#')[1];
+    const rowComponents = [];
+
+    if (task.status === 'pending') {
+      // Claim button
+      rowComponents.push({
+        type: ComponentType.Button as ComponentType.Button,
+        custom_id: `task_claim_${taskId}`,
+        label: 'Claim',
+        style: ButtonStyle.Success as ButtonStyle.Success,
+        emoji: { name: '📌' }
+      });
+    } else if (task.status === 'claimed') {
+      // Complete and Unclaim buttons
+      rowComponents.push({
+        type: ComponentType.Button as ComponentType.Button,
+        custom_id: `task_complete_${taskId}`,
+        label: 'Complete',
+        style: ButtonStyle.Primary as ButtonStyle.Primary,
+        emoji: { name: '✅' }
+      });
+      if (task.claimedBy === userFilter) {
+        rowComponents.push({
+          type: ComponentType.Button as ComponentType.Button,
+          custom_id: `task_unclaim_${taskId}`,
+          label: 'Unclaim',
+          style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+          emoji: { name: '↩️' }
+        });
+      }
+    } else if (task.status === 'completed') {
+      // Approve button
+      rowComponents.push({
+        type: ComponentType.Button as ComponentType.Button,
+        custom_id: `task_approve_${taskId}`,
+        label: 'Approve',
+        style: ButtonStyle.Success as ButtonStyle.Success,
+        emoji: { name: '☑️' }
+      });
+    }
+
+    if (rowComponents.length > 0) {
+      components.push({
+        type: ComponentType.ActionRow as ComponentType.ActionRow,
+        components: rowComponents
+      });
+    }
+  });
 
   if (totalPages > 1) {
     components.push({

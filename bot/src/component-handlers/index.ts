@@ -39,6 +39,7 @@ export const handleComponent = async (
       customId === "task_list_my" ||
       customId === "task_list_completed" ||
       customId === "task_list_all") {
+    console.log(`[handleComponent] Routing to handleTaskListPagination for: ${customId}`);
     return await handleTaskListPagination(interaction, customId);
   } else if (customId.startsWith("task_")) {
     return await handleTaskButtonInteraction(interaction);
