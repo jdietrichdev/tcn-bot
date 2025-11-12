@@ -85,9 +85,13 @@ export const proxy = async (
       body.data.custom_id === "task_list_completed"
     )
   ) {
-    // UNIFY: All task list / task action buttons are deferred and processed via EventBridge.
-    // This ensures a single, consistent pattern and avoids "Interaction failed" due to missing follow-ups.
-    console.log("Task management / task-list button clicked (deferred via EventBridge)");
+    // For task management buttons we want:
+    // - Claim/complete/unclaim/approve + list pagination/refresh/create:
+    //     deferred via EventBridge (edit original message).
+    // - Navigation buttons (view all/my/completed):
+    //     ephemeral "simulated /task-list" responses per user.
+    console.log("Task management / task-list button clicked (via EventBridge)");
+
     await eventClient.send(
       new PutEventsCommand({
         Entries: [
@@ -101,7 +105,24 @@ export const proxy = async (
       })
     );
 
-    response = { type: InteractionResponseType.DeferredMessageUpdate };
+    const isNavButton =
+      body.data.custom_id === "task_list_all" ||
+      body.data.custom_id === "task_list_my" ||
+      body.data.custom_id === "task_list_completed";
+
+    // For navigation buttons, respond with an ephemeral deferred message so the handler
+    // can use the followup webhook to send a separate ephemeral task list.
+    if (isNavButton) {
+      response = {
+        type: InteractionResponseType.DeferredChannelMessageWithSource,
+        data: {
+          flags: MessageFlags.Ephemeral,
+        },
+      };
+    } else {
+      // For non-nav task buttons, keep DeferredMessageUpdate (edit original message).
+      response = { type: InteractionResponseType.DeferredMessageUpdate };
+    }
   } else if (
     body.type === InteractionType.MessageComponent &&
     body.data.custom_id.startsWith("roster_show_")

@@ -342,13 +342,31 @@ const performTaskAction = async (
     low: '🟢'
   };
 
+  // Multi-claim visual state
+  const multiClaimEnabled = task.multipleClaimsAllowed === true;
+  const claimedByUsers: string[] = Array.isArray(task.claimedByUsers)
+    ? task.claimedByUsers
+    : (task.claimedBy ? [task.claimedBy] : []);
+  const completedByUsers: string[] = Array.isArray(task.completedByUsers)
+    ? task.completedByUsers
+    : [];
+
+  // Summary line appended to description for multi-claim tasks
+  const multiClaimSummary =
+    multiClaimEnabled && claimedByUsers.length > 0
+      ? `\n**👥 Multi-Claim:** \`${completedByUsers.length}/${claimedByUsers.length}\` contributors completed`
+      : '';
+
   let embed;
 
   switch (actionType) {
     case 'claim':
       embed = {
         title: title,
-        description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n> ${task.description || '*No description provided*'}`,
+        description:
+          `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n` +
+          `> ${task.description || '*No description provided*'}` +
+          multiClaimSummary,
         fields: [
           {
             name: '📊 **Task Information**',
@@ -360,9 +378,11 @@ const performTaskAction = async (
             inline: false
           },
           {
-            name: '👤 **Claimed By**',
-            value: `<@${userId}>`,
-            inline: true
+            name: multiClaimEnabled ? '👥 **Claimed By (All Contributors)**' : '👤 **Claimed By**',
+            value: multiClaimEnabled && claimedByUsers.length > 0
+              ? claimedByUsers.map((id) => `<@${id}>`).join(', ')
+              : `<@${userId}>`,
+            inline: false
           },
           {
             name: '⏰ **Claimed At**',
@@ -387,7 +407,10 @@ const performTaskAction = async (
     case 'approve':
       embed = {
         title: title,
-        description: `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n> ${task.description || '*No description provided*'}`,
+        description:
+          `### ${priorityEmoji[task.priority as keyof typeof priorityEmoji]} **${task.title}**\n\n` +
+          `> ${task.description || '*No description provided*'}` +
+          multiClaimSummary,
         fields: [
           {
             name: '📝 **Completion Notes**',
@@ -399,6 +422,14 @@ const performTaskAction = async (
             value: `<@${userId}>`,
             inline: true
           },
+          // For multi-claim tasks, also show all current claimants in a dedicated field.
+          ...(multiClaimEnabled && claimedByUsers.length > 0
+            ? [{
+                name: '👥 **All Claimants**',
+                value: claimedByUsers.map((id) => `<@${id}>`).join(', '),
+                inline: false
+              }]
+            : []),
           {
             name: '⏰ **Timestamp**',
             value: `<t:${Math.floor(new Date(now).getTime() / 1000)}:R>`,
@@ -424,10 +455,7 @@ const performTaskAction = async (
       break;
   }
 
-  const multiClaimEnabled = task.multipleClaimsAllowed === true;
-  const claimedByUsers: string[] = Array.isArray(task.claimedByUsers)
-    ? task.claimedByUsers
-    : (task.claimedBy ? [task.claimedBy] : []);
+  // multiClaimEnabled / claimedByUsers already declared above for embed + buttons
 
   const buttons: any[] = [];
 
@@ -553,40 +581,103 @@ export const handleTaskButtonInteraction = async (
   // which means this handler MUST use updateResponse() instead of returning a new response object.
   if (customId === 'task_list_all') {
     console.log('handleTaskButtonInteraction: generating /task-list (all) view from button');
-    const { embeds, components } = await generateTaskListResponse(guildId);
+
+    // Use interaction.id to scope pagination/cache for this ephemeral view,
+    // mirroring /task-list behavior.
+    const { embeds, components, cacheData } = await generateTaskListResponse(
+      guildId,
+      undefined,
+      undefined,
+      undefined,
+      interaction.id
+    );
+
     await updateResponse(interaction.application_id, interaction.token, {
       embeds,
       components,
     });
-    // DeferredMessageUpdate already acknowledged; nothing to return.
+
+    // If pagination is available, store cache so paginator buttons work.
+    if (cacheData) {
+      try {
+        const { storeCacheInDynamoDB } = await import('./taskListButton');
+        cacheData.channelId = interaction.channel_id || '';
+        cacheData.messageId = interaction.message?.id || '';
+        await storeCacheInDynamoDB(interaction.id, cacheData);
+        console.log(
+          `Cached task list (all) from button: interaction=${interaction.id}, message=${cacheData.messageId}, channel=${cacheData.channelId}`
+        );
+      } catch (err) {
+        console.error('Failed to cache task list (all) from button:', err);
+      }
+    }
+
     return;
   }
 
   if (customId === 'task_list_my') {
     console.log('handleTaskButtonInteraction: generating /task-list (my tasks) view from button');
-    const { embeds, components } = await generateTaskListResponse(
+
+    const { embeds, components, cacheData } = await generateTaskListResponse(
       guildId,
       undefined,      // status
       undefined,      // role
-      userId          // userFilter
+      userId,         // userFilter
+      interaction.id
     );
+
     await updateResponse(interaction.application_id, interaction.token, {
       embeds,
       components,
     });
+
+    if (cacheData) {
+      try {
+        const { storeCacheInDynamoDB } = await import('./taskListButton');
+        cacheData.channelId = interaction.channel_id || '';
+        cacheData.messageId = interaction.message?.id || '';
+        await storeCacheInDynamoDB(interaction.id, cacheData);
+        console.log(
+          `Cached task list (my) from button: interaction=${interaction.id}, message=${cacheData.messageId}, channel=${cacheData.channelId}`
+        );
+      } catch (err) {
+        console.error('Failed to cache task list (my) from button:', err);
+      }
+    }
+
     return;
   }
 
   if (customId === 'task_list_completed') {
     console.log('handleTaskButtonInteraction: generating /task-list (completed) view from button');
-    const { embeds, components } = await generateTaskListResponse(
+
+    const { embeds, components, cacheData } = await generateTaskListResponse(
       guildId,
-      'completed'     // status
+      'completed',    // status
+      undefined,
+      undefined,
+      interaction.id
     );
+
     await updateResponse(interaction.application_id, interaction.token, {
       embeds,
       components,
     });
+
+    if (cacheData) {
+      try {
+        const { storeCacheInDynamoDB } = await import('./taskListButton');
+        cacheData.channelId = interaction.channel_id || '';
+        cacheData.messageId = interaction.message?.id || '';
+        await storeCacheInDynamoDB(interaction.id, cacheData);
+        console.log(
+          `Cached task list (completed) from button: interaction=${interaction.id}, message=${cacheData.messageId}, channel=${cacheData.channelId}`
+        );
+      } catch (err) {
+        console.error('Failed to cache task list (completed) from button:', err);
+      }
+    }
+
     return;
   }
 
