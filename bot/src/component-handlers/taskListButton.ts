@@ -134,19 +134,11 @@ export const handleTaskListPagination = async (
     };
   }
 
-  const createTaskEmbed = (pageIndex: number): APIEmbed => {
-    if (!data || !Array.isArray(pages) || pages.length === 0) {
-      console.error('Invalid data or pages for embed generation:', { data, pages });
-      return {
-        title: `📋 ✦ TASK BOARD ✦ 📝`,
-        description: '`No tasks found.`',
-        color: 0x5865F2,
-      };
-    }
+  const parts = customId.split('_');
+  const action = parts[2];
+  const originalInteractionId = parts.slice(3).join('_');
 
-    const page = pages[pageIndex];
-    const startIndex = pageIndex * tasksPerPage;
-
+  const createTaskEmbed = (page: any[], pageIndex: number, totalPages: number, tasks: any[], allTaskCounts: any): APIEmbed => {
     const priorityEmoji = { high: '🔴', medium: '🟡', low: '🟢' };
     const statusEmoji = {
       pending: '📬',
@@ -155,7 +147,7 @@ export const handleTaskListPagination = async (
       approved: '☑️'
     };
 
-    const taskList = page.map((task: any, index: number) => {
+    const taskList = page.map((task: any) => {
       const priority = priorityEmoji[task.priority as keyof typeof priorityEmoji] || '⚪';
       const status = statusEmoji[task.status as keyof typeof statusEmoji] || '❓';
       const dueDate = task.dueDate ? ` (Due: ${task.dueDate})` : '';
@@ -164,7 +156,7 @@ export const handleTaskListPagination = async (
       return `${priority}${status} **${task.title}**${dueDate}${assignments}`;
     }).join('\n');
 
-    const embed: APIEmbed = {
+    return {
       title: `📋 ✦ TASK BOARD ✦ 📝`,
       description: taskList || '`No tasks found.`',
       color: 0x5865F2,
@@ -172,10 +164,10 @@ export const handleTaskListPagination = async (
         {
           name: '📊 **Task Statistics**',
           value: [
-            `**📬 Pending:** \`${data.allTaskCounts.pending}\``,
-            `**📪 In Progress:** \`${data.allTaskCounts.claimed}\``,
-            `**✅ Completed:** \`${data.allTaskCounts.completed}\``,
-            `**☑️ Approved:** \`${data.allTaskCounts.approved}\``
+            `**📬 Pending:** \`${allTaskCounts.pending}\``,
+            `**📪 In Progress:** \`${allTaskCounts.claimed}\``,
+            `**✅ Completed:** \`${allTaskCounts.completed}\``,
+            `**☑️ Approved:** \`${allTaskCounts.approved}\``
           ].join('\n'),
           inline: true
         },
@@ -197,123 +189,179 @@ export const handleTaskListPagination = async (
         }
       ],
       footer: {
-        text: `Page ${pageIndex + 1} of ${pages.length}  •  ${data.tasks.length} tasks displayed`,
+        text: `Page ${pageIndex + 1} of ${totalPages}  •  ${tasks.length} tasks displayed`,
       },
       timestamp: new Date().toISOString()
     };
-
-    console.log('Generated embed:', embed);
-    return embed;
   };
 
-  const createComponents = (currentPage: number) => {
-    if (!Array.isArray(pages) || pages.length === 0) {
-      console.error('Invalid pages for component generation:', { pages });
-      return [];
-    }
-
+  const createComponents = (currentPage: number, totalPages: number, paginatorInteractionId: string, originalId: string) => {
     const components = [];
 
-    if (pages.length > 1) {
+    if (totalPages > 1) {
       components.push({
         type: ComponentType.ActionRow,
         components: [
           {
             type: ComponentType.Button,
-            custom_id: `task_list_first_${originalInteractionId}`,
+            custom_id: `task_list_first_${paginatorInteractionId}`,
             emoji: { name: '⏮️' },
             style: ButtonStyle.Secondary,
             disabled: currentPage === 0
           },
           {
             type: ComponentType.Button,
-            custom_id: `task_list_prev_${originalInteractionId}`,
+            custom_id: `task_list_prev_${paginatorInteractionId}`,
             emoji: { name: '◀️' },
             style: ButtonStyle.Primary,
             disabled: currentPage === 0
           },
           {
             type: ComponentType.Button,
-            custom_id: `task_list_page_${originalInteractionId}`,
-            label: `${currentPage + 1} / ${pages.length}`,
+            custom_id: `task_list_page_${paginatorInteractionId}`,
+            label: `${currentPage + 1} / ${totalPages}`,
             style: ButtonStyle.Secondary,
             disabled: true
           },
           {
             type: ComponentType.Button,
-            custom_id: `task_list_next_${originalInteractionId}`,
+            custom_id: `task_list_next_${paginatorInteractionId}`,
             emoji: { name: '▶️' },
             style: ButtonStyle.Primary,
-            disabled: currentPage === pages.length - 1
+            disabled: currentPage === totalPages - 1
           },
           {
             type: ComponentType.Button,
-            custom_id: `task_list_last_${originalInteractionId}`,
+            custom_id: `task_list_last_${paginatorInteractionId}`,
             emoji: { name: '⏭️' },
             style: ButtonStyle.Secondary,
-            disabled: currentPage === pages.length - 1
+            disabled: currentPage === totalPages - 1
           }
         ]
       });
     }
 
-    console.log('Generated components:', components);
+    components.push({
+      type: ComponentType.ActionRow,
+      components: [
+        {
+          type: ComponentType.Button,
+          custom_id: 'task_create_new',
+          label: 'Create Task',
+          style: ButtonStyle.Success,
+          emoji: { name: '➕' }
+        },
+        {
+          type: ComponentType.Button,
+          custom_id: 'task_refresh_list',
+          label: 'Refresh',
+          style: ButtonStyle.Secondary,
+          emoji: { name: '🔄' }
+        },
+        {
+          type: ComponentType.Button,
+          custom_id: `task_list_all_${originalId}`,
+          label: 'All Tasks',
+          style: ButtonStyle.Secondary,
+          emoji: { name: '📝' }
+        },
+        {
+          type: ComponentType.Button,
+          custom_id: `task_list_my_${originalId}`,
+          label: 'My Tasks',
+          style: ButtonStyle.Secondary,
+          emoji: { name: '👤' }
+        },
+        {
+          type: ComponentType.Button,
+          label: 'Open Dashboard',
+          style: ButtonStyle.Link,
+          url: `${process.env.DASHBOARD_URL || 'https://d19x3gu4qo04f3.cloudfront.net'}/tasks`
+        }
+      ]
+    });
+
+    components.push({
+      type: ComponentType.ActionRow,
+      components: [
+        {
+          type: ComponentType.Button,
+          custom_id: `task_list_completed_${originalId}`,
+          label: 'Completed',
+          style: ButtonStyle.Secondary,
+          emoji: { name: '📋' }
+        }
+      ]
+    });
+
     return components;
   };
 
-  // Ensure buttons for "View All Tasks," "My Tasks," and "Completed Tasks" send ephemeral messages
-  if (customId === 'task_list_all' || customId === 'task_list_my' || customId === 'task_list_completed') {
+  if (action === 'all' || action === 'my' || action === 'completed') {
     console.log(`Handling ${customId} button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message with pagination`);
 
-    const data = await getCacheFromDynamoDB(interaction.id);
+    const data = await getCacheFromDynamoDB(originalInteractionId);
     if (!data || !data.tasks || !Array.isArray(data.tasks)) {
-      console.error(`Invalid or missing cache data for interaction ID: ${interaction.id}`);
+      console.error(`Invalid or missing cache data for interaction ID: ${originalInteractionId}`);
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
           content: '⚠️ No valid tasks found in the cache. Please try again later.',
-          flags: 64 // Ephemeral message
+          flags: 64
         }
       };
+    }
+
+    let filteredTasks = data.tasks;
+    if (action === 'my') {
+      const userId = interaction.member!.user.id;
+      filteredTasks = data.tasks.filter(t => t.createdBy === userId || t.claimedBy === userId || t.completedBy === userId);
+    } else if (action === 'completed') {
+      filteredTasks = data.tasks.filter(t => t.status === 'completed');
     }
 
     const tasksPerPage = 8;
     const pages = [];
-    for (let i = 0; i < data.tasks.length; i += tasksPerPage) {
-      pages.push(data.tasks.slice(i, i + tasksPerPage));
+    for (let i = 0; i < filteredTasks.length; i += tasksPerPage) {
+      pages.push(filteredTasks.slice(i, i + tasksPerPage));
     }
 
     if (pages.length === 0) {
-      console.error(`No tasks to display for interaction ID: ${interaction.id}`);
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: '⚠️ No tasks available to display.',
-          flags: 64 // Ephemeral message
+          content: '⚠️ No tasks available to display for this filter.',
+          flags: 64
         }
       };
     }
 
-    const embed = createTaskEmbed(0); // First page
-    const components = createComponents(0); // Pagination buttons
+    const ephemeralInteractionId = interaction.id;
+    const ephemeralCacheData: TaskListCacheData = {
+      tasks: filteredTasks,
+      filters: data.filters,
+      channelId: data.channelId,
+      messageId: data.messageId,
+      allTaskCounts: data.allTaskCounts,
+    };
+    await storeCacheInDynamoDB(ephemeralInteractionId, ephemeralCacheData);
+
+    const embed = createTaskEmbed(pages[0], 0, pages.length, filteredTasks, data.allTaskCounts);
+    const components = createComponents(0, pages.length, ephemeralInteractionId, originalInteractionId);
 
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
         embeds: [embed],
         components: components,
-        flags: 64 // Ephemeral message
+        flags: 64
       }
     };
   }
 
-  const parts = customId.split('_');
-  const action = parts[2];
-  const originalInteractionId = parts[3];
-
   console.log(`Task list pagination: action=${action}, originalInteractionId=${originalInteractionId}`);
 
-  let data = await getCacheFromDynamoDB(originalInteractionId);
+  const data = await getCacheFromDynamoDB(originalInteractionId);
 
   if (!data) {
     console.error(`Task list cache miss for interaction ID: ${originalInteractionId}`);
@@ -328,8 +376,7 @@ export const handleTaskListPagination = async (
 
   console.log(`Task list cache hit! Data has ${data.tasks.length} tasks`);
 
-  const currentMessage = interaction.message;
-  const currentPageMatch = currentMessage.embeds?.[0]?.footer?.text?.match(/Page (\d+) of (\d+)/);
+  const currentPageMatch = interaction.message.embeds?.[0]?.footer?.text?.match(/Page (\d+) of (\d+)/);
   if (!currentPageMatch) {
     return {
       type: InteractionResponseType.UpdateMessage,
@@ -363,12 +410,19 @@ export const handleTaskListPagination = async (
   }
 
   const result = {
-    embeds: [createTaskEmbed(newPage)],
-    components: createComponents(newPage) as any
+    embeds: [createTaskEmbed(pages[newPage], newPage, totalPages, data.tasks, data.allTaskCounts)],
+    components: createComponents(newPage, totalPages, originalInteractionId, originalInteractionId) as any
   };
 
-  await updateResponse(interaction.application_id, interaction.token, result);
-  return;
+  // For ephemeral messages, we need to use updateResponse.
+  // We can detect this if the originalInteractionId is different from the current interaction's ID,
+  // which we set up for our ephemeral views.
+  if (originalInteractionId !== interaction.id) {
+    await updateResponse(interaction.application_id, interaction.token, result);
+  } else {
+    await updateMessage(data.channelId, data.messageId, result);
+  }
+  return; // End execution
 };
 
 export const refreshTaskListMessages = async (guildId: string) => {
