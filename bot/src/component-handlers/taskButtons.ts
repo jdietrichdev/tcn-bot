@@ -450,7 +450,16 @@ export const handleTaskButtonInteraction = async (
     });
 
     // Check if this is an individual task embed or task list embed
-    const isIndividualTaskEmbed = interaction.message?.embeds?.[0]?.title?.includes('TASK OVERVIEW');
+    const embedTitle = interaction.message?.embeds?.[0]?.title;
+    const isIndividualTaskEmbed = embedTitle &&
+      (embedTitle.includes('TASK OVERVIEW') ||
+       embedTitle.includes('TASK CREATED') ||
+       embedTitle.includes('TASK CLAIMED') ||
+       embedTitle.includes('TASK COMPLETED') ||
+       embedTitle.includes('TASK APPROVED') ||
+       embedTitle.includes('TASK UNCLAIMED') ||
+       embedTitle.includes('TASK DELETED') ||
+       embedTitle.includes('ADMIN TASK UNCLAIM'));
 
     let updateMessageResponse;
     if (isIndividualTaskEmbed) {
