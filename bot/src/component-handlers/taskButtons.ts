@@ -189,6 +189,7 @@ export const handleTaskButtonInteraction = async (
     // Perform the action
     const result = await performTaskAction(interaction, taskId, guildId, actionType);
     if (!result.success) {
+      console.log(`[DEBUG] Action failed for task ${taskId}: ${result.error}`);
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
@@ -203,7 +204,7 @@ export const handleTaskButtonInteraction = async (
       refreshTaskListMessages(guildId).catch(console.error);
     });
 
-    // Return ephemeral task list response
+    // Generate updated task list response for live embed update
     let filter: 'completed' | undefined;
     let claimedBy: string | undefined;
 
@@ -217,15 +218,16 @@ export const handleTaskButtonInteraction = async (
     const { embeds, components } = await generateTaskListResponse(guildId, filter, undefined, claimedBy);
     console.log(`[DEBUG] Generated response with ${embeds?.length || 0} embeds and ${components?.length || 0} components`);
 
-    const updateMessage = {
+    // Return UpdateMessage to modify the original embed in place
+    const updateMessageResponse = {
       type: InteractionResponseType.UpdateMessage,
       data: {
         embeds,
-        components
+        components,
       }
     };
-    console.log(`[DEBUG] Returning update message response:`, JSON.stringify(updateMessage, null, 2));
-    return updateMessage;
+    console.log(`[DEBUG] Returning UpdateMessage response:`, JSON.stringify(updateMessageResponse, null, 2));
+    return updateMessageResponse;
   } catch (err) {
     console.error(`[ERROR] Error handling task button interaction: ${err}`);
     return {
