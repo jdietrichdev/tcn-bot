@@ -596,11 +596,27 @@ export const handleTaskButtonInteraction = async (
       interaction.id
     );
 
-    // Complete the deferred ephemeral response created in proxy()
-    await updateResponse(interaction.application_id, interaction.token, {
-      embeds,
-      components,
-    });
+    try {
+      console.log('Updating response with payload:', JSON.stringify({ embeds, components }, null, 2));
+      await updateResponse(interaction.application_id, interaction.token, {
+        embeds,
+        components,
+      });
+    } catch (err) {
+      const error = err as { statusCode?: number; reason?: string };
+      if (error.statusCode === 404 && error.reason === 'Unknown Webhook') {
+        console.warn('Interaction token expired. Sending a new message instead.');
+        await sendFollowupMessage(interaction.application_id, interaction.token, {
+          content: '⚠️ Interaction expired. Here is the updated task list:',
+          embeds,
+          components,
+        });
+      } else {
+        console.error('Failed to update response:', error);
+        console.error('Payload details:', JSON.stringify({ embeds, components }, null, 2));
+        throw error;
+      }
+    }
 
     return;
   }
