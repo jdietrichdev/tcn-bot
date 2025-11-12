@@ -76,8 +76,7 @@ describe('handleTaskButtonInteraction', () => {
 
     const result = await handleTaskButtonInteraction(mockInteraction);
 
-    expect(result.type).toBe(InteractionResponseType.ChannelMessageWithSource);
-    expect(result.data.flags).toBe(64); // ephemeral flag
+    expect(result.type).toBe(InteractionResponseType.UpdateMessage);
     expect(mockDynamoDbClient.send).toHaveBeenCalledTimes(2); // Get and Update
   });
 
@@ -128,8 +127,7 @@ describe('handleTaskButtonInteraction', () => {
 
     const result = await handleTaskButtonInteraction(mockInteraction);
 
-    expect(result.type).toBe(InteractionResponseType.ChannelMessageWithSource);
-    expect(result.data.flags).toBe(64);
+    expect(result.type).toBe(InteractionResponseType.UpdateMessage);
   });
 
   test('should handle complete button interaction', async () => {
@@ -149,8 +147,7 @@ describe('handleTaskButtonInteraction', () => {
 
     const result = await handleTaskButtonInteraction(completeInteraction);
 
-    expect(result.type).toBe(InteractionResponseType.ChannelMessageWithSource);
-    expect(result.data.flags).toBe(64);
+    expect(result.type).toBe(InteractionResponseType.UpdateMessage);
   });
 
   test('should handle unclaim button interaction', async () => {
@@ -170,8 +167,7 @@ describe('handleTaskButtonInteraction', () => {
 
     const result = await handleTaskButtonInteraction(unclaimInteraction);
 
-    expect(result.type).toBe(InteractionResponseType.ChannelMessageWithSource);
-    expect(result.data.flags).toBe(64);
+    expect(result.type).toBe(InteractionResponseType.UpdateMessage);
   });
 
   test('should reject approve button on ephemeral message', async () => {
@@ -222,7 +218,7 @@ describe('handleTaskButtonInteraction', () => {
     expect(result.data.flags).toBe(64);
   });
 
-  test('should handle navigation buttons', async () => {
+  test('should handle navigation buttons by returning error since they are now routed elsewhere', async () => {
     const navInteractions = [
       { custom_id: 'task_list_my' },
       { custom_id: 'task_list_completed' },
@@ -238,14 +234,12 @@ describe('handleTaskButtonInteraction', () => {
         },
       } as APIMessageComponentInteraction;
 
-      mockGenerateTaskListResponse.mockResolvedValue({
-        embeds: [],
-        components: [],
-      });
-
+      // Since navigation buttons are now routed to handleTaskListPagination,
+      // they should not reach handleTaskButtonInteraction anymore
       const result = await handleTaskButtonInteraction(interaction);
 
       expect(result.type).toBe(InteractionResponseType.ChannelMessageWithSource);
+      expect(result.data.content).toBe('❌ Unknown button interaction.');
       expect(result.data.flags).toBe(64);
     }
   });

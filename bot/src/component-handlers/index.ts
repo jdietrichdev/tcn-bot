@@ -35,7 +35,10 @@ export const handleComponent = async (
       customId.startsWith("task_list_last_") ||
       customId.startsWith("task_list_page_") ||
       customId === "task_refresh_list" ||
-      customId === "task_create_new") {
+      customId === "task_create_new" ||
+      customId === "task_list_my" ||
+      customId === "task_list_completed" ||
+      customId === "task_list_all") {
     return await handleTaskListPagination(interaction, customId);
   } else if (customId.startsWith("task_")) {
     return await handleTaskButtonInteraction(interaction);

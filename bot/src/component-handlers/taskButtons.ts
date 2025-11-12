@@ -133,42 +133,6 @@ export const handleTaskButtonInteraction = async (
 
   console.log(`[DEBUG] Handling button interaction: customId=${customId}, guildId=${guildId}, userId=${userId}`);
 
-  // Handle navigation buttons - return ephemeral task list responses
-  if (customId === 'task_list_my') {
-    console.log('[DEBUG] Handling My Tasks navigation button');
-    const { embeds, components } = await generateTaskListResponse(guildId, undefined, undefined, userId);
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        embeds,
-        components,
-        flags: 64
-      }
-    };
-  } else if (customId === 'task_list_completed') {
-    console.log('[DEBUG] Handling View Completed Tasks navigation button');
-    const { embeds, components } = await generateTaskListResponse(guildId, 'completed');
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        embeds,
-        components,
-        flags: 64
-      }
-    };
-  } else if (customId === 'task_list_all') {
-    console.log('[DEBUG] Handling List All Tasks navigation button');
-    const { embeds, components } = await generateTaskListResponse(guildId);
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        embeds,
-        components,
-        flags: 64
-      }
-    };
-  }
-
   // Handle action buttons - perform action then return ephemeral task list
   const taskIdMatch = customId.match(/^task_\w+_(.+)$/);
   const taskId = taskIdMatch ? taskIdMatch[1] : null;
@@ -251,11 +215,10 @@ export const handleTaskButtonInteraction = async (
 
     const { embeds, components } = await generateTaskListResponse(guildId, filter, undefined, claimedBy);
     return {
-      type: InteractionResponseType.ChannelMessageWithSource,
+      type: InteractionResponseType.UpdateMessage,
       data: {
         embeds,
-        components,
-        flags: 64
+        components
       }
     };
   } catch (err) {
