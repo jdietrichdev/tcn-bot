@@ -546,61 +546,8 @@ export const handleTaskButtonInteraction = async (
   const taskIdMatch = customId.match(/^task_\w+_(.+)$/);
   const taskId = taskIdMatch ? taskIdMatch[1] : null;
 
-  // Handle navigation buttons: always respond with a fresh ephemeral message
-  if (customId === 'task_list_my') {
-    console.log('Handling My Tasks navigation button via taskButtons.ts (ephemeral simulated /task-list user filter)');
-
-    const { embeds, components } = await generateTaskListResponse(
-      guildId,
-      undefined,          // statusFilter
-      undefined,          // roleFilter
-      userId              // userFilter
-    );
-
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        embeds,
-        components,
-        flags: 64 // ephemeral
-      }
-    };
-  }
-
-  if (customId === 'task_list_completed') {
-    console.log('Handling View Completed Tasks navigation button via taskButtons.ts (ephemeral simulated /task-list status:completed)');
-
-    const { embeds, components } = await generateTaskListResponse(
-      guildId,
-      'completed'         // statusFilter
-    );
-
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        embeds,
-        components,
-        flags: 64 // ephemeral
-      }
-    };
-  }
-
-  if (customId === 'task_list_all') {
-    console.log('Handling List All Tasks navigation button via taskButtons.ts (ephemeral simulated /task-list all)');
-
-    const { embeds, components } = await generateTaskListResponse(
-      guildId
-    );
-
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        embeds,
-        components,
-        flags: 64 // ephemeral
-      }
-    };
-  }
+  // Navigation buttons are now handled synchronously in proxy(), not here.
+  // If they reach this handler, fall through to generic logic.
 
   try {
     console.log(`Handling task button: ${customId}, isTaskMessage: ${isTaskMessage}, taskId: ${taskId}`);

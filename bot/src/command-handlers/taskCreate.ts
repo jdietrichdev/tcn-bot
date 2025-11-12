@@ -84,27 +84,53 @@ export const handleTaskCreate = async (
     const taskId = `task-${uuidv4()}`;
     const now = new Date().toISOString();
 
+    // Multi-claim rule:
+    // - If more than one explicit assignee (user or role), allow multipleClaimsAllowed.
+    // - Otherwise default to single-claim semantics.
+    const multipleClaimsAllowed =
+      assignedUserIds.length > 1 ||
+      assignedRoleIds.length > 1;
+
     const shouldAutoAssign = assignedUserIds.length > 0;
     const taskStatus = shouldAutoAssign ? 'claimed' : 'pending';
 
-    const taskItem = {
+    const taskItem: any = {
       pk: guildId,
       sk: `task#${taskId}`,
       taskId,
       title,
       description,
-      assignedRoleIds: assignedRoleIds.length > 0 ? assignedRoleIds : undefined,
-      assignedUserIds: assignedUserIds.length > 0 ? assignedUserIds : undefined,
       priority,
       dueDate,
       status: taskStatus,
       createdBy,
       createdAt: now,
-      ...(shouldAutoAssign && { 
-        claimedBy: assignedUserIds,
-        claimedAt: now
-      })
     };
+
+    if (assignedRoleIds.length > 0) {
+      taskItem.assignedRoleIds = assignedRoleIds;
+    }
+
+    if (assignedUserIds.length > 0) {
+      taskItem.assignedUserIds = assignedUserIds;
+    }
+
+    if (shouldAutoAssign) {
+      // For auto-assigned tasks:
+      // - If multi-claim is allowed, treat all assigned users as initial claimants.
+      // - Else, keep original behavior (claimedBy single or array as before).
+      if (multipleClaimsAllowed) {
+        taskItem.multipleClaimsAllowed = true;
+        taskItem.claimedByUsers = assignedUserIds;
+        taskItem.claimedAt = now;
+      } else {
+        taskItem.claimedBy = assignedUserIds.length === 1 ? assignedUserIds[0] : assignedUserIds;
+        taskItem.claimedAt = now;
+      }
+    } else if (multipleClaimsAllowed) {
+      // If there are multiple roles/users but no direct auto-assign, still mark as multi-claim.
+      taskItem.multipleClaimsAllowed = true;
+    }
 
     await dynamoDbClient.send(
       new PutCommand({
