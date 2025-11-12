@@ -590,12 +590,13 @@ export const handleTaskButtonInteraction = async (
 
     const { embeds, components } = await generateTaskListResponse(
       guildId,
-      undefined,   // status: any
-      undefined,   // role: any
-      undefined,   // user: any (true "All Tasks")
+      undefined,   // any status
+      undefined,   // any role
+      undefined,   // any user -> true "All Tasks"
       interaction.id
     );
 
+    // Complete the deferred ephemeral response created in proxy()
     await updateResponse(interaction.application_id, interaction.token, {
       embeds,
       components,
@@ -609,9 +610,9 @@ export const handleTaskButtonInteraction = async (
 
     const { embeds, components } = await generateTaskListResponse(
       guildId,
-      undefined,   // status: any
-      undefined,   // role: any
-      userId,      // filter to clicking user
+      undefined,   // any status
+      undefined,   // any role
+      userId,      // filter by clicking user
       interaction.id
     );
 
