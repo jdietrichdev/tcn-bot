@@ -46,19 +46,29 @@ export const formatTaskAssignments = (task: any): string => {
 
 // Increase the TTL value to extend cache expiry duration
 export const storeCacheInDynamoDB = async (interactionId: string, data: TaskListCacheData) => {
+  if (!data || !Array.isArray(data.tasks) || data.tasks.length === 0) {
+    console.error(`Invalid cache data provided for interaction ID: ${interactionId}`);
+    throw new Error('Invalid cache data. Ensure tasks are properly formatted.');
+  }
+
   const ttl = Math.floor(Date.now() / 1000) + (30 * 60); // Extend TTL to 30 minutes
-  await dynamoDbClient.send(
-    new PutCommand({
-      TableName: 'BotTable',
-      Item: {
-        pk: 'task-list-cache',
-        sk: interactionId,
-        data: data,
-        ttl: ttl
-      }
-    })
-  );
-  console.log(`Stored task list cache in DynamoDB for interaction ID: ${interactionId}`);
+  try {
+    await dynamoDbClient.send(
+      new PutCommand({
+        TableName: 'BotTable',
+        Item: {
+          pk: 'task-list-cache',
+          sk: interactionId,
+          data: data,
+          ttl: ttl
+        }
+      })
+    );
+    console.log(`Stored task list cache in DynamoDB for interaction ID: ${interactionId}`);
+  } catch (error) {
+    console.error(`Failed to store task list cache in DynamoDB for interaction ID: ${interactionId}`, error);
+    throw new Error('Failed to store cache in DynamoDB.');
+  }
 };
 
 export const getCacheFromDynamoDB = async (interactionId: string): Promise<TaskListCacheData | null> => {
@@ -281,11 +291,12 @@ export const handleTaskListPagination = async (
     console.log(`Handling ${customId} button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message with pagination`);
 
     const data = await getCacheFromDynamoDB(interaction.id);
-    if (!data) {
+    if (!data || !data.tasks || !Array.isArray(data.tasks)) {
+      console.error(`Invalid or missing cache data for interaction ID: ${interaction.id}`);
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: '⚠️ No tasks found. Please try again later.',
+          content: '⚠️ No valid tasks found in the cache. Please try again later.',
           flags: 64 // Ephemeral message
         }
       };
@@ -295,6 +306,17 @@ export const handleTaskListPagination = async (
     const pages = [];
     for (let i = 0; i < data.tasks.length; i += tasksPerPage) {
       pages.push(data.tasks.slice(i, i + tasksPerPage));
+    }
+
+    if (pages.length === 0) {
+      console.error(`No tasks to display for interaction ID: ${interaction.id}`);
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: '⚠️ No tasks available to display.',
+          flags: 64 // Ephemeral message
+        }
+      };
     }
 
     const embed = createTaskEmbed(0); // First page
