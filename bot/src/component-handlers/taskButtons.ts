@@ -2,7 +2,7 @@ import { APIMessageComponentInteraction, InteractionResponseType, ComponentType,
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { updateResponse } from '../adapters/discord-adapter';
-import { handleTaskList } from '../command-handlers/taskList';
+import { generateTaskListResponse } from '../command-handlers/taskList';
 
 const performTaskAction = async (
   interaction: APIMessageComponentInteraction, 
@@ -366,41 +366,34 @@ export const handleTaskButtonInteraction = async (
   // Handle navigation buttons
   if (customId === 'task_list_my') {
     console.log('Handling My Tasks navigation button');
-    const mockInteraction = {
-      ...interaction,
-      data: {
-        ...interaction.data,
-        options: [
-          { name: 'user', value: userId }
-        ]
-      }
-    } as any;
-    await handleTaskList(mockInteraction);
-    console.log('My Tasks button response type:', InteractionResponseType.ChannelMessageWithSource, 'ephemeral:', true);
+    const { embeds, components } = await generateTaskListResponse(guildId, undefined, undefined, userId);
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
-        content: '👤 Use `/task-list user:@me` to view your tasks!',
+        embeds,
+        components,
         flags: 64
       }
     };
   } else if (customId === 'task_list_completed') {
     console.log('Handling View Completed Tasks navigation button');
-    const mockInteraction = {
-      ...interaction,
-      data: {
-        ...interaction.data,
-        options: [
-          { name: 'status', value: 'completed' }
-        ]
-      }
-    } as any;
-    await handleTaskList(mockInteraction);
-    console.log('View Completed Tasks button response type:', InteractionResponseType.ChannelMessageWithSource, 'ephemeral:', true);
+    const { embeds, components } = await generateTaskListResponse(guildId, 'completed');
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
-        content: '✅ Use `/task-list status:completed` to view completed tasks!',
+        embeds,
+        components,
+        flags: 64
+      }
+    };
+  } else if (customId === 'task_list_all') {
+    console.log('Handling List All Tasks navigation button');
+    const { embeds, components } = await generateTaskListResponse(guildId);
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        embeds,
+        components,
         flags: 64
       }
     };

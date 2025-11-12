@@ -7,7 +7,7 @@ import {
 } from 'discord-api-types/v10';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { PutCommand, GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
-import { updateMessage } from '../adapters/discord-adapter';
+import { updateMessage, updateResponse } from '../adapters/discord-adapter';
 
 export interface TaskListCacheData {
   tasks: any[];
@@ -372,13 +372,13 @@ export const handleTaskListPagination = async (
     return components;
   };
 
-  return {
-    type: InteractionResponseType.UpdateMessage,
-    data: {
-      embeds: [createTaskEmbed(newPage)],
-      components: createComponents(newPage)
-    }
+  const result = {
+    embeds: [createTaskEmbed(newPage)],
+    components: createComponents(newPage) as any
   };
+
+  await updateResponse(interaction.application_id, interaction.token, result);
+  return;
 };
 
 export const refreshTaskListMessages = async (guildId: string) => {
