@@ -135,7 +135,8 @@ export const handleTaskListPagination = async (
   }
 
   const createTaskEmbed = (pageIndex: number): APIEmbed => {
-    if (!data) {
+    if (!data || !Array.isArray(pages) || pages.length === 0) {
+      console.error('Invalid data or pages for embed generation:', { data, pages });
       return {
         title: `📋 ✦ TASK BOARD ✦ 📝`,
         description: '`No tasks found.`',
@@ -201,10 +202,16 @@ export const handleTaskListPagination = async (
       timestamp: new Date().toISOString()
     };
 
+    console.log('Generated embed:', embed);
     return embed;
   };
 
   const createComponents = (currentPage: number) => {
+    if (!Array.isArray(pages) || pages.length === 0) {
+      console.error('Invalid pages for component generation:', { pages });
+      return [];
+    }
+
     const components = [];
 
     if (pages.length > 1) {
@@ -250,39 +257,7 @@ export const handleTaskListPagination = async (
       });
     }
 
-    components.push({
-      type: ComponentType.ActionRow,
-      components: [
-        {
-          type: ComponentType.Button,
-          custom_id: 'task_refresh_list',
-          label: 'Refresh',
-          style: ButtonStyle.Secondary,
-          emoji: { name: '🔄' }
-        },
-        {
-          type: ComponentType.Button,
-          custom_id: 'task_create_new',
-          label: 'Create Task',
-          style: ButtonStyle.Success,
-          emoji: { name: '➕' }
-        },
-        {
-          type: ComponentType.Button,
-          custom_id: 'task_list_all',
-          label: 'View All',
-          style: ButtonStyle.Primary,
-          emoji: { name: '📋' }
-        },
-        {
-          type: ComponentType.Button,
-          label: 'Open Dashboard',
-          style: ButtonStyle.Link,
-          url: `${process.env.DASHBOARD_URL || 'https://d19x3gu4qo04f3.cloudfront.net'}/tasks`
-        }
-      ]
-    });
-
+    console.log('Generated components:', components);
     return components;
   };
 
