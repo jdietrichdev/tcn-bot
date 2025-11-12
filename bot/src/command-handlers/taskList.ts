@@ -217,7 +217,8 @@ export const generateTaskListResponse = async (
 
   const components = [];
 
-  if (totalPages > 1) {
+  if (totalPages > 1 && interactionId) {
+    // Pagination row with interaction-scoped IDs
     components.push({
       type: ComponentType.ActionRow as ComponentType.ActionRow,
       components: [
@@ -260,6 +261,7 @@ export const generateTaskListResponse = async (
     });
   }
 
+  // Secondary row: create/refresh/dashboard + filter shortcuts
   components.push({
     type: ComponentType.ActionRow as ComponentType.ActionRow,
     components: [
@@ -279,6 +281,27 @@ export const generateTaskListResponse = async (
       },
       {
         type: ComponentType.Button as ComponentType.Button,
+        custom_id: 'task_list_all',
+        label: 'All Tasks',
+        style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+        emoji: { name: '📝' }
+      },
+      {
+        type: ComponentType.Button as ComponentType.Button,
+        custom_id: 'task_list_my',
+        label: 'My Tasks',
+        style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+        emoji: { name: '👤' }
+      },
+      {
+        type: ComponentType.Button as ComponentType.Button,
+        custom_id: 'task_list_completed',
+        label: 'Completed',
+        style: ButtonStyle.Secondary as ButtonStyle.Secondary,
+        emoji: { name: '📋' }
+      },
+      {
+        type: ComponentType.Button as ComponentType.Button,
         label: 'Open Dashboard',
         style: ButtonStyle.Link as ButtonStyle.Link,
         url: `${process.env.DASHBOARD_URL || 'https://d19x3gu4qo04f3.cloudfront.net'}/tasks`
@@ -295,8 +318,8 @@ export const generateTaskListResponse = async (
         role: roleFilter,
         user: userFilter
       },
-      channelId: '', // This would need to be passed in from the interaction context
-      messageId: '', // This would need to be passed in from the interaction context
+      channelId: '',
+      messageId: '',
       allTaskCounts: taskCounts
     };
   }
