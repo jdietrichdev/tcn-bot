@@ -582,70 +582,64 @@ export const handleTaskButtonInteraction = async (
   const taskIdMatch = customId.match(/^task_\w+_(.+)$/);
   const taskId = taskIdMatch ? taskIdMatch[1] : null;
 
-  // Navigation buttons: return separate ephemeral responses (simulate /task-list).
-  // Proxy defers via DeferredMessageUpdate; here we override that by sending a
-  // ChannelMessageWithSource ephemeral response from the async handler.
+  // Navigation buttons: simulate `/task-list` variants by editing the deferred response.
+  // The proxy responds with DeferredMessageUpdate (type 6), so we MUST use updateResponse
+  // here instead of returning a second top-level interaction response.
   if (customId === 'task_list_all') {
-    console.log('handleTaskButtonInteraction: generating ephemeral /task-list (all) view from button');
+    console.log('handleTaskButtonInteraction: generating /task-list (all) view from button');
 
     const { embeds, components } = await generateTaskListResponse(
       guildId,
-      undefined,
-      undefined,
-      userId, // NOTE: scoped to clicking user context for personalization if desired
+      undefined,   // status: any
+      undefined,   // role: any
+      undefined,   // user: any (true "All Tasks")
       interaction.id
     );
 
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        embeds,
-        components,
-        flags: 64, // Ephemeral
-      },
-    };
+    await updateResponse(interaction.application_id, interaction.token, {
+      embeds,
+      components,
+    });
+
+    return;
   }
 
   if (customId === 'task_list_my') {
-    console.log('handleTaskButtonInteraction: generating ephemeral /task-list (my tasks) view from button');
+    console.log('handleTaskButtonInteraction: generating /task-list (my tasks) view from button');
 
     const { embeds, components } = await generateTaskListResponse(
       guildId,
-      undefined,
-      undefined,
-      userId,
+      undefined,   // status: any
+      undefined,   // role: any
+      userId,      // filter to clicking user
       interaction.id
     );
 
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        embeds,
-        components,
-        flags: 64, // Ephemeral
-      },
-    };
+    await updateResponse(interaction.application_id, interaction.token, {
+      embeds,
+      components,
+    });
+
+    return;
   }
 
   if (customId === 'task_list_completed') {
-    console.log('handleTaskButtonInteraction: generating ephemeral /task-list (completed) view from button');
+    console.log('handleTaskButtonInteraction: generating /task-list (completed) view from button');
 
     const { embeds, components } = await generateTaskListResponse(
       guildId,
-      'completed',
+      'completed', // only completed tasks
       undefined,
       undefined,
       interaction.id
     );
 
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        embeds,
-        components,
-        flags: 64, // Ephemeral
-      },
-    };
+    await updateResponse(interaction.application_id, interaction.token, {
+      embeds,
+      components,
+    });
+
+    return;
   }
 
   try {

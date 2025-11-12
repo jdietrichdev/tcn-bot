@@ -110,21 +110,23 @@ export const proxy = async (
       body.data.custom_id === "task_list_my" ||
       body.data.custom_id === "task_list_completed";
 
-    // CRITICAL:
-    // Navigation buttons should behave like simulated `/task-list`:
-    // - A single ephemeral message per click, not editing the original.
-    // - But our async handler currently calls updateResponse(), which targets the
-    //   original interaction token (DeferredMessageUpdate flow).
-    //
-    // Returning DeferredChannelMessageWithSource here (type 4/ephemeral) without
-    // switching the handler to followup calls causes the "..." spinner with no update.
-    //
-    // To keep the EventBridge + updateResponse pattern stable and fix the spinner:
-    // - Use DeferredMessageUpdate for ALL task message components.
-    // - Let handleTaskButtonInteraction() edit the original or ephemeral message.
-    //
-    // This removes the mismatch and stops the endless "thinking" state.
-    response = { type: InteractionResponseType.DeferredMessageUpdate };
+    // Make navigation buttons ephemeral:
+    // - For nav buttons, send an ephemeral deferred response
+    //   (DeferredChannelMessageWithSource + flags: Ephemeral).
+    // - Our async EventBridge handler will then complete it by editing this
+    //   ephemeral message via updateResponse.
+    if (isNavButton) {
+      response = {
+        type: InteractionResponseType.DeferredChannelMessageWithSource,
+        data: {
+          flags: MessageFlags.Ephemeral,
+        },
+      };
+    } else {
+      // All other task buttons (claim/complete/unclaim/approve/pagination) stick with
+      // DeferredMessageUpdate and are completed via updateResponse.
+      response = { type: InteractionResponseType.DeferredMessageUpdate };
+    }
   } else if (
     body.type === InteractionType.MessageComponent &&
     body.data.custom_id.startsWith("roster_show_")
