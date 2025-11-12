@@ -271,7 +271,7 @@ export const generateTaskListResponse = async (
     });
   }
 
-  // Secondary row: create/refresh/dashboard + filter shortcuts
+  // Secondary rows: create/refresh/dashboard + filter shortcuts
   components.push({
     type: ComponentType.ActionRow as ComponentType.ActionRow,
     components: [
@@ -305,16 +305,22 @@ export const generateTaskListResponse = async (
       },
       {
         type: ComponentType.Button as ComponentType.Button,
+        label: 'Open Dashboard',
+        style: ButtonStyle.Link as ButtonStyle.Link,
+        url: `${process.env.DASHBOARD_URL || 'https://d19x3gu4qo04f3.cloudfront.net'}/tasks`
+      }
+    ]
+  });
+
+  components.push({
+    type: ComponentType.ActionRow as ComponentType.ActionRow,
+    components: [
+      {
+        type: ComponentType.Button as ComponentType.Button,
         custom_id: 'task_list_completed',
         label: 'Completed',
         style: ButtonStyle.Secondary as ButtonStyle.Secondary,
         emoji: { name: '📋' }
-      },
-      {
-        type: ComponentType.Button as ComponentType.Button,
-        label: 'Open Dashboard',
-        style: ButtonStyle.Link as ButtonStyle.Link,
-        url: `${process.env.DASHBOARD_URL || 'https://d19x3gu4qo04f3.cloudfront.net'}/tasks`
       }
     ]
   });
@@ -335,15 +341,25 @@ export const generateTaskListResponse = async (
   }
 
   // Add validation for embed size and component count
-  const validateDiscordPayload = (embeds: APIEmbed[], components: { components: any[] }[]) => {
+  const validateDiscordPayload = (embeds: APIEmbed[], components: { type: ComponentType.ActionRow, components: any[] }[]) => {
     const embedSize = JSON.stringify(embeds).length;
     if (embedSize > 6000) {
       throw new Error(`Embed size exceeds Discord limit: ${embedSize} characters`);
     }
 
+    if (components.length > 5) {
+      throw new Error(`Action row count exceeds Discord limit: ${components.length}`);
+    }
+
+    for (const row of components) {
+      if (row.components.length > 5) {
+        throw new Error(`Component count in an action row exceeds Discord limit: ${row.components.length}`);
+      }
+    }
+
     const totalComponents = components.reduce((count: number, row: { components: any[] }) => count + row.components.length, 0);
     if (totalComponents > 25) {
-      throw new Error(`Component count exceeds Discord limit: ${totalComponents}`);
+      throw new Error(`Total component count exceeds Discord limit: ${totalComponents}`);
     }
   };
 
