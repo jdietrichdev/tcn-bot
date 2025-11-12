@@ -370,38 +370,53 @@ export const handleTaskButtonInteraction = async (
   const taskIdMatch = customId.match(/^task_\w+_(.+)$/);
   const taskId = taskIdMatch ? taskIdMatch[1] : null;
 
-  // Handle navigation buttons
   if (customId === 'task_list_my') {
-    console.log('Handling My Tasks navigation button');
-    const { embeds, components } = await generateTaskListResponse(guildId, undefined, undefined, userId);
+    console.log('Handling My Tasks navigation button via taskButtons.ts (ephemeral simulated /task-list user filter)');
+
+    const { embeds, components } = await generateTaskListResponse(
+      guildId,
+      undefined,          // statusFilter
+      undefined,          // roleFilter
+      userId              // userFilter
+    );
+
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
         embeds,
         components,
-        flags: 64
+        flags: 64 
       }
     };
   } else if (customId === 'task_list_completed') {
-    console.log('Handling View Completed Tasks navigation button');
-    const { embeds, components } = await generateTaskListResponse(guildId, 'completed');
+    console.log('Handling View Completed Tasks navigation button via taskButtons.ts (ephemeral simulated /task-list status:completed)');
+
+    const { embeds, components } = await generateTaskListResponse(
+      guildId,
+      'completed'         
+    );
+
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
         embeds,
         components,
-        flags: 64
+        flags: 64 
       }
     };
   } else if (customId === 'task_list_all') {
-    console.log('Handling List All Tasks navigation button');
-    const { embeds, components } = await generateTaskListResponse(guildId);
+    console.log('Handling List All Tasks navigation button via taskButtons.ts (ephemeral simulated /task-list all)');
+
+    const { embeds, components } = await generateTaskListResponse(
+      guildId
+    );
+
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
         embeds,
         components,
-        flags: 64
+        flags: 64 
       }
     };
   }
@@ -532,7 +547,6 @@ export const handleTaskButtonInteraction = async (
       console.log(`Processing approve action for task ${taskId}, isTaskMessage: ${isTaskMessage}`);
       if (isTaskMessage) {
         console.log(`Taking isTaskMessage true path for task ${taskId}`);
-        // Double check: Only show approve button on public messages
         const isEphemeral = interaction.message?.flags === 64;
         if (isEphemeral) {
           console.log('Approve button pressed on ephemeral message.');
@@ -583,7 +597,6 @@ export const handleTaskButtonInteraction = async (
     };
   }
 
-  // If no matching custom_id was found
   return {
     type: InteractionResponseType.ChannelMessageWithSource,
     data: {
