@@ -104,24 +104,36 @@ export const proxy = async (
       body.data.custom_id === "task_list_completed"
     )
   ) {
-    console.log("Task list navigation button clicked (route via EventBridge only)");
-    await eventClient.send(
-      new PutEventsCommand({
-        Entries: [
-          {
-            Detail: event.body!,
-            DetailType: "Bot Event Received",
-            Source: "tcn-bot-event",
-            EventBusName: "tcn-bot-events",
-          },
-        ],
-      })
+    console.log("Task list navigation button clicked (synchronous ephemeral /task-list simulation)");
+
+    const { generateTaskListResponse } = await import("./command-handlers/taskList");
+
+    const guildId = body.guild_id!;
+    const userId =
+      (body as any).member?.user?.id ||
+      (body as any).user?.id;
+
+    let statusFilter: string | undefined;
+    let userFilter: string | undefined;
+
+    if (body.data.custom_id === "task_list_completed") {
+      statusFilter = "completed";
+    } else if (body.data.custom_id === "task_list_my") {
+      userFilter = userId;
+    }
+
+    const { embeds, components } = await generateTaskListResponse(
+      guildId,
+      statusFilter,
+      undefined,
+      userFilter
     );
-   
+
     response = {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
-        content: "📋 Loading task view... Use `/task-list` for the full board if this does not appear.",
+        embeds,
+        components,
         flags: MessageFlags.Ephemeral,
       },
     };
