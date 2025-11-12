@@ -44,8 +44,9 @@ export const formatTaskAssignments = (task: any): string => {
   return parts.length > 0 ? `\n    ↳ ${parts.join(' • ')}` : '';
 };
 
+// Increase the TTL value to extend cache expiry duration
 export const storeCacheInDynamoDB = async (interactionId: string, data: TaskListCacheData) => {
-  const ttl = Math.floor(Date.now() / 1000) + (15 * 60);
+  const ttl = Math.floor(Date.now() / 1000) + (30 * 60); // Extend TTL to 30 minutes
   await dynamoDbClient.send(
     new PutCommand({
       TableName: 'BotTable',
@@ -121,103 +122,6 @@ export const handleTaskListPagination = async (
         flags: 64
       }
     };
-  }
-
-  // Handle view all
-  if (customId === 'task_list_all') {
-    console.log(`Handling task_list_all button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
-    const response = {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        content: '📋 Use `/task-list` to view all tasks!',
-        flags: 64
-      }
-    };
-    console.log(`Returning ephemeral response for task_list_all:`, JSON.stringify(response, null, 2));
-    return response;
-  }
-
-  // Handle my tasks
-  if (customId === 'task_list_my') {
-    console.log(`Handling task_list_my button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
-    console.log(`Handling task_list_my button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
-    // Navigation button should send ephemeral message
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        content: '👤 Use `/task-list user:@me` to view your tasks!',
-        flags: 64
-      }
-    };
-  }
-
-  // Handle completed tasks
-  if (customId === 'task_list_completed') {
-    console.log(`Handling task_list_completed button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
-    console.log(`Handling task_list_completed button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
-    // Navigation button should send ephemeral message
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        content: '✅ Use `/task-list status:completed` to view completed tasks!',
-        flags: 64
-      }
-    };
-  }
-
-  const parts = customId.split('_');
-  const action = parts[2];
-  const originalInteractionId = parts[3];
-
-  console.log(`Task list pagination: action=${action}, originalInteractionId=${originalInteractionId}`);
-
-  let data = await getCacheFromDynamoDB(originalInteractionId);
-
-  if (!data) {
-    console.error(`Task list cache miss for interaction ID: ${originalInteractionId}`);
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        content: '⚠️ This pagination has expired. Please run `/task-list` again.',
-        flags: 64
-      }
-    };
-  }
-
-  console.log(`Task list cache hit! Data has ${data.tasks.length} tasks`);
-
-  const currentMessage = interaction.message;
-  const currentPageMatch = currentMessage.embeds?.[0]?.footer?.text?.match(/Page (\d+) of (\d+)/);
-  if (!currentPageMatch) {
-    return {
-      type: InteractionResponseType.UpdateMessage,
-      data: {}
-    };
-  }
-
-  const currentPage = parseInt(currentPageMatch[1]) - 1;
-  const totalPages = parseInt(currentPageMatch[2]);
-
-  let newPage = currentPage;
-  switch (action) {
-    case 'first':
-      newPage = 0;
-      break;
-    case 'prev':
-      newPage = Math.max(0, currentPage - 1);
-      break;
-    case 'next':
-      newPage = Math.min(totalPages - 1, currentPage + 1);
-      break;
-    case 'last':
-      newPage = totalPages - 1;
-      break;
-  }
-
-  const tasksPerPage = 8;
-  const pages: any[][] = [];
-  for (let i = 0; i < data.tasks.length; i += tasksPerPage) {
-    pages.push(data.tasks.slice(i, i + tasksPerPage));
   }
 
   const createTaskEmbed = (pageIndex: number): APIEmbed => {
@@ -371,6 +275,95 @@ export const handleTaskListPagination = async (
 
     return components;
   };
+
+  // Ensure buttons for "View All Tasks," "My Tasks," and "Completed Tasks" send ephemeral messages
+  if (customId === 'task_list_all' || customId === 'task_list_my' || customId === 'task_list_completed') {
+    console.log(`Handling ${customId} button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message with pagination`);
+
+    const data = await getCacheFromDynamoDB(interaction.id);
+    if (!data) {
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: '⚠️ No tasks found. Please try again later.',
+          flags: 64 // Ephemeral message
+        }
+      };
+    }
+
+    const tasksPerPage = 8;
+    const pages = [];
+    for (let i = 0; i < data.tasks.length; i += tasksPerPage) {
+      pages.push(data.tasks.slice(i, i + tasksPerPage));
+    }
+
+    const embed = createTaskEmbed(0); // First page
+    const components = createComponents(0); // Pagination buttons
+
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        embeds: [embed],
+        components: components,
+        flags: 64 // Ephemeral message
+      }
+    };
+  }
+
+  const parts = customId.split('_');
+  const action = parts[2];
+  const originalInteractionId = parts[3];
+
+  console.log(`Task list pagination: action=${action}, originalInteractionId=${originalInteractionId}`);
+
+  let data = await getCacheFromDynamoDB(originalInteractionId);
+
+  if (!data) {
+    console.error(`Task list cache miss for interaction ID: ${originalInteractionId}`);
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        content: '⚠️ This pagination has expired. Please run `/task-list` again.',
+        flags: 64
+      }
+    };
+  }
+
+  console.log(`Task list cache hit! Data has ${data.tasks.length} tasks`);
+
+  const currentMessage = interaction.message;
+  const currentPageMatch = currentMessage.embeds?.[0]?.footer?.text?.match(/Page (\d+) of (\d+)/);
+  if (!currentPageMatch) {
+    return {
+      type: InteractionResponseType.UpdateMessage,
+      data: {}
+    };
+  }
+
+  const currentPage = parseInt(currentPageMatch[1]) - 1;
+  const totalPages = parseInt(currentPageMatch[2]);
+
+  let newPage = currentPage;
+  switch (action) {
+    case 'first':
+      newPage = 0;
+      break;
+    case 'prev':
+      newPage = Math.max(0, currentPage - 1);
+      break;
+    case 'next':
+      newPage = Math.min(totalPages - 1, currentPage + 1);
+      break;
+    case 'last':
+      newPage = totalPages - 1;
+      break;
+  }
+
+  const tasksPerPage = 8;
+  const pages: any[][] = [];
+  for (let i = 0; i < data.tasks.length; i += tasksPerPage) {
+    pages.push(data.tasks.slice(i, i + tasksPerPage));
+  }
 
   const result = {
     embeds: [createTaskEmbed(newPage)],

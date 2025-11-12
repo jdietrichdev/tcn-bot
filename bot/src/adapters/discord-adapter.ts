@@ -746,3 +746,41 @@ export const createEvent = async (
     }
   }
 };
+
+// Add test cases for `updateResponse` and `updateMessage` functions
+
+// Test `updateResponse`
+(async () => {
+  try {
+    const applicationId = 'testAppId';
+    const interactionToken = 'testToken';
+    const response = {
+      content: 'Test update response',
+      embeds: [],
+      components: []
+    };
+
+    await updateResponse(applicationId, interactionToken, response);
+    console.log('updateResponse test passed');
+  } catch (error) {
+    console.error('updateResponse test failed:', error);
+  }
+})();
+
+// Test `updateMessage`
+(async () => {
+  try {
+    const channelId = 'testChannelId';
+    const messageId = 'testMessageId';
+    const message = {
+      content: 'Test update message',
+      embeds: [],
+      components: []
+    };
+
+    await updateMessage(channelId, messageId, message);
+    console.log('updateMessage test passed');
+  } catch (error) {
+    console.error('updateMessage test failed:', error);
+  }
+})();
