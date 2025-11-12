@@ -1,7 +1,7 @@
 import { APIMessageComponentInteraction, InteractionResponseType, ComponentType, ButtonStyle } from 'discord-api-types/v10';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { updateResponse } from '../adapters/discord-adapter';
+import { updateResponse, sendFollowupMessage } from '../adapters/discord-adapter';
 import { generateTaskListResponse } from '../command-handlers/taskList';
 
 const performTaskAction = async (
