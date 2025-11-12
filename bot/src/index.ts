@@ -95,7 +95,6 @@ export const proxy = async (
         ],
       })
     );
-    // For these, we update the original message (claim/complete/etc or list pagination)
     response = { type: InteractionResponseType.DeferredMessageUpdate };
   } else if (
     body.type === InteractionType.MessageComponent &&
@@ -105,7 +104,7 @@ export const proxy = async (
       body.data.custom_id === "task_list_completed"
     )
   ) {
-    console.log("Task list navigation button clicked (immediate ephemeral response)");
+    console.log("Task list navigation button clicked (route via EventBridge only)");
     await eventClient.send(
       new PutEventsCommand({
         Entries: [
@@ -118,10 +117,11 @@ export const proxy = async (
         ],
       })
     );
-    // Let the async handler generate a new ephemeral message that simulates /task-list.
+   
     response = {
-      type: InteractionResponseType.DeferredChannelMessageWithSource,
+      type: InteractionResponseType.ChannelMessageWithSource,
       data: {
+        content: "📋 Loading task view... Use `/task-list` for the full board if this does not appear.",
         flags: MessageFlags.Ephemeral,
       },
     };
