@@ -288,7 +288,7 @@ const performTaskAction = async (
     new GetCommand({
       TableName: 'BotTable',
       Key: {
-  pk: guildId,
+        pk: guildId,
         sk: `task#${taskId}`,
       },
     })
@@ -300,9 +300,26 @@ const performTaskAction = async (
     };
   }
 
+  // IMPORTANT:
+  // Use the freshly-loaded task snapshot for visual indicators so that
+  // multi-claim and partial-completion progress (X/Y) is accurate AFTER updates.
   const task = getTaskResult.Item;
-  
   const now = new Date().toISOString();
+
+  // Multi-claim visual state derived from latest task
+  const multiClaimEnabled = task.multipleClaimsAllowed === true;
+  const claimedByUsers: string[] = Array.isArray(task.claimedByUsers)
+    ? task.claimedByUsers
+    : (task.claimedBy ? [task.claimedBy] : []);
+  const completedByUsers: string[] = Array.isArray(task.completedByUsers)
+    ? task.completedByUsers
+    : [];
+
+  // Summary line appended to description for multi-claim tasks, reflecting latest DB state
+  const multiClaimSummary =
+    multiClaimEnabled && claimedByUsers.length > 0
+      ? `\n**👥 Multi-Claim:** \`${completedByUsers.length}/${claimedByUsers.length}\` contributors completed`
+      : '';
 
   let title = '';
   let color = 0;
@@ -341,21 +358,6 @@ const performTaskAction = async (
     medium: '🟡',
     low: '🟢'
   };
-
-  // Multi-claim visual state
-  const multiClaimEnabled = task.multipleClaimsAllowed === true;
-  const claimedByUsers: string[] = Array.isArray(task.claimedByUsers)
-    ? task.claimedByUsers
-    : (task.claimedBy ? [task.claimedBy] : []);
-  const completedByUsers: string[] = Array.isArray(task.completedByUsers)
-    ? task.completedByUsers
-    : [];
-
-  // Summary line appended to description for multi-claim tasks
-  const multiClaimSummary =
-    multiClaimEnabled && claimedByUsers.length > 0
-      ? `\n**👥 Multi-Claim:** \`${completedByUsers.length}/${claimedByUsers.length}\` contributors completed`
-      : '';
 
   let embed;
 
@@ -418,9 +420,15 @@ const performTaskAction = async (
             inline: false
           },
           {
-            name: `👤 **${actionType === 'complete' ? 'Completed' : actionType === 'unclaim' ? 'Unclaimed' : 'Approved'} By**`,
-            value: `<@${userId}>`,
-            inline: true
+            // For multi-claim, show all users who have completed so far.
+            // For single-claim, this is just the acting user.
+            name: multiClaimEnabled
+              ? '✅ **Completed By (All Contributors)**'
+              : `👤 **${actionType === 'complete' ? 'Completed' : actionType === 'unclaim' ? 'Unclaimed' : 'Approved'} By**`,
+            value: multiClaimEnabled && completedByUsers.length > 0
+              ? completedByUsers.map((id: string) => `<@${id}>`).join(', ')
+              : `<@${userId}>`,
+            inline: false
           },
           // For multi-claim tasks, also show all current claimants in a dedicated field.
           ...(multiClaimEnabled && claimedByUsers.length > 0
@@ -574,111 +582,70 @@ export const handleTaskButtonInteraction = async (
   const taskIdMatch = customId.match(/^task_\w+_(.+)$/);
   const taskId = taskIdMatch ? taskIdMatch[1] : null;
 
-  // Handle navigation buttons via async handler (EventBridge path).
-  // proxy() defers all task_list_* buttons; we must return a full response here.
-  // NOTE: These buttons are wired to the EventBridge/async handler path.
-  // proxy() currently uses DeferredMessageUpdate (type 6) for component interactions,
-  // which means this handler MUST use updateResponse() instead of returning a new response object.
+  // Navigation buttons: return separate ephemeral responses (simulate /task-list).
+  // Proxy defers via DeferredMessageUpdate; here we override that by sending a
+  // ChannelMessageWithSource ephemeral response from the async handler.
   if (customId === 'task_list_all') {
-    console.log('handleTaskButtonInteraction: generating /task-list (all) view from button');
+    console.log('handleTaskButtonInteraction: generating ephemeral /task-list (all) view from button');
 
-    // Use interaction.id to scope pagination/cache for this ephemeral view,
-    // mirroring /task-list behavior.
-    const { embeds, components, cacheData } = await generateTaskListResponse(
+    const { embeds, components } = await generateTaskListResponse(
       guildId,
       undefined,
       undefined,
-      undefined,
+      userId, // NOTE: scoped to clicking user context for personalization if desired
       interaction.id
     );
 
-    await updateResponse(interaction.application_id, interaction.token, {
-      embeds,
-      components,
-    });
-
-    // If pagination is available, store cache so paginator buttons work.
-    if (cacheData) {
-      try {
-        const { storeCacheInDynamoDB } = await import('./taskListButton');
-        cacheData.channelId = interaction.channel_id || '';
-        cacheData.messageId = interaction.message?.id || '';
-        await storeCacheInDynamoDB(interaction.id, cacheData);
-        console.log(
-          `Cached task list (all) from button: interaction=${interaction.id}, message=${cacheData.messageId}, channel=${cacheData.channelId}`
-        );
-      } catch (err) {
-        console.error('Failed to cache task list (all) from button:', err);
-      }
-    }
-
-    return;
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        embeds,
+        components,
+        flags: 64, // Ephemeral
+      },
+    };
   }
 
   if (customId === 'task_list_my') {
-    console.log('handleTaskButtonInteraction: generating /task-list (my tasks) view from button');
+    console.log('handleTaskButtonInteraction: generating ephemeral /task-list (my tasks) view from button');
 
-    const { embeds, components, cacheData } = await generateTaskListResponse(
+    const { embeds, components } = await generateTaskListResponse(
       guildId,
-      undefined,      // status
-      undefined,      // role
-      userId,         // userFilter
+      undefined,
+      undefined,
+      userId,
       interaction.id
     );
 
-    await updateResponse(interaction.application_id, interaction.token, {
-      embeds,
-      components,
-    });
-
-    if (cacheData) {
-      try {
-        const { storeCacheInDynamoDB } = await import('./taskListButton');
-        cacheData.channelId = interaction.channel_id || '';
-        cacheData.messageId = interaction.message?.id || '';
-        await storeCacheInDynamoDB(interaction.id, cacheData);
-        console.log(
-          `Cached task list (my) from button: interaction=${interaction.id}, message=${cacheData.messageId}, channel=${cacheData.channelId}`
-        );
-      } catch (err) {
-        console.error('Failed to cache task list (my) from button:', err);
-      }
-    }
-
-    return;
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        embeds,
+        components,
+        flags: 64, // Ephemeral
+      },
+    };
   }
 
   if (customId === 'task_list_completed') {
-    console.log('handleTaskButtonInteraction: generating /task-list (completed) view from button');
+    console.log('handleTaskButtonInteraction: generating ephemeral /task-list (completed) view from button');
 
-    const { embeds, components, cacheData } = await generateTaskListResponse(
+    const { embeds, components } = await generateTaskListResponse(
       guildId,
-      'completed',    // status
+      'completed',
       undefined,
       undefined,
       interaction.id
     );
 
-    await updateResponse(interaction.application_id, interaction.token, {
-      embeds,
-      components,
-    });
-
-    if (cacheData) {
-      try {
-        const { storeCacheInDynamoDB } = await import('./taskListButton');
-        cacheData.channelId = interaction.channel_id || '';
-        cacheData.messageId = interaction.message?.id || '';
-        await storeCacheInDynamoDB(interaction.id, cacheData);
-        console.log(
-          `Cached task list (completed) from button: interaction=${interaction.id}, message=${cacheData.messageId}, channel=${cacheData.channelId}`
-        );
-      } catch (err) {
-        console.error('Failed to cache task list (completed) from button:', err);
-      }
-    }
-
-    return;
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        embeds,
+        components,
+        flags: 64, // Ephemeral
+      },
+    };
   }
 
   try {
