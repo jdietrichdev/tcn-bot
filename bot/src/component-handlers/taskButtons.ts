@@ -546,8 +546,54 @@ export const handleTaskButtonInteraction = async (
   const taskIdMatch = customId.match(/^task_\w+_(.+)$/);
   const taskId = taskIdMatch ? taskIdMatch[1] : null;
 
-  // Navigation buttons are now handled synchronously in proxy(), not here.
-  // If they reach this handler, fall through to generic logic.
+  // Handle navigation buttons via async handler (EventBridge path).
+  // proxy() defers all task_list_* buttons; we must return a full response here.
+  if (customId === 'task_list_all') {
+    console.log('handleTaskButtonInteraction: generating /task-list (all) view from button');
+    const { embeds, components } = await generateTaskListResponse(guildId);
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        embeds,
+        components,
+        flags: 64, // ephemeral, scoped to clicking user
+      },
+    };
+  }
+
+  if (customId === 'task_list_my') {
+    console.log('handleTaskButtonInteraction: generating /task-list (my tasks) view from button');
+    const { embeds, components } = await generateTaskListResponse(
+      guildId,
+      undefined,      // status
+      undefined,      // role
+      userId          // userFilter
+    );
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        embeds,
+        components,
+        flags: 64,
+      },
+    };
+  }
+
+  if (customId === 'task_list_completed') {
+    console.log('handleTaskButtonInteraction: generating /task-list (completed) view from button');
+    const { embeds, components } = await generateTaskListResponse(
+      guildId,
+      'completed'     // status
+    );
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        embeds,
+        components,
+        flags: 64,
+      },
+    };
+  }
 
   try {
     console.log(`Handling task button: ${customId}, isTaskMessage: ${isTaskMessage}, taskId: ${taskId}`);
