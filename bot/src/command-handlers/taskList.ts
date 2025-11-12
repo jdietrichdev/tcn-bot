@@ -324,6 +324,34 @@ export const generateTaskListResponse = async (
     };
   }
 
+  // Add validation for embed size and component count
+  const validateDiscordPayload = (embeds: APIEmbed[], components: { components: any[] }[]) => {
+    const embedSize = JSON.stringify(embeds).length;
+    if (embedSize > 6000) {
+      throw new Error(`Embed size exceeds Discord limit: ${embedSize} characters`);
+    }
+
+    const totalComponents = components.reduce((count: number, row: { components: any[] }) => count + row.components.length, 0);
+    if (totalComponents > 25) {
+      throw new Error(`Component count exceeds Discord limit: ${totalComponents}`);
+    }
+  };
+
+  // Wrap the logic in a try-catch block
+  try {
+    validateDiscordPayload([embed], components);
+  } catch (error) {
+    console.error('Error generating task list response:', error);
+    return {
+      embeds: [{
+        title: 'Error',
+        description: 'An error occurred while generating the task list. Please try again later.',
+        color: 0xFF0000,
+      }],
+      components: [],
+    };
+  }
+
   return { embeds: [embed], components, cacheData };
 };
 
