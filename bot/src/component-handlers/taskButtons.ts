@@ -37,9 +37,39 @@ const performTaskAction = async (
 
     const allowsMultiple = task.multipleClaimsAllowed === true;
 
+    // Eligibility enforcement (same as before, now applied for both single and multi-claim):
+    // - If assignedUserIds / assignedTo present -> only those users can claim.
+    // - If assignedRoleIds / assignedRole present -> only members with those roles can claim.
+    const member = interaction.member;
+    const memberRoles: string[] = Array.isArray(member?.roles) ? (member!.roles as string[]) : [];
+
+    const assignedUsers: string[] = Array.isArray(task.assignedUserIds)
+      ? task.assignedUserIds
+      : (task.assignedTo ? [task.assignedTo] : []);
+
+    const assignedRoles: string[] = Array.isArray(task.assignedRoleIds)
+      ? task.assignedRoleIds
+      : (task.assignedRole ? [task.assignedRole] : []);
+
+    // If specific users are assigned, caller must be one of them.
+    if (assignedUsers.length > 0 && !assignedUsers.includes(userId)) {
+      console.log(`User ${userId} is not in assignedUsers for task ${taskId}`);
+      return {
+        content: '❌ You are not assigned to this task.',
+      };
+    }
+
+    // If specific roles are assigned, caller must have at least one.
+    if (assignedRoles.length > 0 && !memberRoles.some((r) => assignedRoles.includes(r))) {
+      console.log(`User ${userId} does not have required role for task ${taskId}`);
+      return {
+        content: '❌ You do not have the required role to claim this task.',
+      };
+    }
+
     // Multiple-claim logic:
     // - If multipleClaimsAllowed is false: preserve original single-claim behavior.
-    // - If true: allow multiple users to claim by tracking them in claimedByUsers[]
+    // - If true: allow multiple eligible users to claim by tracking them in claimedByUsers[]
     //   while keeping status 'claimed'.
     if (!allowsMultiple) {
       if (task.status !== 'pending') {

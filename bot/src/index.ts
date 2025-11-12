@@ -79,13 +79,10 @@ export const proxy = async (
       body.data.custom_id.startsWith("task_list_last_") ||
       body.data.custom_id.startsWith("task_list_page_") ||
       body.data.custom_id === "task_refresh_list" ||
-      body.data.custom_id === "task_create_new" ||
-      body.data.custom_id === "task_list_all" ||
-      body.data.custom_id === "task_list_my" ||
-      body.data.custom_id === "task_list_completed"
+      body.data.custom_id === "task_create_new"
     )
   ) {
-    console.log("Task management / task-list button clicked (deferred via EventBridge)");
+    console.log("Task management button clicked (deferred via EventBridge)");
     await eventClient.send(
       new PutEventsCommand({
         Entries: [
@@ -98,8 +95,49 @@ export const proxy = async (
         ],
       })
     );
-    
+
     response = { type: InteractionResponseType.DeferredMessageUpdate };
+  } else if (
+    body.type === InteractionType.MessageComponent &&
+    (
+      body.data.custom_id === "task_list_all" ||
+      body.data.custom_id === "task_list_my" ||
+      body.data.custom_id === "task_list_completed"
+    )
+  ) {
+    console.log("Task list navigation button clicked (sync ephemeral /task-list simulation)");
+
+    const { generateTaskListResponse } = await import("./command-handlers/taskList");
+
+    const guildId = body.guild_id!;
+    const userId =
+      (body as any).member?.user?.id ||
+      (body as any).user?.id;
+
+    let statusFilter: string | undefined;
+    let userFilter: string | undefined;
+
+    if (body.data.custom_id === "task_list_completed") {
+      statusFilter = "completed";
+    } else if (body.data.custom_id === "task_list_my") {
+      userFilter = userId;
+    }
+
+    const { embeds, components } = await generateTaskListResponse(
+      guildId,
+      statusFilter,
+      undefined,
+      userFilter
+    );
+
+    response = {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        embeds,
+        components,
+        flags: MessageFlags.Ephemeral,
+      },
+    };
   } else if (
     body.type === InteractionType.MessageComponent &&
     body.data.custom_id.startsWith("roster_show_")
