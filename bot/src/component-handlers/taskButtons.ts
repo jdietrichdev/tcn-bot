@@ -130,14 +130,20 @@ export const handleTaskButtonInteraction = async (
   const customId = interaction.data.custom_id;
   const guildId = interaction.guild_id!;
   const userId = interaction.member?.user?.id || interaction.user?.id!;
+  const isEphemeral = interaction.message?.flags === 64;
 
-  console.log(`[DEBUG] Handling button interaction: customId=${customId}, guildId=${guildId}, userId=${userId}`);
+  console.log(`[DEBUG] Handling button interaction: customId=${customId}, guildId=${guildId}, userId=${userId}, isEphemeral=${isEphemeral}`);
+  console.log(`[DEBUG] Message embed count: ${interaction.message?.embeds?.length || 0}`);
+  console.log(`[DEBUG] Message component count: ${interaction.message?.components?.length || 0}`);
 
   // Handle action buttons - perform action then return ephemeral task list
   const taskIdMatch = customId.match(/^task_\w+_(.+)$/);
   const taskId = taskIdMatch ? taskIdMatch[1] : null;
 
+  console.log(`[DEBUG] Extracted taskId: ${taskId} from customId: ${customId}`);
+
   if (!taskId) {
+    console.log(`[DEBUG] No valid taskId found in customId: ${customId}`);
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
@@ -158,7 +164,10 @@ export const handleTaskButtonInteraction = async (
     actionType = 'approve';
   }
 
+  console.log(`[DEBUG] Determined actionType: ${actionType} for customId: ${customId}`);
+
   if (!actionType) {
+    console.log(`[DEBUG] Unknown action type for customId: ${customId}`);
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
@@ -217,6 +226,13 @@ export const handleTaskButtonInteraction = async (
     console.log(`[DEBUG] Generating task list response for user ${userId}, filter: ${filter}, claimedBy: ${claimedBy}`);
     const { embeds, components } = await generateTaskListResponse(guildId, filter, undefined, claimedBy);
     console.log(`[DEBUG] Generated response with ${embeds?.length || 0} embeds and ${components?.length || 0} components`);
+
+    if (components && components.length > 0) {
+      console.log(`[DEBUG] First component row has ${components[0].components?.length || 0} buttons`);
+      if (components[0].components && components[0].components.length > 0) {
+        console.log(`[DEBUG] Button custom_ids: ${components[0].components.map((c: any) => c.custom_id).join(', ')}`);
+      }
+    }
 
     // Return UpdateMessage to modify the original embed in place
     const updateMessageResponse = {
