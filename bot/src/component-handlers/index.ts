@@ -25,70 +25,53 @@ import { handleSubsApproval } from "./subsApproval";
 import { handleRecruiterScorePagination } from "./recruiterScoreButton";
 import { handleRecruiterLeaderboardRefresh } from "./recruiterLeaderboard";
 
+type Handler = (interaction: APIMessageComponentInteraction, config?: any) => Promise<any>;
+
+const handlers: Record<string, Handler> = {
+  approveApp: (interaction, config) => approveApp(interaction, config),
+  messageRecruit: (interaction) => messageRecruit(interaction),
+  closeRecruit: (interaction) => closeRecruit(interaction),
+  closeTicket: (interaction, config) => closeTicket(interaction, config),
+  deleteTicket: (interaction, config) => deleteTicket(interaction, config),
+  reopenTicket: (interaction, config) => reopenTicket(interaction, config),
+  grantRoles: (interaction, config) => grantRoles(interaction, config),
+  removeRoles: (interaction, config) => removeRoles(interaction, config),
+  confirmDelete: (interaction) => confirmDelete(interaction),
+  rejectDelete: (interaction) => rejectDelete(interaction),
+  signupCwl: (interaction) => signupCwl(interaction),
+  exportCwlQuestions: (interaction) => exportCwlQuestions(interaction),
+  nominationResults: (interaction) => nominationResults(interaction),
+  recruiter_leaderboard_refresh: (interaction) => handleRecruiterLeaderboardRefresh(interaction),
+};
+
+const prefixHandlers: Record<string, Handler> = {
+  task_list: (interaction) => handleTaskListPagination(interaction, interaction.data.custom_id),
+  task_: (interaction) => handleTaskButtonInteraction(interaction),
+  claim: (interaction) => claimEvent(interaction),
+  answer: (interaction) => answerQuestion(interaction),
+  unrostered_: (interaction) => handleUnrosteredPagination(interaction, interaction.data.custom_id),
+  recruiter_score_: (interaction) => handleRecruiterScorePagination(interaction, interaction.data.custom_id),
+  approve_sub_: (interaction) => handleSubsApproval(interaction),
+  deny_sub_: (interaction) => handleSubsApproval(interaction),
+};
+
 export const handleComponent = async (
   interaction: APIMessageComponentInteraction
 ): Promise<any> => {
   const customId = interaction.data.custom_id;
   console.log(`[handleComponent] Received custom_id: ${customId}`);
-  
-  if (
-    customId.startsWith("task_list_first_") ||
-    customId.startsWith("task_list_prev_") ||
-    customId.startsWith("task_list_next_") ||
-    customId.startsWith("task_list_last_") ||
-    customId.startsWith("task_list_page_") ||
-    customId === "task_refresh_list" ||
-    customId === "task_create_new" ||
-    customId.startsWith("task_list_all") ||
-    customId.startsWith("task_list_my") ||
-    customId.startsWith("task_list_completed")
-  ) {
-    console.log("[handleComponent] Routing to handleTaskListPagination for task list pagination/refresh");
-    return await handleTaskListPagination(interaction, customId);
-  } else if (customId.startsWith("task_")) {
-    console.log("[handleComponent] Routing to handleTaskButtonInteraction for task action button");
-    return await handleTaskButtonInteraction(interaction);
-  } else if (customId === "approveApp") {
-    console.log(`[handleComponent] Handling approveApp for message: ${interaction.message.id}`);
-    await approveApp(interaction, getConfig(interaction.guild_id!));
-  } else if (customId === "messageRecruit") {
-    await messageRecruit(interaction);
-  } else if (customId === "closeRecruit") {
-    await closeRecruit(interaction);
-  } else if (customId === "closeTicket") {
-    await closeTicket(interaction, getConfig(interaction.guild_id!));
-  } else if (customId === "deleteTicket") {
-    await deleteTicket(interaction, getConfig(interaction.guild_id!));
-  } else if (customId === "reopenTicket") {
-    await reopenTicket(interaction, getConfig(interaction.guild_id!));
-  } else if (customId === "grantRoles") {
-    await grantRoles(interaction, getConfig(interaction.guild_id!));
-  } else if (customId === "removeRoles") {
-    await removeRoles(interaction, getConfig(interaction.guild_id!));
-  } else if (customId === "confirmDelete") {
-    await confirmDelete(interaction);
-  } else if (customId === "rejectDelete") {
-    await rejectDelete(interaction);
-  } else if (customId === "signupCwl") {
-    await signupCwl(interaction);
-  } else if (customId === "exportCwlQuestions") {
-    await exportCwlQuestions(interaction);
-  } else if (customId.startsWith("claim")) {
-    await claimEvent(interaction);
-  } else if (customId === "nominationResults") {
-    await nominationResults(interaction);
-  } else if (customId.startsWith("answer")) {
-    await answerQuestion(interaction);
-  } else if (customId.startsWith("unrostered_")) {
-    return await handleUnrosteredPagination(interaction, customId);
-  } else if (customId.startsWith("recruiter_score_")) {
-    await handleRecruiterScorePagination(interaction, customId);
-  } else if (customId.startsWith("approve_sub_") || customId.startsWith("deny_sub_")) {
-    console.log(`[handleComponent] Routing to handleSubsApproval for: ${customId}`);
-    await handleSubsApproval(interaction);
-  } else if (customId === "recruiter_leaderboard_refresh") {
-    await handleRecruiterLeaderboardRefresh(interaction);
-  } else {
-    console.log(`[handleComponent] No handler found for custom_id: ${customId}`);
+
+  if (handlers[customId]) {
+    const needsConfig = ["approveApp", "closeTicket", "deleteTicket", "reopenTicket", "grantRoles", "removeRoles"].includes(customId);
+    const config = needsConfig ? getConfig(interaction.guild_id!) : undefined;
+    return await handlerscustomId;
   }
+
+  for (const prefix in prefixHandlers) {
+    if (customId.startsWith(prefix)) {
+      return await prefixHandlersprefix;
+    }
+  }
+
+  console.log(`[handleComponent] No handler found for custom_id: ${customId}`);
 };
