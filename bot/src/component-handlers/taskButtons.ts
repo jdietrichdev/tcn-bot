@@ -163,6 +163,10 @@ const performTaskAction = async (
       ? taskBefore.claimedByUsers
       : (taskBefore.claimedBy ? [taskBefore.claimedBy] : []);
 
+    const assignedRoles: string[] = Array.isArray(taskBefore.assignedRoleIds)
+      ? taskBefore.assignedRoleIds
+      : (taskBefore.assignedRole ? [taskBefore.assignedRole] : []);
+
     // For multi-claim tasks, we require ALL claimants to mark complete.
     // We track per-user completions in completedByUsers[].
     if (allowsMultiple) {
