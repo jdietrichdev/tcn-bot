@@ -1,14 +1,15 @@
-import { APIMessageComponentInteraction, InteractionResponseType, ComponentType, ButtonStyle } from 'discord-api-types/v10';
+import { APIChatInputApplicationCommandInteraction, APIMessageComponentInteraction, InteractionResponseType, ComponentType, ButtonStyle } from 'discord-api-types/v10';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { updateResponse, sendFollowupMessage } from '../adapters/discord-adapter';
 import { generateTaskListResponse } from '../command-handlers/taskList';
 
-const performTaskAction = async (
-  interaction: APIMessageComponentInteraction, 
+export const performTaskAction = async (
+  interaction: APIMessageComponentInteraction | APIChatInputApplicationCommandInteraction, 
   taskId: string, 
   guildId: string,
-  actionType: 'claim' | 'complete' | 'unclaim' | 'approve'
+  actionType: 'claim' | 'complete' | 'unclaim' | 'approve',
+  notes?: string
 ) => {
   const userId = interaction.member?.user?.id || interaction.user?.id!;
   
@@ -259,22 +260,67 @@ const performTaskAction = async (
       );
     }
   } else if (actionType === 'unclaim') {
-    await dynamoDbClient.send(
-      new UpdateCommand({
+    const getTaskBeforeUnclaim = await dynamoDbClient.send(
+      new GetCommand({
         TableName: 'BotTable',
-        Key: {
-          pk: guildId,
-          sk: `task#${taskId}`,
-        },
-        UpdateExpression: 'SET #status = :status REMOVE claimedBy, claimedAt',
-        ExpressionAttributeNames: {
-          '#status': 'status',
-        },
-        ExpressionAttributeValues: {
-          ':status': 'pending',
-        },
+        Key: { pk: guildId, sk: `task#${taskId}` },
       })
     );
+
+    if (!getTaskBeforeUnclaim.Item) {
+      return { content: '❌ Task not found.' };
+    }
+
+    const taskBefore = getTaskBeforeUnclaim.Item;
+    const allowsMultiple = taskBefore.multipleClaimsAllowed === true;
+
+    if (allowsMultiple) {
+      const existingClaimants: string[] = Array.isArray(taskBefore.claimedByUsers) ? taskBefore.claimedByUsers : [];
+      const existingCompleted: string[] = Array.isArray(taskBefore.completedByUsers) ? taskBefore.completedByUsers : [];
+
+      if (!existingClaimants.includes(userId)) {
+        return { content: '❌ You have not claimed this task.' };
+      }
+
+      const updatedClaimants = existingClaimants.filter(id => id !== userId);
+      const updatedCompleted = existingCompleted.filter(id => id !== userId);
+
+      const updateParams: any = {
+        TableName: 'BotTable',
+        Key: { pk: guildId, sk: `task#${taskId}` },
+        UpdateExpression: 'SET claimedByUsers = :claimedByUsers, completedByUsers = :completedByUsers',
+        ExpressionAttributeValues: {
+          ':claimedByUsers': updatedClaimants,
+          ':completedByUsers': updatedCompleted,
+        },
+      };
+
+      if (updatedClaimants.length === 0) {
+        updateParams.UpdateExpression += ', #status = :status REMOVE claimedAt';
+        updateParams.ExpressionAttributeNames = { '#status': 'status' };
+        updateParams.ExpressionAttributeValues[':status'] = 'pending';
+      }
+
+      await dynamoDbClient.send(new UpdateCommand(updateParams));
+    } else {
+      // Single-claim unclaim
+      await dynamoDbClient.send(
+        new UpdateCommand({
+          TableName: 'BotTable',
+          Key: {
+            pk: guildId,
+            sk: `task#${taskId}`,
+          },
+          UpdateExpression: 'SET #status = :status REMOVE claimedBy, claimedAt',
+          ExpressionAttributeNames: {
+            '#status': 'status',
+          },
+          ExpressionAttributeValues: {
+            ':status': 'pending',
+          },
+        })
+      );
+    }
   } else if (actionType === 'approve') {
     const getTaskBeforeApprove = await dynamoDbClient.send(
       new GetCommand({
