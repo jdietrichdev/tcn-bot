@@ -414,15 +414,15 @@ export const handleTaskListPagination = async (
     components: createComponents(newPage, totalPages, originalInteractionId, originalInteractionId) as any
   };
 
-  // For ephemeral messages, we need to use updateResponse.
-  // We can detect this if the originalInteractionId is different from the current interaction's ID,
-  // which we set up for our ephemeral views.
-  if (originalInteractionId !== interaction.id) {
+  // If the message is ephemeral, we must use updateResponse with the current interaction's token.
+  // Otherwise, for a public message, we use updateMessage with the stored channel/message IDs.
+  const isEphemeral = (interaction.message.flags ?? 0) & 64;
+  if (isEphemeral) {
     await updateResponse(interaction.application_id, interaction.token, result);
   } else {
     await updateMessage(data.channelId, data.messageId, result);
   }
-  return; // End execution
+  return;
 };
 
 export const refreshTaskListMessages = async (guildId: string) => {
