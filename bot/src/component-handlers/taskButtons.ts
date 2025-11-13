@@ -187,7 +187,10 @@ const performTaskAction = async (
       // For a multi-claim task to be considered fully complete,
       // at least two users must have claimed it, and all claimants must have marked it as complete.
       // This prevents one person from prematurely completing a task meant for a group.
-      const minimumClaimantsMet = claimedByUsers.length >= 2;
+      // Edge Case: If only ONE role is assigned, we waive the 2-claimant minimum.
+      const isSingleRoleTask = assignedRoles.length === 1 && (!taskBefore.assignedUserIds || taskBefore.assignedUserIds.length === 0);
+      const minimumClaimantsMet = isSingleRoleTask ? true : claimedByUsers.length >= 2;
+
       const allClaimantsFinished = claimedByUsers.length > 0 &&
         claimedByUsers.every((id) => updatedCompleted.includes(id));
       const isFullyComplete = minimumClaimantsMet && allClaimantsFinished;
