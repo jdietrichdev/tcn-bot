@@ -24,6 +24,8 @@ export const handleCommand = async (
         return await commands.handleRecruit(event.detail);
       case "recruiter-score":
         return await commands.handleRecruiterScore(event.detail);
+      case "recruiter-leaderboard":
+        return await commands.handleRecruiterLeaderboard(event.detail);
       case "cwl-roster":
         return await commands.handleCwlRoster(event.detail);
       case "initiate-cwl-signup":
