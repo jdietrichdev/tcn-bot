@@ -187,6 +187,18 @@ const performTaskAction = async (
 
       const updatedCompleted = [...existingCompleted, userId];
 
+      // New check: Ensure at least one claimant from each assigned role is present.
+      let allDemographicsRepresented = true;
+      let missingRoles: string[] = [];
+
+      if (assignedRoles.length > 0) {
+        const claimantRoles = new Set(claimedByUsers.flatMap(id => taskBefore.claimantRoles?.[id] || []));
+        allDemographicsRepresented = assignedRoles.every(roleId => claimantRoles.has(roleId));
+        if (!allDemographicsRepresented) {
+          missingRoles = assignedRoles.filter(roleId => !claimantRoles.has(roleId));
+        }
+      }
+
       // For a multi-claim task to be considered fully complete,
       // at least two users must have claimed it, and all claimants must have marked it as complete.
       // This prevents one person from prematurely completing a task meant for a group.
@@ -196,8 +208,8 @@ const performTaskAction = async (
 
       const allClaimantsFinished = claimedByUsers.length > 0 &&
         claimedByUsers.every((id) => updatedCompleted.includes(id));
-      const isFullyComplete = minimumClaimantsMet && allClaimantsFinished;
 
+      const isFullyComplete = minimumClaimantsMet && allClaimantsFinished && allDemographicsRepresented;
       if (isFullyComplete) {
         // Everyone who claimed has completed: mark task as completed.
         await dynamoDbClient.send(
@@ -236,9 +248,13 @@ const performTaskAction = async (
           })
         );
 
+        const demographicMessage = !allDemographicsRepresented
+          ? `⏳ Waiting for contributor(s) from role(s): ${missingRoles.map(id => `<@&${id}>`).join(', ')}.\n`
+          : '';
         return {
           content:
             `✅ You've marked your part as complete!\n` +
+            demographicMessage +
             (!minimumClaimantsMet ? `⏳ The task is still awaiting more contributors to claim it.\n` : '') +
             `⏳ Waiting on ${claimedByUsers.length - updatedCompleted.length} remaining claimant(s) before the task is fully completed.`,
         };
