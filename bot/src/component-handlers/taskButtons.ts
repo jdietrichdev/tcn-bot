@@ -367,21 +367,17 @@ const performTaskAction = async (
       whatNextMessage = '```\n• Task is ready for admin review\n• Will be removed from board once approved\n• Check dashboard for approval status\n```';
       break;
     case 'unclaim':
-    {
       title = '🔄 ✦ TASK UNCLAIMED ✦ 🔄';
       color = 0xff9900; // Orange - This was missing a closing brace in the previous switch.
       statusMessage = '`📬 PENDING`';
       whatNextMessage = '```\n• Task is back to pending status\n• Anyone can now claim it\n• View task list to see available tasks\n```';
       break;
-    }
     case 'approve':
-    {
       title = '☑️ ✦ TASK APPROVED ✦ ☑️';
       color = 0x9900ff; // Purple - This was missing a closing brace in the previous switch.
       statusMessage = '`☑️ APPROVED`';
       whatNextMessage = '```\n• Task has been completed successfully\n• Removed from active task board\n• Contributors can claim new tasks\n```';
       break;
-    }
   }
 
   // Override for partially completed multi-claim tasks
