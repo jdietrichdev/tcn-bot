@@ -64,12 +64,12 @@ export const handleComponent = async (
   if (handlers[customId]) {
     const needsConfig = ["approveApp", "closeTicket", "deleteTicket", "reopenTicket", "grantRoles", "removeRoles"].includes(customId);
     const config = needsConfig ? getConfig(interaction.guild_id!) : undefined;
-    return await handlerscustomId;
+    return await handlers[customId](interaction, config);
   }
 
   for (const prefix in prefixHandlers) {
     if (customId.startsWith(prefix)) {
-      return await prefixHandlersprefix;
+      return await prefixHandlers[prefix](interaction);
     }
   }
 
