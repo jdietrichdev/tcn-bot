@@ -412,13 +412,9 @@ export const handleTaskListPagination = async (
   };
 
   const isEphemeral = (interaction.message.flags ?? 0) & 64;
-  if (!isEphemeral) {
-    return {
-      type: InteractionResponseType.UpdateMessage,
-      data: result,
-    };
+  if (isEphemeral) {
+    return { type: InteractionResponseType.ChannelMessageWithSource, data: { ...result, flags: 64 } };
   }
-
   return { type: InteractionResponseType.UpdateMessage, data: result };
 };
 

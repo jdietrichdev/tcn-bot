@@ -666,29 +666,14 @@ export const handleTaskButtonInteraction = async (
       interaction.id
     );
 
-    try {
-      console.log('Updating response with payload:', JSON.stringify({ embeds, components }, null, 2));
-      await updateResponse(interaction.application_id, interaction.token, {
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
         embeds,
         components,
-      });
-    } catch (err) {
-      const error = err as { statusCode?: number; reason?: string };
-      if (error.statusCode === 404 && error.reason === 'Unknown Webhook') {
-        console.warn('Interaction token expired. Sending a new message instead.');
-        await sendFollowupMessage(interaction.application_id, interaction.token, {
-          content: '⚠️ Interaction expired. Here is the updated task list:',
-          embeds,
-          components,
-        });
-      } else {
-        console.error('Failed to update response:', error);
-        console.error('Payload details:', JSON.stringify({ embeds, components }, null, 2));
-        throw error;
-      }
-    }
-
-    return;
+        flags: 64,
+      },
+    };
   }
 
   if (customId === 'task_list_my') {
@@ -702,12 +687,14 @@ export const handleTaskButtonInteraction = async (
       interaction.id
     );
 
-    await updateResponse(interaction.application_id, interaction.token, {
-      embeds,
-      components,
-    });
-
-    return;
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        embeds,
+        components,
+        flags: 64,
+      },
+    };
   }
 
   if (customId === 'task_list_completed') {
@@ -721,12 +708,14 @@ export const handleTaskButtonInteraction = async (
       interaction.id
     );
 
-    await updateResponse(interaction.application_id, interaction.token, {
-      embeds,
-      components,
-    });
-
-    return;
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        embeds,
+        components,
+        flags: 64,
+      },
+    };
   }
 
   try {
@@ -763,8 +752,10 @@ export const handleTaskButtonInteraction = async (
           refreshTaskListMessages(guildId).catch(console.error);
         });
 
-        await updateResponse(interaction.application_id, interaction.token, responseData);
-        return;
+        return {
+          type: InteractionResponseType.UpdateMessage,
+          data: responseData,
+        };
       }
 
       return {
