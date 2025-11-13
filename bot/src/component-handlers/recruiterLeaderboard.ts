@@ -14,16 +14,6 @@ export const handleRecruiterLeaderboardRefresh = async (
     const guildId = interaction.guild_id!;
     const config = getConfig(guildId);
 
-    if (!config) {
-      console.error(`[handleRecruiterLeaderboardRefresh] No config found for guild ${guildId}`);
-      await updateResponse(interaction.application_id, interaction.token, {
-        content: "Could not find server configuration. Please contact an admin.",
-        embeds: [],
-        components: [],
-      });
-      return;
-    }
-
     const dataset = await compileRecruiterScoreData(guildId, config);
     const embed = buildRecruiterLeaderboardEmbed(dataset.scores);
 
