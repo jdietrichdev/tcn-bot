@@ -248,16 +248,8 @@ const performTaskAction = async (
           })
         );
 
-        const demographicMessage = !allDemographicsRepresented
-          ? `⏳ Waiting for contributor(s) from role(s): ${missingRoles.map(id => `<@&${id}>`).join(', ')}.\n`
-          : '';
-        return {
-          content:
-            `✅ You've marked your part as complete!\n` +
-            demographicMessage +
-            (!minimumClaimantsMet ? `⏳ The task is still awaiting more contributors to claim it.\n` : '') +
-            `⏳ Waiting on ${claimedByUsers.length - updatedCompleted.length} remaining claimant(s) before the task is fully completed.`,
-        };
+        // Fall through to the embed generation logic to show the updated partial progress.
+        // The ephemeral message will be sent by the calling handler if this function doesn't return a content string.
       }
     } else {
       // Single-claim behavior unchanged: one completion flips the task.
