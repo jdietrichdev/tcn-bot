@@ -353,14 +353,13 @@ const performTaskAction = async (
   let whatNextMessage = '';
 
   switch (actionType) {
-    case 'claim': {
+    case 'claim':
       title = '🚀 ✦ TASK CLAIMED ✦';
       color = 0x0099ff; // Blue
       statusMessage = '`🔄 IN PROGRESS`';
       whatNextMessage = '```\n• Work on the task requirements\n• Use /task-complete when finished\n• Add completion notes if needed\n```';
       break;
-    }
-    case 'complete': {
+    case 'complete':
       title = '🎉 ✦ TASK COMPLETED ✦ 🏆';
       color = 0x00ff00; // Green
       statusMessage = '`✅ AWAITING APPROVAL`';
