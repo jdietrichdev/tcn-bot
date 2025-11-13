@@ -15,6 +15,7 @@ import {
 } from "../adapters/discord-adapter";
 import { determineRolesButton, isActorAdmin, isActorRecruiter } from "./utils";
 import { BUTTONS } from "./buttons";
+import { ensureArchiveCapacity } from "../util/ticketDeletion";
 
 export const closeTicket = async (
   interaction: APIMessageComponentInteraction,
@@ -32,6 +33,9 @@ export const closeTicket = async (
       const userId = (interaction.channel as APITextChannel).topic!.split(
         ":"
       )[1];
+      await ensureArchiveCapacity(interaction.guild_id!, config, {
+        triggeredById: interaction.member?.user.id,
+      });
       await moveChannel(channelId, config.ARCHIVE_CATEGORY);
       await updateChannelPermissions(channelId, userId, {
         type: OverwriteType.Member,
@@ -59,6 +63,9 @@ export const closeTicket = async (
             ],
           },
         ],
+      });
+      await ensureArchiveCapacity(interaction.guild_id!, config, {
+        triggeredById: interaction.member?.user.id,
       });
     } else {
       await sendMessage(

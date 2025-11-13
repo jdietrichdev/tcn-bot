@@ -22,6 +22,8 @@ import { handleUnrosteredPagination } from "./unrosteredButton";
 import { handleTaskButtonInteraction } from "./taskButtons";
 import { handleTaskListPagination } from "./taskListButton";
 import { handleSubsApproval } from "./subsApproval";
+import { handleRecruiterScorePagination } from "./recruiterScoreButton";
+import { handleRecruiterLeaderboardRefresh } from "./recruiterLeaderboard";
 
 export const handleComponent = async (
   interaction: APIMessageComponentInteraction
@@ -84,8 +86,23 @@ export const handleComponent = async (
     await nominationResults(interaction);
   } else if (customId.startsWith("answer")) {
     await answerQuestion(interaction);
+  } else if (customId.startsWith("task_")) {
+    if (
+      customId.startsWith("task_list_first_") ||
+      customId.startsWith("task_list_prev_") ||
+      customId.startsWith("task_list_next_") ||
+      customId.startsWith("task_list_last_") ||
+      customId.startsWith("task_list_page_")
+    ) {
+      return await handleTaskListPagination(interaction, customId);
+    }
+    await handleTaskButtonInteraction(interaction);
   } else if (customId.startsWith("unrostered_")) {
     return await handleUnrosteredPagination(interaction, customId);
+  } else if (customId.startsWith("recruiter_score_")) {
+    await handleRecruiterScorePagination(interaction, customId);
+  } else if (customId === "recruiter_leaderboard_refresh") {
+    await handleRecruiterLeaderboardRefresh(interaction);
   } else if (customId.startsWith("approve_sub_") || customId.startsWith("deny_sub_")) {
     console.log(`[handleComponent] Routing to handleSubsApproval for: ${customId}`);
     await handleSubsApproval(interaction);

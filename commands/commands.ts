@@ -218,6 +218,11 @@ export const recruiterScore = new SlashCommandBuilder()
   .setDescription('Score recruiters based on activity in channels')
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
+export const recruiterLeaderboard = new SlashCommandBuilder()
+  .setName('recruiter-leaderboard')
+  .setDescription('Show the latest recruiter leaderboard')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 export const cwlRoster = new SlashCommandBuilder()
   .setName('cwl-roster')
   .setDescription('Send reminder for people not in correct clans for CWL')
