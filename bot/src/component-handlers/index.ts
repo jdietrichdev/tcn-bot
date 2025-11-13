@@ -79,27 +79,6 @@ export const handleComponent = async (
     await nominationResults(interaction);
   } else if (customId.startsWith("answer")) {
     await answerQuestion(interaction);
---- a/bot/src/util/config.ts
-+++ b/bot/src/util/config.ts
-@@ -10,6 +10,8 @@
-   cwlSignupChannel: string;
-   cwlSignupMessage: string;
-   recruiterScoreboardChannel: string;
-+  recruiterLeaderboardChannel: string;
-+  fcTrackingChannel: string;
- };
- 
- export type Config = {
-@@ -37,6 +39,8 @@
-       cwlSignupChannel: "1094764943407919124",
-       cwlSignupMessage: "1119773459239145523",
-       recruiterScoreboardChannel: "1178732997321633883",
-+      recruiterLeaderboardChannel: "1410700087771926578",
-+      fcTrackingChannel: "1403846063328329768",
-     },
-   },
- };
-
   } else if (customId.startsWith("unrostered_")) {
     return await handleUnrosteredPagination(interaction, customId);
   } else if (customId.startsWith("recruiter_score_")) {
