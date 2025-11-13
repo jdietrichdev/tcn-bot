@@ -124,7 +124,6 @@ const performTaskAction = async (
             pk: guildId,
             sk: `task#${taskId}`,
           },
-          UpdateExpression: 'SET #status = :status, claimedByUsers = :claimedByUsers, claimedAt = if_not_exists(claimedAt, :claimedAt)',
           UpdateExpression: 'SET #status = :status, claimedByUsers = :claimedByUsers, claimantRoles = :claimantRoles, claimedAt = if_not_exists(claimedAt, :claimedAt)',
           ExpressionAttributeNames: {
             '#status': 'status',
