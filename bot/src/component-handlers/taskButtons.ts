@@ -50,7 +50,6 @@ export const performTaskAction = async (
       isEligible = true;
     }
 
-    // If there are any assignments, the user must be eligible.
     if ((assignedUsers.length > 0 || assignedRoles.length > 0) && !isEligible) {
       console.log(`User ${userId} is not eligible to claim task ${taskId}`);
       return {
@@ -152,8 +151,6 @@ export const performTaskAction = async (
       ? taskBefore.assignedRoleIds
       : (taskBefore.assignedRole ? [taskBefore.assignedRole] : []);
 
-    // For multi-claim tasks, we require ALL claimants to mark complete.
-    // We track per-user completions in completedByUsers[].
     if (allowsMultiple) {
       if (!claimedByUsers.includes(userId)) {
         return {
@@ -173,17 +170,13 @@ export const performTaskAction = async (
 
       const updatedCompleted = [...existingCompleted, userId];
 
-      // For a multi-claim task to be considered fully complete,
-      // at least two users must have claimed it, and all claimants must have marked it as complete.
-      // This prevents one person from prematurely completing a task meant for a group.
-      // Edge Case: If only ONE role is assigned, we waive the 2-claimant minimum.
+     
       const isSingleRoleTask = assignedRoles.length === 1 && (!taskBefore.assignedUserIds || taskBefore.assignedUserIds.length === 0);
       const minimumClaimantsMet = isSingleRoleTask ? true : claimedByUsers.length >= 2;
 
       const allClaimantsFinished = claimedByUsers.length > 0 &&
         claimedByUsers.every((id) => updatedCompleted.includes(id));
 
-      // New check: Ensure at least one user from each assigned role has COMPLETED the task.
       let allDemographicsRepresented = true;
       let missingRoles: string[] = [];
 
@@ -197,7 +190,6 @@ export const performTaskAction = async (
 
       const isFullyComplete = minimumClaimantsMet && allClaimantsFinished && allDemographicsRepresented;
       if (isFullyComplete) {
-        // Everyone who claimed has completed: mark task as completed.
         await dynamoDbClient.send(
           new UpdateCommand({
             TableName: 'BotTable',
@@ -218,7 +210,6 @@ export const performTaskAction = async (
           })
         );
       } else {
-        // Not all claimants are done yet: set status to partially_completed.
         await dynamoDbClient.send(
           new UpdateCommand({
             TableName: 'BotTable',
@@ -239,7 +230,6 @@ export const performTaskAction = async (
         );
       }
     } else {
-      // Single-claim behavior unchanged: one completion flips the task.
       await dynamoDbClient.send(
         new UpdateCommand({
           TableName: 'BotTable',
@@ -303,7 +293,6 @@ export const performTaskAction = async (
 
       await dynamoDbClient.send(new UpdateCommand(updateParams));
     } else {
-      // Single-claim unclaim
       await dynamoDbClient.send(
         new UpdateCommand({
           TableName: 'BotTable',
@@ -388,13 +377,10 @@ export const performTaskAction = async (
     };
   }
 
-  // IMPORTANT:
-  // Use the freshly-loaded task snapshot for visual indicators so that
-  // multi-claim and partial-completion progress (X/Y) is accurate AFTER updates.
+ 
   const task = getTaskResult.Item;
   const now = new Date().toISOString();
 
-  // Multi-claim visual state derived from latest task
   const multiClaimEnabled = task.multipleClaimsAllowed === true;
   const claimedByUsers: string[] = Array.isArray(task.claimedByUsers)
     ? task.claimedByUsers
@@ -403,7 +389,6 @@ export const performTaskAction = async (
     ? task.completedByUsers
     : [];
 
-  // Summary line appended to description for multi-claim tasks, reflecting latest DB state
   const multiClaimSummary =
     multiClaimEnabled && claimedByUsers.length > 0
       ? `\n**👥 Multi-Claim:** \`${completedByUsers.length}/${claimedByUsers.length}\` contributors completed`
@@ -417,31 +402,30 @@ export const performTaskAction = async (
   switch (actionType) {
     case 'claim':
       title = '🚀 ✦ TASK CLAIMED ✦';
-      color = 0x0099ff; // Blue
+      color = 0x0099ff; 
       statusMessage = '`🔄 IN PROGRESS`';
       whatNextMessage = '```\n• Work on the task requirements\n• Use /task-complete when finished\n• Add completion notes if needed\n```';
       break;
     case 'complete':
       title = '🎉 ✦ TASK COMPLETED ✦ 🏆';
-      color = 0x00ff00; // Green
+      color = 0x00ff00; 
       statusMessage = '`✅ AWAITING APPROVAL`';
       whatNextMessage = '```\n• Task is ready for admin review\n• Will be removed from board once approved\n• Check dashboard for approval status\n```';
       break;
     case 'unclaim':
       title = '🔄 ✦ TASK UNCLAIMED ✦ 🔄';
-      color = 0xff9900; // Orange - This was missing a closing brace in the previous switch.
+      color = 0xff9900; 
       statusMessage = '`📬 PENDING`';
       whatNextMessage = '```\n• Task is back to pending status\n• Anyone can now claim it\n• View task list to see available tasks\n```';
       break;
     case 'approve':
       title = '☑️ ✦ TASK APPROVED ✦ ☑️';
-      color = 0x9900ff; // Purple - This was missing a closing brace in the previous switch.
+      color = 0x9900ff; 
       statusMessage = '`☑️ APPROVED`';
       whatNextMessage = '```\n• Task has been completed successfully\n• Removed from active task board\n• Contributors can claim new tasks\n```';
       break;
   }
 
-  // Override for partially completed multi-claim tasks
   const isPartiallyComplete = task.status === 'partially_completed';
 
   if (actionType === 'complete' && isPartiallyComplete) {
@@ -518,8 +502,6 @@ export const performTaskAction = async (
             inline: false
           },
           {
-            // For multi-claim, show all users who have completed so far.
-            // For single-claim, this is just the acting user.
             name: multiClaimEnabled
               ? '✅ **Completed By (All Contributors)**'
               : `👤 **${actionType === 'complete' ? 'Completed' : actionType === 'unclaim' ? 'Unclaimed' : 'Approved'} By**`,
@@ -528,7 +510,6 @@ export const performTaskAction = async (
               : `<@${userId}>`,
             inline: false
           },
-          // For multi-claim tasks, also show all current claimants in a dedicated field.
           ...(multiClaimEnabled && claimedByUsers.length > 0
             ? [{
                 name: '👥 **All Claimants**',
@@ -561,13 +542,10 @@ export const performTaskAction = async (
       break;
   }
 
-  // multiClaimEnabled / claimedByUsers already declared above for embed + buttons
 
   const buttons: any[] = [];
 
-  // Claim button:
-  // - Single-claim tasks: show if pending and no one has claimed.
-  // - Multi-claim tasks: always show while status is pending/claimed to let additional eligible users join.
+  
   if (
     (task.status === 'pending' && !task.claimedBy && !multiClaimEnabled) ||
     (multiClaimEnabled && (task.status === 'pending' || task.status === 'claimed'))
@@ -580,9 +558,7 @@ export const performTaskAction = async (
     });
   }
 
-  // Complete button:
-  // - For single-claim: only the sole claimant can complete.
-  // - For multi-claim: only users in claimedByUsers can complete.
+  
   if (task.status === 'claimed' || task.status === 'partially_completed') {
     const isSingleClaimOwner = !multiClaimEnabled && task.claimedBy === userId;
     const isMultiClaimParticipant = multiClaimEnabled && claimedByUsers.includes(userId);
@@ -596,9 +572,7 @@ export const performTaskAction = async (
       });
     }
 
-    // Unclaim:
-    // - Single-claim: sole claimant can unclaim.
-    // - Multi-claim: each participant can unclaim themselves.
+   
     if (isSingleClaimOwner || isMultiClaimParticipant) {
       buttons.push({
         type: ComponentType.Button,
@@ -674,15 +648,13 @@ export const handleTaskButtonInteraction = async (
   const isTaskMessage = embedTitle.includes('✦ TASK') ||
                         embedTitle.includes('🎉 ✦ TASK') ||
                         embedTitle.includes('🔄 ✦ TASK') ||
-                        embedTitle.includes('✅ ✦ TASK');
+                        embedTitle.includes('✅ ✦ TASK') ||
+                        embedTitle.includes('🛡️ ✦ ADMIN TASK UNCLAIM ✦');
   console.log(`isTaskMessage result: ${isTaskMessage}`);
 
   const taskIdMatch = customId.match(/^task_\w+_(.+)$/);
   const taskId = taskIdMatch ? taskIdMatch[1] : null;
-
-  // Navigation buttons: simulate `/task-list` variants by editing the deferred response.
-  // The proxy responds with DeferredMessageUpdate (type 6), so we MUST use updateResponse
-  // here instead of returning a second top-level interaction response.
+   
   if (customId === 'task_list_all') {
     console.log('handleTaskButtonInteraction: generating /task-list (all) view from button');
 
@@ -690,7 +662,7 @@ export const handleTaskButtonInteraction = async (
       guildId,
       undefined,   // any status
       undefined,   // any role
-      undefined,   // any user -> true "All Tasks"
+      undefined,   // any user
       interaction.id
     );
 
