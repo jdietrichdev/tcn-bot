@@ -112,6 +112,10 @@ const performTaskAction = async (
 
       const updatedClaimants = [...existingClaimants, userId];
 
+      // Store the roles of the claiming user for demographic checks later.
+      const claimantRoles = task.claimantRoles || {};
+      claimantRoles[userId] = memberRoles;
+
       console.log(`Adding user ${userId} to claimedByUsers for multi-claim task ${taskId}`);
       await dynamoDbClient.send(
         new UpdateCommand({
@@ -121,12 +125,14 @@ const performTaskAction = async (
             sk: `task#${taskId}`,
           },
           UpdateExpression: 'SET #status = :status, claimedByUsers = :claimedByUsers, claimedAt = if_not_exists(claimedAt, :claimedAt)',
+          UpdateExpression: 'SET #status = :status, claimedByUsers = :claimedByUsers, claimantRoles = :claimantRoles, claimedAt = if_not_exists(claimedAt, :claimedAt)',
           ExpressionAttributeNames: {
             '#status': 'status',
           },
           ExpressionAttributeValues: {
             ':status': 'claimed',
             ':claimedByUsers': updatedClaimants,
+            ':claimantRoles': claimantRoles,
             ':claimedAt': new Date().toISOString(),
           },
         })
@@ -178,10 +184,15 @@ const performTaskAction = async (
 
       const updatedCompleted = [...existingCompleted, userId];
 
-      const allCompleted = claimedByUsers.length > 0 &&
+      // For a multi-claim task to be considered fully complete,
+      // at least two users must have claimed it, and all claimants must have marked it as complete.
+      // This prevents one person from prematurely completing a task meant for a group.
+      const minimumClaimantsMet = claimedByUsers.length >= 2;
+      const allClaimantsFinished = claimedByUsers.length > 0 &&
         claimedByUsers.every((id) => updatedCompleted.includes(id));
+      const isFullyComplete = minimumClaimantsMet && allClaimantsFinished;
 
-      if (allCompleted) {
+      if (isFullyComplete) {
         // Everyone who claimed has completed: mark task as completed.
         await dynamoDbClient.send(
           new UpdateCommand({
@@ -221,7 +232,8 @@ const performTaskAction = async (
 
         return {
           content:
-            `✅ Marked your part as complete.\n` +
+            `✅ You've marked your part as complete!\n` +
+            (!minimumClaimantsMet ? `⏳ The task is still awaiting more contributors to claim it.\n` : '') +
             `⏳ Waiting on ${claimedByUsers.length - updatedCompleted.length} remaining claimant(s) before the task is fully completed.`,
         };
       }
