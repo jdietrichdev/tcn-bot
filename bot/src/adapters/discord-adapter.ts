@@ -1,6 +1,7 @@
 import axios from "axios";
 import axiosRetry from "axios-retry";
 import {
+  APIChannel,
   APIGuildMember,
   APIGuildTextChannel,
   APIMessage,
@@ -18,6 +19,7 @@ import {
   RESTPostAPIGuildScheduledEventJSONBody,
   RESTPostAPIWebhookWithTokenJSONBody,
   RESTPutAPIChannelPermissionJSONBody,
+  RESTGetAPIGuildChannelsResult,
 } from "discord-api-types/v10";
 import { DiscordError } from "../util/errors";
 
@@ -425,6 +427,54 @@ export const moveChannel = async (channelId: string, categoryId: string) => {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
         "Failed to move channel",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
+export const getGuildChannels = async (
+  guildId: string
+): Promise<RESTGetAPIGuildChannelsResult> => {
+  const url = `${BASE_URL}/guilds/${guildId}/channels`;
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to fetch guild channels",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
+export const getChannel = async (channelId: string): Promise<APIChannel> => {
+  const url = `${BASE_URL}/channels/${channelId}`;
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to fetch channel",
         err.response?.data.message,
         err.response?.status ?? 500
       );

@@ -8,12 +8,9 @@ import { authorizeRequest } from "./authorizer/authorizer";
 import { eventClient } from "./clients/eventbridge-client";
 import { PutEventsCommand } from "@aws-sdk/client-eventbridge";
 import {
-  APIApplicationCommandAutocompleteInteraction,
   APIChatInputApplicationCommandInteraction,
   APIInteraction,
   APIInteractionResponse,
-  APIMessageComponentInteraction,
-  APIModalSubmitInteraction,
   InteractionResponseType,
   InteractionType,
   MessageFlags,
@@ -34,7 +31,7 @@ import { handleScheduled } from "./scheduled-handlers";
 export const proxy = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  let response: Record<string, any>;
+  let response: APIInteractionResponse;
   if (!authorizeRequest(event)) {
     console.log("Unauthorized");
     return { statusCode: 401, body: "Unauthorized" };
@@ -42,30 +39,28 @@ export const proxy = async (
   console.log(event.body);
   const body = JSON.parse(event.body!) as APIInteraction;
   if (body.type === InteractionType.Ping) {
-    response = { type: 1 };
+    response = { type: InteractionResponseType.Pong };
   } else if (body.type === InteractionType.ApplicationCommandAutocomplete) {
-    response = await handleAutocomplete(
-      body
-    );
+    response = (await handleAutocomplete(body)) as APIInteractionResponse;
   } else if (
     body.type === InteractionType.ApplicationCommand &&
     commandTriggersModal(body.data.name)
   ) {
     console.log("Command modal triggered");
-    response = createModal(body, body.data.name);
+    response = createModal(body, body.data.name) as APIInteractionResponse;
   } else if (
     body.type === InteractionType.MessageComponent &&
     buttonTriggersModal(body.data.custom_id)
   ) {
     console.log("Button modal triggered");
-    response = createModal(body, body.data.custom_id);
+    response = createModal(body, body.data.custom_id) as APIInteractionResponse;
   } else if (
     body.type === InteractionType.MessageComponent &&
     body.data.custom_id.startsWith("unrostered_")
   ) {
     console.log("Unrostered pagination button clicked");
     const { handleUnrosteredPagination } = await import("./component-handlers/unrosteredButton");
-    response = await handleUnrosteredPagination(body as APIMessageComponentInteraction, body.data.custom_id);
+    response = (await handleUnrosteredPagination(body, body.data.custom_id)) as APIInteractionResponse;
   } else if (
     body.type === InteractionType.MessageComponent &&
     (body.data.custom_id.startsWith("task_list_first_") ||
@@ -76,14 +71,36 @@ export const proxy = async (
   ) {
     console.log("Task list pagination button clicked");
     const { handleTaskListPagination } = await import("./component-handlers/taskListButton");
-    response = await handleTaskListPagination(body as APIMessageComponentInteraction, body.data.custom_id);
+    response = (await handleTaskListPagination(body, body.data.custom_id)) as APIInteractionResponse;
   } else if (
     body.type === InteractionType.MessageComponent &&
     body.data.custom_id.startsWith("roster_show_")
   ) {
     console.log("Roster show pagination button clicked");
     const { handleRosterShowPagination } = await import("./component-handlers/rosterShowButton");
-    response = await handleRosterShowPagination(body as APIMessageComponentInteraction);
+    response = (await handleRosterShowPagination(body)) as APIInteractionResponse;
+  } else if (
+    body.type === InteractionType.MessageComponent &&
+    (body.data.custom_id.startsWith("recruiter_score_") ||
+      body.data.custom_id === "recruiter_leaderboard_refresh")
+  ) {
+    console.log("Recruiter score/leaderboard button clicked (deferred)");
+    await eventClient.send(
+      new PutEventsCommand({
+        Entries: [
+          {
+            Detail: event.body!,
+            DetailType: "Bot Event Received",
+            Source: "tcn-bot-event",
+            EventBusName: "tcn-bot-events",
+          },
+        ],
+      })
+    );
+
+    response = {
+      type: InteractionResponseType.DeferredMessageUpdate,
+    };
   } else {
     await eventClient.send(
       new PutEventsCommand({
@@ -118,7 +135,8 @@ export const proxy = async (
       'task-assign',
       'task-reminders',
       'task-admin-unclaim',
-      'task-overview'
+      'task-overview',
+      'recruiter-leaderboard'
     ];
     
     const publicTaskButtons = [
@@ -135,39 +153,42 @@ export const proxy = async (
       'task_list_available',
       'task_create_new',
       'task_refresh_list',
-      'task_refresh_dashboard'
+      'task_refresh_dashboard',
+      'recruiter_score_',
+      'recruiter_leaderboard_refresh'
     ];
     
-    const isPublicCommand = body.type === InteractionType.ApplicationCommand && 
-                           publicCommands.includes((body as APIChatInputApplicationCommandInteraction).data.name);
-    
-    const isPublicButton = body.type === InteractionType.MessageComponent && 
-                          publicTaskButtons.some(buttonPrefix => 
-                            (body as APIMessageComponentInteraction).data.custom_id.startsWith(buttonPrefix) ||
-                            (body as APIMessageComponentInteraction).data.custom_id === buttonPrefix
-                          );
-    
-    // Debug logging
-    if (body.type === InteractionType.MessageComponent) {
-      const customId = (body as APIMessageComponentInteraction).data.custom_id;
+    const commandName =
+      body.type === InteractionType.ApplicationCommand ? body.data.name : undefined;
+    const customId =
+      body.type === InteractionType.MessageComponent ? body.data.custom_id : undefined;
+
+    const isPublicCommand = Boolean(
+      commandName && publicCommands.includes(commandName)
+    );
+
+    const isPublicButton = Boolean(
+      customId && publicTaskButtons.some((buttonPrefix) => customId.startsWith(buttonPrefix))
+    );
+
+    if (customId) {
       console.log(`Button interaction: ${customId}, isPublic: ${isPublicButton}`);
     }
-    if (body.type === InteractionType.ApplicationCommand) {
-      const commandName = (body as APIChatInputApplicationCommandInteraction).data.name;
+    if (commandName) {
       console.log(`Slash command: ${commandName}, isPublic: ${isPublicCommand}`);
     }
-    
+
     response = {
       type: InteractionResponseType.DeferredChannelMessageWithSource,
-      data: (isPublicCommand || isPublicButton) ? {} : {
+      data: isPublicCommand || isPublicButton ? {} : {
         flags: MessageFlags.Ephemeral,
       },
-    } as APIInteractionResponse;
+    };
   }
   return {
     statusCode: 200,
     body: JSON.stringify(response),
-  } as APIGatewayProxyResult;
+  };
 };
 
 export const handler = async (
