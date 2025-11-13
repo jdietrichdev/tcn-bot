@@ -88,12 +88,12 @@ export const handleTaskCreate = async (
     // - If any roles are assigned (even a single role), allow multiple claims.
     // - Or if more than one explicit user is assigned, allow multiple claims.
     // - Only a single assigned user with no roles stays single-claim.
-    const multipleClaimsAllowed =
-      assignedRoleIds.length > 0 ||
-      assignedUserIds.length > 1;
+    const multipleClaimsAllowed = assignedRoleIds.length > 0 || assignedUserIds.length > 1;
 
     const shouldAutoAssign = assignedUserIds.length > 0;
-    const taskStatus = shouldAutoAssign ? 'claimed' : 'pending';
+    // If it's multi-claim with roles, it should start as 'pending' to allow role members to claim,
+    // unless there are no roles and only multiple users are assigned.
+    const taskStatus = shouldAutoAssign && assignedRoleIds.length === 0 ? 'claimed' : 'pending';
 
     const taskItem: any = {
       pk: guildId,

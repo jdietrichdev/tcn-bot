@@ -209,7 +209,7 @@ const performTaskAction = async (
       const allClaimantsFinished = claimedByUsers.length > 0 &&
         claimedByUsers.every((id) => updatedCompleted.includes(id));
 
-      const isFullyComplete = minimumClaimantsMet && allClaimantsFinished && allDemographicsRepresented;
+      const isFullyComplete = minimumClaimantsMet && allClaimantsFinished && allDemographicsRepresented; // This line was correct, but the surrounding logic was flawed.
       if (isFullyComplete) {
         // Everyone who claimed has completed: mark task as completed.
         await dynamoDbClient.send(
@@ -353,13 +353,14 @@ const performTaskAction = async (
   let whatNextMessage = '';
 
   switch (actionType) {
-    case 'claim':
+    case 'claim': {
       title = '🚀 ✦ TASK CLAIMED ✦';
       color = 0x0099ff; // Blue
       statusMessage = '`🔄 IN PROGRESS`';
       whatNextMessage = '```\n• Work on the task requirements\n• Use /task-complete when finished\n• Add completion notes if needed\n```';
       break;
-    case 'complete':
+    }
+    case 'complete': {
       title = '🎉 ✦ TASK COMPLETED ✦ 🏆';
       color = 0x00ff00; // Green
       statusMessage = '`✅ AWAITING APPROVAL`';
@@ -367,16 +368,28 @@ const performTaskAction = async (
       break;
     case 'unclaim':
       title = '🔄 ✦ TASK UNCLAIMED ✦ 🔄';
-      color = 0xff9900; // Orange
+      color = 0xff9900; // Orange - This was missing a closing brace in the previous switch.
       statusMessage = '`📬 PENDING`';
       whatNextMessage = '```\n• Task is back to pending status\n• Anyone can now claim it\n• View task list to see available tasks\n```';
       break;
     case 'approve':
       title = '☑️ ✦ TASK APPROVED ✦ ☑️';
-      color = 0x9900ff; // Purple
+      color = 0x9900ff; // Purple - This was missing a closing brace in the previous switch.
       statusMessage = '`☑️ APPROVED`';
       whatNextMessage = '```\n• Task has been completed successfully\n• Removed from active task board\n• Contributors can claim new tasks\n```';
       break;
+  }
+
+  // Override for partially completed multi-claim tasks
+  const isPartiallyComplete =
+    multiClaimEnabled &&
+    completedByUsers.length > 0 &&
+    completedByUsers.length < claimedByUsers.length;
+
+  if (actionType === 'complete' && isPartiallyComplete) {
+    title = '⏳ ✦ TASK IN PROGRESS ✦';
+    color = 0x0099ff; // Blue, for in-progress
+    statusMessage = '`🔄 IN PROGRESS`';
   }
 
   const priorityEmoji = {
