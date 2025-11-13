@@ -44,14 +44,13 @@ export const formatTaskAssignments = (task: any): string => {
   return parts.length > 0 ? `\n    ↳ ${parts.join(' • ')}` : '';
 };
 
-// Increase the TTL value to extend cache expiry duration
 export const storeCacheInDynamoDB = async (interactionId: string, data: TaskListCacheData) => {
   if (!data || !Array.isArray(data.tasks) || data.tasks.length === 0) {
     console.error(`Invalid cache data provided for interaction ID: ${interactionId}`);
     throw new Error('Invalid cache data. Ensure tasks are properly formatted.');
   }
 
-  const ttl = Math.floor(Date.now() / 1000) + (30 * 60); // Extend TTL to 30 minutes
+  const ttl = Math.floor(Date.now() / 1000) + (30 * 60);
   try {
     await dynamoDbClient.send(
       new PutCommand({
@@ -96,7 +95,6 @@ export const handleTaskListPagination = async (
   interaction: APIMessageComponentInteraction,
   customId: string
 ): Promise<any> => {
-  // Handle refresh
   if (customId === 'task_refresh_list') {
     console.log(`Handling task_refresh_list button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
     return {
@@ -108,7 +106,6 @@ export const handleTaskListPagination = async (
     };
   }
 
-  // Handle create
   if (customId === 'task_create_new') {
     console.log(`Handling task_create_new button for user ${interaction.member?.user?.id || interaction.user?.id} - sending ephemeral message`);
     try {
@@ -414,15 +411,15 @@ export const handleTaskListPagination = async (
     components: createComponents(newPage, totalPages, originalInteractionId, originalInteractionId) as any
   };
 
-  // If the message is ephemeral, we must use updateResponse with the current interaction's token.
-  // Otherwise, for a public message, we use updateMessage with the stored channel/message IDs.
   const isEphemeral = (interaction.message.flags ?? 0) & 64;
-  if (isEphemeral) {
-    await updateResponse(interaction.application_id, interaction.token, result);
-  } else {
-    await updateMessage(data.channelId, data.messageId, result);
+  if (!isEphemeral) {
+    return {
+      type: InteractionResponseType.UpdateMessage,
+      data: result,
+    };
   }
-  return;
+
+  return { type: InteractionResponseType.UpdateMessage, data: result };
 };
 
 export const refreshTaskListMessages = async (guildId: string) => {
