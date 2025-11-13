@@ -217,7 +217,7 @@ const performTaskAction = async (
           })
         );
       } else {
-        // Not all claimants are done yet: only update completedByUsers.
+        // Not all claimants are done yet: set status to partially_completed.
         await dynamoDbClient.send(
           new UpdateCommand({
             TableName: 'BotTable',
@@ -226,15 +226,16 @@ const performTaskAction = async (
               sk: `task#${taskId}`,
             },
             UpdateExpression:
-              'SET completedByUsers = :completedByUsers',
+              'SET #status = :status, completedByUsers = :completedByUsers',
+            ExpressionAttributeNames: {
+              '#status': 'status',
+            },
             ExpressionAttributeValues: {
+              ':status': 'partially_completed',
               ':completedByUsers': updatedCompleted,
             },
           })
         );
-
-        // Fall through to the embed generation logic to show the updated partial progress.
-        // The ephemeral message will be sent by the calling handler if this function doesn't return a content string.
       }
     } else {
       // Single-claim behavior unchanged: one completion flips the task.
@@ -275,6 +276,36 @@ const performTaskAction = async (
       })
     );
   } else if (actionType === 'approve') {
+    const getTaskBeforeApprove = await dynamoDbClient.send(
+      new GetCommand({
+        TableName: 'BotTable',
+        Key: {
+          pk: guildId,
+          sk: `task#${taskId}`,
+        },
+      })
+    );
+
+    if (!getTaskBeforeApprove.Item) {
+      return {
+        content: '❌ Task not found.',
+      };
+    }
+
+    const taskBefore = getTaskBeforeApprove.Item;
+
+    if (taskBefore.status === 'partially_completed') {
+      return {
+        content: '❌ This task is only partially completed and cannot be approved yet.',
+      };
+    }
+
+    if (taskBefore.status !== 'completed') {
+      return {
+        content: '❌ Only tasks that are fully completed can be approved.',
+      };
+    }
+
     await dynamoDbClient.send(
       new UpdateCommand({
         TableName: 'BotTable',
@@ -365,15 +396,13 @@ const performTaskAction = async (
   }
 
   // Override for partially completed multi-claim tasks
-  const isPartiallyComplete =
-    multiClaimEnabled &&
-    completedByUsers.length > 0 &&
-    completedByUsers.length < claimedByUsers.length;
+  const isPartiallyComplete = task.status === 'partially_completed';
 
   if (actionType === 'complete' && isPartiallyComplete) {
-    title = '⏳ ✦ TASK IN PROGRESS ✦';
-    color = 0x0099ff; // Blue, for in-progress
-    statusMessage = '`🔄 IN PROGRESS`';
+    title = '⏳ ✦ TASK PARTIALLY COMPLETED ✦';
+    color = 0xf2c744; // Yellow
+    statusMessage = '`⏳ PARTIALLY COMPLETED`';
+    whatNextMessage = '```\n• Waiting for other contributors to complete their part.\n• Task cannot be approved yet.\n```';
   }
 
   const priorityEmoji = {
@@ -508,7 +537,7 @@ const performTaskAction = async (
   // Complete button:
   // - For single-claim: only the sole claimant can complete.
   // - For multi-claim: only users in claimedByUsers can complete.
-  if (task.status === 'claimed') {
+  if (task.status === 'claimed' || task.status === 'partially_completed') {
     const isSingleClaimOwner = !multiClaimEnabled && task.claimedBy === userId;
     const isMultiClaimParticipant = multiClaimEnabled && claimedByUsers.includes(userId);
 
