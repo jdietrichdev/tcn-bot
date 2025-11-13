@@ -33,47 +33,33 @@ const performTaskAction = async (
     }
 
     const task = getTaskResult.Item;
-    console.log(`Task ${taskId} status: ${task.status}, multipleClaimsAllowed: ${task.multipleClaimsAllowed}, claimedBy: ${task.claimedBy}`);
+    const allowsMultiple = Array.isArray(task.assignedRoleIds) && task.assignedRoleIds.length > 0;
 
-    const allowsMultiple = task.multipleClaimsAllowed === true;
-
-    // Eligibility enforcement (same as before, now applied for both single and multi-claim):
-    // - If assignedUserIds / assignedTo present -> only those users can claim.
-    // - If assignedRoleIds / assignedRole present -> only members with those roles can claim.
     const member = interaction.member;
     const memberRoles: string[] = Array.isArray(member?.roles) ? (member!.roles as string[]) : [];
 
-    const assignedUsers: string[] = Array.isArray(task.assignedUserIds)
-      ? task.assignedUserIds
-      : (task.assignedTo ? [task.assignedTo] : []);
+    const assignedUsers: string[] = Array.isArray(task.assignedUserIds) ? task.assignedUserIds : [];
+    const assignedRoles: string[] = Array.isArray(task.assignedRoleIds) ? task.assignedRoleIds : [];
 
-    const assignedRoles: string[] = Array.isArray(task.assignedRoleIds)
-      ? task.assignedRoleIds
-      : (task.assignedRole ? [task.assignedRole] : []);
+    let isEligible = false;
+    if (assignedUsers.length > 0 && assignedUsers.includes(userId)) {
+      isEligible = true;
+    }
+    if (assignedRoles.length > 0 && memberRoles.some((r) => assignedRoles.includes(r))) {
+      isEligible = true;
+    }
 
-    // If specific users are assigned, caller must be one of them.
-    if (assignedUsers.length > 0 && !assignedUsers.includes(userId)) {
-      console.log(`User ${userId} is not in assignedUsers for task ${taskId}`);
+    // If there are any assignments, the user must be eligible.
+    if ((assignedUsers.length > 0 || assignedRoles.length > 0) && !isEligible) {
+      console.log(`User ${userId} is not eligible to claim task ${taskId}`);
       return {
-        content: '❌ You are not assigned to this task.',
+        content: '❌ You are not assigned to this task or do not have the required role.',
       };
     }
 
-    // If specific roles are assigned, caller must have at least one.
-    if (assignedRoles.length > 0 && !memberRoles.some((r) => assignedRoles.includes(r))) {
-      console.log(`User ${userId} does not have required role for task ${taskId}`);
-      return {
-        content: '❌ You do not have the required role to claim this task.',
-      };
-    }
-
-    // Multiple-claim logic:
-    // - If multipleClaimsAllowed is false: preserve original single-claim behavior.
-    // - If true: allow multiple eligible users to claim by tracking them in claimedByUsers[]
-    //   while keeping status 'claimed'.
     if (!allowsMultiple) {
       if (task.status !== 'pending') {
-        console.log(`Task ${taskId} cannot be claimed - status: ${task.status}, allowsMultiple: ${allowsMultiple}`);
+        console.log(`Task ${taskId} cannot be claimed - status: ${task.status}`);
         return {
           content: '❌ This task has already been claimed.',
         };
@@ -112,7 +98,6 @@ const performTaskAction = async (
 
       const updatedClaimants = [...existingClaimants, userId];
 
-      // Store the roles of the claiming user for demographic checks later.
       const claimantRoles = task.claimantRoles || {};
       claimantRoles[userId] = memberRoles;
 
@@ -187,18 +172,6 @@ const performTaskAction = async (
 
       const updatedCompleted = [...existingCompleted, userId];
 
-      // New check: Ensure at least one claimant from each assigned role is present.
-      let allDemographicsRepresented = true;
-      let missingRoles: string[] = [];
-
-      if (assignedRoles.length > 0) {
-        const claimantRoles = new Set(claimedByUsers.flatMap(id => taskBefore.claimantRoles?.[id] || []));
-        allDemographicsRepresented = assignedRoles.every(roleId => claimantRoles.has(roleId));
-        if (!allDemographicsRepresented) {
-          missingRoles = assignedRoles.filter(roleId => !claimantRoles.has(roleId));
-        }
-      }
-
       // For a multi-claim task to be considered fully complete,
       // at least two users must have claimed it, and all claimants must have marked it as complete.
       // This prevents one person from prematurely completing a task meant for a group.
@@ -209,7 +182,19 @@ const performTaskAction = async (
       const allClaimantsFinished = claimedByUsers.length > 0 &&
         claimedByUsers.every((id) => updatedCompleted.includes(id));
 
-      const isFullyComplete = minimumClaimantsMet && allClaimantsFinished && allDemographicsRepresented; // This line was correct, but the surrounding logic was flawed.
+      // New check: Ensure at least one user from each assigned role has COMPLETED the task.
+      let allDemographicsRepresented = true;
+      let missingRoles: string[] = [];
+
+      if (assignedRoles.length > 0) {
+        const completerRoles = new Set(updatedCompleted.flatMap(id => taskBefore.claimantRoles?.[id] || []));
+        allDemographicsRepresented = assignedRoles.every(roleId => completerRoles.has(roleId));
+        if (!allDemographicsRepresented) {
+          missingRoles = assignedRoles.filter(roleId => !completerRoles.has(roleId));
+        }
+      }
+
+      const isFullyComplete = minimumClaimantsMet && allClaimantsFinished && allDemographicsRepresented;
       if (isFullyComplete) {
         // Everyone who claimed has completed: mark task as completed.
         await dynamoDbClient.send(
