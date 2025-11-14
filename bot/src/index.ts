@@ -231,6 +231,7 @@ export const proxy = async (
         flags: MessageFlags.Ephemeral,
       },
     };
+  }
   return {
     statusCode: 200,
     body: JSON.stringify(response),

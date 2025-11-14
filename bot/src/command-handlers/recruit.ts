@@ -26,7 +26,7 @@ export const handleRecruit = async (
       );
     await sendMessage(
       {
-        content: `<@&${config.RECRUITER_ROLE}>`,
+        content: `<@&${config.recruiterRole}>`,
         embeds: [
           {
             title: "New potential recruit!",
@@ -44,7 +44,7 @@ export const handleRecruit = async (
           users: [userId.value],
         },
       },
-      config.RECRUITMENT_OPP_CHANNEL
+      config.recruitmentOppChannel
     );
     await updateResponse(interaction.application_id, interaction.token, {
       content: `Thanks for your recommendation <@${interaction.member?.user.id}>`,
