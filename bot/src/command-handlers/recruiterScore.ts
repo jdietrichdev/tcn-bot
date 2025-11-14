@@ -387,7 +387,7 @@ const isFcPostMessage = (message: APIMessage): boolean => {
     return false;
   }
 
-  if (content.startsWith("https://discord.com/channels/236523452230533121/1058589765508800644")) {
+  if (content.startsWith("https://discord.com/channels/")) {
     return true;
   }
 

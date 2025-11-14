@@ -208,44 +208,29 @@ export const proxy = async (
       'recruiter_leaderboard_refresh'
     ];
     
-    const isPublicCommand = body.type === InteractionType.ApplicationCommand && 
-                           publicCommands.includes((body as APIChatInputApplicationCommandInteraction).data.name);
-    
-    const isPublicButton = body.type === InteractionType.MessageComponent && 
-                          publicTaskButtons.some(buttonPrefix => 
-                            (body as APIMessageComponentInteraction).data.custom_id.startsWith(buttonPrefix) ||
-                            (body as APIMessageComponentInteraction).data.custom_id === buttonPrefix
-                          );
-    
-    if (body.type === InteractionType.MessageComponent) {
-      const customId = (body as APIMessageComponentInteraction).data.custom_id;
     const commandName =
       body.type === InteractionType.ApplicationCommand ? body.data.name : undefined;
     const customId =
       body.type === InteractionType.MessageComponent ? body.data.custom_id : undefined;
-
+ 
     const isPublicCommand = Boolean(
       commandName && publicCommands.includes(commandName)
     );
-
+ 
     const isPublicButton = Boolean(
-      customId && publicTaskButtons.some((buttonPrefix) => customId.startsWith(buttonPrefix))
+      customId &&
+        publicTaskButtons.some(
+          (buttonPrefix) =>
+            customId.startsWith(buttonPrefix) || customId === buttonPrefix
+        )
     );
-
-    if (customId) {
-      console.log(`Button interaction: ${customId}, isPublic: ${isPublicButton}`);
-    }
-    if (commandName) {
-      console.log(`Slash command: ${commandName}, isPublic: ${isPublicCommand}`);
-    }
-
+ 
     response = {
       type: InteractionResponseType.DeferredChannelMessageWithSource,
       data: isPublicCommand || isPublicButton ? {} : {
         flags: MessageFlags.Ephemeral,
       },
     };
-  }
   return {
     statusCode: 200,
     body: JSON.stringify(response),
