@@ -63,12 +63,65 @@ export const proxy = async (
     response = (await handleUnrosteredPagination(body, body.data.custom_id)) as APIInteractionResponse;
   } else if (
     body.type === InteractionType.MessageComponent &&
-    (body.data.custom_id.startsWith("task_list_first_") ||
-     body.data.custom_id.startsWith("task_list_prev_") ||
-     body.data.custom_id.startsWith("task_list_next_") ||
-     body.data.custom_id.startsWith("task_list_last_") ||
-     body.data.custom_id.startsWith("task_list_page_"))
+    (
+      body.data.custom_id.startsWith("task_claim_") ||
+      body.data.custom_id.startsWith("task_complete_") ||
+      body.data.custom_id.startsWith("task_unclaim_") ||
+      body.data.custom_id.startsWith("task_approve_") ||
+      body.data.custom_id.startsWith("task_list_first_") ||
+      body.data.custom_id.startsWith("task_list_prev_") ||
+      body.data.custom_id.startsWith("task_list_next_") ||
+      body.data.custom_id.startsWith("task_list_last_") ||
+      body.data.custom_id.startsWith("task_list_page_") ||
+      body.data.custom_id === "task_refresh_list" ||
+      body.data.custom_id === "task_create_new" ||
+      body.data.custom_id === "task_list_all" ||
+      body.data.custom_id === "task_list_my" ||
+      body.data.custom_id === "task_list_completed"
+    )
   ) {
+    // For task management buttons we want:
+    // - Claim/complete/unclaim/approve + list pagination/refresh/create:
+    //     deferred via EventBridge (edit original message).
+    // - Navigation buttons (view all/my/completed):
+    //     ephemeral "simulated /task-list" responses per user.
+    console.log("Task management / task-list button clicked (via EventBridge)");
+
+    await eventClient.send(
+      new PutEventsCommand({
+        Entries: [
+          {
+            Detail: event.body!,
+            DetailType: "Bot Event Received",
+            Source: "tcn-bot-event",
+            EventBusName: "tcn-bot-events",
+          },
+        ],
+      })
+    );
+
+    const isNavButton =
+      body.data.custom_id === "task_list_all" ||
+      body.data.custom_id === "task_list_my" ||
+      body.data.custom_id === "task_list_completed";
+
+    // Make navigation buttons ephemeral:
+    // - For nav buttons, send an ephemeral deferred response
+    //   (DeferredChannelMessageWithSource + flags: Ephemeral).
+    // - Our async EventBridge handler will then complete it by editing this
+    //   ephemeral message via updateResponse.
+    if (isNavButton) {
+      response = {
+        type: InteractionResponseType.DeferredChannelMessageWithSource,
+        data: {
+          flags: MessageFlags.Ephemeral,
+        },
+      };
+    } else {
+      // All other task buttons (claim/complete/unclaim/approve/pagination) stick with
+      // DeferredMessageUpdate and are completed via updateResponse.
+      response = { type: InteractionResponseType.DeferredMessageUpdate };
+    }
     console.log("Task list pagination button clicked");
     const { handleTaskListPagination } = await import("./component-handlers/taskListButton");
     response = (await handleTaskListPagination(body, body.data.custom_id)) as APIInteractionResponse;
@@ -144,14 +197,11 @@ export const proxy = async (
       'task_complete_',
       'task_unclaim_',
       'task_approve_',
-      'task_list_all',
-      'task_list_my',
-      'task_list_pending',
-      'task_list_claimed',
-      'task_list_completed',
-      'task_list_approved',
-      'task_list_available',
-      'task_create_new',
+      'task_list_first_',
+      'task_list_prev_',
+      'task_list_next_',
+      'task_list_last_',
+      'task_list_page_',
       'task_refresh_list',
       'task_refresh_dashboard',
       'recruiter_score_',
@@ -162,22 +212,19 @@ export const proxy = async (
       body.type === InteractionType.ApplicationCommand ? body.data.name : undefined;
     const customId =
       body.type === InteractionType.MessageComponent ? body.data.custom_id : undefined;
-
+ 
     const isPublicCommand = Boolean(
       commandName && publicCommands.includes(commandName)
     );
-
+ 
     const isPublicButton = Boolean(
-      customId && publicTaskButtons.some((buttonPrefix) => customId.startsWith(buttonPrefix))
+      customId &&
+        publicTaskButtons.some(
+          (buttonPrefix) =>
+            customId.startsWith(buttonPrefix) || customId === buttonPrefix
+        )
     );
-
-    if (customId) {
-      console.log(`Button interaction: ${customId}, isPublic: ${isPublicButton}`);
-    }
-    if (commandName) {
-      console.log(`Slash command: ${commandName}, isPublic: ${isPublicCommand}`);
-    }
-
+ 
     response = {
       type: InteractionResponseType.DeferredChannelMessageWithSource,
       data: isPublicCommand || isPublicButton ? {} : {

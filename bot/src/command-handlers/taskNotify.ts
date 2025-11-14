@@ -5,7 +5,7 @@ import {
   ComponentType,
   ButtonStyle
 } from 'discord-api-types/v10';
-import { updateResponse } from '../adapters/discord-adapter';
+import { sendFollowupMessage, updateResponse } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 
@@ -20,6 +20,7 @@ export const handleTaskNotify = async (
     if (!taskOption) {
       await updateResponse(interaction.application_id, interaction.token, {
         content: '❌ Task selection is required.',
+        flags: 64 // Ephemeral message
       });
       return;
     }
@@ -41,8 +42,9 @@ export const handleTaskNotify = async (
 
     const task = getResult.Item;
     if (!task) {
-      await updateResponse(interaction.application_id, interaction.token, {
+      await sendFollowupMessage(interaction.application_id, interaction.token, {
         content: '❌ Task not found. It may have been deleted or completed.',
+        flags: 64
       });
       return;
     }
@@ -50,6 +52,11 @@ export const handleTaskNotify = async (
     if (task.status === 'approved') {
       await updateResponse(interaction.application_id, interaction.token, {
         content: '❌ This task has already been approved and completed. No notification needed.',
+        flags: 64
+      });
+      await sendFollowupMessage(interaction.application_id, interaction.token, {
+        content: '❌ This task has already been approved and completed. No notification needed.',
+        flags: 64
       });
       return;
     }
@@ -105,12 +112,27 @@ export const handleTaskNotify = async (
       urgencyLevel = '📋 **NEEDS ATTENTION**';
     }
 
-    let pingText = '';
-    if (task.assignedRole) {
-      pingText = `<@&${task.assignedRole}> `;
-    } else if (task.status === 'completed') {
-      pingText = '**@admin** ';
-    }
+    const generatePingText = () => {
+      const allPings = [];
+      
+      if (task.assignedRoleIds && Array.isArray(task.assignedRoleIds) && task.assignedRoleIds.length > 0) {
+        allPings.push(...task.assignedRoleIds.map((id: string) => `<@&${id}>`));
+      } else if (task.assignedRole) {
+        allPings.push(`<@&${task.assignedRole}>`);
+      }
+      
+      if (task.assignedUserIds && Array.isArray(task.assignedUserIds) && task.assignedUserIds.length > 0) {
+        allPings.push(...task.assignedUserIds.map((id: string) => `<@${id}>`));
+      }
+      
+      if (allPings.length === 0 && task.status === 'completed') {
+        return `Pinging admins for approval.`;
+      }
+      
+      return allPings.length > 0 ? `${allPings.join(' ')} ` : '';
+    };
+
+    const pingText = generatePingText();
 
     const embed: APIEmbed = {
       title: notificationType,
@@ -222,10 +244,15 @@ export const handleTaskNotify = async (
       components: actionButtons
     }];
 
-    const content = pingText ? `${pingText}${notificationType}` : undefined;
+    const content = pingText ? `${pingText}` : `Task notification for: **${task.title}**`;
 
     await updateResponse(interaction.application_id, interaction.token, {
-      content,
+      content: `✅ Notification sent for task: **${task.title}**`,
+      flags: 64
+    });
+
+    await sendFollowupMessage(interaction.application_id, interaction.token, {
+      content: content,
       embeds: [embed],
       components
     });
@@ -234,8 +261,9 @@ export const handleTaskNotify = async (
 
   } catch (err) {
     console.error('Failed to send task notification:', err);
-    await updateResponse(interaction.application_id, interaction.token, {
+    await sendFollowupMessage(interaction.application_id, interaction.token, {
       content: '❌ Failed to send task notification. Please try again or contact an admin.',
+      flags: 64
     });
   }
 };

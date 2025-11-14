@@ -13,6 +13,7 @@ export const handleRecruiterLeaderboardRefresh = async (
   try {
     const guildId = interaction.guild_id!;
     const config = getConfig(guildId);
+
     const dataset = await compileRecruiterScoreData(guildId, config);
     const embed = buildRecruiterLeaderboardEmbed(dataset.scores);
 

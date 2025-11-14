@@ -9,6 +9,39 @@ import { updateResponse } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { GetCommand } from '@aws-sdk/lib-dynamodb';
 
+const formatAssignmentDetails = (task: any) => {
+  let roleDisplay = '`Anyone can claim`';
+  if (task.assignedRoleIds && Array.isArray(task.assignedRoleIds) && task.assignedRoleIds.length > 0) {
+    const roleList = task.assignedRoleIds.map((id: string) => `<@&${id}>`).join(', ');
+    roleDisplay = roleList;
+  } else if (task.assignedRole) {
+    roleDisplay = `<@&${task.assignedRole}>`;
+  }
+  
+  let userDisplay = '`Not assigned to specific user`';
+  if (task.assignedUserIds && Array.isArray(task.assignedUserIds) && task.assignedUserIds.length > 0) {
+    const userList = task.assignedUserIds.map((id: string) => `<@${id}>`).join(', ');
+    userDisplay = userList;
+  } else if (task.assignedTo && Array.isArray(task.assignedTo) && task.assignedTo.length > 0) {
+    const userList = task.assignedTo.map((id: string) => `<@${id}>`).join(', ');
+    userDisplay = userList;
+  } else if (task.assignedTo) {
+    userDisplay = `<@${task.assignedTo}>`;
+  }
+  
+  let claimedDisplay = '`No one`';
+  if (task.claimedBy) {
+    if (Array.isArray(task.claimedBy)) {
+      const claimedList = task.claimedBy.map((id: string) => `<@${id}>`).join(', ');
+      claimedDisplay = claimedList;
+    } else {
+      claimedDisplay = `<@${task.claimedBy}>`;
+    }
+  }
+  
+  return { roleDisplay, userDisplay, claimedDisplay };
+};
+
 export const handleTaskOverview = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
@@ -91,9 +124,9 @@ export const handleTaskOverview = async (
         {
           name: '👥 **Assignment & Access**',
           value: [
-            `**Assigned Role:** ${task.assignedRole ? `<@&${task.assignedRole}>` : '`Anyone can claim`'}`,
-            `**Assigned User:** ${task.assignedTo ? `<@${task.assignedTo}>` : '`Not assigned to specific user`'}`,
-            `**Currently Claimed:** ${task.claimedBy ? `<@${task.claimedBy}>` : '`No one`'}`
+            `**Assigned Role:** ${formatAssignmentDetails(task).roleDisplay}`,
+            `**Assigned User:** ${formatAssignmentDetails(task).userDisplay}`,
+            `**Currently Claimed:** ${formatAssignmentDetails(task).claimedDisplay}`
           ].join('\n'),
           inline: false
         },
@@ -132,13 +165,43 @@ export const handleTaskOverview = async (
       }
     }
 
-    const canClaim = task.status === 'pending' && 
-                    (!task.assignedRole || (interaction.member?.roles || []).includes(task.assignedRole)) &&
-                    (!task.assignedTo || task.assignedTo === userId);
-
-    const canUnclaim = task.status === 'claimed' && task.claimedBy === userId;
+    const allowsMultipleClaims = (task.assignedRoleIds && task.assignedRoleIds.length > 0) || 
+                                (task.assignedUserIds && task.assignedUserIds.length > 0) ||
+                                task.assignedRole; 
     
-    const canComplete = task.status === 'claimed' && task.claimedBy === userId;
+    let hasClaimPermission = true;
+    if (task.assignedRoleIds && task.assignedRoleIds.length > 0) {
+      hasClaimPermission = task.assignedRoleIds.some((roleId: string) => 
+        (interaction.member?.roles || []).includes(roleId)
+      );
+    } else if (task.assignedUserIds && task.assignedUserIds.length > 0) {
+      hasClaimPermission = task.assignedUserIds.includes(userId);
+    } else if (task.assignedRole) {
+      hasClaimPermission = (interaction.member?.roles || []).includes(task.assignedRole);
+    } else if (task.assignedTo) {
+      hasClaimPermission = task.assignedTo === userId;
+    }
+    
+    let hasUserClaimed = false;
+    if (allowsMultipleClaims && task.claimedBy) {
+      const claimedByArray = Array.isArray(task.claimedBy) ? task.claimedBy : [task.claimedBy];
+      hasUserClaimed = claimedByArray.includes(userId);
+    }
+
+    const canClaim = hasClaimPermission && (
+      (task.status === 'pending') || 
+      (allowsMultipleClaims && task.status === 'claimed' && !hasUserClaimed)
+    );
+
+    const canUnclaim = (task.status === 'claimed') && (
+      (allowsMultipleClaims && hasUserClaimed) || 
+      (!allowsMultipleClaims && task.claimedBy === userId) 
+    );
+    
+    const canComplete = (task.status === 'claimed') && (
+      (allowsMultipleClaims && hasUserClaimed) || 
+      (!allowsMultipleClaims && task.claimedBy === userId)
+    );
 
     const components = [];
 

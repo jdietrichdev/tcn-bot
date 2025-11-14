@@ -53,21 +53,45 @@ export const handleTaskAdminUnclaim = async (
       return;
     }
 
-    if (task.status !== 'claimed') {
-      const statusMessages = {
-        pending: '❌ This task is not claimed.',
-        'ready-for-review': '❌ This task is ready for review. Use the approve/reject commands instead.',
-        approved: '❌ This task has been approved and cannot be unclaimed.',
-      };
-      
+    if (task.status !== 'claimed' && task.status !== 'partially_completed') {
       await updateResponse(interaction.application_id, interaction.token, {
-        content: statusMessages[task.status as keyof typeof statusMessages] || '❌ This task cannot be unclaimed.',
+        content: '❌ This task is not in a state that can be unclaimed (must be `claimed` or `partially_completed`).',
       });
       return;
     }
 
-    const previousClaimant = task.claimedBy;
-    
+    const allowsMultiple = task.multipleClaimsAllowed === true;
+    let previousClaimants: string[] = [];
+    let updateExpression: string;
+    let expressionAttributeValues: any;
+
+    if (allowsMultiple) {
+      previousClaimants = Array.isArray(task.claimedByUsers) ? task.claimedByUsers : [];
+      updateExpression = 'SET #status = :status, unclaimedByAdmin = :adminId, unclaimedAt = :timestamp REMOVE claimedByUsers, claimedAt, completedByUsers';
+      expressionAttributeValues = {
+        ':status': 'pending',
+        ':adminId': adminUserId,
+        ':timestamp': new Date().toISOString(),
+      };
+    } else {
+      if (task.claimedBy) {
+        previousClaimants = [task.claimedBy];
+      }
+      updateExpression = 'SET #status = :status, unclaimedByAdmin = :adminId, unclaimedAt = :timestamp REMOVE claimedBy, claimedAt, assignedTo';
+      expressionAttributeValues = {
+        ':status': 'pending',
+        ':adminId': adminUserId,
+        ':timestamp': new Date().toISOString(),
+      };
+    }
+
+    if (previousClaimants.length === 0) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: '❌ This task is not currently claimed by anyone.',
+      });
+      return;
+    }
+
     await dynamoDbClient.send(
       new UpdateCommand({
         TableName: 'BotTable',
@@ -75,15 +99,11 @@ export const handleTaskAdminUnclaim = async (
           pk: guildId,
           sk: `task#${taskId}`,
         },
-        UpdateExpression: 'SET #status = :status, unclaimedByAdmin = :adminId, unclaimedAt = :timestamp REMOVE claimedBy, claimedAt, assignedTo',
+        UpdateExpression: updateExpression,
         ExpressionAttributeNames: {
           '#status': 'status',
         },
-        ExpressionAttributeValues: {
-          ':status': 'pending',
-          ':adminId': adminUserId,
-          ':timestamp': new Date().toISOString(),
-        },
+        ExpressionAttributeValues: expressionAttributeValues,
       })
     );
 
@@ -109,7 +129,7 @@ export const handleTaskAdminUnclaim = async (
         },
         {
           name: '👤 **Previous Claimant**',
-          value: `<@${previousClaimant}>`,
+          value: previousClaimants.map(id => `<@${id}>`).join(', '),
           inline: true
         },
         {
@@ -171,7 +191,7 @@ export const handleTaskAdminUnclaim = async (
       components
     });
 
-    console.log(`Task ${taskId} force-unclaimed by admin ${adminUserId} from user ${previousClaimant}`);
+    console.log(`Task ${taskId} force-unclaimed by admin ${adminUserId} from user(s) ${previousClaimants.join(', ')}`);
 
   } catch (err) {
     console.error('Failed to admin unclaim task:', err);

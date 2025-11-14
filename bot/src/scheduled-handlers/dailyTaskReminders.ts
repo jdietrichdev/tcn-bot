@@ -2,21 +2,30 @@ import { ScanCommand } from "@aws-sdk/client-dynamodb";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import { sendMessage } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
+import { APIEmbed } from "discord-api-types/v10";
+
+// Function to create a formatted string for a list of tasks
+const formatTasks = (tasks: any[], includeStatus = false) => {
+  if (tasks.length === 0) return '`None`';
+  return tasks.map(task => {
+    const statusEmoji = includeStatus ? (task.status === 'claimed' ? '📪' : '📬') : '';
+    const dueDateText = task.dueDate ? ` (Due: ${task.dueDate})` : '';
+    return `• ${statusEmoji} **${task.title}**${dueDateText}`.trim();
+  }).join('\n');
+};
 
 export const handleDailyTaskReminders = async (
   eventDetail: Record<string, string>
 ) => {
   try {
     const { guildId } = eventDetail;
-    const channelId = "1435760579213136035";
-    
+    const channelId = "1438383813662347274"; // New Channel ID
+
     const result = await dynamoDbClient.send(
       new ScanCommand({
         TableName: "BotTable",
         FilterExpression: "pk = :guildId AND begins_with(sk, :taskPrefix) AND (#status = :claimedStatus OR #status = :pendingStatus)",
-        ExpressionAttributeNames: {
-          "#status": "status"
-        },
+        ExpressionAttributeNames: { "#status": "status" },
         ExpressionAttributeValues: marshall({
           ":guildId": guildId,
           ":taskPrefix": "task#",
@@ -27,138 +36,125 @@ export const handleDailyTaskReminders = async (
     );
 
     if (!result.Items || result.Items.length === 0) {
-      console.log("No pending or claimed tasks found for reminders");
+      console.log("No pending or claimed tasks found for reminders.");
       return;
     }
 
     const tasks = result.Items.map((item) => unmarshall(item));
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-    
-    const tasksByAssignee = new Map();
-    
+    today.setUTCHours(0, 0, 0, 0);
+
+    const tasksByAssignee = new Map<string, {
+      assignee: string;
+      assigneeType: 'user' | 'role';
+      overdueTasks: any[];
+      dueTodayTasks: any[];
+      pendingTasks: any[];
+      claimedTasks: any[];
+    }>();
+
     for (const task of tasks) {
-      let assignee = null;
-      let assigneeType = 'none';
-      
-      if (task.assignedTo || task.claimedBy) {
-        assignee = task.assignedTo || task.claimedBy;
-        assigneeType = 'user';
-      } else if (task.assignedRole) {
-        assignee = task.assignedRole;
-        assigneeType = 'role';
-      }
-      
-      if (!assignee) continue;
-      
-      const key = `${assigneeType}:${assignee}`;
+      const assigneeId = task.claimedBy || task.assignedTo || task.assignedRole;
+      if (!assigneeId) continue;
+
+      const assigneeType = task.claimedBy || task.assignedTo ? 'user' : 'role';
+      const key = `${assigneeType}:${assigneeId}`;
+
       if (!tasksByAssignee.has(key)) {
         tasksByAssignee.set(key, {
-          assignee,
+          assignee: assigneeId,
           assigneeType,
           overdueTasks: [],
-          dueTasks: [],
+          dueTodayTasks: [],
           pendingTasks: [],
           claimedTasks: []
         });
       }
-      
-      const assigneeData = tasksByAssignee.get(key);
-      
-      if (task.dueDate) {
-        const dueDate = new Date(task.dueDate + 'T00:00:00.000Z');
-        const taskDueDateStr = task.dueDate;
-        
-        if (taskDueDateStr < todayStr) {
-          assigneeData.overdueTasks.push(task);
-        } else if (taskDueDateStr === todayStr) {
-          assigneeData.dueTasks.push(task);
+
+      const group = tasksByAssignee.get(key)!;
+      const taskDueDate = task.dueDate ? new Date(task.dueDate + 'T00:00:00.000Z') : null;
+
+      if (taskDueDate) {
+        if (taskDueDate < today) {
+          group.overdueTasks.push(task);
+        } else if (taskDueDate.getTime() === today.getTime()) {
+          group.dueTodayTasks.push(task);
         } else {
-          if (task.status === 'claimed') {
-            assigneeData.claimedTasks.push(task);
-          } else {
-            assigneeData.pendingTasks.push(task);
-          }
+          if (task.status === 'claimed') group.claimedTasks.push(task);
+          else group.pendingTasks.push(task);
         }
       } else {
-        if (task.status === 'claimed') {
-          assigneeData.claimedTasks.push(task);
-        } else {
-          assigneeData.pendingTasks.push(task);
-        }
+        if (task.status === 'claimed') group.claimedTasks.push(task);
+        else group.pendingTasks.push(task);
       }
     }
 
     if (tasksByAssignee.size === 0) {
-      console.log("No assigned tasks found for reminders");
+      console.log("No assigned tasks to send reminders for.");
       return;
     }
 
-    for (const [key, data] of tasksByAssignee) {
-      const { assignee, assigneeType, overdueTasks, dueTasks, pendingTasks, claimedTasks } = data;
+    for (const [, data] of tasksByAssignee) {
+      const { assignee, assigneeType, overdueTasks, dueTodayTasks, pendingTasks, claimedTasks } = data;
       
-      let mention = '';
-      if (assigneeType === 'user') {
-        mention = `<@${assignee}>`;
-      } else if (assigneeType === 'role') {
-        mention = `<@&${assignee}>`;
-      }
-      
-      let messageContent = `🔔 **Task Summary** ${mention}\n\n`;
-      
+      const mention = assigneeType === 'user' ? `<@${assignee}>` : `<@&${assignee}>`;
+      const totalTasks = overdueTasks.length + dueTodayTasks.length + pendingTasks.length + claimedTasks.length;
+
+      if (totalTasks === 0) continue;
+
+      const embed: APIEmbed = {
+        title: `🔔 Daily Task Summary for ${assigneeType === 'user' ? 'You' : 'Your Role'}`,
+        description: `Here is a summary of your **${totalTasks}** assigned task(s).`,
+        color: overdueTasks.length > 0 ? 0xff0000 : (dueTodayTasks.length > 0 ? 0xffa500 : 0x5865F2),
+        fields: [],
+        footer: {
+          text: "Use /task-list or the dashboard to manage your tasks.",
+        },
+        timestamp: new Date().toISOString(),
+      };
+
       if (overdueTasks.length > 0) {
-        messageContent += `⚠️ **OVERDUE TASKS:**\n`;
-        for (const task of overdueTasks) {
-          const daysPast = Math.floor((new Date().getTime() - new Date(task.dueDate + 'T00:00:00.000Z').getTime()) / (1000 * 60 * 60 * 24));
-          const statusEmoji = task.status === 'claimed' ? '📪' : '📬';
-          messageContent += `• ${statusEmoji} **${task.title}** - Due ${daysPast} day${daysPast > 1 ? 's' : ''} ago (${task.dueDate})\n`;
-        }
-        messageContent += '\n';
+        embed.fields!.push({
+          name: `⚠️ Overdue Tasks (${overdueTasks.length})`,
+          value: formatTasks(overdueTasks, true),
+          inline: false,
+        });
       }
-      
-      if (dueTasks.length > 0) {
-        messageContent += `📅 **DUE TODAY:**\n`;
-        for (const task of dueTasks) {
-          const statusEmoji = task.status === 'claimed' ? '📪' : '📬';
-          messageContent += `• ${statusEmoji} **${task.title}** - Due today (${task.dueDate})\n`;
-        }
-        messageContent += '\n';
+      if (dueTodayTasks.length > 0) {
+        embed.fields!.push({
+          name: `📅 Due Today (${dueTodayTasks.length})`,
+          value: formatTasks(dueTodayTasks, true),
+          inline: false,
+        });
       }
-      
       if (claimedTasks.length > 0) {
-        messageContent += `📪 **IN PROGRESS:**\n`;
-        for (const task of claimedTasks) {
-          const dueDateText = task.dueDate ? ` - Due: ${task.dueDate}` : '';
-          messageContent += `• **${task.title}**${dueDateText}\n`;
-        }
-        messageContent += '\n';
+        embed.fields!.push({
+          name: `📪 In Progress (${claimedTasks.length})`,
+          value: formatTasks(claimedTasks),
+          inline: false,
+        });
       }
-      
       if (pendingTasks.length > 0) {
-        messageContent += `📬 **PENDING (Need to Claim):**\n`;
-        for (const task of pendingTasks) {
-          const dueDateText = task.dueDate ? ` - Due: ${task.dueDate}` : '';
-          messageContent += `• **${task.title}**${dueDateText}\n`;
-        }
-        messageContent += '\n';
+        embed.fields!.push({
+          name: `📬 Pending & Needs Claiming (${pendingTasks.length})`,
+          value: formatTasks(pendingTasks),
+          inline: false,
+        });
       }
-      
-      const totalTasks = overdueTasks.length + dueTasks.length + claimedTasks.length + pendingTasks.length;
-      messageContent += `📊 **Total Tasks: ${totalTasks}**\n\n`;
-      messageContent += `Use \`/task-list\` to view all your tasks or visit the [Task Dashboard](${process.env.DASHBOARD_URL || 'https://d19x3gu4qo04f3.cloudfront.net'}/tasks) for more details.`;
-      
+
       await sendMessage(
         {
-          content: messageContent,
+          content: mention,
+          embeds: [embed],
           allowed_mentions: {
             users: assigneeType === 'user' ? [assignee] : [],
-            roles: assigneeType === 'role' ? [assignee] : []
+            roles: assigneeType === 'role' ? [assignee] : [],
           }
         },
         channelId
       );
       
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Avoid rate limiting
     }
 
     console.log(`Sent task summary reminders for ${tasksByAssignee.size} assignee(s) in guild ${guildId}`);
