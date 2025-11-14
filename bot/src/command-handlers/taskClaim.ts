@@ -25,13 +25,11 @@ export const handleTaskClaim = async (
 
     const responseData = await performTaskAction(interaction, taskId, guildId, 'claim');
 
-    // If performTaskAction returned a simple content message (for errors/confirmations)
     if (responseData.content) {
       await updateResponse(interaction.application_id, interaction.token, {
         content: responseData.content,
       });
     } else {
-      // Otherwise, it returned a full embed and components
       await updateResponse(interaction.application_id, interaction.token, {
         embeds: responseData.embeds,
         components: responseData.components,

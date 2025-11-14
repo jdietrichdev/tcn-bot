@@ -84,13 +84,9 @@ export const handleTaskCreate = async (
     const taskId = `task-${uuidv4()}`;
     const now = new Date().toISOString();
 
-    // Multi-claim rule:
-    // - If any roles are assigned (even a single role), allow multiple claims.
-    // - Or if more than one explicit user is assigned, allow multiple claims.
-    // - Only a single assigned user with no roles stays single-claim.
+    
     const multipleClaimsAllowed = assignedRoleIds.length > 0 || assignedUserIds.length > 1;
 
-    // Auto-assign/claim should only happen if users are specified AND no roles are.
     const shouldAutoAssign = assignedUserIds.length > 0 && assignedRoleIds.length === 0;
     
     const taskStatus = shouldAutoAssign ? 'claimed' : 'pending';
@@ -117,9 +113,6 @@ export const handleTaskCreate = async (
     }
 
     if (shouldAutoAssign) {
-      // For auto-assigned tasks:
-      // - If multi-claim is allowed, treat all assigned users as initial claimants.
-      // - Else, keep original behavior (claimedBy single or array as before).
       if (multipleClaimsAllowed) {
         taskItem.multipleClaimsAllowed = true;
         taskItem.claimedByUsers = assignedUserIds;
@@ -129,7 +122,6 @@ export const handleTaskCreate = async (
         taskItem.claimedAt = now;
       }
     } else if (multipleClaimsAllowed) {
-      // If there are multiple roles/users but no direct auto-assign, still mark as multi-claim.
       taskItem.multipleClaimsAllowed = true;
     }
 

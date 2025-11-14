@@ -160,7 +160,6 @@ export const generateTaskListResponse = async (
     return `${priority}${status} **${task.title}**${dueDate}${assignments}`;
   }).join('\n');
 
-  // Add validation and truncation for embed description
   const truncateEmbedDescription = (description: string, maxLength: number): string => {
     if (description.length > maxLength) {
       return description.slice(0, maxLength - 3) + '...';
@@ -168,9 +167,8 @@ export const generateTaskListResponse = async (
     return description;
   };
 
-  // Validate and truncate embed description
   const embedDescription = taskList || '`No tasks found matching the current filters.`';
-  const truncatedDescription = truncateEmbedDescription(embedDescription, 4096); // Discord's max description length is 4096
+  const truncatedDescription = truncateEmbedDescription(embedDescription, 4096); 
 
   const embed: APIEmbed = {
     title: `📋 ✦ TASK BOARD${isFiltered ? ' (FILTERED)' : ''} ✦ 📝`,
@@ -228,7 +226,6 @@ export const generateTaskListResponse = async (
   const components = [];
 
   if (totalPages > 1 && interactionId) {
-    // Pagination row with interaction-scoped IDs
     components.push({
       type: ComponentType.ActionRow as ComponentType.ActionRow,
       components: [
@@ -271,7 +268,6 @@ export const generateTaskListResponse = async (
     });
   }
 
-  // Secondary rows: create/refresh/dashboard + filter shortcuts
   components.push({
     type: ComponentType.ActionRow as ComponentType.ActionRow,
     components: [
@@ -340,7 +336,6 @@ export const generateTaskListResponse = async (
     };
   }
 
-  // Add validation for embed size and component count
   const validateDiscordPayload = (embeds: APIEmbed[], components: { type: ComponentType.ActionRow, components: any[] }[]) => {
     const embedSize = JSON.stringify(embeds).length;
     if (embedSize > 6000) {
@@ -363,7 +358,6 @@ export const generateTaskListResponse = async (
     }
   };
 
-  // Wrap the logic in a try-catch block
   try {
     validateDiscordPayload([embed], components);
   } catch (error) {

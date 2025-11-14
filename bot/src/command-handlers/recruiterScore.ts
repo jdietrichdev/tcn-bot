@@ -219,7 +219,7 @@ const collectCandidateChannelActivity = async (
     );
 
     for (const reactor of reactors) {
-      if (reactor.bot || reactor.id === config.BOT_ID) {
+      if (reactor.bot || reactor.id === config.botId) {
         continue;
       }
 
