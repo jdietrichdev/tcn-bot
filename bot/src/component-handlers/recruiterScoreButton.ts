@@ -59,8 +59,8 @@ export const handleRecruiterScorePagination = async (
     }
 
     const context: RecruiterScoreDisplayContext = {
-      recruitmentOppChannelId: config.recruitmentOppChannel,
-      clanPostsChannelId: config.clanPostsChannel,
+      recruitmentOppChannelId: config.RECRUITMENT_OPP_CHANNEL,
+      clanPostsChannelId: config.CLAN_POSTS_CHANNEL,
       generatedAt: new Date().toISOString(),
     };
 

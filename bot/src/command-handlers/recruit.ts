@@ -44,7 +44,7 @@ export const handleRecruit = async (
           users: [userId.value],
         },
       },
-      config.recruitmentOppChannel
+      config.RECRUITMENT_OPP_CHANNEL
     );
     await updateResponse(interaction.application_id, interaction.token, {
       content: `Thanks for your recommendation <@${interaction.member?.user.id}>`,
