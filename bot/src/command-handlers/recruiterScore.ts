@@ -48,23 +48,23 @@ export const handleRecruiterScore = async (
     const config = getConfig(guildId);
     const dataset = await compileRecruiterScoreData(guildId, config);
     const displayContext: RecruiterScoreDisplayContext = {
-      recruitmentOppChannelId: config.recruitmentOppChannel,
-      clanPostsChannelId: config.clanPostsChannel,
+      recruitmentOppChannelId: config.RECRUITMENT_OPP_CHANNEL,
+      clanPostsChannelId: config.CLAN_POSTS_CHANNEL,
       generatedAt: new Date().toISOString(),
     };
 
     await publishRecruiterScoreMessage(
-      config.recruiterChannel,
+      config.RECRUITER_CHANNEL,
       dataset,
       displayContext
     );
     if (typeof input !== "string") {
       await updateResponse(input.application_id, input.token, {
-        content: `Information has been compiled and sent to <#${config.recruiterChannel}>`,
+        content: `Information has been compiled and sent to <#${config.RECRUITER_CHANNEL}>`,
       });
     } else {
       await publishRecruiterScoreMessage(
-        config.recruiterLeaderboardChannel,
+        config.RECRUITMENT_LEADERBOARD_CHANNEL,
         dataset,
         displayContext
       );
@@ -181,7 +181,7 @@ const collectCandidateChannelActivity = async (
   config: ServerConfig
 ) => {
   const since = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000);
-  const messages = await getChannelMessages(config.recruitmentOppChannel, since);
+  const messages = await getChannelMessages(config.RECRUITMENT_OPP_CHANNEL, since);
 
   for (const message of messages) {
     if (message.author.bot) {
@@ -213,7 +213,7 @@ const collectCandidateChannelActivity = async (
     }
 
     const reactors = await getMessageReaction(
-      config.recruitmentOppChannel,
+      config.RECRUITMENT_OPP_CHANNEL,
       message.id,
       MAIL_REACTION_QUERY
     );
@@ -301,7 +301,7 @@ const getFcPostsMessages = async (
   guildId: string,
   trackerState: RecruitmentTrackerState
 ): Promise<{ lastFcMessageId?: string }> => {
-  const messages = await getChannelMessages(config.clanPostsChannel, new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000));
+  const messages = await getChannelMessages(config.CLAN_POSTS_CHANNEL, new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000));
   const lastProcessedId = trackerState.lastFcMessageId
     ? BigInt(trackerState.lastFcMessageId)
     : null;
