@@ -57,7 +57,7 @@ export const handleCwlQuestions = async (
           },
         ],
       },
-      config.cwlSignupChannel
+      config.CWL_SIGNUP_CHANNEL
     );
 
     await updateResponse(interaction.application_id, interaction.token, {

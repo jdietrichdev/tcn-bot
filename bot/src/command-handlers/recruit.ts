@@ -26,7 +26,7 @@ export const handleRecruit = async (
       );
     await sendMessage(
       {
-        content: `<@&${config.recruiterRole}>`,
+        content: `<@&${config.RECRUITER_ROLE}>`,
         embeds: [
           {
             title: "New potential recruit!",

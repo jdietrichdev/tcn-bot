@@ -46,7 +46,7 @@ export const closeTicket = async (
         await ensureArchiveCapacity(interaction.guild_id!, config, {
           triggeredById: interaction.member?.user.id,
         });
-        await moveChannel(channelId, config.archiveCategory);
+        await moveChannel(channelId, config.ARCHIVE_CATEGORY);
         await updateChannelPermissions(channelId, userId, {
           type: OverwriteType.Member,
           allow: "0",
