@@ -64,7 +64,7 @@ export const handleCwlRoster = async (
       if (rosterData.previousMessages) {
         for (const messageId of rosterData.previousMessages) {
           try {
-            await deleteMessage(config.CWL_ROSTER_CHANNEL, messageId);
+            await deleteMessage(config.cwlRosterChannel, messageId);
           } catch (err) {
             if ((err as DiscordError).statusCode === 404) {
               console.log("Message already deleted, continuing...");
@@ -76,9 +76,9 @@ export const handleCwlRoster = async (
       for (const message of announcementMessages) {
         const { id } = await sendMessage(
           { content: message.content?.split("\n")[0] },
-          config.CWL_ROSTER_CHANNEL
+          config.cwlRosterChannel
         );
-        await updateMessage(config.CWL_ROSTER_CHANNEL, id, message);
+        await updateMessage(config.cwlRosterChannel, id, message);
         previousMessages.push(id);
         await new Promise((resolve) => setTimeout(resolve, 1500));
       }
@@ -98,7 +98,7 @@ export const handleCwlRoster = async (
       console.log("Sending roster reminder");
       const reminderMessages = await buildReminder(rosterData.roster);
       for (const message of reminderMessages) {
-        await sendMessage(message, config.GENERAL_CHANNEL);
+        await sendMessage(message, config.generalChannel);
         await new Promise((resolve) => setTimeout(resolve, 1500));
       }
       await updateResponse(interaction.application_id, interaction.token, {
@@ -126,7 +126,7 @@ export const handleCwlRoster = async (
               name: `cwl_${clan.clan}`,
               type: ChannelType.GuildText,
               topic: `CWL channel for ${clan.clan}`,
-              parent_id: config.CWL_CATEGORY,
+              parent_id: config.cwlCategory,
               permission_overwrites: [
                 {
                   id: interaction.guild_id!,
@@ -145,7 +145,7 @@ export const handleCwlRoster = async (
                   deny: "0",
                 },
                 {
-                  id: config.BOT_ID,
+                  id: config.botId,
                   type: OverwriteType.Member,
                   allow: (
                     PermissionFlagsBits.ViewChannel |

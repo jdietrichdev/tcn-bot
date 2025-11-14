@@ -70,7 +70,7 @@ export const handleCreateEvent = async (
           name: eventData.name.toLowerCase().trim().replace(/\s+/g, "-"),
           type: channelTypeMap.get(eventData.type)![0],
           topic: eventId,
-          parent_id: config.EVENTS_CATEGORY,
+          parent_id: config.eventsCategory,
           permission_overwrites: [
             {
               id: interaction.guild_id!,
@@ -79,7 +79,7 @@ export const handleCreateEvent = async (
               deny: PermissionFlagsBits.ViewChannel.toString(),
             },
             {
-              id: config.CLAN_ROLE,
+              id: config.clanRole,
               type: OverwriteType.Role,
               allow: (
                 PermissionFlagsBits.ViewChannel |
@@ -90,7 +90,7 @@ export const handleCreateEvent = async (
               deny: "0",
             },
             {
-              id: config.BOT_ID,
+              id: config.botId,
               type: OverwriteType.Member,
               allow: (
                 PermissionFlagsBits.ViewChannel |
