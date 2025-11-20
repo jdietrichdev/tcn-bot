@@ -119,7 +119,6 @@ export const handleCommand = async (
       case "register-subs":
         return await commands.handleRegisterSubsCommand(event.detail);
       case "clan":
-        // This is a subcommand, so we need to check the subcommand name
         // @ts-ignore - options are not strictly typed on the base interaction
         switch (event.detail.data.options[0].name) {
           case "show":

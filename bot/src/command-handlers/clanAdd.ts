@@ -10,20 +10,22 @@ import {
 export const handleClanAdd = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
-  // Helper to find the value of a subcommand option
   const getOptionValue = (
-    name: string
+    name: string,
   ): string | number | undefined => {
-    const options = interaction.data.options?.[0]?.options; // Options are nested under the subcommand
-    if (!options) return undefined;
-    const option = options.find((o) => o.name === name);
-    if (
-      option?.type === ApplicationCommandOptionType.String ||
-      option?.type === ApplicationCommandOptionType.Integer ||
-      option?.type === ApplicationCommandOptionType.User
-    ) {
-      return option.value;
+    const subcommand = interaction.data.options?.[0];
+
+    if (subcommand?.type !== ApplicationCommandOptionType.Subcommand) {
+      return undefined;
     }
+
+    const option = subcommand.options?.find(
+      (o) => o.name === name
+    );
+
+    return (option?.type === ApplicationCommandOptionType.String || option?.type === ApplicationCommandOptionType.Integer || option?.type === ApplicationCommandOptionType.User)
+      ? option.value
+      : undefined;
   };
 
   const clanName = getOptionValue("clan") as string;
