@@ -1,6 +1,11 @@
-import { CommandInteraction, EmbedBuilder } from "discord.js";
-import { Command, CommandHandler } from "./index";
-import { updateResponse } from "../adapters/discord-adapter";
+import {
+  CommandInteraction,
+  EmbedBuilder,
+  ChatInputCommandInteraction,
+} from "discord.js";
+import { Command, CommandHandler } from "command-handlers";
+import { updateResponse } from "adapters/discord-adapter";
+import { APIEmbed } from "discord-api-types/v10";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 
@@ -12,8 +17,8 @@ interface PlayerItem {
   trophies: number;
 }
 
-export const handleClanShow: CommandHandler = async (
-  interaction: CommandInteraction
+export const handleClanShow = async (
+  interaction: ChatInputCommandInteraction
 ) => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -36,9 +41,13 @@ export const handleClanShow: CommandHandler = async (
     const players = queryResult.Items as PlayerItem[] | undefined;
 
     if (!players || players.length === 0) {
-      await updateResponse(interaction, {
-        content: `No players found in clan ${clanName}.`,
-      });
+      await updateResponse(
+        interaction.applicationId,
+        interaction.token,
+        {
+          content: `No players found in clan ${clanName}.`,
+        }
+      );
       return;
     }
 
@@ -53,14 +62,18 @@ export const handleClanShow: CommandHandler = async (
       .setDescription(playerList)
       .setColor("Blue");
 
-    await updateResponse(interaction, {
-      embeds: [embed],
+    await updateResponse(interaction.applicationId, interaction.token, {
+      embeds: [embed.toJSON() as APIEmbed],
     });
   } catch (error) {
     console.error("Error showing clan roster:", error);
-    await updateResponse(interaction, {
-      content: "An error occurred while retrieving the clan roster.",
-    });
+    await updateResponse(
+      interaction.applicationId,
+      interaction.token,
+      {
+        content: "An error occurred while retrieving the clan roster.",
+      }
+    );
   }
 };
 

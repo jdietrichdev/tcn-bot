@@ -1,7 +1,20 @@
 import { EventBridgeEvent } from "aws-lambda";
-import { APIChatInputApplicationCommandInteraction } from "discord-api-types/v10";
+import {
+  APIChatInputApplicationCommandInteraction,
+} from "discord-api-types/v10";
+import { ChatInputCommandInteraction } from "discord.js";
 import * as commands from "./handlers";
 import { handleTest } from "./test";
+
+export type CommandHandler = (
+  interaction: ChatInputCommandInteraction
+) => Promise<void>;
+
+export interface Command {
+  name: string;
+  description: string;
+  handler: (interaction: ChatInputCommandInteraction) => Promise<void>;
+}
 
 export const handleCommand = async (
   event: EventBridgeEvent<string, APIChatInputApplicationCommandInteraction>
@@ -104,8 +117,6 @@ export const handleCommand = async (
         return await commands.handleTaskOverview(event.detail);
       case "register-subs":
         return await commands.handleRegisterSubsCommand(event.detail);
-      case "clan":
-        return await commands.handleClan(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);

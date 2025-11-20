@@ -21,6 +21,11 @@
     "inlineSources": true,
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
+    "baseUrl": "./bot/src",
+    "paths": {
+      "command-handlers": ["command-handlers/index"],
+      "adapters/*": ["adapters/*"]
+    },
     "typeRoots": [
       "./node_modules/@types"
     ]
