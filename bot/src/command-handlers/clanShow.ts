@@ -1,8 +1,16 @@
-import { CommandInteraction } from "discord.js";
-import { Command, CommandHandler } from ".";
+import { CommandInteraction, EmbedBuilder } from "discord.js";
+import { Command, CommandHandler } from "./index";
 import { updateResponse } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
+
+interface PlayerItem {
+  pk: string;
+  sk: string;
+  playerName: string;
+  discordId: string;
+  trophies: number;
+}
 
 export const handleClanShow: CommandHandler = async (
   interaction: CommandInteraction
@@ -11,7 +19,7 @@ export const handleClanShow: CommandHandler = async (
 
   await interaction.deferReply({ ephemeral: true });
 
-  const clan = interaction.options.getString("clan", true);
+  const clanName = interaction.options.getString("clan", true);
 
   try {
     const queryResult = await dynamoDbClient.send(
@@ -19,25 +27,34 @@ export const handleClanShow: CommandHandler = async (
         TableName: "BotTable",
         KeyConditionExpression: "pk = :pk AND begins_with(sk, :sk)",
         ExpressionAttributeValues: {
-          ":pk": `clan#${clan}`,
+          ":pk": `clan#${clanName}`,
           ":sk": "player#",
         },
       })
     );
 
-    if (!queryResult.Items || queryResult.Items.length === 0) {
+    const players = queryResult.Items as PlayerItem[] | undefined;
+
+    if (!players || players.length === 0) {
       await updateResponse(interaction, {
-        content: `No players found in clan ${clan}`,
+        content: `No players found in clan ${clanName}.`,
       });
       return;
     }
 
-    const playerList = queryResult.Items.map((item) => {
-      return `- ${item.playerName} (<@${item.discordId}>) - ${item.trophies} trophies`;
-    }).join("\n");
+    const playerList = players
+      .map((player) => {
+        return `- ${player.playerName} (<@${player.discordId}>) - ${player.trophies} trophies`;
+      })
+      .join("\n");
+
+    const embed = new EmbedBuilder()
+      .setTitle(`Players in ${clanName}`)
+      .setDescription(playerList)
+      .setColor("Blue");
 
     await updateResponse(interaction, {
-      content: `**Players in ${clan}:**\n${playerList}`,
+      embeds: [embed],
     });
   } catch (error) {
     console.error("Error showing clan roster:", error);
