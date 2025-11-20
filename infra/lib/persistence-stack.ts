@@ -33,6 +33,7 @@ export class PersistenceStack extends cdk.Stack {
       sortKey: { name: 'sk', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.RETAIN, // Or another policy like DESTROY
+      stream: dynamodb.StreamViewType.NEW_AND_OLD_IMAGES,
     });
 
     this.botTable.addGlobalSecondaryIndex({
