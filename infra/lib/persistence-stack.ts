@@ -1,17 +1,18 @@
 import { Construct } from "constructs";
-import { RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
+import * as cdk from "aws-cdk-lib";
 import {
   AttributeType,
   StreamViewType,
   Table,
   TableEncryption,
 } from "aws-cdk-lib/aws-dynamodb";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 
-export class PersistenceStack extends Stack {
+export class PersistenceStack extends cdk.Stack {
   readonly table: Table;
   readonly botTable: Table;
 
-  constructor(scope: Construct, id: string, props: StackProps) {
+  constructor(scope: Construct, id: string, props: cdk.StackProps) {
     super(scope, id, props);
 
     this.table = new Table(this, "scheduling-table", {
@@ -31,7 +32,7 @@ export class PersistenceStack extends Stack {
       partitionKey: { name: 'pk', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'sk', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      removalPolicy: cdk.RemovalPolicy.RETAIN, // Or another policy like DESTROY
     });
 
     this.botTable.addGlobalSecondaryIndex({
