@@ -6,7 +6,7 @@ import {
 } from "discord-api-types/v10";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { updateResponse } from "adapters/discord-adapter";
+import { sendAutocompleteResponse } from "../adapters/discord-adapter";
 
 interface ClanItem {
   pk: string;
@@ -47,6 +47,5 @@ export const handleClanAutocomplete = async (
     },
   };
 
-  
-  console.log("Autocomplete Response:", JSON.stringify(response));
+  return await sendAutocompleteResponse(response);
 };

@@ -1,6 +1,7 @@
 import axios from "axios";
 import axiosRetry from "axios-retry";
 import {
+  APIApplicationCommandAutocompleteResponse,
   APIChannel,
   APIGuildMember,
   APIGuildTextChannel,
@@ -135,6 +136,20 @@ export const updateMessage = async (
       throw new Error(`Unexpected error: ${err}`);
     }
   }
+};
+
+export const sendAutocompleteResponse = async (
+  response: APIApplicationCommandAutocompleteResponse
+) => {
+  // Autocomplete requires a direct response to the interaction webhook.
+  // This function assumes the calling Lambda will return this object.
+  // In a real scenario, you would return this from your main Lambda handler.
+  // For now, we will just return the structured response.
+  return {
+    statusCode: 200,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(response),
+  };
 };
 
 export const deleteResponse = async (
