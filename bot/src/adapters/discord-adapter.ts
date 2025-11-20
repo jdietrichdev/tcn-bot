@@ -1,5 +1,6 @@
 import axios from "axios";
 import axiosRetry from "axios-retry";
+import { InteractionResponseType } from "discord-api-types/v10";
 import {
   APIChannel,
   APIGuildMember,
@@ -26,6 +27,28 @@ import { DiscordError } from "../util/errors";
 const BASE_URL = "https://discord.com/api/v10";
 
 axiosRetry(axios, { retries: 2 });
+
+export const deferResponse = async (
+  interactionId: string,
+  interactionToken: string
+) => {
+  const url = `${BASE_URL}/interactions/${interactionId}/${interactionToken}/callback`;
+  try {
+    await axios.post(url, {
+      type: InteractionResponseType.DeferredChannelMessageWithSource,
+    });
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to defer response",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
 
 export const updateResponse = async (
   applicationId: string,

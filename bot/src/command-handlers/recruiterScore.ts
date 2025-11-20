@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from "uuid";
 import { getConfig, ServerConfig } from "../util/serverConfig";
 import {
   getChannelMessages,
+  deferResponse,
   getMessageReaction,
   sendMessage,
   updateResponse,
@@ -44,6 +45,10 @@ export const handleRecruiterScore = async (
   input: APIChatInputApplicationCommandInteraction | string
 ) => {
   try {
+    if (typeof input !== "string") {
+      await deferResponse(input.id, input.token);
+    }
+
     const guildId = typeof input === "string" ? input : input.guild_id!;
     const config = getConfig(guildId);
     const dataset = await compileRecruiterScoreData(guildId, config);
@@ -86,6 +91,7 @@ export const handleRecruiterLeaderboard = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
   try {
+    await deferResponse(interaction.id, interaction.token);
     const guildId = interaction.guild_id!;
     const config = getConfig(guildId);
     const dataset = await compileRecruiterScoreData(guildId, config);
