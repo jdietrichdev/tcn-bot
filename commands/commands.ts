@@ -583,15 +583,23 @@ export const clan = new SlashCommandBuilder()
       .addStringOption(option =>
         option.setName('clan')
           .setDescription('The clan to add the player to.')
-          .setRequired(true))
+          .setRequired(true)
+      )
       .addUserOption(option =>
-        option.setName('user')
+        option.setName('player')
           .setDescription('The Discord user of the new recruit.')
-          .setRequired(true))
+          .setRequired(true)
+      )
       .addStringOption(option =>
-        option.setName('player-tag')
-          .setDescription('The player tag of the new recruit.')
-          .setRequired(true)))
+        option.setName('player-name')
+          .setDescription('The in-game name of the player.')
+          .setRequired(true)
+      )
+      .addIntegerOption(option =>
+        option.setName('trophies')
+          .setDescription("The player's trophy count.")
+          .setRequired(true)
+      ))
   .addSubcommand(subcommand =>
     subcommand
       .setName('show')

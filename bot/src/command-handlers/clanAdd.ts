@@ -1,30 +1,48 @@
-import { ChatInputCommandInteraction } from "discord.js";
-import { Command } from "command-handlers";
-import { updateResponse } from "adapters/discord-adapter";
+import { CommandHandler } from "command-handlers";
+import { updateResponse } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  APIChatInputApplicationCommandInteraction,
+  ApplicationCommandOptionType,
+} from "discord-api-types/v10";
 
 export const handleClanAdd = async (
-  interaction: ChatInputCommandInteraction
+  interaction: APIChatInputApplicationCommandInteraction
 ) => {
-  if (!interaction.isChatInputCommand()) return;
+  // Helper to find the value of a subcommand option
+  const getOptionValue = (
+    name: string
+  ): string | number | undefined => {
+    const options = interaction.data.options?.[0]?.options; // Options are nested under the subcommand
+    if (!options) return undefined;
+    const option = options.find((o) => o.name === name);
+    if (
+      option?.type === ApplicationCommandOptionType.String ||
+      option?.type === ApplicationCommandOptionType.Integer ||
+      option?.type === ApplicationCommandOptionType.User
+    ) {
+      return option.value;
+    }
+  };
 
-  await interaction.deferReply({ ephemeral: true });
+  const clanName = getOptionValue("clan") as string;
+  const playerId = getOptionValue("player") as string;
+  const playerName = getOptionValue("player-name") as string;
+  const trophies = getOptionValue("trophies") as number;
 
-  const clanName = interaction.options.getString("clan", true);
-  const player = interaction.options.getUser("player", true);
-  const playerName = interaction.options.getString("player-name", true);
-  const trophies = interaction.options.getInteger("trophies", true);
+  if (!clanName || !playerId || !playerName || trophies === undefined) {
+    throw new Error("Missing required options for clan add.");
+  }
 
   try {
-
     await dynamoDbClient.send(
       new PutCommand({
         TableName: "BotTable",
         Item: {
           pk: `clan#${clanName}`,
-          sk: `player#${player.id}`,
-          discordId: player.id,
+          sk: `player#${playerId}`,
+          discordId: playerId,
           playerName: playerName,
           trophies: trophies,
         },
@@ -32,7 +50,7 @@ export const handleClanAdd = async (
     );
 
     await updateResponse(
-      interaction.applicationId,
+      interaction.application_id,
       interaction.token,
       {
         content: `Successfully added ${playerName} to clan ${clanName}.`,
@@ -41,17 +59,11 @@ export const handleClanAdd = async (
   } catch (error) {
     console.error("Error adding player to clan:", error);
     await updateResponse(
-      interaction.applicationId,
+      interaction.application_id,
       interaction.token,
       {
         content: "An error occurred while adding the player to the clan.",
       }
     );
   }
-};
-
-export const clanAdd: Command = {
-  name: "clan-add",
-  description: "Adds a player to a clan's roster.",
-  handler: handleClanAdd,
 };

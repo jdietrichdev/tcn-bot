@@ -2,18 +2,19 @@ import { EventBridgeEvent } from "aws-lambda";
 import {
   APIChatInputApplicationCommandInteraction,
 } from "discord-api-types/v10";
-import { ChatInputCommandInteraction } from "discord.js";
 import * as commands from "./handlers";
 import { handleTest } from "./test";
+import { handleClanAdd } from "./clanAdd";
+import { handleClanShow } from "./clan";
 
 export type CommandHandler = (
-  interaction: ChatInputCommandInteraction
+  interaction: APIChatInputApplicationCommandInteraction
 ) => Promise<void>;
 
 export interface Command {
   name: string;
   description: string;
-  handler: (interaction: ChatInputCommandInteraction) => Promise<void>;
+  handler: CommandHandler;
 }
 
 export const handleCommand = async (
@@ -117,6 +118,15 @@ export const handleCommand = async (
         return await commands.handleTaskOverview(event.detail);
       case "register-subs":
         return await commands.handleRegisterSubsCommand(event.detail);
+      case "clan":
+        // This is a subcommand, so we need to check the subcommand name
+        // @ts-ignore - options are not strictly typed on the base interaction
+        switch (event.detail.data.options[0].name) {
+          case "show":
+            return await handleClanShow(event.detail);
+          case "add":
+            return await handleClanAdd(event.detail);
+        }
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);
