@@ -27,20 +27,16 @@ export class PersistenceStack extends Stack {
       timeToLiveAttribute: "expiration",
     });
 
-    this.botTable = new Table(this, "bot-table", {
-      tableName: "BotTable",
-      encryption: TableEncryption.AWS_MANAGED,
-      partitionKey: {
-        name: "pk",
-        type: AttributeType.STRING,
-      },
-      sortKey: {
-        name: "sk",
-        type: AttributeType.STRING,
-      },
-      stream: StreamViewType.NEW_AND_OLD_IMAGES,
-      timeToLiveAttribute: "expires",
-      removalPolicy: RemovalPolicy.RETAIN,
+    this.botTable = new dynamodb.Table(this, 'BotTable', {
+      partitionKey: { name: 'pk', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'sk', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    this.botTable.addGlobalSecondaryIndex({
+      indexName: 'recruitedBy-index',
+      partitionKey: { name: 'recruitedBy', type: dynamodb.AttributeType.STRING },
     });
   }
 }

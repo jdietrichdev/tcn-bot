@@ -3,6 +3,26 @@ import { getClan } from "./coc-api-adapter";
 
 const CLASHKING_BASE_URL = "https://api.clashk.ing";
 
+interface PlayerStats {
+  trophies: number;
+}
+
+export const getPlayerStats = async (
+  playerTag: string
+): Promise<PlayerStats | null> => {
+  try {
+    const tag = encodeURIComponent(playerTag);
+    const statsUrl = `${CLASHKING_BASE_URL}/player/${tag}/stats`;
+    const response = await axios.get<PlayerStats>(statsUrl, {
+      timeout: 10000,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to get player stats for ${playerTag}:`, error);
+    return null;
+  }
+};
+
 interface WarHit {
   war_data: {
     type: string;

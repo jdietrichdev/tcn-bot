@@ -104,6 +104,8 @@ export const handleCommand = async (
         return await commands.handleTaskOverview(event.detail);
       case "register-subs":
         return await commands.handleRegisterSubsCommand(event.detail);
+      case "clan":
+        return await commands.handleClan(event.detail);
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);

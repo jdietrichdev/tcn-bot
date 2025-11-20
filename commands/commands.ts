@@ -573,6 +573,34 @@ export const unrostered = new SlashCommandBuilder()
   .setName('unrostered')
   .setDescription('List all unrostered players');
 
+export const clan = new SlashCommandBuilder()
+  .setName('clan')
+  .setDescription('Manage clan rosters.')
+  .addSubcommand(subcommand =>
+    subcommand
+      .setName('add')
+      .setDescription('Adds a new recruit to a clan roster.')
+      .addStringOption(option =>
+        option.setName('clan')
+          .setDescription('The clan to add the player to.')
+          .setRequired(true))
+      .addUserOption(option =>
+        option.setName('user')
+          .setDescription('The Discord user of the new recruit.')
+          .setRequired(true))
+      .addStringOption(option =>
+        option.setName('player-tag')
+          .setDescription('The player tag of the new recruit.')
+          .setRequired(true)))
+  .addSubcommand(subcommand =>
+    subcommand
+      .setName('show')
+      .setDescription('Shows the roster for a clan.')
+      .addStringOption(option =>
+        option.setName('clan')
+          .setDescription('The clan to show the roster for.')
+          .setRequired(true)));
+
 export const createRoster = new SlashCommandBuilder()
   .setName('create-roster')
   .setDescription('Create a new roster for CWL')
