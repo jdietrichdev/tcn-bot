@@ -1,4 +1,5 @@
 import path from "path";
+import webpack from "webpack";
 
 export default {
   entry: "./src/index.ts",
@@ -28,4 +29,9 @@ export default {
       },
     ],
   },
+  plugins: [
+    new webpack.IgnorePlugin({
+      resourceRegExp: /^zlib-sync$/,
+    }),
+  ],
 };
