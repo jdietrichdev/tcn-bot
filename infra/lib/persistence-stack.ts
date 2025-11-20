@@ -35,10 +35,5 @@ export class PersistenceStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.RETAIN, // Or another policy like DESTROY
       stream: dynamodb.StreamViewType.NEW_AND_OLD_IMAGES,
     });
-
-    this.botTable.addGlobalSecondaryIndex({
-      indexName: 'recruitedBy-index',
-      partitionKey: { name: 'recruitedBy', type: dynamodb.AttributeType.STRING },
-    });
   }
 }
