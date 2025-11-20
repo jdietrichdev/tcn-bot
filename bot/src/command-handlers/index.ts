@@ -2,6 +2,7 @@ import { EventBridgeEvent } from "aws-lambda";
 import {
   APIChatInputApplicationCommandInteraction,
   InteractionType,
+  APIInteraction,
 } from "discord-api-types/v10";
 import * as commands from "./handlers";
 import { handleTest } from "./test";
@@ -20,126 +21,131 @@ export interface Command {
 }
 
 export const handleCommand = async (
-  event: EventBridgeEvent<string, APIChatInputApplicationCommandInteraction>
+  event: EventBridgeEvent<string, APIInteraction>
 ) => {
-  // Handle Autocomplete interactions separately
   if (event.detail.type === InteractionType.ApplicationCommandAutocomplete) {
     return await handleClanAutocomplete(event.detail);
   }
 
+  if (event.detail.type !== InteractionType.ApplicationCommand) {
+    return;
+  }
+
+  const interaction = event.detail as APIChatInputApplicationCommandInteraction;
+
   try {
-    switch (event.detail.data.name) {
+    switch (interaction.data.name) {
       case "hello":
-        return await commands.handleHello(event.detail);
+        return await commands.handleHello(interaction);
       case "player":
-        return await commands.handlePlayer(event.detail);
+        return await commands.handlePlayer(interaction);
       case "event":
-        return await commands.handleEvent(event.detail);
+        return await commands.handleEvent(interaction);
       case "link":
-        return await commands.handleLink(event.detail);
+        return await commands.handleLink(interaction);
       case "test":
-        return await handleTest(event.detail);
+        return await handleTest(interaction);
       case "upgrade":
-        return await commands.handleUpgrade(event.detail);
+        return await commands.handleUpgrade(interaction);
       case "ro":
-        return await commands.handleRecruit(event.detail);
+        return await commands.handleRecruit(interaction);
       case "recruiter-score":
-        return await commands.handleRecruiterScore(event.detail);
+        return await commands.handleRecruiterScore(interaction);
       case "recruiter-leaderboard":
-        return await commands.handleRecruiterLeaderboard(event.detail);
+        return await commands.handleRecruiterLeaderboard(interaction);
       case "cwl-roster":
-        return await commands.handleCwlRoster(event.detail);
+        return await commands.handleCwlRoster(interaction);
       case "initiate-cwl-signup":
-        return await commands.handleInitiateCwlSignup(event.detail);
+        return await commands.handleInitiateCwlSignup(interaction);
       case "cwl-questions":
-        return await commands.handleCwlQuestions(event.detail);
+        return await commands.handleCwlQuestions(interaction);
       case "close-ticket":
-        return await commands.closeTicket(event.detail);
+        return await commands.closeTicket(interaction);
       case "delete-ticket":
-        return await commands.deleteTicket(event.detail);
+        return await commands.deleteTicket(interaction);
       case "create-event":
-        return await commands.handleCreateEvent(event.detail);
+        return await commands.handleCreateEvent(interaction);
       case "question-create":
-        return await commands.handleQuestionCreate(event.detail);
+        return await commands.handleQuestionCreate(interaction);
       case "question-close":
-        return await commands.handleQuestionClose(event.detail);
+        return await commands.handleQuestionClose(interaction);
       case "question-answer":
-        return await commands.handleQuestionAnswer(event.detail);
+        return await commands.handleQuestionAnswer(interaction);
       case "event-leaderboard":
-        return await commands.handleEventLeaderboard(event.detail);
+        return await commands.handleEventLeaderboard(interaction);
       case "event-winner":
-        return await commands.handleEventWinner(event.detail);
+        return await commands.handleEventWinner(interaction);
       case "nominate":
-        return await commands.handleNominate(event.detail);
+        return await commands.handleNominate(interaction);
       case "nomination-result":
-        return await commands.handleNominationResult(event.detail);
+        return await commands.handleNominationResult(interaction);
       case "rank-proposal-reminder":
-        return await commands.handleRankProposalReminder(event.detail);
+        return await commands.handleRankProposalReminder(interaction);
       case "announce-roster":
-        return await commands.handleAnnounceRoster(event.detail);
+        return await commands.handleAnnounceRoster(interaction);
       case "schedule-event":
-        return await commands.handleScheduleEvent(event.detail);
+        return await commands.handleScheduleEvent(interaction);
       case "unrostered":
-        return await commands.handleUnrosteredCommand(event.detail);
+        return await commands.handleUnrosteredCommand(interaction);
       case "create-roster":
-        return await commands.handleCreateRoster(event.detail);
+        return await commands.handleCreateRoster(interaction);
       case "roster-add":
-        return await commands.handleRosterAdd(event.detail);
+        return await commands.handleRosterAdd(interaction);
       case "roster-show":
-        return await commands.handleRosterShow(event.detail);
+        return await commands.handleRosterShow(interaction);
       case "roster-remove":
-        return await commands.handleRosterRemove(event.detail);
+        return await commands.handleRosterRemove(interaction);
       case "roster-delete":
-        return await commands.handleRosterDelete(event.detail);
+        return await commands.handleRosterDelete(interaction);
       case "export-rosters":
-        return await commands.handleExportRosters(event.detail);
+        return await commands.handleExportRosters(interaction);
       case "cwl-response":
-        return await commands.handleCwlResponseCommand(event.detail);
+        return await commands.handleCwlResponseCommand(interaction);
       case "task-create":
-        return await commands.handleTaskCreate(event.detail);
+        return await commands.handleTaskCreate(interaction);
       case "task-claim":
-        return await commands.handleTaskClaim(event.detail);
+        return await commands.handleTaskClaim(interaction);
       case "task-complete":
-        return await commands.handleTaskComplete(event.detail);
+        return await commands.handleTaskComplete(interaction);
       case "task-list":
-        return await commands.handleTaskList(event.detail);
+        return await commands.handleTaskList(interaction);
       case "task-dashboard":
-        return await commands.handleTaskDashboard(event.detail);
+        return await commands.handleTaskDashboard(interaction);
       case "task-unclaim":
-        return await commands.handleTaskUnclaim(event.detail);
+        return await commands.handleTaskUnclaim(interaction);
       case "task-approve":
-        return await commands.handleTaskApprove(event.detail);
+        return await commands.handleTaskApprove(interaction);
       case "task-delete":
-        return await commands.handleTaskDelete(event.detail);
+        return await commands.handleTaskDelete(interaction);
       case "task-notify":
-        return await commands.handleTaskNotify(event.detail);
+        return await commands.handleTaskNotify(interaction);
       case "task-set-due-date":
-        return await commands.handleTaskSetDueDate(event.detail);
+        return await commands.handleTaskSetDueDate(interaction);
       case "task-assign":
-        return await commands.handleTaskAssign(event.detail);
+        return await commands.handleTaskAssign(interaction);
       case "task-reminders":
-        return await commands.handleTaskReminders(event.detail);
+        return await commands.handleTaskReminders(interaction);
       case "task-admin-unclaim":
-        return await commands.handleTaskAdminUnclaim(event.detail);
+        return await commands.handleTaskAdminUnclaim(interaction);
       case "task-overview":
-        return await commands.handleTaskOverview(event.detail);
+        return await commands.handleTaskOverview(interaction);
       case "register-subs":
-        return await commands.handleRegisterSubsCommand(event.detail);
+        return await commands.handleRegisterSubsCommand(interaction);
       case "clan":
         // @ts-ignore - options are not strictly typed on the base interaction
-        switch (event.detail.data.options[0].name) {
+        switch (interaction.data.options[0].name) {
           case "show":
-            return await handleClanShow(event.detail);
+            return await handleClanShow(interaction);
           case "add":
-            return await handleClanAdd(event.detail);
+            return await handleClanAdd(interaction);
         }
         break; // Add break to prevent fall-through
       default:
         console.log("Command not found, responding to command");
-        return await commands.handleCommandNotFound(event.detail);
+        return await commands.handleCommandNotFound(interaction);
     }
   } catch (err) {
     console.error(err);
-    await commands.handleFailure(event.detail);
+    await commands.handleFailure(interaction);
   }
 };
