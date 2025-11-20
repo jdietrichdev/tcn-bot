@@ -28,7 +28,7 @@ export class PersistenceStack extends cdk.Stack {
       timeToLiveAttribute: "expiration",
     });
 
-    this.botTable = new dynamodb.Table(this, 'BotTable', {
+    this.botTable = new dynamodb.Table(this, 'BotTableV2', { // Changed the logical ID
       partitionKey: { name: 'pk', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'sk', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
