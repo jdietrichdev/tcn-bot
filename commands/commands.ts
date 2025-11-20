@@ -583,6 +583,7 @@ export const clan = new SlashCommandBuilder()
       .addStringOption(option =>
         option.setName('clan')
           .setDescription('The clan to add the player to.')
+          .setAutocomplete(true)
           .setRequired(true)
       )
       .addUserOption(option =>
@@ -607,6 +608,7 @@ export const clan = new SlashCommandBuilder()
       .addStringOption(option =>
         option.setName('clan')
           .setDescription('The clan to show the roster for.')
+          .setAutocomplete(true)
           .setRequired(true)));
 
 export const createRoster = new SlashCommandBuilder()

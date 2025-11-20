@@ -1,11 +1,13 @@
 import { EventBridgeEvent } from "aws-lambda";
 import {
   APIChatInputApplicationCommandInteraction,
+  InteractionType,
 } from "discord-api-types/v10";
 import * as commands from "./handlers";
 import { handleTest } from "./test";
 import { handleClanAdd } from "./clanAdd";
 import { handleClanShow } from "./clan";
+import { handleClanAutocomplete } from "./clanAutocomplete";
 
 export type CommandHandler = (
   interaction: APIChatInputApplicationCommandInteraction
@@ -20,6 +22,11 @@ export interface Command {
 export const handleCommand = async (
   event: EventBridgeEvent<string, APIChatInputApplicationCommandInteraction>
 ) => {
+  // Handle Autocomplete interactions separately
+  if (event.detail.type === InteractionType.ApplicationCommandAutocomplete) {
+    return await handleClanAutocomplete(event.detail);
+  }
+
   try {
     switch (event.detail.data.name) {
       case "hello":
@@ -126,6 +133,7 @@ export const handleCommand = async (
           case "add":
             return await handleClanAdd(event.detail);
         }
+        break; // Add break to prevent fall-through
       default:
         console.log("Command not found, responding to command");
         return await commands.handleCommandNotFound(event.detail);
