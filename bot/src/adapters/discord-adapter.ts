@@ -282,17 +282,19 @@ export const createThread = async (
 
 export const getChannelMessages = async (
   channelId: string,
-  end?: Date
+  end?: Date,
+  after?: string
 ): Promise<APIMessage[]> => {
   let fetching = true;
   let url = "";
   let before = "";
   const compiledMessages: APIMessage[] = [];
   try {
+    const afterParam = after ? `&after=${after}` : "";
     while (fetching) {
       url = `${BASE_URL}/channels/${channelId}/messages?limit=100${
         before ? `&before=${before}` : ""
-      }`;
+      }${afterParam}`;
       console.log(url);
       const response = await axios.get(
         `${url}${before ? `&before=${before}` : ""}`,
@@ -452,6 +454,32 @@ export const getGuildChannels = async (
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
         "Failed to fetch guild channels",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
+export const getMessage = async (
+  channelId: string,
+  messageId: string
+): Promise<APIMessage> => {
+  const url = `${BASE_URL}/channels/${channelId}/messages/${messageId}`;
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to fetch message",
         err.response?.data.message,
         err.response?.status ?? 500
       );

@@ -387,11 +387,11 @@ const isFcPostMessage = (message: APIMessage): boolean => {
     return false;
   }
 
-  if (content.startsWith("https://discord.com/channels/")) {
+  if (content.startsWith("https://discord.com/channels/") || content.startsWith("<#")) {
     return true;
   }
 
-  if (/^#\d{17,20}/.test(content)) {
+  if (/base\s\d:/i.test(content)) {
     return true;
   }
 
