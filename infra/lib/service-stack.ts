@@ -1,28 +1,9 @@
-import { Construct } from "constructs";
-import { Duration, RemovalPolicy, Stack, StackProps, CfnOutput } from "aws-cdk-lib";
 import {
-  Code,
-  Function as Lambda,
-  Runtime,
-  StartingPosition,
-} from "aws-cdk-lib/aws-lambda";
-import {
-  AccessLogFormat,
-  LambdaRestApi,
-  LogGroupLogDestination,
-} from "aws-cdk-lib/aws-apigateway";
-import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
-import {
-  EventBus,
-  Rule,
-  RuleTargetInput,
-  Schedule,
-} from "aws-cdk-lib/aws-events";
-import {
-  CloudWatchLogGroup,
-  LambdaFunction,
-} from "aws-cdk-lib/aws-events-targets";
-import { Table } from "aws-cdk-lib/aws-dynamodb";
+  AttributeType,
+  StreamViewType,
+  Table,
+  TableEncryption,
+} from "aws-cdk-lib/aws-dynamodb";
 import {
   BlockPublicAccess,
   Bucket,
@@ -33,10 +14,7 @@ import { LambdaDestination } from "aws-cdk-lib/aws-s3-notifications";
 import { PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { CfnPipe } from "aws-cdk-lib/aws-pipes";
 
-interface ServiceStackProps extends StackProps {
-  table: Table;
-  botTable: Table;
-}
+interface ServiceStackProps extends StackProps {}
 
 export class ServiceStack extends Stack {
   private eventBus: EventBus;
@@ -46,9 +24,40 @@ export class ServiceStack extends Stack {
   private taskApiLambda: Lambda;
   readonly rosterBucket: Bucket;
   readonly transcriptBucket: Bucket;
+  readonly table: Table;
+  readonly botTable: Table;
 
   constructor(scope: Construct, id: string, props: ServiceStackProps) {
     super(scope, id, props);
+
+    this.table = new Table(this, "scheduling-table", {
+      tableName: "SchedulingTable",
+      partitionKey: {
+        name: "pk",
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: "sk",
+        type: AttributeType.STRING,
+      },
+      timeToLiveAttribute: "expiration",
+    });
+
+    this.botTable = new Table(this, "bot-table", {
+      tableName: "BotTable",
+      encryption: TableEncryption.AWS_MANAGED,
+      partitionKey: {
+        name: "pk",
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: "sk",
+        type: AttributeType.STRING,
+      },
+      stream: StreamViewType.NEW_AND_OLD_IMAGES,
+      timeToLiveAttribute: "expires",
+      removalPolicy: RemovalPolicy.RETAIN,
+    });
 
     this.rosterBucket = new Bucket(this, "roster-bucket", {
       bucketName: "bot-roster-bucket",
@@ -83,7 +92,7 @@ export class ServiceStack extends Stack {
       timeout: Duration.minutes(5),
       retryAttempts: 0,
     });
-    props.botTable.grantReadWriteData(this.scheduled);
+    this.botTable.grantReadWriteData(this.scheduled);
     this.scheduled.addToRolePolicy(
       new PolicyStatement({
         actions: ["scheduler:DeleteSchedule"],
@@ -208,7 +217,7 @@ export class ServiceStack extends Stack {
     });
     this.eventBus.grantPutEventsTo(this.proxy);
     this.rosterBucket.grantRead(this.proxy);
-    props.botTable.grantReadData(this.proxy);
+    this.botTable.grantReadData(this.proxy);
 
     this.handler = new Lambda(this, "bot-handler", {
       functionName: "bot-handler",
@@ -240,8 +249,8 @@ export class ServiceStack extends Stack {
         resources: [schedulerRole.roleArn],
       })
     );
-    props.table.grantReadWriteData(this.handler);
-    props.botTable.grantReadWriteData(this.handler);
+    this.table.grantReadWriteData(this.handler);
+    this.botTable.grantReadWriteData(this.handler);
     this.transcriptBucket.grantWrite(this.handler);
 
     new Rule(this, "bot-event-handler", {
@@ -281,7 +290,7 @@ export class ServiceStack extends Stack {
       },
       timeout: Duration.seconds(30),
     });
-    props.botTable.grantReadWriteData(this.taskApiLambda);
+    this.botTable.grantReadWriteData(this.taskApiLambda);
 
     const taskApiGateway = new LambdaRestApi(this, "task-api-gateway", {
       restApiName: "TaskApi",
@@ -329,11 +338,11 @@ export class ServiceStack extends Stack {
       assumedBy: new ServicePrincipal("pipes.amazonaws.com"),
     });
 
-    props.botTable.grantStreamRead(pipeRole);
+    this.botTable.grantStreamRead(pipeRole);
     botProcessor.grantInvoke(pipeRole);
 
     new CfnPipe(this, "user-data-pipe", {
-      source: props.botTable.tableStreamArn!,
+      source: this.botTable.tableStreamArn!,
       target: botProcessor.functionArn,
       roleArn: pipeRole.roleArn,
       sourceParameters: {
@@ -370,6 +379,6 @@ export class ServiceStack extends Stack {
     });
 
     this.rosterBucket.grantRead(botProcessor);
-    props.botTable.grantReadWriteData(botProcessor);
+    this.botTable.grantReadWriteData(botProcessor);
   }
 }
