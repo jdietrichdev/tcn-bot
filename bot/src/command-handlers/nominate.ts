@@ -19,31 +19,41 @@ import { getConfig } from "../util/serverConfig";
 import { BUTTONS } from "../component-handlers/buttons";
 import { Proposal } from "../util/interfaces";
 
+
 export const handleNominate = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
   try {
-    const config = getConfig(interaction.guild_id!);
+    const config = await getConfig(interaction.guild_id!);
     const user =
       getCommandOptionData<APIApplicationCommandInteractionDataUserOption>(
         interaction,
         "user"
       ).value;
-    const type =
-      getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
-        interaction,
-        "type"
-      ).value;
-    const rank =
-      getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
-        interaction,
-        "rank"
-      ).value;
-    const reason =
+    const reasonOption =
       getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
         "reason"
-      ).value;
+      );
+    const reason = "value" in reasonOption ? reasonOption.value : undefined;
+    const type = "Promotion"; // Hardcoding as per original request simplification
+
+    const channelId = interaction.channel_id;
+    let rank: "Lead" | "Elder" | undefined;
+
+    if (channelId === config.LEAD_PROPOSAL_CHANNEL) {
+      rank = "Lead";
+    } else if (channelId === config.ELDER_PROPOSAL_CHANNEL) {
+      rank = "Elder";
+    }
+
+    if (!rank) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content:
+          "This command can only be used in the lead or elder proposal channels.",
+      });
+      return;
+    }
 
     const proposalData = (
       await dynamoDbClient.send(
@@ -76,6 +86,9 @@ export const handleNominate = async (
     }
 
     const userData = await getServerUser(interaction.guild_id!, user);
+    if (!userData) {
+      throw new Error(`Could not retrieve user data for user ID: ${user}`);
+    }
     const embed = createNominationEmbed(
       interaction,
       userData,
@@ -101,7 +114,7 @@ export const handleNominate = async (
           },
         ],
       },
-      config.RANK_PROPOSAL_CHANNEL
+      rank === "Lead" ? config.LEAD_PROPOSAL_CHANNEL : config.ELDER_PROPOSAL_CHANNEL
     );
 
     proposalData.proposals.push({
@@ -141,14 +154,17 @@ const createNominationEmbed = (
   user: APIGuildMember,
   type: string,
   rank: string,
-  reason: string
+  reason?: string
 ) => {
-  let description = `Proposal for ${user.user.username}/${user.nick ?? user.user.username}\nProposed by: ${
+  let description = `Proposal for ${ 
+    user.user.username
+  }/${user.nick ?? user.user.username}\nProposed by: ${ 
     interaction.member!.user.username
   }`;
   if (reason) description += `\nReasoning: ${reason}`;
   return {
     title: `${rank} ${type} Proposal`,
     description,
+    color: rank === "Lead" ? 0x00ff00 : 0x0000ff,
   } as APIEmbed;
 };

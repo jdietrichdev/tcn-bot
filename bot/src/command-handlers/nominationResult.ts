@@ -1,96 +1,66 @@
-import {
-  APIApplicationCommandInteractionDataRoleOption,
-  APIApplicationCommandInteractionDataStringOption,
-  APIChatInputApplicationCommandInteraction,
-  ComponentType,
+import { 
+  APIEmbed,
+  APIMessageComponentInteraction,
 } from "discord-api-types/v10";
-import { getCommandOptionData } from "../util/interaction-util";
 import { dynamoDbClient } from "../clients/dynamodb-client";
-import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
-import {
-  deleteResponse,
-  grantRole,
-  removeRole,
-  updateMessage,
-} from "../adapters/discord-adapter";
+import { GetCommand } from "@aws-sdk/lib-dynamodb";
+import { updateResponse } from "../adapters/discord-adapter";
+import { isActorAdmin } from "./utils";
 import { getConfig } from "../util/serverConfig";
-import { BUTTONS } from "../component-handlers/buttons";
 import { Proposal } from "../util/interfaces";
-import { Rank } from "../util/enums";
 
-export const handleNominationResult = async (
-  interaction: APIChatInputApplicationCommandInteraction
+export const nominationResults = async (
+  interaction: APIMessageComponentInteraction
 ) => {
   try {
-    const config = getConfig(interaction.guild_id!);
-    const id =
-      getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
-        interaction,
-        "proposal"
-      ).value;
-    const result =
-      getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
-        interaction,
-        "result"
-      ).value;
-    const role =
-      getCommandOptionData<APIApplicationCommandInteractionDataRoleOption>(
-        interaction,
-        "role"
-      )?.value;
-
-    const proposals = (
-      await dynamoDbClient.send(
-        new GetCommand({
-          TableName: "BotTable",
-          Key: {
-            pk: interaction.guild_id!,
-            sk: "rank-proposals",
-          },
-        })
+    if (
+      await isActorAdmin(
+        interaction.guild_id!,
+        interaction.member!.user.id,
+        getConfig(interaction.guild_id!)
       )
-    ).Item!;
+    ) {
+      const message = interaction.message.id;
+      const proposalData = (
+        await dynamoDbClient.send(
+          new GetCommand({
+            TableName: "BotTable",
+            Key: {
+              pk: interaction.guild_id!,
+              sk: "rank-proposals",
+            },
+          })
+        )
+      ).Item!;
 
-    const proposalData: Proposal = proposals.proposals.find(
-      (proposal: Proposal) => proposal.message === id
-    );
-    proposalData.result = result;
+      const proposal = proposalData.proposals.find(
+        (proposal: Proposal) => proposal.message === message
+      );
 
-    if (result === "Approve" && role) {
-      if (proposalData.type === "Promotion") {
-        await grantRole(interaction.guild_id!, proposalData.userId, role);
-      } else {
-        await removeRole(interaction.guild_id!, proposalData.userId, role);
-      }
+      const resultEmbed = createResultsEmbed(proposal);
+
+      await updateResponse(interaction.application_id, interaction.token, {
+        embeds: [resultEmbed],
+      });
+    } else {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: `Talk to admins if you'd like to see detailed results`,
+      });
     }
-    await removeRole(
-      interaction.guild_id!,
-      proposalData.userId,
-      proposalData.rank === Rank.ELDER
-        ? config.TRIAL_ELDER_ROLE
-        : config.TRIAL_LEAD_ROLE
-    );
-
-    await updateMessage(config.RANK_PROPOSAL_CHANNEL, proposalData.message, {
-      content: `Proposal ${result === "Approve" ? "Approved" : "Denied"}`,
-      components: [
-        {
-          type: ComponentType.ActionRow,
-          components: [BUTTONS.NOMINATION_RESULTS],
-        },
-      ],
-    });
-
-    await dynamoDbClient.send(
-      new PutCommand({
-        TableName: "BotTable",
-        Item: proposals,
-      })
-    );
-
-    await deleteResponse(interaction.application_id, interaction.token);
   } catch (err) {
-    console.log("Failure handling nomination result", err);
-    throw err;
+    console.error(`Failure displaying nomination results: ${err}`);
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: "There was an issue displaying results, please try again",
+    });
   }
+};
+
+const createResultsEmbed = (proposal: Proposal) => {
+  return {
+    title: `Current Results for ${proposal.username}`,
+    description: proposal.reason,
+    fields: proposal.votes.map((vote) => {
+      return { name: vote.user, value: `${vote.type}: ${vote.reason}` };
+    }),
+  } as APIEmbed;
 };
