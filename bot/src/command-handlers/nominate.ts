@@ -120,8 +120,8 @@ export const handleNominate = async (
     proposalData.proposals.push({
       userId: user,
       username: userData.user.username,
-      rank,
       type,
+      rank,
       reason,
       votes: [],
       proposalTime: new Date().toISOString(),

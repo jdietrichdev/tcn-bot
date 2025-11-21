@@ -485,22 +485,6 @@ export const nominate = new SlashCommandBuilder()
   })
   .addStringOption((option) => {
     return option
-      .setName('rank')
-      .setDescription('Rank for promotion/demotion')
-      .setRequired(true)
-      .setChoices([
-        {
-          name: 'Elder',
-          value: 'Elder',
-        },
-        {
-          name: 'Lead',
-          value: 'Lead',
-        },
-      ]);
-  })
-  .addStringOption((option) => {
-    return option
       .setName('reason')
       .setDescription('Reason for proposal')
       .setRequired(true);
