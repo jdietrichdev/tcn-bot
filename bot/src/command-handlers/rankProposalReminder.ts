@@ -29,7 +29,7 @@ export const handleRankProposalReminder = async (
     if (proposals.proposals.length !== 0) {
       const reminderEmbed: APIEmbed = {
         title: 'Rank Proposal Reminder',
-        description: `Please make sure you are checking <#${config.RANK_PROPOSAL_CHANNEL}> and voting on proposals!`,
+        description: `Please make sure you are checking the <#${config.LEAD_PROPOSAL_CHANNEL}> and <#${config.ELDER_PROPOSAL_CHANNEL}> channels and voting on proposals!`,
         fields: proposals.proposals
           .filter((proposal: Record<string, any>) => !proposal.result)
           .map((proposal: Record<string, any>) => {
