@@ -71,7 +71,12 @@ export const handleNominationResult = async (
         : config.TRIAL_LEAD_ROLE
     );
 
-    await updateMessage(config.RANK_PROPOSAL_CHANNEL, proposalData.message, {
+    await updateMessage(
+      proposalData.rank === Rank.ELDER
+        ? config.ELDER_PROPOSAL_CHANNEL
+        : config.LEAD_PROPOSAL_CHANNEL,
+      proposalData.message,
+      {
       content: `Proposal ${result === "Approve" ? "Approved" : "Denied"}`,
       components: [
         {
