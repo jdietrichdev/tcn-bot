@@ -57,7 +57,9 @@ export const submitVoteNominationModal = async (interaction: APIModalSubmitInter
             }
         ];
 
-        await updateMessage(config.RANK_PROPOSAL_CHANNEL, message, {
+        await updateMessage(
+            proposal.rank === "Elder" ? config.ELDER_PROPOSAL_CHANNEL : config.LEAD_PROPOSAL_CHANNEL,
+             message, {
             embeds: [updatedEmbed],
         });
         await dynamoDbClient.send(new PutCommand({
