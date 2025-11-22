@@ -26,28 +26,46 @@ export const handleRankProposalReminder = async (
       )
     ).Item!;
 
-    if (proposals.proposals.length !== 0) {
-      const reminderEmbed: APIEmbed = {
-        title: 'Rank Proposal Reminder',
-        description: `Please make sure you are checking the <#${config.LEAD_PROPOSAL_CHANNEL}> and <#${config.ELDER_PROPOSAL_CHANNEL}> channels and voting on proposals!`,
-        fields: proposals.proposals
-          .filter((proposal: Record<string, any>) => !proposal.result)
-          .map((proposal: Record<string, any>) => {
-            const [yes, no] = tallyVotes(proposal.votes);
-            return {
-              name: `${proposal.rank} ${proposal.type} - ${proposal.username}`,
-              value: `Yes: ${yes}, No: ${no}`,
-            };
-          }),
-      };
 
-      await sendMessage(
-        {
-          embeds: [reminderEmbed],
-        },
-        config.FAMILY_LEAD_CHANNEL,
-      );
-    } else {
+if (proposals.proposals.length !== 0) {
+  // Lead proposals
+  const leadProposals = proposals.proposals.filter(
+    (proposal: Record<string, any>) => proposal.rank === "Lead" && !proposal.result
+  );
+  if (leadProposals.length > 0) {
+    const leadEmbed: APIEmbed = {
+      title: "Lead Rank Proposal Reminder",
+      description: `Please check <#${config.LEAD_PROPOSAL_CHANNEL}> and vote on lead proposals!`,
+      fields: leadProposals.map((proposal: Record<string, any>) => {
+        const [yes, no] = tallyVotes(proposal.votes);
+        return {
+          name: `${proposal.rank} ${proposal.type} - ${proposal.username}`,
+          value: `Yes: ${yes}, No: ${no}`,
+        };
+      }),
+    };
+    await sendMessage({ embeds: [leadEmbed] }, config.ADMIN_CHANNEL);
+  }
+
+  // Elder proposals
+  const elderProposals = proposals.proposals.filter(
+    (proposal: Record<string, any>) => proposal.rank === "Elder" && !proposal.result
+  );
+  if (elderProposals.length > 0) {
+    const elderEmbed: APIEmbed = {
+      title: "Elder Rank Proposal Reminder",
+      description: `Please check <#${config.ELDER_PROPOSAL_CHANNEL}> and vote on elder proposals!`,
+      fields: elderProposals.map((proposal: Record<string, any>) => {
+        const [yes, no] = tallyVotes(proposal.votes);
+        return {
+          name: `${proposal.rank} ${proposal.type} - ${proposal.username}`,
+          value: `Yes: ${yes}, No: ${no}`,
+        };
+      }),
+    };
+    await sendMessage({ embeds: [elderEmbed] }, config.FAMILY_LEAD_CHANNEL);
+  }
+} else {
       await sendMessage(
         {
           content:
