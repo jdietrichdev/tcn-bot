@@ -164,8 +164,8 @@ export const formatRecruiterScoreTable = (
 
     const detailLine = [
       `🎫 \`${formatNumber(ticketPoints)}\``,
-      `📣 \`${formatNumber(score.fcPosts)}\``,
-      `📦 \`${score.candidateForwards} (${formatNumber(
+      `⚔️ \`${formatNumber(score.fcPosts)}\``,
+      `⏩ \`${score.candidateForwards} (${formatNumber(
         score.candidateForwardPoints
       )} pts)\``,
       `✉️ \`${score.candidateDms} (${formatNumber(
