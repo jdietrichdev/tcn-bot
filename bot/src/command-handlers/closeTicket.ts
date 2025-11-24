@@ -118,8 +118,10 @@ const recordTicketStatsIfNeeded = async (
   config: ServerConfig
 ) => {
   try {
+    const closedAt = new Date().toISOString();
     const existing = await getTicketRecruiterStatsRecord(
       interaction.guild_id!,
+      closedAt,
       interaction.channel.id
     );
     if (existing) {
