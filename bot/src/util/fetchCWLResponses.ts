@@ -2,7 +2,7 @@ import { parse } from 'csv-parse/sync';
 import https from 'https';
 
 const CWL_RESPONSES_URL =
-  'https://docs.google.com/spreadsheets/d/e/2PACX-1vSrGTB_Y7rx2s9uXCZk1Rt7yoX-cPjyQHCiEldi7MwI8e8-wqVvM_rdEL24kfa1m9h4LAxveEkgbZ3A/pub?output=csv';
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIsoqyuYk4-JrKXalIX2Ntc2jQkl3NzI6-yoVF8GcTG4RMBLLvymUn1E15ihmh8GTWo0ZPcTyxn15F/pub?output=csv';
 
 export interface CWLResponse {
   discordId: string;
