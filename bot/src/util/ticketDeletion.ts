@@ -25,7 +25,7 @@ import { isActorRecruiter } from "../component-handlers/utils";
 import {
   getTicketRecruiterStatsRecord,
   incrementRecruitmentPoints,
-  recordTicketRecruiterStats,
+  saveTicketRecruiterStats,
   TicketRecruiterMessage,
 } from "./recruitmentTracker";
 import { ServerConfig } from "./serverConfig";
@@ -137,19 +137,24 @@ export const deleteTicketChannel = async (
     0
   );
 
-  await recordTicketRecruiterStats(guildId, {
-    ticketChannelId: channel.id,
-    ticketChannelName: channel.name ?? undefined,
-    ticketNumber: channel.name ? channel.name.split("-")[1] : undefined,
-    transcriptId,
-    applicantId,
-    applicantUsername,
-    recruiterMessages,
-    totalParticipantMessages,
-    closedBy: deletedById,
-    closedByUsername: deletedByUsername,
-    closedAt: new Date().toISOString(),
-  });
+  await saveTicketRecruiterStats(
+    guildId,
+    new Date().toISOString(),
+    channel.id,
+    {
+      ticketChannelId: channel.id,
+      ticketChannelName: channel.name ?? undefined,
+      ticketNumber: channel.name ? channel.name.split("-")[1] : undefined,
+      transcriptId,
+      applicantId,
+      applicantUsername,
+      recruiterMessages,
+      totalParticipantMessages,
+      closedBy: deletedById,
+      closedByUsername: deletedByUsername,
+      closedAt: new Date().toISOString(),
+    }
+  );
 
   await sendMessage(
     {

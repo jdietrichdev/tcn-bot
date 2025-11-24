@@ -20,7 +20,7 @@ import { GetCommand } from "@aws-sdk/lib-dynamodb";
 import {
   getTicketRecruiterStatsRecord,
   incrementRecruitmentPoints,
-  recordTicketRecruiterStats,
+  saveTicketRecruiterStats,
   TicketRecruiterMessage,
 } from "../util/recruitmentTracker";
 import { ensureArchiveCapacity } from "../util/ticketDeletion";
@@ -169,26 +169,31 @@ const recordTicketStatsIfNeeded = async (
       }
     }
 
-    await recordTicketRecruiterStats(interaction.guild_id!, {
-      ticketChannelId: interaction.channel.id,
-      ticketChannelName:
-        "name" in interaction.channel && interaction.channel.name
-          ? interaction.channel.name
-          : undefined,
-      ticketNumber:
-        "name" in interaction.channel && interaction.channel.name
-          ? interaction.channel.name.split("-")[1]
-          : undefined,
-      transcriptId: `pending-${interaction.channel.id}`,
-      applicantId: applicantId ?? "unknown",
-      applicantUsername,
-      recruiterMessages,
-      totalParticipantMessages,
-      closedBy: interaction.member!.user.id,
-      closedByUsername:
-        interaction.member!.user.username ?? interaction.member!.user.id,
-      closedAt: new Date().toISOString(),
-    });
+    await saveTicketRecruiterStats(
+      interaction.guild_id!,
+      new Date().toISOString(),
+      interaction.channel.id,
+      {
+        ticketChannelId: interaction.channel.id,
+        ticketChannelName:
+          "name" in interaction.channel && interaction.channel.name
+            ? interaction.channel.name
+            : undefined,
+        ticketNumber:
+          "name" in interaction.channel && interaction.channel.name
+            ? interaction.channel.name.split("-")[1]
+            : undefined,
+        transcriptId: `pending-${interaction.channel.id}`,
+        applicantId: applicantId ?? "unknown",
+        applicantUsername,
+        recruiterMessages,
+        totalParticipantMessages,
+        closedBy: interaction.member!.user.id,
+        closedByUsername:
+          interaction.member!.user.username ?? interaction.member!.user.id,
+        closedAt: new Date().toISOString(),
+      }
+    );
   } catch (err) {
     console.error(
       `Failed to record ticket recruiter stats during closeTicket: ${err}`
