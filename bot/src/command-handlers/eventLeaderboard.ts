@@ -1,5 +1,5 @@
 import { APIChatInputApplicationCommandInteraction, APIEmbed, APITextChannel } from "discord-api-types/v10";
-import { deleteResponse, sendMessage, updateResponse } from "../adapters/discord-adapter";
+import { deleteResponse, sendMessage, updateResponse, deferResponse } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
 
