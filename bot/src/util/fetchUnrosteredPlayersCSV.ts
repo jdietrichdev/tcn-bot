@@ -2,7 +2,7 @@ import { parse } from 'csv-parse/sync';
 import https from 'https';
 
 const CSV_URL =
-  'https://docs.google.com/spreadsheets/d/e/2PACX-1vTL3sSwoCebgxF1B9-3e-HMumXEN9FM7k8AkirJX0RDA-S2u1QiwMYoiGD83VCdtgKBNA8EEqZaASf9/pub?gid=0&single=true&output=csv';
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6oacCmPdCUXtYoRsWu3gBpNRE-xof2L49PRvcnN2EiatJa19ME9wqYzKXTB97jyHnz-O0AsO0IJbG/pub?output=csv';
 
 export interface PlayerData {
   name: string;

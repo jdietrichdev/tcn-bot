@@ -51,12 +51,15 @@ export const handleRecruiterScore = async (
 
     const guildId = typeof input === "string" ? input : input.guild_id!;
     const config = getConfig(guildId);
+    console.log("[RecruiterScore] Config:", config);
     const dataset = await compileRecruiterScoreData(guildId, config);
+    console.log("[RecruiterScore] Dataset:", dataset);
     const displayContext: RecruiterScoreDisplayContext = {
       recruitmentOppChannelId: config.RECRUITMENT_OPP_CHANNEL,
       clanPostsChannelId: config.CLAN_POSTS_CHANNEL,
       generatedAt: new Date().toISOString(),
     };
+    console.log("[RecruiterScore] DisplayContext:", displayContext);
 
     await publishRecruiterScoreMessage(
       config.RECRUITER_CHANNEL,
@@ -75,7 +78,7 @@ export const handleRecruiterScore = async (
       );
     }
   } catch (err) {
-    console.error(`Failed to generate recruitment score: ${err}`);
+    console.error(`[RecruiterScore] Failed to generate recruitment score:`, err);
     if (typeof input !== "string") {
       await updateResponse(input.application_id, input.token, {
         content:
@@ -94,15 +97,18 @@ export const handleRecruiterLeaderboard = async (
     await deferResponse(interaction.id, interaction.token);
     const guildId = interaction.guild_id!;
     const config = getConfig(guildId);
+    console.log("[RecruiterLeaderboard] Config:", config);
     const dataset = await compileRecruiterScoreData(guildId, config);
+    console.log("[RecruiterLeaderboard] Dataset:", dataset);
     const embed = buildRecruiterLeaderboardEmbed(dataset.scores);
+    console.log("[RecruiterLeaderboard] Embed:", embed);
 
     await updateResponse(interaction.application_id, interaction.token, {
       embeds: [embed],
       components: getRecruiterLeaderboardComponents(),
     });
   } catch (err) {
-    console.error(`Failed to generate recruiter leaderboard: ${err}`);
+    console.error(`[RecruiterLeaderboard] Failed to generate recruiter leaderboard:`, err);
     await updateResponse(interaction.application_id, interaction.token, {
       content:
         "There was a failure generating the recruiter leaderboard, please try again or contact admins for assistance",
