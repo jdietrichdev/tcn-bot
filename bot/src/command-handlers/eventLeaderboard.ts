@@ -5,6 +5,7 @@ import { GetCommand } from "@aws-sdk/lib-dynamodb";
 
 export const handleEventLeaderboard = async (interaction: APIChatInputApplicationCommandInteraction) => {
     try {
+      await deferResponse(interaction.application_id, interaction.token);
         const eventId = (interaction.channel as APITextChannel).topic;
     
         const eventData = (

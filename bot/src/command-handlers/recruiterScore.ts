@@ -45,6 +45,9 @@ export const handleRecruiterScore = async (
   input: APIChatInputApplicationCommandInteraction | string
 ) => {
   try {
+    if (typeof input !== "string") {
+      await deferResponse(input.application_id, input.token);
+    }
     const guildId = typeof input === "string" ? input : input.guild_id!;
     const config = getConfig(guildId);
     console.log("[RecruiterScore] Config:", config);
