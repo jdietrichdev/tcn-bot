@@ -118,6 +118,7 @@ export const deleteTicketChannel = async (
 
   const existingStats = await getTicketRecruiterStatsRecord(
     guildId,
+    new Date().toISOString(),
     channelId
   );
 
