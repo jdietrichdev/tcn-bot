@@ -5,7 +5,15 @@ import { GetCommand } from "@aws-sdk/lib-dynamodb";
 
 export const handleEventLeaderboard = async (interaction: APIChatInputApplicationCommandInteraction) => {
     try {
-      await deferResponse(interaction.application_id, interaction.token);
+      try {
+        await deferResponse(interaction.application_id, interaction.token);
+      } catch (err: any) {
+        if (err?.statusCode === 404 && err?.reason === "Unknown interaction") {
+          console.warn("[EventLeaderboard] Could not defer response: Unknown interaction (likely expired or already acknowledged)");
+        } else {
+          console.error("[EventLeaderboard] deferResponse error:", err);
+        }
+      }
         const eventId = (interaction.channel as APITextChannel).topic;
     
         const eventData = (

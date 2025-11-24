@@ -46,7 +46,15 @@ export const handleRecruiterScore = async (
 ) => {
   try {
     if (typeof input !== "string") {
-      await deferResponse(input.application_id, input.token);
+      try {
+        await deferResponse(input.application_id, input.token);
+      } catch (err: any) {
+        if (err?.statusCode === 404 && err?.reason === "Unknown interaction") {
+          console.warn("[RecruiterScore] Could not defer response: Unknown interaction (likely expired or already acknowledged)");
+        } else {
+          console.error("[RecruiterScore] deferResponse error:", err);
+        }
+      }
     }
     const guildId = typeof input === "string" ? input : input.guild_id!;
     const config = getConfig(guildId);
