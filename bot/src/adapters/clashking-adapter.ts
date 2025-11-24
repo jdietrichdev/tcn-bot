@@ -82,8 +82,8 @@ export const getPlayerCWLLeague = async (
       return "Unknown";
     }
 
-    const cwlStartDate = new Date("2025-10-01T00:00:00Z");
-    const cwlEndDate = new Date("2025-10-10T23:59:59Z");
+    const cwlStartDate = new Date("2025-11-01T00:00:00Z");
+    const cwlEndDate = new Date("2025-11-10T23:59:59Z");
 
     console.log(`Total war hits: ${warHits.length}, checking for CWL between ${cwlStartDate.toISOString()} and ${cwlEndDate.toISOString()}`);
     
@@ -228,9 +228,9 @@ export const getPlayerWarHitRate = async (
       return null;
     }
 
-    // Filter for October 2025 wars (all war types)
-    const octoberStartDate = new Date("2025-10-01T00:00:00Z");
-    const octoberEndDate = new Date("2025-10-31T23:59:59Z");
+    // Filter for November 2025 wars (all war types)
+    const octoberStartDate = new Date("2025-11-01T00:00:00Z");
+    const octoberEndDate = new Date("2025-11-30T23:59:59Z");
 
     const octoberAttacks = warHits.filter((hit) => {
       const dateStr = hit.war_data.endTime;
