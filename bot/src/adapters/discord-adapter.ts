@@ -306,7 +306,8 @@ export const createThread = async (
 export const getChannelMessages = async (
   channelId: string,
   end?: Date,
-  after?: string
+  after?: string,
+  maxMessages: number = 500 // NEW: hard limit
 ): Promise<APIMessage[]> => {
   let fetching = true;
   let url = "";
@@ -314,11 +315,12 @@ export const getChannelMessages = async (
   const compiledMessages: APIMessage[] = [];
   try {
     const afterParam = after ? `&after=${after}` : "";
+    const startTime = Date.now();
     while (fetching) {
       url = `${BASE_URL}/channels/${channelId}/messages?limit=100${
         before ? `&before=${before}` : ""
       }${afterParam}`;
-      console.log(url);
+      console.log(`[getChannelMessages] Fetching: ${url}`);
       const response = await axios.get(
         `${url}${before ? `&before=${before}` : ""}`,
         {
@@ -335,6 +337,10 @@ export const getChannelMessages = async (
           break;
         } else {
           compiledMessages.push(message);
+          if (compiledMessages.length >= maxMessages) {
+            fetching = false;
+            break;
+          }
         }
       }
       if (messages.length < 100) {
@@ -343,6 +349,12 @@ export const getChannelMessages = async (
         before = messages[messages.length - 1].id;
       }
     }
+    const endTime = Date.now();
+    console.log(
+      `[getChannelMessages] Total messages: ${compiledMessages.length}, Time taken: ${
+        (endTime - startTime) / 1000
+      }s`
+    );
     return compiledMessages;
   } catch (err) {
     if (axios.isAxiosError(err)) {

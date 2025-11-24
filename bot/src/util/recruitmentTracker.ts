@@ -163,71 +163,53 @@ export const incrementRecruitmentPoints = async (
   );
 };
 
-export const recordTicketRecruiterStats = async (
+export function buildTicketStatsSortKey(closedAt: string, ticketChannelId: string) {
+  return `${TICKET_STATS_PREFIX}${closedAt}#${ticketChannelId}`;
+}
+
+export async function saveTicketRecruiterStats(
   guildId: string,
-  record: TicketStatsRecord
-): Promise<void> => {
+  closedAt: string,
+  ticketChannelId: string,
+  stats: TicketStatsRecord
+) {
   await dynamoDbClient.send(
     new PutCommand({
       TableName: "BotTable",
       Item: {
         pk: guildId,
-        sk: `${TICKET_STATS_PREFIX}${record.ticketChannelId}`,
-        ...record,
+        sk: buildTicketStatsSortKey(closedAt, ticketChannelId),
+        ...stats,
+        closedAt,
+        ticketChannelId,
       },
     })
   );
-};
-
-export const fetchRecruitmentPoints = async (
-  guildId: string
-): Promise<RecruitmentPointsItem[]> => {
-  const items: RecruitmentPointsItem[] = [];
-  let ExclusiveStartKey: Record<string, any> | undefined;
-
-  do {
-    const response = await dynamoDbClient.send(
-      new QueryCommand({
-        TableName: "BotTable",
-        KeyConditionExpression: "pk = :pk AND begins_with(sk, :prefix)",
-        ExpressionAttributeValues: {
-          ":pk": guildId,
-          ":prefix": POINTS_PREFIX,
-        },
-        ExclusiveStartKey,
-      })
-    );
-
-    if (response.Items) {
-      items.push(...(response.Items as RecruitmentPointsItem[]));
-    }
-
-    ExclusiveStartKey = response.LastEvaluatedKey as
-      | Record<string, any>
-      | undefined;
-  } while (ExclusiveStartKey);
-
-  return items;
-};
+}
 
 export const fetchTicketRecruiterStats = async (
   guildId: string,
-  since: Date
+  since: Date,
+  until?: Date
 ): Promise<TicketStatsRecord[]> => {
   const items: TicketStatsRecord[] = [];
   let ExclusiveStartKey: Record<string, any> | undefined;
   const sinceIso = since.toISOString();
+  const untilIso = until ? until.toISOString() : new Date().toISOString();
+  const startSk = `${TICKET_STATS_PREFIX}${sinceIso}`;
+  const endSk = `${TICKET_STATS_PREFIX}${untilIso}`;
+  const startTime = Date.now();
+  let totalFetched = 0;
 
   do {
     const response = await dynamoDbClient.send(
       new QueryCommand({
         TableName: "BotTable",
-        KeyConditionExpression: "pk = :pk AND begins_with(sk, :prefix)",
-        FilterExpression: "closedAt >= :since",
+        KeyConditionExpression: "pk = :pk AND sk BETWEEN :startSk AND :endSk",
         ExpressionAttributeValues: {
           ":pk": guildId,
-          ":prefix": TICKET_STATS_PREFIX,
-          ":since": sinceIso,
+          ":startSk": startSk,
+          ":endSk": endSk,
         },
         ExclusiveStartKey,
       })
@@ -235,6 +217,8 @@ export const fetchTicketRecruiterStats = async (
 
     if (response.Items) {
       items.push(...(response.Items as TicketStatsItem[]));
+      totalFetched += response.Items.length;
+      console.log(`[fetchTicketRecruiterStats] Fetched ${response.Items.length} items, total so far: ${totalFetched}`);
     }
 
     ExclusiveStartKey = response.LastEvaluatedKey as
@@ -242,11 +226,50 @@ export const fetchTicketRecruiterStats = async (
       | undefined;
   } while (ExclusiveStartKey);
 
+  const endTime = Date.now();
+  console.log(`[fetchTicketRecruiterStats] Total items: ${items.length}, Time taken: ${(endTime - startTime) / 1000}s`);
+
   return items;
 };
 
+export const fetchRecruitmentPoints = async (
+  guildId: string
+): Promise<RecruitmentPointsItem[]> => {
+  const items: RecruitmentPointsItem[] = [];
+  let ExclusiveStartKey: Record<string, any> | undefined;
+  const startTime = Date.now();
+  let totalFetched = 0;
+
+  do {
+    const response = await dynamoDbClient.send(
+      new QueryCommand({
+        TableName: "BotTable",
+        KeyConditionExpression: "pk = :pk AND begins_with(sk, :pointsPrefix)",
+        ExpressionAttributeValues: {
+          ":pk": guildId,
+          ":pointsPrefix": POINTS_PREFIX,
+        },
+        ExclusiveStartKey,
+      })
+    );
+
+    if (response.Items) {
+      items.push(...(response.Items as RecruitmentPointsItem[]));
+      totalFetched += response.Items.length;
+      console.log(`[fetchRecruitmentPoints] Fetched ${response.Items.length} items, total so far: ${totalFetched}`);
+    }
+
+    ExclusiveStartKey = response.LastEvaluatedKey as Record<string, any> | undefined;
+  } while (ExclusiveStartKey);
+
+  const endTime = Date.now();
+  console.log(`[fetchRecruitmentPoints] Total items: ${items.length}, Time taken: ${(endTime - startTime) / 1000}s`);
+
+  return items;
+};
 export const getTicketRecruiterStatsRecord = async (
   guildId: string,
+  closedAt: string,
   ticketChannelId: string
 ): Promise<TicketStatsRecord | undefined> => {
   const response = await dynamoDbClient.send(
@@ -254,7 +277,7 @@ export const getTicketRecruiterStatsRecord = async (
       TableName: "BotTable",
       Key: {
         pk: guildId,
-        sk: `${TICKET_STATS_PREFIX}${ticketChannelId}`,
+        sk: buildTicketStatsSortKey(closedAt, ticketChannelId),
       },
     })
   );
