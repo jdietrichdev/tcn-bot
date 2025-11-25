@@ -163,7 +163,7 @@ export const formatRecruiterScoreTable = (
     )} — **${formatNumber(score.points)} pts**`;
 
     const detailLine = [
-      `🎫 \`${formatNumber(ticketPoints)}\``,
+      `<:yap:1442667111611629649> \`${formatNumber(ticketPoints)}\``,
       `⚔️ \`${formatNumber(score.fcPosts)}\``,
       `⏩ \`${score.candidateForwards} (${formatNumber(
         score.candidateForwardPoints
