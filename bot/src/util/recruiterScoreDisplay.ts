@@ -294,6 +294,18 @@ export const createRecruiterScoreComponents = (
       type: ComponentType.ActionRow,
       components: buttons,
     },
+    {
+      type: ComponentType.ActionRow,
+      components: [
+        {
+          type: ComponentType.Button,
+          custom_id: "recruiter_score_refresh",
+          style: ButtonStyle.Primary,
+          emoji: { name: "🔄" },
+          label: "Refresh",
+        },
+      ],
+    },
   ];
 };
 
