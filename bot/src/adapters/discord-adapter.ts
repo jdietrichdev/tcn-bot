@@ -181,7 +181,7 @@ export const deleteResponse = rateLimited(async (
   }
 });
 
-export const deleteMessage = async (channelId: string, messageId: string) => {
+export const deleteMessage = rateLimited(async (channelId: string, messageId: string) => {
   const url = `${BASE_URL}/channels/${channelId}/messages/${messageId}`;
   try {
     await axios.delete(url, {
@@ -200,9 +200,9 @@ export const deleteMessage = async (channelId: string, messageId: string) => {
       throw new Error(`Unexpected error: ${err}`);
     }
   }
-};
+});
 
-export const sendMessage = async (
+export const sendMessage = rateLimited(async (
   message: RESTPostAPIWebhookWithTokenJSONBody,
   channelId: string
 ): Promise<RESTPostAPIChannelMessageResult> => {
@@ -226,9 +226,9 @@ export const sendMessage = async (
       throw new Error(`Unexpected error: ${err}`);
     }
   }
-};
+});
 
-export const sendMessageWithAttachment = async (
+export const sendMessageWithAttachment = rateLimited(async (
   message: FormData,
   channelId: string
 ) => {
@@ -250,9 +250,9 @@ export const sendMessageWithAttachment = async (
       throw new Error(`Unexpected error: ${err}`);
     }
   }
-};
+});
 
-export const pinMessage = async (channelId: string, messageId: string) => {
+export const pinMessage = rateLimited(async (channelId: string, messageId: string) => {
   const url = `${BASE_URL}/channels/${channelId}/pins/${messageId}`;
   try {
     await axios.put(
@@ -275,7 +275,7 @@ export const pinMessage = async (channelId: string, messageId: string) => {
       throw new Error(`Unexpected error: ${err}`);
     }
   }
-};
+});
 
 export const createThread = async (
   thread: RESTPostAPIChannelMessagesThreadsJSONBody,
