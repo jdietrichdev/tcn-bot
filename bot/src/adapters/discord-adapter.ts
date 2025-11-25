@@ -1,5 +1,6 @@
 import axios from "axios";
 import axiosRetry from "axios-retry";
+import { rateLimited } from "../util/rateLimiter";
 import { InteractionResponseType } from "discord-api-types/v10";
 import {
   APIChannel,
@@ -28,7 +29,7 @@ const BASE_URL = "https://discord.com/api/v10";
 
 axiosRetry(axios, { retries: 2 });
 
-export const deferResponse = async (
+export const deferResponse = rateLimited(async (
   interactionId: string,
   interactionToken: string
 ) => {
@@ -48,9 +49,9 @@ export const deferResponse = async (
       throw new Error(`Unexpected error: ${err}`);
     }
   }
-};
+});
 
-export const updateResponse = async (
+export const updateResponse = rateLimited(async (
   applicationId: string,
   interactionToken: string,
   response: RESTPostAPIWebhookWithTokenJSONBody
@@ -69,7 +70,7 @@ export const updateResponse = async (
       throw new Error(`Unexpected error: ${err}`);
     }
   }
-};
+});
 
 export const getOriginalResponse = async (
   applicationId: string,
@@ -92,7 +93,7 @@ export const getOriginalResponse = async (
   }
 };
 
-export const sendFollowupMessage = async (
+export const sendFollowupMessage = rateLimited(async (
   applicationId: string,
   interactionToken: string,
   response: RESTPostAPIWebhookWithTokenJSONBody
@@ -111,9 +112,9 @@ export const sendFollowupMessage = async (
       throw new Error(`Unexpected error: ${err}`);
     }
   }
-};
+});
 
-export const updateResponseWithAttachment = async (
+export const updateResponseWithAttachment = rateLimited(async (
   applicationId: string,
   interactionToken: string,
   response: FormData
@@ -132,9 +133,9 @@ export const updateResponseWithAttachment = async (
       throw new Error(`Unexpected error: ${err}`);
     }
   }
-};
+});
 
-export const updateMessage = async (
+export const updateMessage = rateLimited(async (
   channelId: string,
   messageId: string,
   message: RESTPostAPIWebhookWithTokenJSONBody
@@ -158,9 +159,9 @@ export const updateMessage = async (
       throw new Error(`Unexpected error: ${err}`);
     }
   }
-};
+});
 
-export const deleteResponse = async (
+export const deleteResponse = rateLimited(async (
   applicationId: string,
   interactionToken: string
 ) => {
@@ -178,7 +179,7 @@ export const deleteResponse = async (
       throw new Error(`Unexpected error: ${err}`);
     }
   }
-};
+});
 
 export const deleteMessage = async (channelId: string, messageId: string) => {
   const url = `${BASE_URL}/channels/${channelId}/messages/${messageId}`;
