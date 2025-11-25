@@ -281,10 +281,70 @@ export const compileRecruiterScoreData = async (
     candidateDmPoints: 0,
   };
 
-  await applyRecentTicketStats(scoreMap, totals, guildId);
-  await collectCandidateChannelActivity(scoreMap, totals, config);
+  const [ticketStats, candidateMessages, trackerState, recruitmentPoints] = await Promise.all([
+    fetchTicketRecruiterStats(guildId, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
+    getChannelMessages(config.RECRUITMENT_OPP_CHANNEL, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
+    getRecruitmentTrackerState(guildId),
+    fetchRecruitmentPoints(guildId),
+  ]);
 
-  const trackerState = await getRecruitmentTrackerState(guildId);
+  totals.ticketsClosed += ticketStats.length;
+  for (const record of ticketStats) {
+    for (const participant of record.recruiterMessages) {
+      const stats = ensureRecruiterRecord(
+        scoreMap,
+        participant.userId,
+        participant.username
+      );
+      stats.messages += participant.count;
+      totals.messages += participant.count;
+    }
+  }
+
+  for (const message of candidateMessages) {
+    if (message.author.bot) continue;
+    if (message.message_reference) {
+      const forwarder = ensureRecruiterRecord(
+        scoreMap,
+        message.author.id,
+        resolveUserDisplayName(
+          message.author.id,
+          message.author.username,
+          message.author.global_name ?? undefined
+        )
+      );
+      forwarder.candidateForwards++;
+      totals.candidateForwards++;
+      forwarder.candidateForwardPoints += CANDIDATE_FORWARD_POINT_VALUE;
+      totals.candidateForwardPoints += CANDIDATE_FORWARD_POINT_VALUE;
+    }
+    const mailReaction = message.reactions?.find(
+      (reaction) => reaction.emoji?.name === MAIL_REACTION_EMOJI
+    );
+    if (!mailReaction) continue;
+    const reactors = await getMessageReaction(
+      config.RECRUITMENT_OPP_CHANNEL,
+      message.id,
+      MAIL_REACTION_QUERY
+    );
+    for (const reactor of reactors) {
+      if (reactor.bot || reactor.id === config.BOT_ID) continue;
+      const dmCredit = ensureRecruiterRecord(
+        scoreMap,
+        reactor.id,
+        resolveUserDisplayName(
+          reactor.id,
+          reactor.username,
+          reactor.global_name ?? undefined
+        )
+      );
+      dmCredit.candidateDms++;
+      totals.candidateDms++;
+      dmCredit.candidateDmPoints += CANDIDATE_DM_POINT_VALUE;
+      totals.candidateDmPoints += CANDIDATE_DM_POINT_VALUE;
+    }
+  }
+
   const fcMessageState = await getFcPostsMessages(
     scoreMap,
     totals,
@@ -292,7 +352,6 @@ export const compileRecruiterScoreData = async (
     guildId,
     trackerState
   );
-
   if (
     fcMessageState.lastFcMessageId &&
     fcMessageState.lastFcMessageId !== trackerState.lastFcMessageId
@@ -305,7 +364,6 @@ export const compileRecruiterScoreData = async (
   await mergeRecruitmentPoints(scoreMap, totals, guildId);
 
   const scores = sortRecruiterScores(scoreMap);
-
   return {
     scores,
     totals,
