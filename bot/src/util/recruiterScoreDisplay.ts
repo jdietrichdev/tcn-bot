@@ -15,7 +15,7 @@ import {
 
 const RANK_MEDALS = ["🥇", "🥈", "🥉"] as const;
 
-export const SCORE_PAGE_SIZE = 10;
+export const SCORE_PAGE_SIZE = 9;
 
 export interface RecruiterScoreDisplayContext {
   recruitmentOppChannelId: string;
