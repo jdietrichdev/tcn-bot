@@ -50,6 +50,7 @@ export const handleExportRosters = async (
     );
 
     const records = [[
+      '@',
       'Player Name',
       'Player Tag',
       'Current Clan',
@@ -74,7 +75,7 @@ export const handleExportRosters = async (
       'Defense Avg. Stars',
       'Defense Destruction',
       'Defense Avg. Destruction'
-    ]];
+    ];
 
     for (const roster of queryResult.Items) {
       const rosterName = roster.clanName || 'Unknown';
@@ -141,34 +142,35 @@ export const handleExportRosters = async (
             return {
               playerName: player.playerName,
               playerTag: details?.playerTag || '',
-              currentClan: details?.currentClan || '',
+              currentClan: rosterName, // fallback to roster name
               discord: details?.discord || '',
               townHall: details?.townHall || '',
               combinedHeroes: details?.combinedHeroes || '',
               warHitrate,
               cwlHitrate,
-              lastCWL: details?.lastCWL || '',
+              lastCWL: '', // not available
               notes,
               totalAttacks: details?.totalAttacks || '',
-              stars: details?.stars || '',
+              stars: details?.totalCwlStars || '', // fallback to totalCwlStars
               avgStars: details?.avgStars || '',
               destruction: details?.destruction || '',
-              avgDestruction,
+              avgDestruction: details?.destruction || '', // fallback to destruction
               threeStars,
               twoStars,
               oneStar,
               zeroStars,
               missed: details?.missed || '',
-              defenseStars: details?.defenseStars || '',
+              defenseStars: '', // not available
               defenseAvgStars: details?.defenseAvgStars || '',
-              defenseDestruction,
-              defenseAvgDestruction
+              defenseDestruction: details?.destruction || '', // fallback to destruction
+              defenseAvgDestruction: details?.destruction || '', // fallback to destruction
             };
           })
         );
 
         for (const playerData of batchResults) {
           records.push([
+            playerData.discord ? `@${playerData.discord}` : '',
             playerData.playerName,
             playerData.playerTag,
             playerData.currentClan || rosterName,
