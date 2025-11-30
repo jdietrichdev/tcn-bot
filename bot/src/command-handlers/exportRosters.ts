@@ -47,21 +47,30 @@ export const handleExportRosters = async (
     );
 
     const records = [[
-      'Roster Name',
-      'Clan Rank',
       'Player Name',
-      'Town Hall',
-      'CWL League',
-      'War Hit Rate (3★)',
-      'Total CWL Stars',
-      'Avg Stars',
-      'Total Attacks',
-      'Defense Avg Stars',
-      'Destruction %',
-      'Missed Attacks',
-      'Combined Heroes',
+      'Player Tag',
+      'Current Clan',
       'Discord',
-      'Player Tag'
+      'TH',
+      'Combined',
+      'War Hitrate',
+      'CWL Hitrate',
+      'Last CWL',
+      'Notes',
+      'Total Attacks',
+      'Stars',
+      'Avg. Stars',
+      'Destruction',
+      'Avg. Destruction',
+      '3 Stars',
+      '2 Stars',
+      '1 Star',
+      '0 Stars',
+      'Missed',
+      'Defense Stars',
+      'Defense Avg. Stars',
+      'Defense Destruction',
+      'Defense Avg. Destruction'
     ]];
 
     for (const roster of queryResult.Items) {
@@ -70,21 +79,7 @@ export const handleExportRosters = async (
 
       if (!roster.players || roster.players.length === 0) {
         records.push([
-          rosterName,
-          clanRank,
-          'No players',
-          '',
-          '',
-          '',
-          '',
-          '',
-          '',
-          '',
-          '',
-          '',
-          '',
-          '',
-          ''
+          '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
         ]);
         continue;
       }
@@ -142,21 +137,30 @@ export const handleExportRosters = async (
 
         for (const playerData of batchResults) {
           records.push([
-            rosterName,
-            clanRank,
             playerData.playerName,
-            playerData.townHall,
-            playerData.cwlLeague,
-            playerData.warHitRate,
-            playerData.totalCwlStars,
-            playerData.avgStars,
-            playerData.totalAttacks,
-            playerData.defenseAvgStars,
-            playerData.destruction,
-            playerData.missed,
-            playerData.combinedHeroes,
+            playerData.playerTag,
+            playerData.currentClan || rosterName,
             playerData.discord,
-            playerData.playerTag
+            playerData.townHall,
+            playerData.combinedHeroes,
+            playerData.warHitrate,
+            playerData.cwlHitrate,
+            playerData.lastCWL,
+            playerData.notes,
+            playerData.totalAttacks,
+            playerData.stars,
+            playerData.avgStars,
+            playerData.destruction,
+            playerData.avgDestruction,
+            playerData.threeStars,
+            playerData.twoStars,
+            playerData.oneStar,
+            playerData.zeroStars,
+            playerData.missed,
+            playerData.defenseStars,
+            playerData.defenseAvgStars,
+            playerData.defenseDestruction,
+            playerData.defenseAvgDestruction
           ]);
         }
 
