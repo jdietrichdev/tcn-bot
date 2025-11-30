@@ -49,7 +49,7 @@ export const handleExportRosters = async (
       allPlayerDetails.map(p => [p.name.toLowerCase().trim(), p])
     );
 
-    const records = [[
+    const records: any[][] = [[
       '@',
       'Player Name',
       'Player Tag',
@@ -179,22 +179,22 @@ export const handleExportRosters = async (
             playerData.combinedHeroes,
             playerData.warHitrate,
             playerData.cwlHitrate,
-            playerData.lastCWL,
+            playerData.lastCWL || '',
             playerData.notes,
             playerData.totalAttacks,
             playerData.stars,
             playerData.avgStars,
             playerData.destruction,
-            playerData.avgDestruction,
+            playerData.destruction, // avgDestruction fallback
             playerData.threeStars,
             playerData.twoStars,
             playerData.oneStar,
             playerData.zeroStars,
             playerData.missed,
-            playerData.defenseStars,
+            playerData.defenseAvgStars, // fallback for defenseStars
             playerData.defenseAvgStars,
-            playerData.defenseDestruction,
-            playerData.defenseAvgDestruction
+            playerData.destruction, // defenseDestruction fallback
+            playerData.destruction // defenseAvgDestruction fallback
           ]);
         }
 
