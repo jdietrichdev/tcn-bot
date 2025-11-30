@@ -75,10 +75,9 @@ export const handleCwlRoster = async (
       const previousMessages: string[] = [];
       for (const message of announcementMessages) {
         const { id } = await sendMessage(
-          { content: message.content?.split("\n")[0] },
+          message,
           config.CWL_ROSTER_CHANNEL
         );
-        await updateMessage(config.CWL_ROSTER_CHANNEL, id, message);
         previousMessages.push(id);
         await new Promise((resolve) => setTimeout(resolve, 1500));
       }
