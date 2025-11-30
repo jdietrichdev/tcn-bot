@@ -215,26 +215,28 @@ const buildAnnouncement = async (roster: Record<string, any>[]) => {
   const messages: RESTPostAPIWebhookWithTokenJSONBody[] = [];
   for (const clan of roster) {
     const clanData = await getClan(`#${clan.clanTag}`);
-    let message = `# ${
-      WAR_LEAGUE[clanData.warLeague.name as keyof typeof WAR_LEAGUE]
-    } **${clanData.warLeague.name}**\n## [${
-      clanData.name
-    }](<https://link.clashofclans.com/en/?action=OpenClanProfile&tag=${
-      clan.clanTag
-    }>)\n`;
+    let message = `# ${WAR_LEAGUE[clanData.warLeague.name as keyof typeof WAR_LEAGUE]} **${clanData.warLeague.name}**\n## [${clanData.name}](<https://link.clashofclans.com/en/?action=OpenClanProfile&tag=${clan.clanTag}>)\n`;
     message += `${ANNOUNCEMENT_DISCLAIMER}\n`;
     for (const player of clan.players) {
       message += `<@${player.userId}> | ${player.playerName} | \`${player.playerTag}\`\n`;
     }
-    messages.push({ content: message.replace(/_/g, "\\_") });
+    const MAX_DISCORD_MESSAGE_LENGTH = 2000;
+    if (message.length > MAX_DISCORD_MESSAGE_LENGTH) {
+      let start = 0;
+      while (start < message.length) {
+        const chunk = message.slice(start, start + MAX_DISCORD_MESSAGE_LENGTH);
+        messages.push({ content: chunk.replace(/_/g, "\\_") });
+        start += MAX_DISCORD_MESSAGE_LENGTH;
+      }
+    } else {
+      messages.push({ content: message.replace(/_/g, "\\_") });
+    }
   }
   messages.push({
     content: ANNOUNCEMENT_DISCLAIMER,
   });
   messages.push({
-    content: `*Last updated: <t:${createDiscordTimestamp(
-      new Date().toUTCString()
-    )}:R>*`,
+    content: `*Last updated: <t:${createDiscordTimestamp(new Date().toUTCString())}:R>*`,
   });
   return messages;
 };
