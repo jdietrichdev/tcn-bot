@@ -212,25 +212,33 @@ export const handleCwlRoster = async (
 
 const buildAnnouncement = async (roster: Record<string, any>[]) => {
   const messages: RESTPostAPIWebhookWithTokenJSONBody[] = [];
+  const PLAYERS_PER_MESSAGE = 18;
+  
   for (const clan of roster) {
     const clanData = await getClan(`#${clan.clanTag}`);
-    let message = `# ${WAR_LEAGUE[clanData.warLeague.name as keyof typeof WAR_LEAGUE]} **${clanData.warLeague.name}**\n## [${clanData.name}](<https://link.clashofclans.com/en/?action=OpenClanProfile&tag=${clan.clanTag}>)\n`;
-    message += `${ANNOUNCEMENT_DISCLAIMER}\n`;
+    const header = `# ${WAR_LEAGUE[clanData.warLeague.name as keyof typeof WAR_LEAGUE]} **${clanData.warLeague.name}**\n## [${clanData.name}](<https://link.clashofclans.com/en/?action=OpenClanProfile&tag=${clan.clanTag}>)\n${ANNOUNCEMENT_DISCLAIMER}\n`;
+    
+    let currentMessage = header;
+    let playerCount = 0;
+    
     for (const player of clan.players) {
-      message += `<@${player.userId}> | ${player.playerName} | \`${player.playerTag}\`\n`;
-    }
-    const MAX_DISCORD_MESSAGE_LENGTH = 2000;
-    if (message.length > MAX_DISCORD_MESSAGE_LENGTH) {
-      let start = 0;
-      while (start < message.length) {
-        const chunk = message.slice(start, start + MAX_DISCORD_MESSAGE_LENGTH);
-        messages.push({ content: chunk.replace(/_/g, "\\_") });
-        start += MAX_DISCORD_MESSAGE_LENGTH;
+      const playerLine = `<@${player.userId}> | ${player.playerName} | \`${player.playerTag}\`\n`;
+      
+      if (playerCount >= PLAYERS_PER_MESSAGE) {
+        messages.push({ content: currentMessage.replace(/_/g, "\\_") });
+        currentMessage = header;
+        playerCount = 0;
       }
-    } else {
-      messages.push({ content: message.replace(/_/g, "\\_") });
+      
+      currentMessage += playerLine;
+      playerCount++;
+    }
+    
+    if (playerCount > 0) {
+      messages.push({ content: currentMessage.replace(/_/g, "\\_") });
     }
   }
+  
   messages.push({
     content: ANNOUNCEMENT_DISCLAIMER,
   });
