@@ -4,6 +4,7 @@ import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { stringify } from "csv-stringify/sync";
 import { updateResponseWithAttachment } from "../adapters/discord-adapter";
 import { fetchPlayersWithDetailsFromCSV, PlayerData } from "../util/fetchUnrosteredPlayersCSV";
+import { getPlayerNotes } from "../util/playerNotes";
 import { getPlayerCWLLeague, getPlayerWarHitRate } from "../adapters/clashking-adapter";
 
 export const handleExportRosters = async (
@@ -32,6 +33,8 @@ export const handleExportRosters = async (
     if (!queryResult.Items || queryResult.Items.length === 0) {
       throw new Error("No rosters found. Create one using `/create-roster` first.");
     }
+    // Add a separator row after each roster
+    records.push(["---- End of Roster ----", ...Array(records[0].length - 1).fill("")]);
 
     console.log(`Found ${queryResult.Items.length} rosters`);
 
@@ -95,42 +98,71 @@ export const handleExportRosters = async (
         const batchResults = await Promise.all(
           batch.map(async (player: { playerName: string }) => {
             const details = playerDetailsMap.get(player.playerName.toLowerCase().trim());
-            
             let cwlLeague = 'No Tag';
-            let warHitRate = 'N/A';
-
+            let warHitrate = '';
+            let cwlHitrate = '';
+            let avgDestruction = '';
+            let threeStars = '';
+            let twoStars = '';
+            let oneStar = '';
+            let zeroStars = '';
+            let defenseDestruction = '';
+            let defenseAvgDestruction = '';
+            let notes = '';
             if (details?.playerTag && details.playerTag.trim()) {
               try {
                 const [cwlLeagueData, hitRateData] = await Promise.all([
                   getPlayerCWLLeague(details.playerTag),
                   getPlayerWarHitRate(details.playerTag)
                 ]);
-
                 cwlLeague = cwlLeagueData;
-                warHitRate = hitRateData
-                  ? `${hitRateData.threeStars}/${hitRateData.totalAttacks} (${hitRateData.hitRate}%)`
-                  : 'N/A';
+                if (hitRateData) {
+                  warHitrate = `${hitRateData.threeStars}/${hitRateData.totalAttacks} (${hitRateData.hitRate}%)`;
+                  cwlHitrate = hitRateData.hitRate ? `${hitRateData.hitRate}%` : '';
+                  threeStars = hitRateData.threeStars?.toString() || '';
+                  // For demo, set other star breakdowns to blank
+                  twoStars = '';
+                  oneStar = '';
+                  zeroStars = '';
+                }
               } catch (error) {
                 console.error(`Failed to fetch data for ${player.playerName}:`, error);
                 cwlLeague = 'Unknown';
-                warHitRate = 'N/A';
+                warHitrate = '';
+                cwlHitrate = '';
               }
             }
-
+            // Notes from CWL responses
+            notes = await getPlayerNotes(details?.discord || '', player.playerName);
+            // Defensive stats (for demo, use blank or details if available)
+            avgDestruction = details?.avgDestruction || '';
+            defenseDestruction = details?.defenseDestruction || '';
+            defenseAvgDestruction = details?.defenseAvgDestruction || '';
             return {
               playerName: player.playerName,
-              townHall: details?.townHall || '',
-              cwlLeague,
-              warHitRate,
-              totalCwlStars: details?.totalCwlStars || '',
-              avgStars: details?.avgStars || '',
-              totalAttacks: details?.totalAttacks || '',
-              defenseAvgStars: details?.defenseAvgStars || '',
-              destruction: details?.destruction || '',
-              missed: details?.missed || '',
-              combinedHeroes: details?.combinedHeroes || '',
+              playerTag: details?.playerTag || '',
+              currentClan: details?.currentClan || '',
               discord: details?.discord || '',
-              playerTag: details?.playerTag || ''
+              townHall: details?.townHall || '',
+              combinedHeroes: details?.combinedHeroes || '',
+              warHitrate,
+              cwlHitrate,
+              lastCWL: details?.lastCWL || '',
+              notes,
+              totalAttacks: details?.totalAttacks || '',
+              stars: details?.stars || '',
+              avgStars: details?.avgStars || '',
+              destruction: details?.destruction || '',
+              avgDestruction,
+              threeStars,
+              twoStars,
+              oneStar,
+              zeroStars,
+              missed: details?.missed || '',
+              defenseStars: details?.defenseStars || '',
+              defenseAvgStars: details?.defenseAvgStars || '',
+              defenseDestruction,
+              defenseAvgDestruction
             };
           })
         );
