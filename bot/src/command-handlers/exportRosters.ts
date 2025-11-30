@@ -18,36 +18,6 @@ export const handleExportRosters = async (
 
   try {
     console.log("Fetching all rosters from DynamoDB...");
-    
-    const queryResult = await dynamoDbClient.send(
-      new QueryCommand({
-        TableName: "BotTable",
-        KeyConditionExpression: "pk = :pk AND begins_with(sk, :sk)",
-        ExpressionAttributeValues: {
-          ":pk": guildId,
-          ":sk": "roster#",
-        },
-      })
-    );
-
-    if (!queryResult.Items || queryResult.Items.length === 0) {
-      throw new Error("No rosters found. Create one using `/create-roster` first.");
-    }
-    // Add a separator row after each roster
-    records.push(["---- End of Roster ----", ...Array(records[0].length - 1).fill("")]);
-
-    console.log(`Found ${queryResult.Items.length} rosters`);
-
-    let allPlayerDetails: PlayerData[] = [];
-    try {
-      allPlayerDetails = await fetchPlayersWithDetailsFromCSV();
-    } catch (error) {
-      console.error("Failed to fetch player details from CSV:", error);
-    }
-
-    const playerDetailsMap = new Map(
-      allPlayerDetails.map(p => [p.name.toLowerCase().trim(), p])
-    );
 
     const records: any[][] = [[
       '@',
@@ -75,7 +45,35 @@ export const handleExportRosters = async (
       'Defense Avg. Stars',
       'Defense Destruction',
       'Defense Avg. Destruction'
-    ];
+    ]];
+
+    const queryResult = await dynamoDbClient.send(
+      new QueryCommand({
+        TableName: "BotTable",
+        KeyConditionExpression: "pk = :pk AND begins_with(sk, :sk)",
+        ExpressionAttributeValues: {
+          ":pk": guildId,
+          ":sk": "roster#",
+        },
+      })
+    );
+
+    if (!queryResult.Items || queryResult.Items.length === 0) {
+      throw new Error("No rosters found. Create one using `/create-roster` first.");
+    }
+
+    console.log(`Found ${queryResult.Items.length} rosters`);
+
+    let allPlayerDetails: PlayerData[] = [];
+    try {
+      allPlayerDetails = await fetchPlayersWithDetailsFromCSV();
+    } catch (error) {
+      console.error("Failed to fetch player details from CSV:", error);
+    }
+
+    const playerDetailsMap = new Map(
+      allPlayerDetails.map(p => [p.name.toLowerCase().trim(), p])
+    );
 
     for (const roster of queryResult.Items) {
       const rosterName = roster.clanName || 'Unknown';
@@ -107,9 +105,15 @@ export const handleExportRosters = async (
             let twoStars = '';
             let oneStar = '';
             let zeroStars = '';
+            let defenseStars = '';
+            let defenseAvgStars = '';
             let defenseDestruction = '';
             let defenseAvgDestruction = '';
             let notes = '';
+            let totalAttacks = '';
+            let stars = '';
+            let avgStars = '';
+            let destruction = '';
             if (details?.playerTag && details.playerTag.trim()) {
               try {
                 const [cwlLeagueData, hitRateData] = await Promise.all([
@@ -121,10 +125,22 @@ export const handleExportRosters = async (
                   warHitrate = `${hitRateData.threeStars}/${hitRateData.totalAttacks} (${hitRateData.hitRate}%)`;
                   cwlHitrate = hitRateData.hitRate ? `${hitRateData.hitRate}%` : '';
                   threeStars = hitRateData.threeStars?.toString() || '';
-                  // For demo, set other star breakdowns to blank
-                  twoStars = '';
-                  oneStar = '';
-                  zeroStars = '';
+                  totalAttacks = hitRateData.totalAttacks?.toString() || '';
+                  stars = hitRateData.threeStars?.toString() || '';
+                  avgStars = hitRateData.hitRate?.toString() || '';
+                  // Count twoStars, oneStar, zeroStars from attack data
+                  let twoStarCount = 0, oneStarCount = 0, zeroStarCount = 0;
+                  if (hitRateData.attacks && Array.isArray(hitRateData.attacks)) {
+                    for (const attack of hitRateData.attacks) {
+                      if (attack.stars === 2) twoStarCount++;
+                      if (attack.stars === 1) oneStarCount++;
+                      if (attack.stars === 0) zeroStarCount++;
+                    }
+                  }
+                  twoStars = twoStarCount.toString();
+                  oneStar = oneStarCount.toString();
+                  zeroStars = zeroStarCount.toString();
+                  // Defensive stats left blank unless API provides them
                 }
               } catch (error) {
                 console.error(`Failed to fetch data for ${player.playerName}:`, error);
@@ -136,9 +152,10 @@ export const handleExportRosters = async (
             // Notes from CWL responses
             notes = await getPlayerNotes(details?.discord || '', player.playerName);
             // Defensive stats (for demo, use blank or details if available)
-            avgDestruction = details?.avgDestruction || '';
-            defenseDestruction = details?.defenseDestruction || '';
-            defenseAvgDestruction = details?.defenseAvgDestruction || '';
+            // These fields do not exist on PlayerData, use fallback to blank
+            avgDestruction = destruction = details?.destruction?.toString() || '';
+            defenseDestruction = '';
+            defenseAvgDestruction = '';
             return {
               playerName: player.playerName,
               playerTag: details?.playerTag || '',
@@ -150,20 +167,20 @@ export const handleExportRosters = async (
               cwlHitrate,
               lastCWL: '', // not available
               notes,
-              totalAttacks: details?.totalAttacks || '',
-              stars: details?.totalCwlStars || '', // fallback to totalCwlStars
-              avgStars: details?.avgStars || '',
-              destruction: details?.destruction || '',
-              avgDestruction: details?.destruction || '', // fallback to destruction
+              totalAttacks,
+              stars,
+              avgStars,
+              destruction,
+              avgDestruction,
               threeStars,
               twoStars,
               oneStar,
               zeroStars,
               missed: details?.missed || '',
-              defenseStars: '', // not available
-              defenseAvgStars: details?.defenseAvgStars || '',
-              defenseDestruction: details?.destruction || '', // fallback to destruction
-              defenseAvgDestruction: details?.destruction || '', // fallback to destruction
+              defenseStars,
+              defenseAvgStars,
+              defenseDestruction,
+              defenseAvgDestruction
             };
           })
         );
