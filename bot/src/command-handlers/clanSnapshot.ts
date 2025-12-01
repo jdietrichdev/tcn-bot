@@ -65,7 +65,9 @@ export const handleClanSnapshot = async (
       console.log(`Response is not an array. Type: ${typeof legendData}, Keys: ${Object.keys(legendData || {})}`);
       
       let dataArray = legendData;
-      if (legendData && typeof legendData === 'object' && legendData.members) {
+      if (legendData && typeof legendData === 'object' && legendData.memberList) {
+        dataArray = legendData.memberList;
+      } else if (legendData && typeof legendData === 'object' && legendData.members) {
         dataArray = legendData.members;
       } else if (legendData && typeof legendData === 'object' && legendData.data) {
         dataArray = legendData.data;
@@ -84,13 +86,19 @@ export const handleClanSnapshot = async (
     }
 
     const sortedMembers = legendData.sort(
-      (a: any, b: any) => (b.legends_trophies || 0) - (a.legends_trophies || 0)
+      (a: any, b: any) => {
+        const aTrophies = a.legends?.trophies || a.legends_trophies || 0;
+        const bTrophies = b.legends?.trophies || b.legends_trophies || 0;
+        return bTrophies - aTrophies;
+      }
     );
 
     const membersList = sortedMembers
       .map(
-        (member: any, index: number) =>
-          `${index + 1}. ${member.name} - ${member.legends_trophies || 0} 🏆`
+        (member: any, index: number) => {
+          const trophies = member.legends?.trophies || member.legends_trophies || 0;
+          return `${index + 1}. ${member.name} - ${trophies} 🏆`;
+        }
       )
       .join("\n");
 
