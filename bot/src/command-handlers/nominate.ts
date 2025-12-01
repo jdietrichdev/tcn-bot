@@ -76,7 +76,8 @@ export const handleNominate = async (
         (proposal: Record<string, any>) =>
           proposal.userId === user &&
           proposal.rank === rank &&
-          proposal.type === type
+          proposal.type === type &&
+          !proposal.result 
       )
     ) {
       await updateResponse(interaction.application_id, interaction.token, {

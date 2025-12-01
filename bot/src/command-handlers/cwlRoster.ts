@@ -55,7 +55,12 @@ export const handleCwlRoster = async (
         },
       })
     );
-    const rosterData = response.Item!;
+    const rosterData = response.Item;
+    
+    if (!rosterData) {
+      throw new Error(`Roster "${rosterName}" not found. Please create one using /create-roster first.`);
+    }
+    
     console.log(JSON.stringify(rosterData));
 
     if (notificationType === "Announcement") {
