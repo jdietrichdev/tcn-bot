@@ -87,8 +87,10 @@ export const handleClanSnapshot = async (
 
     const sortedMembers = legendData.sort(
       (a: any, b: any) => {
-        const aTrophies = a.legends?.trophies || a.legends_trophies || 0;
-        const bTrophies = b.legends?.trophies || b.legends_trophies || 0;
+        // Try multiple possible trophy fields
+        const aTrophies = a.legends?.trophies || a.legends_trophies || a.trophies || 0;
+        const bTrophies = b.legends?.trophies || b.legends_trophies || b.trophies || 0;
+        console.log(`Member ${a.name}: ${aTrophies} trophies (full object: ${JSON.stringify(a)})`);
         return bTrophies - aTrophies;
       }
     );
@@ -96,7 +98,7 @@ export const handleClanSnapshot = async (
     const membersList = sortedMembers
       .map(
         (member: any, index: number) => {
-          const trophies = member.legends?.trophies || member.legends_trophies || 0;
+          const trophies = member.legends?.trophies || member.legends_trophies || member.trophies || 0;
           return `${index + 1}. ${member.name} - ${trophies} 🏆`;
         }
       )
