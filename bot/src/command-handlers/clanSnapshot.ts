@@ -57,14 +57,30 @@ export const handleClanSnapshot = async (
       timeout: 10000,
     });
 
-    const legendData = response.data;
+    let legendData = response.data;
+
+    console.log(`Legend data response:`, JSON.stringify(legendData, null, 2));
 
     if (!legendData || !Array.isArray(legendData)) {
-      await updateResponse(interaction.application_id, interaction.token, {
-        content: `No legend stats found for clan #${clanTag} on ${formattedDate}`,
-        flags: 64,
-      });
-      return;
+      console.log(`Response is not an array. Type: ${typeof legendData}, Keys: ${Object.keys(legendData || {})}`);
+      
+      let dataArray = legendData;
+      if (legendData && typeof legendData === 'object' && legendData.members) {
+        dataArray = legendData.members;
+      } else if (legendData && typeof legendData === 'object' && legendData.data) {
+        dataArray = legendData.data;
+      } else if (legendData && typeof legendData === 'object' && legendData.items) {
+        dataArray = legendData.items;
+      }
+
+      if (!Array.isArray(dataArray)) {
+        await updateResponse(interaction.application_id, interaction.token, {
+          content: `No legend stats found for clan #${clanTag} on ${formattedDate}`,
+          flags: 64,
+        });
+        return;
+      }
+      legendData = dataArray;
     }
 
     const sortedMembers = legendData.sort(
