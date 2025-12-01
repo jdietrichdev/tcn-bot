@@ -74,6 +74,8 @@ export const handleCommand = async (
         return await commands.handleExportRosters(event.detail);
       case "cwl-response":
         return await commands.handleCwlResponseCommand(event.detail);
+      case "clan-snapshot":
+        return await commands.handleClanSnapshot(event.detail);
       case "task-create":
         return await commands.handleTaskCreate(event.detail);
       case "task-claim":

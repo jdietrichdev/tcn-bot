@@ -31,6 +31,7 @@ export * from "./rosterRemove";
 export * from "./rosterDelete";
 export * from "./exportRosters";
 export * from "./cwlResponse";
+export * from "./clanSnapshot";
 export * from "./taskCreate";
 export * from "./taskClaim";
 export * from "./taskComplete";

@@ -647,6 +647,16 @@ export const cwlResponse = new SlashCommandBuilder()
       .setAutocomplete(true);
   });
 
+export const clanSnapshot = new SlashCommandBuilder()
+  .setName('clan-snapshot')
+  .setDescription('Get trophy count for all clan members sorted by trophies on a specific date')
+  .addStringOption((option) => {
+    return option
+      .setName('date')
+      .setDescription('Date in YYYY-MM-DD format (e.g., 2025-12-01)')
+      .setRequired(false);
+  });
+
 // Task Management Commands
 export const taskCreate = new SlashCommandBuilder()
   .setName("task-create")
