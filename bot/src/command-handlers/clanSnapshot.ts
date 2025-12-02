@@ -6,6 +6,7 @@ import {
 import axios from "axios";
 import { updateResponse } from "../adapters/discord-adapter";
 import { getCommandOptionData } from "../util/interaction-util";
+import { clashkingLimited } from "../util/rateLimiter";
 
 const CLASHKING_BASE_URL = "https://api.clashk.ing";
 
@@ -20,7 +21,7 @@ const formatDateForAPI = (dateStr: string): string => {
   return `${year}${month}${day}`;
 };
 
-const fetchPlayerLegendTrophies = async (playerTag: string, date: string): Promise<number> => {
+const fetchPlayerLegendTrophies = clashkingLimited(async (playerTag: string, date: string): Promise<number> => {
   try {
     const url = `${CLASHKING_BASE_URL}/legends/player/${playerTag}/${date}`;
     const response = await axios.get(url, { timeout: 5000 });
@@ -28,7 +29,6 @@ const fetchPlayerLegendTrophies = async (playerTag: string, date: string): Promi
     
     console.log(`Fetched trophies for ${playerTag}: ${JSON.stringify(data)}`);
     
-    // The response could be an array or object - handle both
     if (Array.isArray(data) && data.length > 0) {
       return data[0].trophies || 0;
     } else if (data && data.trophies) {
@@ -39,25 +39,23 @@ const fetchPlayerLegendTrophies = async (playerTag: string, date: string): Promi
     console.error(`Failed to fetch legend trophies for ${playerTag}:`, err);
     return 0;
   }
-};
+});
 
 const getClanMembersAtDate = async (clanTag: string, timestamp: number): Promise<Set<string>> => {
   try {
-    // Get historical data around the target date
     const url = `${CLASHKING_BASE_URL}/clan/${clanTag}/historical`;
     const response = await axios.get(url, {
       params: {
-        timestamp_start: timestamp - 3600, // 1 hour before
-        timestamp_end: timestamp + 3600,   // 1 hour after
+        timestamp_start: timestamp - 3600,
+        timestamp_end: timestamp + 3600,  
         limit: 1000,
       },
-      timeout: 10000,
+      timeout: 30000,
     });
     
     const events = Array.isArray(response.data) ? response.data : [];
     console.log(`Found ${events.length} historical events for clan`);
     
-    // Extract all unique player tags that were members
     const memberTags = new Set<string>();
     events.forEach((event: any) => {
       if (event.player_tag) {
@@ -72,6 +70,44 @@ const getClanMembersAtDate = async (clanTag: string, timestamp: number): Promise
     return new Set();
   }
 };
+
+const getClanLegendSnapshot = clashkingLimited(async (clanTag: string, date: string): Promise<Array<{ name: string; tag: string; trophies: number }>> => {
+  try {
+    const url = `${CLASHKING_BASE_URL}/legends/clan/${clanTag}/${date}`;
+    console.log(`Fetching clan legend snapshot from ${url}`);
+    
+    const response = await axios.get(url, { timeout: 10000 });
+    const clanData = response.data;
+    
+    console.log(`Clan snapshot response: ${JSON.stringify(clanData)}`);
+    
+    let memberList = clanData.memberList || clanData.members || [];
+    
+    if (!Array.isArray(memberList) || memberList.length === 0) {
+      console.log(`No members found in clan snapshot`);
+      return [];
+    }
+
+    console.log(`Found ${memberList.length} members in clan, fetching their trophy counts...`);
+    
+    // Fetch trophy data for each member
+    const membersWithTrophies = await Promise.all(
+      memberList.map(async (member: any) => {
+        const trophies = await fetchPlayerLegendTrophies(member.tag, date);
+        return { 
+          name: member.name,
+          tag: member.tag,
+          trophies
+        };
+      })
+    );
+    
+    return membersWithTrophies;
+  } catch (err) {
+    console.error(`Failed to fetch clan legend snapshot for ${clanTag}:`, err);
+    return [];
+  }
+});
 
 export const handleClanSnapshot = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -102,31 +138,16 @@ export const handleClanSnapshot = async (
       day: "numeric",
     });
 
-    // Convert date to Unix timestamp (5:00 AM UTC on that date)
-    const dateAtTime = new Date(`${dateInput}T05:00:00Z`);
-    const timestamp = Math.floor(dateAtTime.getTime() / 1000);
+    // Get clan snapshot with member list and their names
+    const membersWithTrophies = await getClanLegendSnapshot(clanTag, date);
 
-    console.log(`Looking for clan members at timestamp ${timestamp} (${formattedDate} 5:00 AM UTC)`);
-
-    // Get all player tags that were in clan at that time
-    const memberTags = await getClanMembersAtDate(clanTag, timestamp);
-
-    if (memberTags.size === 0) {
+    if (membersWithTrophies.length === 0) {
       await updateResponse(interaction.application_id, interaction.token, {
-        content: `No clan member data found for clan #${clanTag} on ${formattedDate}`,
+        content: `No clan data found for clan #${clanTag} on ${formattedDate}`,
         flags: 64,
       });
       return;
     }
-
-    // Fetch legend trophies for each player
-    console.log(`Fetching legend trophies for ${memberTags.size} members...`);
-    const membersWithTrophies = await Promise.all(
-      Array.from(memberTags).map(async (playerTag: string) => {
-        const trophies = await fetchPlayerLegendTrophies(playerTag, date);
-        return { tag: playerTag, trophies };
-      })
-    );
 
     const sortedMembers = membersWithTrophies.sort(
       (a: any, b: any) => b.trophies - a.trophies
