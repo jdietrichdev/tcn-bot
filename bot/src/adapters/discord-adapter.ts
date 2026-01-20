@@ -357,6 +357,84 @@ export const getChannelMessages = async (
   }
 };
 
+export const getThreadMessages = async (
+  threadId: string,
+  end?: Date,
+  after?: string
+): Promise<APIMessage[]> => {
+  let fetching = true;
+  let url = "";
+  let before = "";
+  const compiledMessages: APIMessage[] = [];
+  try {
+    const afterParam = after ? `&after=${after}` : "";
+    while (fetching) {
+      url = `${BASE_URL}/channels/${threadId}/messages?limit=100${
+        before ? `&before=${before}` : ""
+      }${afterParam}`;
+      const response = await axios.get(
+        `${url}${before ? `&before=${before}` : ""}`,
+        {
+          headers: {
+            Authorization: `Bot ${process.env.BOT_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const messages = response.data as APIMessage[];
+      for (const message of messages) {
+        if (end && new Date(message.timestamp) < end) {
+          fetching = false;
+          break;
+        } else {
+          compiledMessages.push(message);
+        }
+      }
+      if (messages.length < 100) {
+        fetching = false;
+      } else {
+        before = messages[messages.length - 1].id;
+      }
+    }
+    return compiledMessages;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to compile thread messages",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
+export const listChannelThreads = async (
+  channelId: string
+): Promise<APIChannel[]> => {
+  const url = `${BASE_URL}/channels/${channelId}/threads/active`;
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data.threads || [];
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to list channel threads",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
 export const getMessageReaction = async (
   channelId: string,
   messageId: string,
