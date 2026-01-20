@@ -3,12 +3,12 @@ import {
   APIApplicationCommandInteractionDataStringOption,
   APICommandAutocompleteInteractionResponseCallbackData,
   InteractionResponseType,
-} from "discord-api-types/v10";
-import { s3Client } from "../clients/s3-client";
-import { ListObjectsV2Command } from "@aws-sdk/client-s3";
+} from 'discord-api-types/v10';
+import { s3Client } from '../clients/s3-client';
+import { ListObjectsV2Command } from '@aws-sdk/client-s3';
 
 export const handleCwlRoster = async (
-  interaction: APIApplicationCommandAutocompleteInteraction
+  interaction: APIApplicationCommandAutocompleteInteraction,
 ) => {
   const options: APICommandAutocompleteInteractionResponseCallbackData = {
     choices: [],
@@ -18,29 +18,34 @@ export const handleCwlRoster = async (
     interaction.data
       .options as APIApplicationCommandInteractionDataStringOption[]
   ).find(
-    (option: APIApplicationCommandInteractionDataStringOption) => option.focused
+    (option: APIApplicationCommandInteractionDataStringOption) =>
+      option.focused,
   );
 
-  if (focused && focused.name === "roster") {
+  if (focused && focused.name === 'roster') {
     const objects = await s3Client.send(
       new ListObjectsV2Command({
-        Bucket: "bot-roster-bucket",
+        Bucket: 'bot-roster-bucket',
         Prefix: `${interaction.guild_id}/`,
-        Delimiter: "/",
-      })
+        Delimiter: '/',
+      }),
     );
 
     console.log(JSON.stringify(objects));
 
+    const lastMonth = Date.now() - 30 * 24 * 60 * 60 * 1000;
+
     const rosters = objects.Contents?.filter(
-      (object) => object.Key! !== `${interaction.guild_id}/`
+      (object) =>
+        object.Key! !== `${interaction.guild_id}/` &&
+        object.LastModified!.getTime() >= lastMonth,
     );
     console.log(rosters);
 
     options.choices = rosters?.map((object) => {
       return {
-        name: object.Key!.split("/")[1].replace(".csv", ""),
-        value: object.Key!.split("/")[1].replace(".csv", ""),
+        name: object.Key!.split('/')[1].replace('.csv', ''),
+        value: object.Key!.split('/')[1].replace('.csv', ''),
       };
     });
 
