@@ -12,6 +12,7 @@ import {
   getMessageReaction,
   sendMessage,
   updateResponse,
+  getServerMembers,
 } from "../adapters/discord-adapter";
 import {
   fetchRecruitmentPoints,
@@ -246,6 +247,31 @@ const collectCandidateChannelActivity = async (
   }
 };
 
+const filterRecruitersByRole = async (
+  scores: RecruiterScoreRow[],
+  guildId: string,
+  config: ServerConfig
+): Promise<RecruiterScoreRow[]> => {
+  try {
+    const members = await getServerMembers(guildId);
+    const recruiterRoleId = config.RECRUITER_ROLE;
+
+    const activeRecruiters = new Set<string>();
+    for (const member of members) {
+      if (member.roles.includes(recruiterRoleId)) {
+        activeRecruiters.add(member.user!.id);
+      }
+    }
+
+    return scores.filter((score) => activeRecruiters.has(score.userId));
+  } catch (err) {
+    console.error(
+      `Failed to filter recruiters by role, returning all scores: ${err}`
+    );
+    return scores;
+  }
+};
+
 interface RecruiterScoreDataset {
   scores: RecruiterScoreRow[];
   totals: ScoreTotals;
@@ -294,8 +320,10 @@ export const compileRecruiterScoreData = async (
 
   const scores = sortRecruiterScores(scoreMap);
 
+  const filteredScores = await filterRecruitersByRole(scores, guildId, config);
+
   return {
-    scores,
+    scores: filteredScores,
     totals,
   };
 };

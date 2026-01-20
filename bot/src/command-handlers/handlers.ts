@@ -10,6 +10,7 @@ export * from "./recruiterScore";
 export * from "./cwlRoster";
 export * from "./initiateCwlSignup";
 export * from "./cwlQuestions";
+export * from "./infoCwl";
 export * from "./closeTicket";
 export * from "./deleteTicket";
 export * from "./createEvent";

@@ -1,5 +1,5 @@
 import { GetCommand, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { getChannelMessages } from '../adapters/discord-adapter';
+import { getChannelMessages, getThreadMessages, listChannelThreads } from '../adapters/discord-adapter';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { getConfig } from '../util/serverConfig';
 
@@ -12,7 +12,7 @@ export const handleCreditFcs = async (event: any) => {
   const channelId = config.FC_TRACKING_CHANNEL;
 
   if (!channelId) {
-    console.error(`clanPosts channel not configured for guild ${guildId}`);
+    console.error(`FC tracking channel not configured for guild ${guildId}`);
     return;
   }
 
@@ -25,17 +25,29 @@ export const handleCreditFcs = async (event: any) => {
     console.error(e);
   }
 
+  const channelMessages = await getChannelMessages(channelId, undefined, lastMessageId);
 
-  const messages = await getChannelMessages(channelId, undefined, lastMessageId);
+  const threads = await listChannelThreads(channelId);
+  
+  const allMessages = [...channelMessages];
+  for (const thread of threads) {
+    try {
+      const threadMessages = await getThreadMessages(thread.id, undefined, lastMessageId);
+      allMessages.push(...threadMessages);
+    } catch (e) {
+      console.error(`Failed to fetch messages from thread ${thread.id}:`, e);
+    }
+  }
 
-  if (messages.length === 0) {
+  if (allMessages.length === 0) {
     console.log('No new messages to process for FC credit.');
     return;
   }
 
-  const newLastMessageId = messages[0].id;
+  allMessages.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  const newLastMessageId = allMessages[0].id;
 
-  for (const message of messages) {
+  for (const message of allMessages) {
     if (FC_REGEX.test(message.content)) {
       const author = message.author;
       const points = 2;

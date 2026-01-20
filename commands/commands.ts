@@ -269,6 +269,11 @@ export const cwlQuestions = new SlashCommandBuilder()
       .setRequired(true);
   });
 
+export const infoCwl = new SlashCommandBuilder()
+  .setName('info-cwl')
+  .setDescription('Post CWL information and rules')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+
 export const closeTicket = new SlashCommandBuilder()
   .setName('close-ticket')
   .setDescription('Close current application ticket');
