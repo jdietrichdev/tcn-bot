@@ -9,7 +9,11 @@ export const handleInfoCwl = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
   try {
-    await deferResponse(interaction.id, interaction.token);
+    try {
+      await deferResponse(interaction.id, interaction.token);
+    } catch (deferErr) {
+      console.warn(`Failed to defer response: ${deferErr}, continuing anyway`);
+    }
 
     const guildId = interaction.guild_id!;
     const config = getConfig(guildId);
@@ -32,7 +36,7 @@ export const handleInfoCwl = async (
       .map((id) => `<@&${id}>`)
       .join(" ");
 
-   await sendMessage(
+    await sendMessage(
       {
         content: mentions || "",
         embeds: [embed],
@@ -45,10 +49,14 @@ export const handleInfoCwl = async (
     });
   } catch (err) {
     console.error(`Failed to post CWL info: ${err}`);
-    await updateResponse(interaction.application_id, interaction.token, {
-      content:
-        "There was a failure posting the CWL info, please try again or contact admins for assistance",
-    });
+    try {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content:
+          "There was a failure posting the CWL info, please try again or contact admins for assistance",
+      });
+    } catch (updateErr) {
+      console.error(`Failed to send error response: ${updateErr}`);
+    }
   }
 };
 
