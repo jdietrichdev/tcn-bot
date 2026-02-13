@@ -9,6 +9,8 @@ import {
   APIEmbed,
   ModalSubmitActionRowComponent,
   RESTPostAPIWebhookWithTokenJSONBody,
+  APIMessageComponentInteraction,
+  APIApplicationCommandInteraction,
 } from "discord-api-types/v10";
 import {
   createThread,
@@ -18,82 +20,27 @@ import {
 import { getConfig, ServerConfig } from "../util/serverConfig";
 import { BUTTONS } from "../component-handlers/buttons";
 
-const questionMapping = {
-  tags: "Player tag(s)",
-  source: "Where/Who did you learn about us from?",
-  leaveClan: "What's wrong with your current/previous clan?",
-  clanWants: "What do you want in a clan?",
-  competition: "Competition level/favorite strategies?",
-};
-
-export const createApplyModal = () => {
+export const createApplyModal = (interaction: APIMessageComponentInteraction | APIApplicationCommandInteraction) => {
+  const config = getConfig(interaction.guild_id!);
   return {
     type: InteractionResponseType.Modal,
     data: {
       custom_id: "applicationModal",
-      title: "Apply for This Clan Now",
-      components: [
-        {
+      title: config.APPLICATION_QUESTIONS!.title,
+      components: config.APPLICATION_QUESTIONS!.questions.map((question) => {
+        return {
           type: ComponentType.ActionRow,
           components: [
             {
               type: ComponentType.TextInput,
-              custom_id: "tags",
-              label: "Player tag(s)",
-              style: TextInputStyle.Short,
-              required: true,
-            },
-          ],
-        },
-        {
-          type: ComponentType.ActionRow,
-          components: [
-            {
-              type: ComponentType.TextInput,
-              custom_id: "source",
-              label: "Where/Who did you learn about us from?",
+              custom_id: question.custom_id,
+              label: question.label,
               style: TextInputStyle.Paragraph,
               required: true,
             },
           ],
-        },
-        {
-          type: ComponentType.ActionRow,
-          components: [
-            {
-              type: ComponentType.TextInput,
-              custom_id: "leaveClan",
-              label: "What's wrong with your current/previous clan?",
-              style: TextInputStyle.Paragraph,
-              required: true,
-            },
-          ],
-        },
-        {
-          type: ComponentType.ActionRow,
-          components: [
-            {
-              type: ComponentType.TextInput,
-              custom_id: "clanWants",
-              label: "What do you want in a clan?",
-              style: TextInputStyle.Paragraph,
-              required: true,
-            },
-          ],
-        },
-        {
-          type: ComponentType.ActionRow,
-          components: [
-            {
-              type: ComponentType.TextInput,
-              custom_id: "competition",
-              label: "Competition level/favorite strategies?",
-              style: TextInputStyle.Paragraph,
-              required: true,
-            },
-          ],
-        },
-      ],
+        };
+      })
     },
   } as APIInteractionResponse;
 };
@@ -146,9 +93,9 @@ const buildApplicationConfirmation = (
         (item: ModalSubmitActionRowComponent) => {
           const response = item.components[0];
           return {
-            name: questionMapping[
-              response.custom_id as keyof typeof questionMapping
-            ],
+            name: config.APPLICATION_QUESTIONS?.questions.find(
+              (question) => question.custom_id === response.custom_id
+            )?.label as string,
             value: response.value,
           };
         }

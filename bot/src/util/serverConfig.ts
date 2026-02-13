@@ -4,6 +4,16 @@ export interface ClanConfig {
   clanChannel: string;
 }
 
+export interface ApplicationQuestion {
+  custom_id: string;
+  label: string;
+}
+
+export interface ApplicationQuestionConfig {
+  title: string;
+  questions: ApplicationQuestion[];
+}
+
 export interface ServerConfig {
   LEAD_APPLICATION_CATEGORY: string;
   APPLICATION_CATEGORY: string;
@@ -42,6 +52,7 @@ export interface ServerConfig {
   TCN6_ROLE: string;
   BOT_ID: string;
   CLANS: Record<string, ClanConfig>;
+  APPLICATION_QUESTIONS?: ApplicationQuestionConfig;
 }
 
 const configMap = new Map<string, ServerConfig>();
@@ -107,6 +118,31 @@ configMap.set('1021786969077973022', {
       clanChannel: '1232442920062156800',
     },
   },
+  APPLICATION_QUESTIONS: {
+    title: 'Apply for VXNT',
+    questions: [
+      {
+        custom_id: 'reason',
+        label: 'What brings you to our team?'
+      },
+      {
+        custom_id: 'location',
+        label: 'Where are you from?'
+      },
+      {
+        custom_id: 'experience',
+        label: 'What previous team experience do you have?'
+      },
+      {
+        custom_id: 'goals',
+        label: 'What are your goals and expectations?'
+      },
+      {
+        custom_id: 'achievement',
+        label: 'What is your biggest achievement in game?'
+      }
+    ]
+  }
 });
 
 // TCN Server
@@ -169,6 +205,31 @@ configMap.set('1111490767991615518', {
       clanChannel: '1232442920062156800',
     },
   },
+  APPLICATION_QUESTIONS: {
+    title: 'Apply for This Clan Now',
+    questions: [
+      {
+        custom_id: 'tags',
+        label: 'Player tag(s)'
+      },
+      {
+        custom_id: 'source',
+        label: 'Where/Who did you learn about us from?'
+      },
+      {
+        custom_id: 'leaveClan',
+        label: "What's wrong with your current/previous clan?"
+      },
+      {
+        custom_id: 'clanWants',
+        label: 'What do you want in a clan?'
+      },
+      {
+        custom_id: 'competition',
+        label: 'Competition level/favorite strategies?'
+      }
+    ]
+  }
 });
 
 export const getConfig = (guidId: string): ServerConfig => {

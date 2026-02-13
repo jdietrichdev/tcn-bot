@@ -17,7 +17,7 @@ export const createModal = (
 ) => {
   switch (trigger) {
     case "apply":
-      return createApplyModal();
+      return createApplyModal(interaction);
     case "lead-apply":
     case "applyLead":
       return createLeadApplyModal(interaction);
