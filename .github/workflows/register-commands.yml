@@ -70,5 +70,5 @@ jobs:
 
       - name: Register Test Commands
         env:
-          GUILD: 'TCN'
+          GUILD: 'POINT'
         run: npm run register-commands --workspace commands
