@@ -53,6 +53,7 @@ export interface ServerConfig {
   BOT_ID: string;
   CLANS: Record<string, ClanConfig>;
   APPLICATION_QUESTIONS?: ApplicationQuestionConfig;
+  CAN_CLOSE_TICKET: boolean;
 }
 
 const configMap = new Map<string, ServerConfig>();
@@ -141,8 +142,9 @@ configMap.set('1021786969077973022', {
         custom_id: 'achievement',
         label: 'What is your biggest achievement in game?'
       }
-    ]
-  }
+    ],
+  },
+  CAN_CLOSE_TICKET: false,
 });
 
 // TCN Server
@@ -218,7 +220,7 @@ configMap.set('1111490767991615518', {
       },
       {
         custom_id: 'leaveClan',
-        label: "What's wrong with your current/previous clan?"
+        label: "Why'd you leave your current/previous clan?"
       },
       {
         custom_id: 'clanWants',
@@ -229,8 +231,75 @@ configMap.set('1111490767991615518', {
         label: 'Competition level/favorite strategies?'
       }
     ]
-  }
+  },
+  CAN_CLOSE_TICKET: true,
 });
+
+// Point Alliance Server
+configMap.set('1310007885656363068', {
+  LEAD_APPLICATION_CATEGORY: '',
+  APPLICATION_CATEGORY: '1459011476072300737',
+  ARCHIVE_CATEGORY: '',
+  CWL_CATEGORY: '',
+  EVENTS_CATEGORY: '',
+  GENERAL_CHANNEL: '',
+  ANNOUNCEMENT_CHANNEL: '',
+  APP_APPROVAL_CHANNEL: '1501690771428999330',
+  RECRUITER_CHANNEL: '',
+  RECRUITMENT_LEADERBOARD_CHANNEL: '',
+  FC_TRACKING_CHANNEL: '',
+  RECRUITMENT_OPP_CHANNEL: '',
+  CLAN_POSTS_CHANNEL: '',
+  GUEST_CHAT_CHANNEL: '1496509979333496872',
+  TRANSCRIPT_CHANNEL: '1459008247213068349',
+  CWL_SIGNUP_CHANNEL: '',
+  CWL_ROSTER_CHANNEL: '',
+  ELDER_PROPOSAL_CHANNEL: '',
+  LEAD_PROPOSAL_CHANNEL: '',
+  FAMILY_LEAD_CHANNEL: '',
+  ADMIN_CHANNEL: '',
+  ADMIN_ROLE: '1459377224699482379',
+  RECRUITER_ROLE: '1459020966981009724',
+  CLAN_ROLE: '1459022299184365660',
+  ORES_ROLE: '',
+  VISITOR_ROLE: '',
+  TRIAL_ELDER_ROLE: '',
+  TRIAL_LEAD_ROLE: '',
+  CWL_GENERAL_ROLE: '',
+  TCN1_ROLE: '',
+  TCN2_ROLE: '',
+  TCN3_ROLE: '',
+  TCN4_ROLE: '',
+  TCN5_ROLE: '',
+  TCN6_ROLE: '',
+  BOT_ID: '1257342457868451920',
+  CLANS: {},
+  APPLICATION_QUESTIONS: {
+    title: 'Point Alliance Application',
+    questions: [
+      {
+        custom_id: 'tags',
+        label: 'Player tag(s)'
+      },
+      {
+        custom_id: 'source',
+        label: 'Where/Who did you learn about us from?'
+      },
+      {
+        custom_id: 'leaveClan',
+        label: "Why'd you leave your current/previous clan?"
+      },
+      {
+        custom_id: 'clanWants',
+        label: 'What do you want in a clan?'
+      },
+      {
+        custom_id: 'competition',
+        label: 'Competition level/favorite strategies?'
+      }],
+  },
+  CAN_CLOSE_TICKET: false,
+})
 
 export const getConfig = (guidId: string): ServerConfig => {
   const config = configMap.get(guidId);

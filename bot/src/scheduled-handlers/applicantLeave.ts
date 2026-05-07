@@ -4,12 +4,14 @@ import { getServerUser, sendMessage } from "../adapters/discord-adapter";
 import { DiscordError } from "../util/errors";
 import { ComponentType } from "discord-api-types/v10";
 import { BUTTONS } from "../component-handlers/buttons";
+import { getConfig } from "../util/serverConfig";
 
 export const handleApplicantLeave = async (
   eventDetail: Record<string, string>
 ) => {
   try {
     const { guildId } = eventDetail;
+    const config = getConfig(guildId);
     const ticketData = (
       await dynamoDbClient.send(
         new GetCommand({
@@ -37,7 +39,7 @@ export const handleApplicantLeave = async (
               components: [
                 {
                   type: ComponentType.ActionRow,
-                  components: [BUTTONS.CLOSE_TICKET, BUTTONS.DELETE_TICKET],
+                  components: [...(config.CAN_CLOSE_TICKET ? [BUTTONS.CLOSE_TICKET] : []), BUTTONS.DELETE_TICKET],
                 },
               ],
             },
