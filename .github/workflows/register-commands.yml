@@ -16,7 +16,8 @@ env:
   APPLICATION_ID: ${{ secrets.APPLICATION_ID }}
   BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
   TEST_GUILD_ID: ${{ secrets.TEST_GUILD_ID }}
-  TCN_GUILD_ID: ${{ secrets.TCN_GUILD_ID}}
+  TCN_GUILD_ID: ${{ secrets.TCN_GUILD_ID }}
+  POINT_GUILD_ID: ${{ secrets.POINT_GUILD_ID }}
 
 jobs:
   register-test-commands:
@@ -37,6 +38,24 @@ jobs:
         run: npm run register-commands --workspace commands
 
   register-tcn-commands:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20.x'
+
+      - uses: actions/checkout@v5
+
+      - run: npm install
+
+      - name: Register Test Commands
+        env:
+          GUILD: 'TCN'
+        run: npm run register-commands --workspace commands
+
+  register-point-commands:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:

@@ -1,3 +1,4 @@
+import { SlashCommandOptionsOnlyBuilder } from "discord.js";
 import {
   apply,
   cwlRoster,
@@ -43,7 +44,7 @@ import {
   registerSubs,
 } from "./commands";
 
-export const tcnCommands = [
+export const tcnCommands: SlashCommandOptionsOnlyBuilder[] = [
   apply,
   cwlRoster,
   ro,

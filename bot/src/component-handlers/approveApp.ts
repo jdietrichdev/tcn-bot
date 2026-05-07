@@ -53,7 +53,7 @@ export const approveApp = async (
           {
             type: ComponentType.ActionRow,
             components: [
-              BUTTONS.CLOSE_TICKET,
+              ...(config.CAN_CLOSE_TICKET ? [BUTTONS.CLOSE_TICKET] : []),
               BUTTONS.DELETE_TICKET,
               await determineRolesButton(
                 interaction.guild_id!,

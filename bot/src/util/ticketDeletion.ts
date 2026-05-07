@@ -6,6 +6,7 @@ import {
   ChannelType,
   ComponentType,
   GuildTextChannelType,
+  MessageType,
 } from "discord-api-types/v10";
 import { v4 as uuidv4 } from "uuid";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
@@ -23,9 +24,6 @@ import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { isActorRecruiter } from "../component-handlers/utils";
 import {
-  getTicketRecruiterStatsRecord,
-  incrementRecruitmentPoints,
-  recordTicketRecruiterStats,
   TicketRecruiterMessage,
 } from "./recruitmentTracker";
 import { ServerConfig } from "./serverConfig";
@@ -59,7 +57,6 @@ export const deleteTicketChannel = async (
     channelId,
     config,
     deletedById,
-    deletedByUsername,
     channel: channelInput,
     deletionReason,
   } = options;
@@ -93,15 +90,12 @@ export const deleteTicketChannel = async (
       message.author.id === config.BOT_ID &&
       !message.content.startsWith("You do not have permission") &&
       message.embeds.length === 0 &&
-      message.type !== 6
+      message.type !== MessageType.ChannelPinnedMessage
     );
   });
 
   const {
     embed: transcript,
-    participantMap,
-    applicantId,
-    applicantUsername,
   } = await createTranscript({
     channel,
     messages,
@@ -110,46 +104,46 @@ export const deleteTicketChannel = async (
     deletionReason,
   });
 
-  const recruiterMessages = await collectRecruiterMessages(
-    guildId,
-    participantMap,
-    config
-  );
+  // const recruiterMessages = await collectRecruiterMessages(
+  //   guildId,
+  //   participantMap,
+  //   config
+  // );
 
-  const existingStats = await getTicketRecruiterStatsRecord(
-    guildId,
-    channelId
-  );
+  // const existingStats = await getTicketRecruiterStatsRecord(
+  //   guildId,
+  //   channelId
+  // );
 
-  if (!existingStats && recruiterMessages.length > 0) {
-    await Promise.all(
-      recruiterMessages.map((entry) =>
-        incrementRecruitmentPoints(guildId, entry.userId, entry.username, {
-          ticketMessages: entry.count,
-          points: entry.count * 0.1,
-        })
-      )
-    );
-  }
+  // if (!existingStats && recruiterMessages.length > 0) {
+  //   await Promise.all(
+  //     recruiterMessages.map((entry) =>
+  //       incrementRecruitmentPoints(guildId, entry.userId, entry.username, {
+  //         ticketMessages: entry.count,
+  //         points: entry.count * 0.1,
+  //       })
+  //     )
+  //   );
+  // }
 
-  const totalParticipantMessages = Array.from(participantMap.values()).reduce(
-    (sum, details) => sum + details.count,
-    0
-  );
+  // const totalParticipantMessages = Array.from(participantMap.values()).reduce(
+  //   (sum, details) => sum + details.count,
+  //   0
+  // );
 
-  await recordTicketRecruiterStats(guildId, {
-    ticketChannelId: channel.id,
-    ticketChannelName: channel.name ?? undefined,
-    ticketNumber: channel.name ? channel.name.split("-")[1] : undefined,
-    transcriptId,
-    applicantId,
-    applicantUsername,
-    recruiterMessages,
-    totalParticipantMessages,
-    closedBy: deletedById,
-    closedByUsername: deletedByUsername,
-    closedAt: new Date().toISOString(),
-  });
+  // await recordTicketRecruiterStats(guildId, {
+  //   ticketChannelId: channel.id,
+  //   ticketChannelName: channel.name ?? undefined,
+  //   ticketNumber: channel.name ? channel.name.split("-")[1] : undefined,
+  //   transcriptId,
+  //   applicantId,
+  //   applicantUsername,
+  //   recruiterMessages,
+  //   totalParticipantMessages,
+  //   closedBy: deletedById,
+  //   closedByUsername: deletedByUsername,
+  //   closedAt: new Date().toISOString(),
+  // });
 
   await sendMessage(
     {
