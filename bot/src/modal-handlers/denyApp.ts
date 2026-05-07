@@ -58,7 +58,7 @@ export const submitDenyAppModal = async (
       config.GUEST_CHAT_CHANNEL
     );
     await updateMessage(channelId, messageId, {
-      content: `Denied by ${interaction.member?.user.username}`,
+      content: `Denied by ${interaction.member?.user.username}\nReason: ${interaction.data.components[0].components[0].value}`,
       components: [],
     });
     await deleteResponse(interaction.application_id, interaction.token);
