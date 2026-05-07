@@ -171,7 +171,7 @@ export const upgrade = new SlashCommandBuilder()
 
 export const apply = new SlashCommandBuilder()
   .setName('apply')
-  .setDescription('Apply to join This Clan Now');
+  .setDescription('Apply to join the clan');
 
 export const ro = new SlashCommandBuilder()
   .setName('ro')
