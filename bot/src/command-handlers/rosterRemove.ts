@@ -56,7 +56,9 @@ export const handleRosterRemove = async (
     console.log(`RosterRemove: Roster names:`, queryResult.Items.map(r => r.clanName));
 
     const roster = queryResult.Items.find(
-      (item) => item.clanName?.toLowerCase() === rosterName.toLowerCase()
+      (item) =>
+        item.sk === rosterName ||
+        item.clanName?.toLowerCase() === rosterName.toLowerCase()
     );
 
     if (!roster) {
@@ -111,7 +113,7 @@ export const handleRosterRemove = async (
       content: `✅ Successfully removed **${playerName.replace(
         /_/g,
         "\\_"
-      )}** from roster **${rosterName.replace(/_/g, "\\_")}**.`,
+      )}** from roster **${roster.clanName.replace(/_/g, "\\_")}**.`,
     });
   } catch (error) {
     console.error("Error removing player from roster:", error);

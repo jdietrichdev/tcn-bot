@@ -171,7 +171,6 @@ export const proxy = async (
     const publicCommands = [
       'unrostered', 
       'announceRoster', 
-      'create-roster', 
       'roster-add', 
       'roster-show', 
       'roster-remove',

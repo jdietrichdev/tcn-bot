@@ -20,6 +20,8 @@ export const handleAutocomplete = async (
         return await autocomplete.handleQuestionAnswer(interaction);
       case "roster-add":
         return await autocomplete.handleRosterAdd(interaction);
+      case "create-roster":
+        return await autocomplete.handleCwlMonthAutocomplete(interaction);
       case "roster-show":
         return await autocomplete.handleRosterShow(interaction);
       case "roster-remove":

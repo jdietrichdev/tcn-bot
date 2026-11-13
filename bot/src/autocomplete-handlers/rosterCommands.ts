@@ -8,6 +8,55 @@ import { dynamoDbClient } from "../clients/dynamodb-client";
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { fetchUnrosteredPlayersFromCSV } from "../util/fetchUnrosteredPlayersCSV";
 
+export const handleCwlMonthAutocomplete = async (
+  interaction: APIApplicationCommandAutocompleteInteraction
+) => {
+  const focused = (interaction.data.options as APIApplicationCommandInteractionDataStringOption[])?.find(
+    (option) => option.focused
+  );
+  const choices: APICommandAutocompleteInteractionResponseCallbackData = {
+    choices: [],
+  };
+
+  if (!focused || focused.name !== "month" || !interaction.guild_id) {
+    return {
+      type: InteractionResponseType.ApplicationCommandAutocompleteResult,
+      data: choices,
+    };
+  }
+
+  try {
+    const result = await dynamoDbClient.send(
+      new QueryCommand({
+        TableName: "BotTable",
+        KeyConditionExpression: "pk = :pk AND begins_with(sk, :sk)",
+        ExpressionAttributeValues: {
+          ":pk": interaction.guild_id,
+          ":sk": "cwl-month#",
+        },
+      })
+    );
+    const searchTerm = focused.value.toLowerCase();
+    choices.choices = (result.Items || [])
+      .filter(
+        (month) =>
+          month.status === "open" &&
+          typeof month.month === "string" &&
+          month.month.includes(searchTerm)
+      )
+      .sort((a, b) => b.month.localeCompare(a.month))
+      .slice(0, 25)
+      .map((month) => ({ name: month.month, value: month.month }));
+  } catch (error) {
+    console.error("Error in CWL month autocomplete:", error);
+  }
+
+  return {
+    type: InteractionResponseType.ApplicationCommandAutocompleteResult,
+    data: choices,
+  };
+};
+
 export const handleRosterAdd = async (
   interaction: APIApplicationCommandAutocompleteInteraction
 ) => {
@@ -91,8 +140,8 @@ export const handleRosterAdd = async (
         });
 
       options.choices = filteredRosters.slice(0, 25).map((roster) => ({
-        name: `${roster.clanName} (Rank ${roster.clanRank} • ${roster.players?.length || 0} players)`,
-        value: roster.clanName,
+        name: `${roster.clanName} (${roster.cwlMonth || "Legacy"} · Rank ${roster.clanRank} · ${roster.players?.length || 0} players)`,
+        value: roster.sk || roster.clanName || "",
       }));
     }
   } catch (error) {
@@ -162,8 +211,8 @@ export const handleRosterShow = async (
       });
 
     options.choices = filteredRosters.slice(0, 25).map((roster) => ({
-      name: `${roster.clanName} (Rank ${roster.clanRank} • ${roster.players?.length || 0} players)`,
-      value: roster.clanName,
+      name: `${roster.clanName} (${roster.cwlMonth || "Legacy"} · Rank ${roster.clanRank} · ${roster.players?.length || 0} players)`,
+      value: roster.sk || roster.clanName || "",
     }));
   } catch (error) {
     console.error("Error in roster-show autocomplete:", error);
@@ -233,8 +282,8 @@ export const handleRosterRemove = async (
         });
 
       options.choices = filteredRosters.slice(0, 25).map((roster) => ({
-        name: `${roster.clanName} (Rank ${roster.clanRank} • ${roster.players?.length || 0} players)`,
-        value: roster.clanName,
+        name: `${roster.clanName} (${roster.cwlMonth || "Legacy"} · Rank ${roster.clanRank} · ${roster.players?.length || 0} players)`,
+        value: roster.sk || roster.clanName || "",
       }));
     }
 
@@ -247,7 +296,9 @@ export const handleRosterRemove = async (
 
       if (rosterNameOption?.value && rosterNameOption.value.trim() !== '') {
         const roster = rosters.find(
-          (r) => r.clanName?.toLowerCase() === rosterNameOption.value.toLowerCase()
+          (r) =>
+            r.sk === rosterNameOption.value ||
+            r.clanName?.toLowerCase() === rosterNameOption.value.toLowerCase()
         );
 
         console.log("RosterRemove autocomplete - found roster:", roster?.clanName, "players:", roster?.players?.length);
@@ -356,8 +407,8 @@ export const handleRosterDelete = async (
       });
 
     options.choices = filteredRosters.slice(0, 25).map((roster) => ({
-      name: `${roster.clanName} (Rank ${roster.clanRank} • ${roster.players?.length || 0} players)`,
-      value: roster.clanName,
+      name: `${roster.clanName} (${roster.cwlMonth || "Legacy"} · Rank ${roster.clanRank} · ${roster.players?.length || 0} players)`,
+      value: roster.sk || roster.clanName || "",
     }));
   } catch (error) {
     console.error("Error in roster-delete autocomplete:", error);

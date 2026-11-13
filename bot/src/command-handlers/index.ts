@@ -64,6 +64,8 @@ export const handleCommand = async (
         return await commands.handleUnrosteredCommand(event.detail);
       case "create-roster":
         return await commands.handleCreateRoster(event.detail);
+      case "cwl-month-start":
+        return await commands.handleCwlMonthStart(event.detail);
       case "roster-add":
         return await commands.handleRosterAdd(event.detail);
       case "roster-show":

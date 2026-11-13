@@ -48,7 +48,9 @@ export const handleRosterShow = async (
     }
 
     const roster = queryResult.Items.find(
-      (item) => item.clanName?.toLowerCase() === rosterName.toLowerCase()
+      (item) =>
+        item.sk === rosterName ||
+        item.clanName?.toLowerCase() === rosterName.toLowerCase()
     );
 
     if (!roster) {
@@ -233,8 +235,8 @@ export const handleRosterShow = async (
         : "*No players yet*";
 
       return {
-        title: `🏆 ${roster.clanName}`,
-        description: `> **Rank ${roster.clanRank}**  •  **${sortedPlayers?.length || 0} Players**\n\n${playerList}`,
+        title: `🏆 ${roster.clanName}${roster.cwlMonth ? ` · ${roster.cwlMonth}` : ""}`,
+        description: `> **Rank ${roster.clanRank}**${roster.clanTag ? `  •  **Clan tag ${roster.clanTag}**` : ""}  •  **${sortedPlayers?.length || 0} Players**\n\n${playerList}`,
         color: 0x5865F2,
         footer: {
           text: pages.length > 1 

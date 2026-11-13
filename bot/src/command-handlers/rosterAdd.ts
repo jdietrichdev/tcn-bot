@@ -59,7 +59,9 @@ export const handleRosterAdd = async (
     }
 
     const roster = rostersResult.Items.find(
-      (r) => r.clanName && r.clanName.toLowerCase() === selectedRosterName.toLowerCase()
+      (r) =>
+        r.sk === selectedRosterName ||
+        (r.clanName && r.clanName.toLowerCase() === selectedRosterName.toLowerCase())
     );
 
     if (!roster) {

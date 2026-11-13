@@ -565,6 +565,7 @@ export const unrostered = new SlashCommandBuilder()
 export const createRoster = new SlashCommandBuilder()
   .setName('create-roster')
   .setDescription('Create a new roster for CWL')
+  .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
   .addStringOption((option) => {
     return option
       .setName('clan-name')
@@ -575,6 +576,30 @@ export const createRoster = new SlashCommandBuilder()
     return option
       .setName('clan-rank')
       .setDescription('Clan rank (ex: C1, M2, etc.)')
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName('month')
+      .setDescription('CWL month to create the roster for')
+      .setRequired(true)
+      .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName('clan-tag')
+      .setDescription('Clash of Clans clan tag')
+      .setRequired(true);
+  });
+
+export const cwlMonthStart = new SlashCommandBuilder()
+  .setName('cwl-month-start')
+  .setDescription('Start CWL roster management for a month')
+  .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+  .addStringOption((option) => {
+    return option
+      .setName('month')
+      .setDescription('CWL month in YYYY-MM format (for example, 2026-12)')
       .setRequired(true);
   });
 

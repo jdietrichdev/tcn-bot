@@ -43,7 +43,9 @@ export const handleRosterDelete = async (
     }
 
     const roster = queryResult.Items.find(
-      (item) => item.clanName?.toLowerCase() === rosterName.toLowerCase()
+      (item) =>
+        item.sk === rosterName ||
+        item.clanName?.toLowerCase() === rosterName.toLowerCase()
     );
 
     if (!roster) {
@@ -65,7 +67,7 @@ export const handleRosterDelete = async (
     );
 
     await updateResponse(interaction.application_id, interaction.token, {
-      content: `✅ Successfully deleted roster **${rosterName}** (Rank ${roster.clanRank}) and removed ${playerCount} player${playerCount !== 1 ? 's' : ''}.`,
+      content: `✅ Successfully deleted roster **${roster.clanName}** (Rank ${roster.clanRank})${roster.cwlMonth ? ` for ${roster.cwlMonth}` : ""} and removed ${playerCount} player${playerCount !== 1 ? 's' : ''}.`,
     });
 
     if (roster.players && Array.isArray(roster.players) && roster.players.length > 0) {
