@@ -54,6 +54,7 @@ export interface ServerConfig {
   CLANS: Record<string, ClanConfig>;
   APPLICATION_QUESTIONS?: ApplicationQuestionConfig;
   CAN_CLOSE_TICKET: boolean;
+  LINK_ACCOUNT_FROM_TICKET: boolean;
 }
 
 const configMap = new Map<string, ServerConfig>();
@@ -145,6 +146,7 @@ configMap.set('1021786969077973022', {
     ],
   },
   CAN_CLOSE_TICKET: false,
+  LINK_ACCOUNT_FROM_TICKET: true,
 });
 
 // TCN Server
@@ -233,6 +235,7 @@ configMap.set('1111490767991615518', {
     ]
   },
   CAN_CLOSE_TICKET: true,
+  LINK_ACCOUNT_FROM_TICKET: false,
 });
 
 // Point Alliance Server
@@ -299,6 +302,7 @@ configMap.set('1310007885656363068', {
       }],
   },
   CAN_CLOSE_TICKET: false,
+  LINK_ACCOUNT_FROM_TICKET: false,
 })
 
 export const getConfig = (guidId: string): ServerConfig => {
