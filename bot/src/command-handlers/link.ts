@@ -1,109 +1,144 @@
 import {
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
-} from "discord-api-types/payloads/v10";
-import { verify } from "../adapters/coc-api-adapter";
-import { updateResponse } from "../adapters/discord-adapter";
-import { dynamoDbClient } from "../clients/dynamodb-client";
-import {
-  DeleteItemCommand,
-  ReturnValue,
-} from "@aws-sdk/client-dynamodb";
+} from 'discord-api-types/payloads/v10';
+import { verify } from '../adapters/coc-api-adapter';
+import { updateResponse } from '../adapters/discord-adapter';
+import { dynamoDbClient } from '../clients/dynamodb-client';
+import { DeleteItemCommand, ReturnValue } from '@aws-sdk/client-dynamodb';
 import {
   getMessageSender,
   getSubCommandOptionData,
-} from "../util/interaction-util";
-import { PutCommand } from "@aws-sdk/lib-dynamodb";
+} from '../util/interaction-util';
+import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 
 export const handleLink = async (
-  interaction: APIChatInputApplicationCommandInteraction
+  interaction: APIChatInputApplicationCommandInteraction,
 ) => {
   try {
     switch (interaction.data.options![0].name) {
-      case "create":
+      case 'create':
         return await linkPlayer(interaction);
-      case "remove":
+      case 'remove':
         return await unlinkPlayer(interaction);
       default:
-        throw new Error("No processing defined for that command");
+        throw new Error('No processing defined for that command');
     }
   } catch (err) {
-    console.log("Failure handling link command", err);
+    console.log('Failure handling link command', err);
     throw err;
   }
 };
 
 const linkPlayer = async (
-  interaction: APIChatInputApplicationCommandInteraction
+  interaction: APIChatInputApplicationCommandInteraction,
 ) => {
   const playerTag =
     getSubCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
       interaction,
-      "create",
-      "tag"
+      'create',
+      'tag',
     ).value;
   const apiToken =
     getSubCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
       interaction,
-      "create",
-      "token"
+      'create',
+      'token',
     ).value;
   const user = getMessageSender(interaction).id;
 
   try {
+    const existingLink = await dynamoDbClient.send(
+      new QueryCommand({
+        TableName: 'BotTable',
+        IndexName: 'sk-index',
+        KeyConditionExpression: 'sk = :sk',
+        ExpressionAttributeValues: {
+          ':sk': `player#${playerTag.substring(1)}`,
+        },
+      }),
+    );
+    if (existingLink.Items && existingLink.Items.length > 0) {
+      for (const item of existingLink.Items) {
+        if (item.pk === user) {
+          await updateResponse(interaction.application_id, interaction.token, {
+            content:
+              'Your account is already linked, no further action is needed',
+          });
+          return;
+        }
+      }
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: 'This player tag is already linked to another discord account',
+      });
+      return;
+    }
+  } catch (err) {
+    console.error('Error checking for existing links:', err);
+    await updateResponse(interaction.application_id, interaction.token, {
+      content:
+        'There was an issue checking for existing links, please try again',
+    });
+  }
+
+  try {
     await verify(playerTag, apiToken);
-    const response = await dynamoDbClient.send(
+  } catch (err) {
+    console.error('Error verifying credentials:', err);
+    await updateResponse(interaction.application_id, interaction.token, {
+      content:
+        'There was an issue verifying your credentials, please try again',
+    });
+  }
+
+  try {
+    await dynamoDbClient.send(
       new PutCommand({
-        TableName: "BotTable",
+        TableName: 'BotTable',
         Item: {
           pk: user,
           sk: `player#${playerTag.substring(1)}`,
           id: user,
-          tag: playerTag
+          tag: playerTag,
         },
-        ReturnValues: ReturnValue.NONE,
-      })
+      }),
     );
-    console.log(response);
-    await updateResponse(interaction.application_id, interaction.token, {
-      content: "User successfully linked",
-    });
   } catch (err) {
-    console.log("Failure linking account", err);
+    console.error('Error linking account:', err);
     await updateResponse(interaction.application_id, interaction.token, {
-      content: "Failed to link user, please try again",
+      content: 'There was an issue linking your account, please try again',
     });
   }
 };
 
 const unlinkPlayer = async (
-  interaction: APIChatInputApplicationCommandInteraction
+  interaction: APIChatInputApplicationCommandInteraction,
 ) => {
   try {
     const playerTag =
       getSubCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
         interaction,
-        "remove",
-        "tag"
+        'remove',
+        'tag',
       ).value;
     const user = getMessageSender(interaction).id;
     const response = await dynamoDbClient.send(
       new DeleteItemCommand({
-        TableName: "BotTable",
+        TableName: 'BotTable',
         Key: {
           pk: { S: user },
           sk: { S: `player#${playerTag.substring(1)}` },
         },
-      })
+      }),
     );
     console.log(response);
     await updateResponse(interaction.application_id, interaction.token, {
-      content: "User successfully unlinked",
+      content: 'User successfully unlinked',
     });
   } catch (err) {
     await updateResponse(interaction.application_id, interaction.token, {
-      content: "Failure removing account link, please try again"
-    })
-    console.log("Failure unlinking account", err);
+      content: 'Failure removing account link, please try again',
+    });
+    console.log('Failure unlinking account', err);
   }
 };
