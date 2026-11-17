@@ -6,7 +6,7 @@ import {
 import { DeleteCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import {
   deleteMessage,
-  sendMessageWithAttachment,
+  sendMessage,
   updateMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
@@ -16,11 +16,10 @@ import {
   BasePostRecord,
   buildBasePostEmbeds,
   buildBasePostPayload,
-  CLAN_CASTLE_TROOP_IMAGE_FILENAME,
 } from "../util/basePost";
 import {
-  buildClanCastleTroopGraphic,
   ClanCastleTroopInputError,
+  loadClanCastleTroopEmojiMap,
   parseClanCastleTroops,
 } from "../util/clanCastleTroops";
 import type { ClanCastleTroop } from "../util/clanCastleTroops";
@@ -130,7 +129,15 @@ export const handleBasePost = async (
       throw new Error("No base-post redirect URL is configured.");
     }
 
-    const troopGraphic = buildClanCastleTroopGraphic(clanCastleTroops);
+    const troopEmojiMap = loadClanCastleTroopEmojiMap();
+    const clanCastleTroopEmojiIds: Record<string, string> = {};
+    for (const { slug } of clanCastleTroops) {
+      const emojiId = troopEmojiMap[slug];
+      if (!emojiId) {
+        throw new Error(`Missing ClashKing application emoji for ${slug}.`);
+      }
+      clanCastleTroopEmojiIds[slug] = emojiId;
+    }
 
     const counterResult = await dynamoDbClient.send(
       new UpdateCommand({
@@ -163,6 +170,7 @@ export const handleBasePost = async (
       baseLink: linkUrl.toString(),
       clanCastle,
       clanCastleTroops,
+      clanCastleTroopEmojiIds,
       league,
       notes,
       imageUrl: image.url,
@@ -172,40 +180,14 @@ export const handleBasePost = async (
       negativeVotes: 0,
     };
 
-    const formData = new FormData();
-    formData.append(
-      "payload_json",
-      JSON.stringify({
-        embeds: buildBasePostEmbeds(basePostData, {
-          includeTroopImage: false,
-        }),
-        attachments: [
-          { id: "0", filename: CLAN_CASTLE_TROOP_IMAGE_FILENAME },
-        ],
-      })
+    const postedMessage = await sendMessage(
+      { embeds: buildBasePostEmbeds(basePostData) },
+      channelId
     );
-    formData.append(
-      "files[0]",
-      new Blob([new Uint8Array(troopGraphic)], { type: "image/png" }),
-      CLAN_CASTLE_TROOP_IMAGE_FILENAME
-    );
-
-    const postedMessage = await sendMessageWithAttachment(formData, channelId);
     messageId = postedMessage.id;
-    const troopAttachment = postedMessage.attachments.find(
-      (attachment) =>
-        attachment.filename === CLAN_CASTLE_TROOP_IMAGE_FILENAME
-    );
-    if (!troopAttachment) {
-      throw new Error("Discord did not return the Clan Castle troop image.");
-    }
     record = {
       ...basePostData,
       messageId,
-      clanCastleAttachment: {
-        id: troopAttachment.id,
-        filename: troopAttachment.filename,
-      },
     };
 
     await dynamoDbClient.send(

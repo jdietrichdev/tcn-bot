@@ -13,6 +13,7 @@
     "lint:fix": "eslint . --ext .ts --fix",
     "cdk": "cdk",
     "bootstrap": "cdk bootstrap",
+    "predeploy": "npm run sync:troop-emojis --workspace bot",
     "deploy": "cdk deploy --all"
   },
   "devDependencies": {

@@ -5,7 +5,10 @@ import {
   ButtonStyle,
   ComponentType,
 } from "discord-api-types/v10";
-import type { ClanCastleTroop } from "./clanCastleTroops";
+import {
+  formatClanCastleTroops,
+  type ClanCastleTroop,
+} from "./clanCastleTroops";
 
 export const CLAN_CASTLE_TROOP_IMAGE_FILENAME = "clan-castle-troops.png";
 
@@ -22,6 +25,7 @@ export interface BasePostRecord {
   baseLink: string;
   clanCastle: string;
   clanCastleTroops?: ClanCastleTroop[];
+  clanCastleTroopEmojiIds?: Record<string, string>;
   clanCastleAttachment?: BasePostAttachment;
   league: string;
   notes?: string;
@@ -44,37 +48,35 @@ export interface BasePostPayload {
   attachments?: BasePostAttachment[];
 }
 
-export const buildBasePostEmbed = (basePost: BasePostRecord): APIEmbed => ({
-  title: `<:emblem:1502439157832749057> Point Alliance Base #${basePost.baseId}`,
-  description: `**Recommended League:** ${basePost.league}`,
-  color: 0x551a8b,
-  fields: [
-    { name: "Clan Castle", value: basePost.clanCastle, inline: true },
-    { name: "Shared by", value: basePost.builderName, inline: true },
-    ...(basePost.notes
-      ? [{ name: "Builder Notes", value: basePost.notes }]
-      : []),
-  ],
-  image: { url: basePost.imageUrl },
-});
+export const buildBasePostEmbed = (basePost: BasePostRecord): APIEmbed => {
+  const formattedTroops =
+    basePost.clanCastleTroops?.length && basePost.clanCastleTroopEmojiIds
+      ? formatClanCastleTroops(
+          basePost.clanCastleTroops,
+          basePost.clanCastleTroopEmojiIds
+        )
+      : undefined;
 
-export const buildBasePostEmbeds = (
-  basePost: BasePostRecord,
-  options: { includeTroopImage?: boolean } = {}
-): APIEmbed[] => [
+  return {
+    title: `<:emblem:1502439157832749057> Point Alliance Base #${basePost.baseId}`,
+    description: `**Recommended League:** ${basePost.league}`,
+    color: 0x551a8b,
+    fields: [
+      {
+        name: formattedTroops ? "Clan Castle Troops" : "Clan Castle",
+        value: formattedTroops ?? basePost.clanCastle,
+      },
+      { name: "Shared by", value: basePost.builderName, inline: true },
+      ...(basePost.notes
+        ? [{ name: "Builder Notes", value: basePost.notes }]
+        : []),
+    ],
+    image: { url: basePost.imageUrl },
+  };
+};
+
+export const buildBasePostEmbeds = (basePost: BasePostRecord): APIEmbed[] => [
   buildBasePostEmbed(basePost),
-  ...(options.includeTroopImage !== false &&
-  basePost.clanCastleTroops?.length
-    ? [
-        {
-          title: "Clan Castle Troops",
-          color: 0x551a8b,
-          image: {
-            url: `attachment://${CLAN_CASTLE_TROOP_IMAGE_FILENAME}`,
-          },
-        },
-      ]
-    : []),
 ];
 
 export const buildBasePostPayload = (
@@ -83,7 +85,7 @@ export const buildBasePostPayload = (
 ): BasePostPayload => ({
   embeds: buildBasePostEmbeds(basePost),
   ...(basePost.clanCastleAttachment
-    ? { attachments: [basePost.clanCastleAttachment] }
+    ? { attachments: [] }
     : {}),
   components: [
     {
@@ -136,9 +138,9 @@ export const buildBasePostRedirectUrl = (
 };
 
 export const isBasePostRecord = (
-  item: Record<string, unknown> | undefined
+  item: unknown
 ): item is BasePostRecord & Record<string, unknown> =>
-  !!item &&
+  isRecord(item) &&
   typeof item.guildId === "string" &&
   typeof item.channelId === "string" &&
   typeof item.messageId === "string" &&
@@ -147,6 +149,8 @@ export const isBasePostRecord = (
   typeof item.clanCastle === "string" &&
   (item.clanCastleTroops === undefined ||
     isClanCastleTroopArray(item.clanCastleTroops)) &&
+  (item.clanCastleTroopEmojiIds === undefined ||
+    isClanCastleTroopEmojiIdMap(item.clanCastleTroopEmojiIds)) &&
   (item.clanCastleAttachment === undefined ||
     isBasePostAttachment(item.clanCastleAttachment)) &&
   typeof item.league === "string" &&
@@ -166,6 +170,17 @@ const isClanCastleTroop = (value: unknown): value is ClanCastleTroop =>
   typeof value.quantity === "number" &&
   Number.isSafeInteger(value.quantity) &&
   value.quantity > 0;
+
+const isClanCastleTroopEmojiIdMap = (
+  value: unknown
+): value is Record<string, string> =>
+  isRecord(value) &&
+  Object.entries(value).every(
+    ([slug, emojiId]) =>
+      /^[a-z0-9_]+$/.test(slug) &&
+      typeof emojiId === "string" &&
+      /^\d+$/.test(emojiId)
+  );
 
 const isBasePostAttachment = (
   value: unknown

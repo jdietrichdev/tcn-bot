@@ -1,9 +1,12 @@
 export default {
-  entry: "./src/index.ts",
+  entry: {
+    index: "./src/index.ts",
+    taskApi: "./src/taskApi.ts",
+  },
   mode: "production",
   target: "node",
   output: {
-    filename: "index.js",
+    filename: "[name].js",
     libraryTarget: "commonjs",
   },
   devtool: "source-map",

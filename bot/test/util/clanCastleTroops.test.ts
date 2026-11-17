@@ -1,10 +1,9 @@
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { PNG } from "pngjs";
 import {
-  buildClanCastleTroopGraphic,
   ClanCastleTroopInputError,
+  formatClanCastleTroops,
   groupClanCastleTroops,
   parseClanCastleTroops,
 } from "../../src/util/clanCastleTroops";
@@ -59,71 +58,33 @@ describe("parseClanCastleTroops", () => {
   });
 });
 
-describe("buildClanCastleTroopGraphic", () => {
-  let iconDirectory: string;
-
-  beforeEach(() => {
-    iconDirectory = mkdtempSync(
-      path.join(os.tmpdir(), "clan-castle-graphic-")
-    );
-    for (const [slug, color] of [
-      ["ice_golem", { red: 220, green: 40, blue: 40 }],
-      ["baby_dragon", { red: 40, green: 80, blue: 220 }],
-      ["ice_hound", { red: 40, green: 180, blue: 60 }],
-    ] as const) {
-      const icon = new PNG({ width: 24, height: 24 });
-      for (let index = 0; index < icon.data.length; index += 4) {
-        icon.data[index] = color.red;
-        icon.data[index + 1] = color.green;
-        icon.data[index + 2] = color.blue;
-        icon.data[index + 3] = 255;
-      }
-      mkdirSync(iconDirectory, { recursive: true });
-      writeFileSync(
-        path.join(iconDirectory, `${slug}.png`),
-        PNG.sync.write(icon)
-      );
-    }
-  });
-
-  afterEach(() => {
-    rmSync(iconDirectory, { recursive: true, force: true });
-  });
-
-  it("creates a PNG containing each requested troop icon", () => {
-    const result = buildClanCastleTroopGraphic(
+describe("formatClanCastleTroops", () => {
+  it("renders inline emoji rows with counts and separate troop groups", () => {
+    expect(
+      formatClanCastleTroops(
+        [
+          { slug: "baby_dragon", quantity: 1 },
+          { slug: "ice_hound", quantity: 2 },
+        ],
+        { baby_dragon: "1001", ice_hound: "1002" }
+      )
+    ).toBe(
       [
-        { slug: "ice_golem", quantity: 2 },
-        { slug: "baby_dragon", quantity: 1 },
-        { slug: "ice_hound", quantity: 1 },
-      ],
-      iconDirectory
+        "**Troops**",
+        "<:cc_baby_dragon:1001> `x1` Baby Dragon",
+        "",
+        "**Super Troops**",
+        "<:cc_ice_hound:1002> `x2` Ice Hound",
+      ].join("\n")
     );
-    const graphic = PNG.sync.read(result);
-    let redPixels = 0;
-    let bluePixels = 0;
-    let greenPixels = 0;
+  });
 
-    for (let index = 0; index < graphic.data.length; index += 4) {
-      if (graphic.data[index] > 180 && graphic.data[index + 1] < 80) {
-        redPixels += 1;
-      }
-      if (graphic.data[index + 2] > 180 && graphic.data[index] < 80) {
-        bluePixels += 1;
-      }
-      if (
-        graphic.data[index + 1] > 140 &&
-        graphic.data[index] < 80 &&
-        graphic.data[index + 2] < 100
-      ) {
-        greenPixels += 1;
-      }
-    }
-
-    expect(graphic.width).toBe(300);
-    expect(graphic.height).toBe(158);
-    expect(redPixels).toBeGreaterThan(0);
-    expect(bluePixels).toBeGreaterThan(0);
-    expect(greenPixels).toBeGreaterThan(0);
+  it("requires an emoji mapping for every listed troop", () => {
+    expect(() =>
+      formatClanCastleTroops(
+        [{ slug: "ice_golem", quantity: 2 }],
+        {}
+      )
+    ).toThrow("Missing ClashKing application emoji for ice_golem.");
   });
 });
