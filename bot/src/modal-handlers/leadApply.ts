@@ -1,9 +1,10 @@
-import { APIApplicationCommandInteraction, APIApplicationCommandInteractionDataStringOption, APIChatInputApplicationCommandInteraction, APIMessageComponentInteraction, APIModalSubmitInteraction, ChannelType, ComponentType, InteractionType, ModalSubmitActionRowComponent, OverwriteType, PermissionFlagsBits } from "discord-api-types/v10"
+import { APIApplicationCommandInteraction, APIApplicationCommandInteractionDataStringOption, APIChatInputApplicationCommandInteraction, APIMessageComponentInteraction, APIModalSubmitInteraction, ChannelType, ComponentType, InteractionType, OverwriteType, PermissionFlagsBits } from "discord-api-types/v10"
 import { getConfig, ServerConfig } from "../util/serverConfig";
 import { createChannel, pinMessage, sendMessage, updateResponse } from "../adapters/discord-adapter";
 import { BUTTONS } from "../component-handlers/buttons";
 import { getCommandOptionData } from "../util/interaction-util";
 import { buildModal } from "./utils";
+import { getModalTextInputs } from "../util/modalComponents";
 
 export const createLeadApplyModal = (interaction: APIMessageComponentInteraction | APIApplicationCommandInteraction) => {
     if (interaction.type === InteractionType.ApplicationCommand) {
@@ -53,13 +54,10 @@ export const submitLeadApplyModal = async (interaction: APIModalSubmitInteractio
                     title: `${role} application for ${interaction.member?.user.username}`,
                     description: "Application responses",
                     fields: [
-                        ...interaction.data.components.map((item: ModalSubmitActionRowComponent) => {
-                            const response = item.components[0];
-                            return {
-                                name: response.custom_id,
-                                value: response.value,
-                            }
-                        })
+                        ...getModalTextInputs(interaction).map((response) => ({
+                            name: response.custom_id,
+                            value: response.value,
+                        }))
                     ]
                 }],
                 components: [

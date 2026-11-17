@@ -6,6 +6,7 @@ import { Proposal } from "../util/interfaces";
 import { addVote, tallyVotes } from "../util/nomination-util";
 import { VoteType } from "../util/enums";
 import { updateMessage, updateResponse } from "../adapters/discord-adapter";
+import { getModalTextInputValue } from "../util/modalComponents";
 
 export const createVoteNominationModal = (interaction: APIMessageComponentInteraction) => {
     return {
@@ -43,7 +44,7 @@ export const submitVoteNominationModal = async (interaction: APIModalSubmitInter
         }))).Item!;
 
         const proposal: Proposal = proposalData.proposals.find((proposal: Proposal) => proposal.message === message);
-        const reason = interaction.data.components[0].components[0].value;
+        const reason = getModalTextInputValue(interaction);
 
         addVote(interaction, proposal.votes, determineVoteType(interaction.data.custom_id), reason);
 

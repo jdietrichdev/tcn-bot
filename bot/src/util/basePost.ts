@@ -1,7 +1,7 @@
 import {
   APIActionRowComponent,
+  APIComponentInMessageActionRow,
   APIEmbed,
-  APIMessageActionRowComponent,
   ButtonStyle,
   ComponentType,
 } from "discord-api-types/v10";
@@ -13,6 +13,8 @@ import {
 } from "./clanCastleTroops";
 
 export const CLAN_CASTLE_TROOP_IMAGE_FILENAME = "clan-castle-troops.png";
+export const BASE_POST_IMAGE_FILENAME = "base-post-image.png";
+export const BASE_POST_IMAGE_JPEG_FILENAME = "base-post-image.jpg";
 const BASE_POST_LEAGUE_EMOJI_MAP_FILENAME = "clashking-league-emojis.json";
 const LEAGUE_EMOJI_KEY_BY_NAME: Record<string, string> = {
   "Legends 1": "legends_1",
@@ -34,12 +36,15 @@ export interface BasePostRecord {
   guildId: string;
   channelId: string;
   messageId: string;
+  builderId?: string;
+  feedbackThreadId?: string;
   baseId: number;
   baseLink: string;
   clanCastle: string;
   clanCastleTroops?: ClanCastleTroop[];
   clanCastleTroopEmojiIds?: Record<string, string>;
   clanCastleAttachment?: BasePostAttachment;
+  imageAttachment?: BasePostAttachment;
   league: string;
   leagueEmojiId?: string;
   notes?: string;
@@ -54,11 +59,13 @@ export const BASE_POST_BUTTONS = {
   positiveVote: "base_post_positive",
   negativeVote: "base_post_negative",
   downloadCount: "base_post_download_count",
+  feedback: "base_post_feedback",
+  settings: "base_post_settings",
 } as const;
 
 export interface BasePostPayload {
   embeds: APIEmbed[];
-  components: APIActionRowComponent<APIMessageActionRowComponent>[];
+  components: APIActionRowComponent<APIComponentInMessageActionRow>[];
   attachments?: BasePostAttachment[];
 }
 
@@ -69,6 +76,15 @@ export const getRecommendedLeagueEmojiKey = (league: string): string => {
   }
   return emojiKey;
 };
+
+export const canEditBasePost = (
+  basePost: Pick<BasePostRecord, "builderId">,
+  userId: string,
+  roleIds: string[],
+  adminRoleId: string
+): boolean =>
+  basePost.builderId === userId ||
+  (Boolean(adminRoleId) && roleIds.includes(adminRoleId));
 
 export const loadBasePostLeagueEmojiMap = (): Record<string, string> => {
   const candidates = [
@@ -137,8 +153,8 @@ export const buildBasePostPayload = (
   redirectBaseUrl: string
 ): BasePostPayload => ({
   embeds: buildBasePostEmbeds(basePost),
-  ...(basePost.clanCastleAttachment
-    ? { attachments: [] }
+  ...(basePost.clanCastleAttachment || basePost.imageAttachment
+    ? { attachments: basePost.imageAttachment ? [basePost.imageAttachment] : [] }
     : {}),
   components: [
     {
@@ -175,6 +191,26 @@ export const buildBasePostPayload = (
         },
       ],
     },
+    {
+      type: ComponentType.ActionRow,
+      components: [
+        {
+          type: ComponentType.Button,
+          style: ButtonStyle.Primary,
+          label: "Feedback",
+          emoji: { name: "\u{1F4AC}" },
+          custom_id: BASE_POST_BUTTONS.feedback,
+          disabled: !basePost.feedbackThreadId,
+        },
+        {
+          type: ComponentType.Button,
+          style: ButtonStyle.Secondary,
+          label: "Settings",
+          emoji: { name: "\u{2699}\u{FE0F}" },
+          custom_id: BASE_POST_BUTTONS.settings,
+        },
+      ],
+    },
   ],
 });
 
@@ -197,6 +233,11 @@ export const isBasePostRecord = (
   typeof item.guildId === "string" &&
   typeof item.channelId === "string" &&
   typeof item.messageId === "string" &&
+  (item.builderId === undefined ||
+    (typeof item.builderId === "string" && /^\d+$/.test(item.builderId))) &&
+  (item.feedbackThreadId === undefined ||
+    (typeof item.feedbackThreadId === "string" &&
+      /^\d+$/.test(item.feedbackThreadId))) &&
   typeof item.baseId === "number" &&
   typeof item.baseLink === "string" &&
   typeof item.clanCastle === "string" &&
@@ -206,6 +247,8 @@ export const isBasePostRecord = (
     isClanCastleTroopEmojiIdMap(item.clanCastleTroopEmojiIds)) &&
   (item.clanCastleAttachment === undefined ||
     isBasePostAttachment(item.clanCastleAttachment)) &&
+  (item.imageAttachment === undefined ||
+    isBasePostImageAttachment(item.imageAttachment)) &&
   typeof item.league === "string" &&
   (item.leagueEmojiId === undefined ||
     (typeof item.leagueEmojiId === "string" &&
@@ -248,6 +291,14 @@ const isBasePostAttachment = (
   isRecord(value) &&
   typeof value.id === "string" &&
   value.filename === CLAN_CASTLE_TROOP_IMAGE_FILENAME;
+
+const isBasePostImageAttachment = (
+  value: unknown
+): value is BasePostAttachment =>
+  isRecord(value) &&
+  typeof value.id === "string" &&
+  (value.filename === BASE_POST_IMAGE_FILENAME ||
+    value.filename === BASE_POST_IMAGE_JPEG_FILENAME);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === "object";

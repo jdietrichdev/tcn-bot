@@ -5,6 +5,8 @@ import {
 } from "discord-api-types/v10";
 import { DeleteCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import {
+  createForumThread,
+  deleteChannel,
   deleteMessage,
   sendMessage,
   updateMessage,
@@ -117,6 +119,7 @@ export const handleBasePost = async (
 
   let channelId: string | undefined;
   let messageId: string | undefined;
+  let feedbackThreadId: string | undefined;
   let record: BasePostRecord | undefined;
   let recordSaved = false;
 
@@ -125,6 +128,10 @@ export const handleBasePost = async (
     channelId = config.BASE_POST_CHANNEL;
     if (!channelId) {
       throw new Error("No base-post channel is configured for this server.");
+    }
+    const feedbackForumId = config.BASE_POST_FEEDBACK_FORUM;
+    if (!feedbackForumId) {
+      throw new Error("No base-post feedback forum is configured for this server.");
     }
     const redirectBaseUrl = process.env.BASE_POST_REDIRECT_URL;
     if (!redirectBaseUrl) {
@@ -171,10 +178,16 @@ export const handleBasePost = async (
       interaction.member?.user.username ??
       interaction.user?.username ??
       "Builder";
+    const builderId =
+      interaction.member?.user.id ?? interaction.user?.id;
+    if (!builderId) {
+      throw new Error("Couldn't identify the base builder.");
+    }
     const basePostData: BasePostRecord = {
       guildId: interaction.guild_id,
       channelId,
       messageId: "",
+      builderId,
       baseId,
       baseLink: linkUrl.toString(),
       clanCastle,
@@ -195,9 +208,22 @@ export const handleBasePost = async (
       channelId
     );
     messageId = postedMessage.id;
+    const forumThread = await createForumThread(feedbackForumId, {
+      name: `Base #${baseId} Feedback`,
+      auto_archive_duration: 4320,
+      message: {
+        content: `Feedback discussion for [Base #${baseId}](https://discord.com/channels/${interaction.guild_id}/${channelId}/${messageId}).`,
+      },
+    });
+    feedbackThreadId = forumThread.id;
+    if (!feedbackThreadId) {
+      throw new Error("Discord did not return the feedback forum thread ID.");
+    }
+
     record = {
       ...basePostData,
       messageId,
+      feedbackThreadId,
     };
 
     await dynamoDbClient.send(
@@ -220,22 +246,33 @@ export const handleBasePost = async (
   } catch (err) {
     console.error("Failed to post base layout", err);
 
+    if (feedbackThreadId) {
+      try {
+        await deleteChannel(feedbackThreadId);
+      } catch (cleanupError) {
+        console.error("Failed to clean up base-post feedback thread", cleanupError);
+      }
+    }
     if (channelId && messageId) {
       try {
         await deleteMessage(channelId, messageId);
-        if (recordSaved) {
-          await dynamoDbClient.send(
-            new DeleteCommand({
-              TableName: "BotTable",
-              Key: {
-                pk: interaction.guild_id,
-                sk: `base-post#${messageId}`,
-              },
-            })
-          );
-        }
       } catch (cleanupError) {
         console.error("Failed to clean up incomplete base post", cleanupError);
+      }
+    }
+    if (recordSaved && messageId) {
+      try {
+        await dynamoDbClient.send(
+          new DeleteCommand({
+            TableName: "BotTable",
+            Key: {
+              pk: interaction.guild_id,
+              sk: `base-post#${messageId}`,
+            },
+          })
+        );
+      } catch (cleanupError) {
+        console.error("Failed to remove incomplete base-post record", cleanupError);
       }
     }
 

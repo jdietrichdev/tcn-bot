@@ -4,7 +4,11 @@ import {
   TransactWriteCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { APIMessageComponentInteraction } from "discord-api-types/v10";
-import { updateMessage, updateResponse } from "../adapters/discord-adapter";
+import {
+  addThreadMember,
+  updateMessage,
+  updateResponse,
+} from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import {
   BASE_POST_BUTTONS,
@@ -32,6 +36,37 @@ export const handleBasePostComponent = async (
     }
 
     const action = interaction.data.custom_id;
+    if (action === BASE_POST_BUTTONS.feedback) {
+      if (!basePost.feedbackThreadId) {
+        await respond(interaction, "This base does not have a feedback thread.");
+        return;
+      }
+
+      const userId =
+        interaction.member?.user?.id ?? interaction.user?.id;
+      if (!userId) {
+        await respond(interaction, "I couldn't identify your Discord account.");
+        return;
+      }
+
+      try {
+        await addThreadMember(basePost.feedbackThreadId, userId);
+      } catch (err) {
+        console.error("Failed to add user to base-post feedback thread", err);
+        await respond(
+          interaction,
+          "I couldn't add you to the feedback thread. Please try again or contact an admin."
+        );
+        return;
+      }
+
+      await respond(
+        interaction,
+        `You've joined the feedback discussion: <#${basePost.feedbackThreadId}>.`
+      );
+      return;
+    }
+
     if (
       action === BASE_POST_BUTTONS.positiveVote ||
       action === BASE_POST_BUTTONS.negativeVote

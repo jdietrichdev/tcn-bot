@@ -5,8 +5,14 @@ import { submitLeadApplyModal } from "./leadApply";
 import { submitCwlAccountSignupModal } from "./signupAccount";
 import { submitCwlQuestionsModal } from "./cwlQuestions";
 import { submitVoteNominationModal } from "./nominationVote";
+import { submitBasePostEditModal } from "./basePost";
 
 export const submitModal = async (interaction: APIModalSubmitInteraction) => {
+  if (interaction.data.custom_id.startsWith("base_post_edit:")) {
+    await submitBasePostEditModal(interaction);
+    return;
+  }
+
   const id = interaction.data.custom_id.split("_")[0];
   switch (id) {
     case "applicationModal":

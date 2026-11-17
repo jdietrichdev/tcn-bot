@@ -1,7 +1,9 @@
 import {
   buildBasePostEmbeds,
   buildBasePostPayload,
+  BASE_POST_IMAGE_JPEG_FILENAME,
   CLAN_CASTLE_TROOP_IMAGE_FILENAME,
+  canEditBasePost,
   getRecommendedLeagueEmojiKey,
   isBasePostRecord,
 } from "../../src/util/basePost";
@@ -11,6 +13,8 @@ const basePost: BasePostRecord = {
   guildId: "123",
   channelId: "456",
   messageId: "789",
+  builderId: "123",
+  feedbackThreadId: "555",
   baseId: 1,
   baseLink: "https://link.clashofclans.com/en?action=OpenLayout&id=abc",
   clanCastle: "2x Ice Golem, 1x Baby Dragon",
@@ -64,6 +68,14 @@ describe("base-post Clan Castle embeds", () => {
     expect(embeds[0].fields?.find((field) => field.name === "Shared by")?.value)
       .toBe("**Builder**");
     expect(payload.attachments).toEqual([]);
+    expect(
+      payload.components[1].components.map((button) =>
+        "custom_id" in button ? button.custom_id : undefined
+      )
+    ).toEqual(["base_post_feedback", "base_post_settings"]);
+    expect(payload.components[1].components[0]).toMatchObject({
+      disabled: false,
+    });
   });
 
   it("continues rendering legacy posts that have no emoji map", () => {
@@ -112,6 +124,32 @@ describe("base-post Clan Castle embeds", () => {
         leagueEmojiId: "not-an-id",
       })
     ).toBe(false);
+  });
+
+  it("preserves an uploaded base image and recognizes JPEG image metadata", () => {
+    const imagePost: BasePostRecord = {
+      ...basePost,
+      clanCastleAttachment: undefined,
+      imageUrl: `attachment://${BASE_POST_IMAGE_JPEG_FILENAME}`,
+      imageAttachment: {
+        id: "987654322",
+        filename: BASE_POST_IMAGE_JPEG_FILENAME,
+      },
+    };
+
+    expect(isBasePostRecord(imagePost)).toBe(true);
+    expect(
+      buildBasePostPayload(imagePost, "https://api.example/prod/base-post")
+        .attachments
+    ).toEqual([imagePost.imageAttachment]);
+  });
+
+  it("allows only the builder or configured admins to edit a base post", () => {
+    expect(canEditBasePost(basePost, "123", [], "admin-role")).toBe(true);
+    expect(canEditBasePost(basePost, "999", ["admin-role"], "admin-role")).toBe(
+      true
+    );
+    expect(canEditBasePost(basePost, "999", [], "admin-role")).toBe(false);
   });
 
   it("maps all recommended leagues to their application emoji keys", () => {

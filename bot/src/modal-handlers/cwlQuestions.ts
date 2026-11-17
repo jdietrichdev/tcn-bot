@@ -9,6 +9,7 @@ import {
 import { updateResponse } from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { getModalTextInputs } from "../util/modalComponents";
 
 export const createCwlQuestionsModal = (
   interaction: APIMessageComponentInteraction
@@ -86,9 +87,8 @@ export const submitCwlQuestionsModal = async (
   try {
     console.log(JSON.stringify(interaction));
     const responses: { [key: string]: string } = {};
-    interaction.data.components.forEach((component) => {
-      responses[component.components[0].custom_id] =
-        component.components[0].value;
+    getModalTextInputs(interaction).forEach((component) => {
+      responses[component.custom_id] = component.value;
     });
     const account = {
       id: interaction.member!.user.id,

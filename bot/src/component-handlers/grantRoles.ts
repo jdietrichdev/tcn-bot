@@ -45,12 +45,18 @@ export const grantRoles = async (
         },
         interaction.channel.id
       );
+      const actionRow = interaction.message.components?.find(
+        (component) => component.type === ComponentType.ActionRow
+      );
+      if (!actionRow) {
+        throw new Error("The roles message is missing its action row.");
+      }
       await updateMessage(interaction.channel.id, interaction.message.id, {
         components: [
           {
             type: ComponentType.ActionRow,
             components: [
-              ...interaction.message.components![0].components.splice(0, 2),
+              ...actionRow.components.slice(0, 2),
               await determineRolesButton(
                 interaction.guild_id!,
                 userId,

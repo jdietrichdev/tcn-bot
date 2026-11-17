@@ -47,13 +47,13 @@ export const proxy = async (
     commandTriggersModal(body.data.name)
   ) {
     console.log("Command modal triggered");
-    response = createModal(body, body.data.name) as APIInteractionResponse;
+    response = await createModal(body, body.data.name);
   } else if (
     body.type === InteractionType.MessageComponent &&
     buttonTriggersModal(body.data.custom_id)
   ) {
     console.log("Button modal triggered");
-    response = createModal(body, body.data.custom_id) as APIInteractionResponse;
+    response = await createModal(body, body.data.custom_id);
   } else if (
     body.type === InteractionType.MessageComponent &&
     body.data.custom_id.startsWith("unrostered_")

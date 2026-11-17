@@ -233,7 +233,9 @@ const fetchArchiveTicketChannels = async (
       return (
         channel.type === ChannelType.GuildText &&
         channel.parent_id === config.ARCHIVE_CATEGORY &&
-        Boolean(channel.topic?.includes("Application channel for"))
+        "topic" in channel &&
+        typeof channel.topic === "string" &&
+        channel.topic.includes("Application channel for")
       );
     })
     .map(

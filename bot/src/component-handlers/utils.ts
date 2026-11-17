@@ -11,6 +11,7 @@ const BUTTON_MODAL_TRIGGERS = [
   "vouch",
   "oppose",
   "indifferent",
+  "base_post_settings",
 ];
 const COMMAND_MODAL_TRIGGERS = ["apply", "lead-apply"];
 
