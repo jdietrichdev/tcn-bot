@@ -9,7 +9,8 @@ project welcomes reuse and requests credit. See [UPSTREAM_README.md](./UPSTREAM_
 and [LICENSE](./LICENSE) for the original attribution and GPLv3 license.
 
 The files are available from the UI under `/clashking-assets/troops/` and
-`/clashking-assets/leagues/`. The imported files are unmodified.
+`/clashking-assets/leagues/`. The imported files are unmodified. The bot build
+also converts troop icons to 96x96 PNGs for Clan Castle base-post graphics.
 
 Clash of Clans names and artwork remain the property of their respective
 owners. This project is not affiliated with or endorsed by Supercell.

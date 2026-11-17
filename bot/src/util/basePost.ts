@@ -5,6 +5,14 @@ import {
   ButtonStyle,
   ComponentType,
 } from "discord-api-types/v10";
+import type { ClanCastleTroop } from "./clanCastleTroops";
+
+export const CLAN_CASTLE_TROOP_IMAGE_FILENAME = "clan-castle-troops.png";
+
+export interface BasePostAttachment {
+  id: string;
+  filename: string;
+}
 
 export interface BasePostRecord {
   guildId: string;
@@ -13,6 +21,8 @@ export interface BasePostRecord {
   baseId: number;
   baseLink: string;
   clanCastle: string;
+  clanCastleTroops?: ClanCastleTroop[];
+  clanCastleAttachment?: BasePostAttachment;
   league: string;
   notes?: string;
   imageUrl: string;
@@ -31,6 +41,7 @@ export const BASE_POST_BUTTONS = {
 export interface BasePostPayload {
   embeds: APIEmbed[];
   components: APIActionRowComponent<APIMessageActionRowComponent>[];
+  attachments?: BasePostAttachment[];
 }
 
 export const buildBasePostEmbed = (basePost: BasePostRecord): APIEmbed => ({
@@ -47,11 +58,31 @@ export const buildBasePostEmbed = (basePost: BasePostRecord): APIEmbed => ({
   image: { url: basePost.imageUrl },
 });
 
+export const buildBasePostEmbeds = (
+  basePost: BasePostRecord
+): APIEmbed[] => [
+  buildBasePostEmbed(basePost),
+  ...(basePost.clanCastleTroops?.length
+    ? [
+        {
+          title: "Clan Castle Troops",
+          color: 0x551a8b,
+          image: {
+            url: `attachment://${CLAN_CASTLE_TROOP_IMAGE_FILENAME}`,
+          },
+        },
+      ]
+    : []),
+];
+
 export const buildBasePostPayload = (
   basePost: BasePostRecord,
   redirectBaseUrl: string
 ): BasePostPayload => ({
-  embeds: [buildBasePostEmbed(basePost)],
+  embeds: buildBasePostEmbeds(basePost),
+  ...(basePost.clanCastleAttachment
+    ? { attachments: [basePost.clanCastleAttachment] }
+    : {}),
   components: [
     {
       type: ComponentType.ActionRow,
@@ -112,6 +143,10 @@ export const isBasePostRecord = (
   typeof item.baseId === "number" &&
   typeof item.baseLink === "string" &&
   typeof item.clanCastle === "string" &&
+  (item.clanCastleTroops === undefined ||
+    isClanCastleTroopArray(item.clanCastleTroops)) &&
+  (item.clanCastleAttachment === undefined ||
+    isBasePostAttachment(item.clanCastleAttachment)) &&
   typeof item.league === "string" &&
   (item.notes === undefined || typeof item.notes === "string") &&
   typeof item.imageUrl === "string" &&
@@ -119,3 +154,23 @@ export const isBasePostRecord = (
   typeof item.downloads === "number" &&
   typeof item.positiveVotes === "number" &&
   typeof item.negativeVotes === "number";
+
+const isClanCastleTroopArray = (value: unknown): value is ClanCastleTroop[] =>
+  Array.isArray(value) && value.every(isClanCastleTroop);
+
+const isClanCastleTroop = (value: unknown): value is ClanCastleTroop =>
+  isRecord(value) &&
+  typeof value.slug === "string" &&
+  typeof value.quantity === "number" &&
+  Number.isSafeInteger(value.quantity) &&
+  value.quantity > 0;
+
+const isBasePostAttachment = (
+  value: unknown
+): value is BasePostAttachment =>
+  isRecord(value) &&
+  typeof value.id === "string" &&
+  value.filename === CLAN_CASTLE_TROOP_IMAGE_FILENAME;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === "object";

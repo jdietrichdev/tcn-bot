@@ -230,18 +230,23 @@ export const sendMessage = async (
 export const sendMessageWithAttachment = async (
   message: FormData,
   channelId: string
-) => {
+): Promise<RESTPostAPIChannelMessageResult> => {
   const url = `${BASE_URL}/channels/${channelId}/messages`;
   try {
-    await axios.post(url, message, {
-      headers: {
-        Authorization: `Bot ${process.env.BOT_TOKEN}`,
-      },
-    });
+    const response = await axios.post<RESTPostAPIChannelMessageResult>(
+      url,
+      message,
+      {
+        headers: {
+          Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        },
+      }
+    );
+    return response.data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to update response",
+        "Failed to send message with attachment",
         err.response?.data.message,
         err.response?.status ?? 500
       );

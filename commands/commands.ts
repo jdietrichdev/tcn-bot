@@ -151,7 +151,7 @@ export const basePost = new SlashCommandBuilder()
   .addStringOption((option) => {
     return option
       .setName('clan_castle')
-      .setDescription('Recommended Clan Castle troops')
+      .setDescription('Troop counts, e.g. 2x Ice Golem, 1x Baby Dragon')
       .setRequired(true)
       .setMaxLength(100);
   })
