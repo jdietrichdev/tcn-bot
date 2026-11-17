@@ -16,6 +16,8 @@ import {
   BasePostRecord,
   buildBasePostEmbeds,
   buildBasePostPayload,
+  getRecommendedLeagueEmojiKey,
+  loadBasePostLeagueEmojiMap,
 } from "../util/basePost";
 import {
   ClanCastleTroopInputError,
@@ -139,6 +141,13 @@ export const handleBasePost = async (
       clanCastleTroopEmojiIds[slug] = emojiId;
     }
 
+    const leagueEmojiMap = loadBasePostLeagueEmojiMap();
+    const leagueEmojiId =
+      leagueEmojiMap[getRecommendedLeagueEmojiKey(league)];
+    if (!leagueEmojiId) {
+      throw new Error(`Missing ClashKing application emoji for league "${league}".`);
+    }
+
     const counterResult = await dynamoDbClient.send(
       new UpdateCommand({
         TableName: "BotTable",
@@ -172,6 +181,7 @@ export const handleBasePost = async (
       clanCastleTroops,
       clanCastleTroopEmojiIds,
       league,
+      leagueEmojiId,
       notes,
       imageUrl: image.url,
       builderName,

@@ -166,7 +166,9 @@ export const basePost = new SlashCommandBuilder()
         { name: 'Legends 3', value: 'Legends 3' },
         { name: 'Legends 2/3', value: 'Legends 2/3' },
         { name: 'CWL', value: 'CWL' },
-        { name: 'Titans CWL', value: 'Titans CWL' },
+        { name: 'Titan I CWL', value: 'Titan I CWL' },
+        { name: 'Titan II CWL', value: 'Titan II CWL' },
+        { name: 'Titan III CWL', value: 'Titan III CWL' },
       ]);
   })
   .addAttachmentOption((option) => {

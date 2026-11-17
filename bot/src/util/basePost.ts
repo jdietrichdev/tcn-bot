@@ -5,12 +5,25 @@ import {
   ButtonStyle,
   ComponentType,
 } from "discord-api-types/v10";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
 import {
   formatClanCastleTroops,
   type ClanCastleTroop,
 } from "./clanCastleTroops";
 
 export const CLAN_CASTLE_TROOP_IMAGE_FILENAME = "clan-castle-troops.png";
+const BASE_POST_LEAGUE_EMOJI_MAP_FILENAME = "clashking-league-emojis.json";
+const LEAGUE_EMOJI_KEY_BY_NAME: Record<string, string> = {
+  "Legends 1": "legends_1",
+  "Legends 2": "legends_2",
+  "Legends 3": "legends_3",
+  "Legends 2/3": "legends_2_3",
+  CWL: "cwl",
+  "Titan I CWL": "titan_1_cwl",
+  "Titan II CWL": "titan_2_cwl",
+  "Titan III CWL": "titan_3_cwl",
+};
 
 export interface BasePostAttachment {
   id: string;
@@ -28,6 +41,7 @@ export interface BasePostRecord {
   clanCastleTroopEmojiIds?: Record<string, string>;
   clanCastleAttachment?: BasePostAttachment;
   league: string;
+  leagueEmojiId?: string;
   notes?: string;
   imageUrl: string;
   builderName: string;
@@ -48,6 +62,34 @@ export interface BasePostPayload {
   attachments?: BasePostAttachment[];
 }
 
+export const getRecommendedLeagueEmojiKey = (league: string): string => {
+  const emojiKey = LEAGUE_EMOJI_KEY_BY_NAME[league];
+  if (!emojiKey) {
+    throw new Error(`No application emoji is configured for league "${league}".`);
+  }
+  return emojiKey;
+};
+
+export const loadBasePostLeagueEmojiMap = (): Record<string, string> => {
+  const candidates = [
+    path.join(process.cwd(), BASE_POST_LEAGUE_EMOJI_MAP_FILENAME),
+    path.join(process.cwd(), "dist", BASE_POST_LEAGUE_EMOJI_MAP_FILENAME),
+    path.join(process.cwd(), "bot", "dist", BASE_POST_LEAGUE_EMOJI_MAP_FILENAME),
+  ];
+  const mapPath = candidates.find(existsSync);
+  if (!mapPath) {
+    throw new Error(
+      `Missing ${BASE_POST_LEAGUE_EMOJI_MAP_FILENAME}; sync the ClashKing application emojis before deployment.`
+    );
+  }
+
+  const parsed: unknown = JSON.parse(readFileSync(mapPath, "utf8"));
+  if (!isEmojiIdMap(parsed)) {
+    throw new Error("ClashKing league emoji map is invalid.");
+  }
+  return parsed;
+};
+
 export const buildBasePostEmbed = (basePost: BasePostRecord): APIEmbed => {
   const formattedTroops =
     basePost.clanCastleTroops?.length && basePost.clanCastleTroopEmojiIds
@@ -56,19 +98,30 @@ export const buildBasePostEmbed = (basePost: BasePostRecord): APIEmbed => {
           basePost.clanCastleTroopEmojiIds
         )
       : undefined;
+  const leagueEmoji = basePost.leagueEmojiId
+    ? `<:league_${getRecommendedLeagueEmojiKey(basePost.league)}:${basePost.leagueEmojiId}> `
+    : "";
+  const formattedNotes = basePost.notes
+    ?.split(/\r?\n/)
+    .map((line) => `> ${line}`)
+    .join("\n");
 
   return {
     title: `<:emblem:1502439157832749057> Point Alliance Base #${basePost.baseId}`,
-    description: `**Recommended League:** ${basePost.league}`,
+    description: `**Recommended League**\n> ${leagueEmoji}**${basePost.league}**`,
     color: 0x551a8b,
     fields: [
       {
         name: formattedTroops ? "Clan Castle Troops" : "Clan Castle",
         value: formattedTroops ?? basePost.clanCastle,
       },
-      { name: "Shared by", value: basePost.builderName, inline: true },
-      ...(basePost.notes
-        ? [{ name: "Builder Notes", value: basePost.notes }]
+      {
+        name: "Shared by",
+        value: `**${basePost.builderName}**`,
+        inline: true,
+      },
+      ...(formattedNotes
+        ? [{ name: "Builder Notes", value: formattedNotes }]
         : []),
     ],
     image: { url: basePost.imageUrl },
@@ -154,6 +207,9 @@ export const isBasePostRecord = (
   (item.clanCastleAttachment === undefined ||
     isBasePostAttachment(item.clanCastleAttachment)) &&
   typeof item.league === "string" &&
+  (item.leagueEmojiId === undefined ||
+    (typeof item.leagueEmojiId === "string" &&
+      /^\d+$/.test(item.leagueEmojiId))) &&
   (item.notes === undefined || typeof item.notes === "string") &&
   typeof item.imageUrl === "string" &&
   typeof item.builderName === "string" &&
@@ -172,6 +228,10 @@ const isClanCastleTroop = (value: unknown): value is ClanCastleTroop =>
   value.quantity > 0;
 
 const isClanCastleTroopEmojiIdMap = (
+  value: unknown
+): value is Record<string, string> => isEmojiIdMap(value);
+
+const isEmojiIdMap = (
   value: unknown
 ): value is Record<string, string> =>
   isRecord(value) &&

@@ -4,7 +4,6 @@ import path from "node:path";
 import {
   ClanCastleTroopInputError,
   formatClanCastleTroops,
-  groupClanCastleTroops,
   parseClanCastleTroops,
 } from "../../src/util/clanCastleTroops";
 
@@ -44,22 +43,10 @@ describe("parseClanCastleTroops", () => {
       parseClanCastleTroops("1x Unknown Troop", iconDirectory)
     ).toThrow(/couldn't find a troop icon/i);
   });
-
-  it("groups super troops separately", () => {
-    const troops = [
-      { slug: "baby_dragon", quantity: 1 },
-      { slug: "ice_hound", quantity: 2 },
-    ];
-
-    expect(groupClanCastleTroops(troops)).toEqual({
-      troops: [{ slug: "baby_dragon", quantity: 1 }],
-      superTroops: [{ slug: "ice_hound", quantity: 2 }],
-    });
-  });
 });
 
 describe("formatClanCastleTroops", () => {
-  it("renders inline emoji rows with counts and separate troop groups", () => {
+  it("renders icon, count, and name rows without subgroup headings", () => {
     expect(
       formatClanCastleTroops(
         [
@@ -70,10 +57,7 @@ describe("formatClanCastleTroops", () => {
       )
     ).toBe(
       [
-        "**Troops**",
         "<:cc_baby_dragon:1001> `x1` Baby Dragon",
-        "",
-        "**Super Troops**",
         "<:cc_ice_hound:1002> `x2` Ice Hound",
       ].join("\n")
     );

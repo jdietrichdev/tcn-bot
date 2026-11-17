@@ -7,10 +7,60 @@ const SOURCE_DIRECTORY = path.resolve(
   __dirname,
   "../../ui/public/clashking-assets/troops"
 );
-const OUTPUT_PATH = path.resolve(
+const LEAGUE_SOURCE_DIRECTORY = path.resolve(
+  __dirname,
+  "../../ui/public/clashking-assets/leagues"
+);
+const TROOP_OUTPUT_PATH = path.resolve(
   __dirname,
   "../dist/clashking-troop-emojis.json"
 );
+const LEAGUE_OUTPUT_PATH = path.resolve(
+  __dirname,
+  "../dist/clashking-league-emojis.json"
+);
+const LEAGUE_EMOJI_ASSETS = {
+  legends_1: path.join(
+    LEAGUE_SOURCE_DIRECTORY,
+    "league-tier",
+    "legend_league_1.png"
+  ),
+  legends_2: path.join(
+    LEAGUE_SOURCE_DIRECTORY,
+    "league-tier",
+    "legend_league_2.png"
+  ),
+  legends_3: path.join(
+    LEAGUE_SOURCE_DIRECTORY,
+    "league-tier",
+    "legend_league_3.png"
+  ),
+  legends_2_3: path.join(
+    LEAGUE_SOURCE_DIRECTORY,
+    "league-tier",
+    "legend_league.png"
+  ),
+  cwl: path.join(
+    LEAGUE_SOURCE_DIRECTORY,
+    "cwl",
+    "champion_league_1.png"
+  ),
+  titan_1_cwl: path.join(
+    LEAGUE_SOURCE_DIRECTORY,
+    "cwl",
+    "titan_league_1.png"
+  ),
+  titan_2_cwl: path.join(
+    LEAGUE_SOURCE_DIRECTORY,
+    "cwl",
+    "titan_league_2.png"
+  ),
+  titan_3_cwl: path.join(
+    LEAGUE_SOURCE_DIRECTORY,
+    "cwl",
+    "titan_league_3.png"
+  ),
+};
 const token = process.env.BOT_TOKEN;
 
 if (!token) {
@@ -53,7 +103,45 @@ const requestDiscord = async (endpoint, options = {}) => {
   }
 };
 
-const syncTroopEmojis = async () => {
+const syncEmoji = async (
+  emojiEndpoint,
+  emojiName,
+  sourcePath,
+  existingEmojis
+) => {
+  let emojiId = existingEmojis.get(emojiName);
+  if (emojiId) {
+    return emojiId;
+  }
+
+  const image = await sharp(sourcePath)
+    .resize(128, 128, {
+      fit: "contain",
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    })
+    .png()
+    .toBuffer();
+  if (image.length > 256 * 1024) {
+    throw new Error(`${emojiName} exceeds Discord's 256 KiB emoji limit.`);
+  }
+
+  const emoji = await requestDiscord(emojiEndpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: emojiName,
+      image: `data:image/png;base64,${image.toString("base64")}`,
+    }),
+  });
+  emojiId = emoji.id;
+  if (typeof emojiId !== "string") {
+    throw new Error(`Discord did not return an ID for ${emojiName}.`);
+  }
+  existingEmojis.set(emojiName, emojiId);
+  return emojiId;
+};
+
+const syncBasePostEmojis = async () => {
   const application = await requestDiscord("/users/@me");
   if (!application.id) {
     throw new Error("Discord did not return the bot application ID.");
@@ -86,54 +174,48 @@ const syncTroopEmojis = async () => {
       continue;
     }
 
-    const sourcePath = path.join(troopDirectoryPath, "icon.webp");
     const emojiName = `cc_${troopDirectory.name}`;
-    let emojiId = existingEmojis.get(emojiName);
-    if (!emojiId) {
-      const image = await sharp(sourcePath)
-        .resize(128, 128, {
-          fit: "contain",
-          background: { r: 0, g: 0, b: 0, alpha: 0 },
-        })
-        .png()
-        .toBuffer();
-      if (image.length > 256 * 1024) {
-        throw new Error(`${emojiName} exceeds Discord's 256 KiB emoji limit.`);
-      }
-      const emoji = await requestDiscord(emojiEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: emojiName,
-          image: `data:image/png;base64,${image.toString("base64")}`,
-        }),
-      });
-      emojiId = emoji.id;
-      if (typeof emojiId !== "string") {
-        throw new Error(`Discord did not return an ID for ${emojiName}.`);
-      }
-      existingEmojis.set(emojiName, emojiId);
-    }
-
-    emojiIds[troopDirectory.name] = emojiId;
+    emojiIds[troopDirectory.name] = await syncEmoji(
+      emojiEndpoint,
+      emojiName,
+      path.join(troopDirectoryPath, "icon.webp"),
+      existingEmojis
+    );
   }
 
   if (!Object.keys(emojiIds).length) {
     throw new Error(`No troop icons were found in ${SOURCE_DIRECTORY}.`);
   }
 
-  await fs.mkdir(path.dirname(OUTPUT_PATH), { recursive: true });
-  await fs.writeFile(
-    OUTPUT_PATH,
-    `${JSON.stringify(emojiIds, null, 2)}\n`,
-    "utf8"
-  );
+  const leagueEmojiIds = {};
+  for (const [emojiKey, sourcePath] of Object.entries(LEAGUE_EMOJI_ASSETS)) {
+    leagueEmojiIds[emojiKey] = await syncEmoji(
+      emojiEndpoint,
+      `league_${emojiKey}`,
+      sourcePath,
+      existingEmojis
+    );
+  }
+
+  await fs.mkdir(path.dirname(TROOP_OUTPUT_PATH), { recursive: true });
+  await Promise.all([
+    fs.writeFile(
+      TROOP_OUTPUT_PATH,
+      `${JSON.stringify(emojiIds, null, 2)}\n`,
+      "utf8"
+    ),
+    fs.writeFile(
+      LEAGUE_OUTPUT_PATH,
+      `${JSON.stringify(leagueEmojiIds, null, 2)}\n`,
+      "utf8"
+    ),
+  ]);
   console.log(
-    `Synced ${Object.keys(emojiIds).length} ClashKing application emojis.`
+    `Synced ${Object.keys(emojiIds).length} troop and ${Object.keys(leagueEmojiIds).length} league application emojis.`
   );
 };
 
-syncTroopEmojis().catch((error) => {
+syncBasePostEmojis().catch((error) => {
   console.error("Failed to sync ClashKing application emojis.", error);
   process.exitCode = 1;
 });

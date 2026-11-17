@@ -2,6 +2,7 @@ import {
   buildBasePostEmbeds,
   buildBasePostPayload,
   CLAN_CASTLE_TROOP_IMAGE_FILENAME,
+  getRecommendedLeagueEmojiKey,
   isBasePostRecord,
 } from "../../src/util/basePost";
 import type { BasePostRecord } from "../../src/util/basePost";
@@ -28,6 +29,7 @@ const basePost: BasePostRecord = {
     filename: CLAN_CASTLE_TROOP_IMAGE_FILENAME,
   },
   league: "CWL",
+  leagueEmojiId: "2001",
   imageUrl: "https://cdn.example/base.png",
   builderName: "Builder",
   downloads: 0,
@@ -36,7 +38,7 @@ const basePost: BasePostRecord = {
 };
 
 describe("base-post Clan Castle embeds", () => {
-  it("renders troop emojis and counts inline, grouped by troop type", () => {
+  it("renders troop emojis, counts, and names without redundant group headings", () => {
     const embeds = buildBasePostEmbeds(basePost);
     const payload = buildBasePostPayload(
       basePost,
@@ -49,15 +51,18 @@ describe("base-post Clan Castle embeds", () => {
     expect(embeds).toHaveLength(1);
     expect(troopField?.value).toBe(
       [
-        "**Troops**",
         "<:cc_ice_golem:1001> `x2` Ice Golem",
         "<:cc_baby_dragon:1002> `x1` Baby Dragon",
-        "",
-        "**Super Troops**",
         "<:cc_ice_hound:1003> `x1` Ice Hound",
       ].join("\n")
     );
+    expect(troopField?.value).not.toContain("Troops");
     expect(embeds[0].image?.url).toBe(basePost.imageUrl);
+    expect(embeds[0].description).toBe(
+      "**Recommended League**\n> <:league_cwl:2001> **CWL**"
+    );
+    expect(embeds[0].fields?.find((field) => field.name === "Shared by")?.value)
+      .toBe("**Builder**");
     expect(payload.attachments).toEqual([]);
   });
 
@@ -67,6 +72,7 @@ describe("base-post Clan Castle embeds", () => {
       clanCastleTroops: undefined,
       clanCastleTroopEmojiIds: undefined,
       clanCastleAttachment: undefined,
+      leagueEmojiId: undefined,
     };
 
     const embeds = buildBasePostEmbeds(legacyPost);
@@ -100,5 +106,46 @@ describe("base-post Clan Castle embeds", () => {
         clanCastleTroopEmojiIds: { ice_golem: "not-an-id" },
       })
     ).toBe(false);
+    expect(
+      isBasePostRecord({
+        ...basePost,
+        leagueEmojiId: "not-an-id",
+      })
+    ).toBe(false);
+  });
+
+  it("maps all recommended leagues to their application emoji keys", () => {
+    expect(
+      [
+        "Legends 1",
+        "Legends 2",
+        "Legends 3",
+        "Legends 2/3",
+        "CWL",
+        "Titan I CWL",
+        "Titan II CWL",
+        "Titan III CWL",
+      ].map(getRecommendedLeagueEmojiKey)
+    ).toEqual([
+      "legends_1",
+      "legends_2",
+      "legends_3",
+      "legends_2_3",
+      "cwl",
+      "titan_1_cwl",
+      "titan_2_cwl",
+      "titan_3_cwl",
+    ]);
+  });
+
+  it("uses a blockquote to distinguish builder notes from the troop list", () => {
+    const embed = buildBasePostEmbeds({
+      ...basePost,
+      notes: "Try this base in war.\nProtect the Town Hall.",
+    })[0];
+
+    expect(
+      embed.fields?.find((field) => field.name === "Builder Notes")?.value
+    ).toBe("> Try this base in war.\n> Protect the Town Hall.");
   });
 });
