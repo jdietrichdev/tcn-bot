@@ -1,6 +1,8 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { dynamoDbClient } from './clients/dynamodb-client';
 import { QueryCommand, GetCommand, PutCommand, UpdateCommand, DeleteCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
+import { updateMessage } from './adapters/discord-adapter';
+import { buildBasePostPayload, isBasePostRecord } from './util/basePost';
 
 const headers = {
   'Content-Type': 'application/json',
@@ -23,10 +25,22 @@ export const taskApi = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   try {
     const { httpMethod, path, pathParameters, queryStringParameters, body } = event;
     const guildId = queryStringParameters?.guildId || '1021786969077973022';
+    const basePostMatch = path.match(/\/base-post\/(\d+)\/(\d+)\/?$/);
 
     switch (httpMethod) {
       case 'GET':
-        if (path === '/api/tasks' || path.endsWith('/tasks')) {
+        if (basePostMatch) {
+          const { domainName, stage } = event.requestContext;
+          if (!domainName || !stage) {
+            throw new Error('API Gateway domain and stage are required for base redirects.');
+          }
+          return await redirectBasePost(
+            basePostMatch[1],
+            basePostMatch[2],
+            domainName,
+            stage
+          );
+        } else if (path === '/api/tasks' || path.endsWith('/tasks')) {
           return await getTasks(guildId, queryStringParameters);
         } else if (path === '/api/analytics' || path.endsWith('/analytics')) {
           return await getAnalytics(guildId);
@@ -391,4 +405,77 @@ async function getAnalytics(guildId: string): Promise<APIGatewayProxyResult> {
     console.error('Error fetching analytics:', error);
     throw error;
   }
+}
+
+async function redirectBasePost(
+  guildId: string,
+  messageId: string,
+  domainName: string,
+  stage: string
+): Promise<APIGatewayProxyResult> {
+  const result = await dynamoDbClient.send(
+    new GetCommand({
+      TableName: 'BotTable',
+      Key: {
+        pk: guildId,
+        sk: `base-post#${messageId}`,
+      },
+      ConsistentRead: true,
+    })
+  );
+  if (!isBasePostRecord(result.Item)) {
+    return {
+      statusCode: 404,
+      headers,
+      body: JSON.stringify({ error: 'Base post not found' }),
+    };
+  }
+
+  const baseLink = new URL(result.Item.baseLink);
+  if (
+    baseLink.protocol !== 'https:' ||
+    baseLink.hostname !== 'link.clashofclans.com'
+  ) {
+    throw new Error('Stored base link is not a valid Clash of Clans URL.');
+  }
+
+  const incrementResult = await dynamoDbClient.send(
+    new UpdateCommand({
+      TableName: 'BotTable',
+      Key: {
+        pk: guildId,
+        sk: `base-post#${messageId}`,
+      },
+      UpdateExpression: 'SET downloads = downloads + :one',
+      ConditionExpression: 'attribute_exists(baseLink)',
+      ExpressionAttributeValues: {
+        ':one': 1,
+      },
+      ReturnValues: 'ALL_NEW',
+    })
+  );
+  if (!isBasePostRecord(incrementResult.Attributes)) {
+    throw new Error('Failed to retrieve updated base post after download.');
+  }
+
+  const redirectBaseUrl = `https://${domainName}/${stage}/base-post`;
+
+  try {
+    await updateMessage(
+      incrementResult.Attributes.channelId,
+      incrementResult.Attributes.messageId,
+      buildBasePostPayload(incrementResult.Attributes, redirectBaseUrl)
+    );
+  } catch (error) {
+    console.error('Failed to refresh base-post download count', error);
+  }
+
+  return {
+    statusCode: 302,
+    headers: {
+      Location: baseLink.toString(),
+      'Cache-Control': 'no-store',
+    },
+    body: '',
+  };
 }

@@ -2,7 +2,6 @@ import { TransactionCanceledException } from "@aws-sdk/client-dynamodb";
 import {
   GetCommand,
   TransactWriteCommand,
-  UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { APIMessageComponentInteraction } from "discord-api-types/v10";
 import { updateMessage, updateResponse } from "../adapters/discord-adapter";
@@ -33,11 +32,6 @@ export const handleBasePostComponent = async (
     }
 
     const action = interaction.data.custom_id;
-    if (action === BASE_POST_BUTTONS.link) {
-      await handleLinkClick(interaction, basePost);
-      return;
-    }
-
     if (
       action === BASE_POST_BUTTONS.positiveVote ||
       action === BASE_POST_BUTTONS.negativeVote
@@ -56,12 +50,16 @@ export const handleBasePostComponent = async (
       if (!updatedPost) {
         throw new Error("Base post disappeared after its vote was saved.");
       }
+      const redirectBaseUrl = process.env.BASE_POST_REDIRECT_URL;
+      if (!redirectBaseUrl) {
+        throw new Error("No base-post redirect URL is configured.");
+      }
 
       try {
         await updateMessage(
           updatedPost.channelId,
           updatedPost.messageId,
-          buildBasePostPayload(updatedPost)
+          buildBasePostPayload(updatedPost, redirectBaseUrl)
         );
       } catch (err) {
         console.error("Failed to refresh base-post vote counts", err);
@@ -87,50 +85,6 @@ export const handleBasePostComponent = async (
       "I couldn't process that action. Please try again."
     );
   }
-};
-
-const handleLinkClick = async (
-  interaction: APIMessageComponentInteraction,
-  basePost: BasePostRecord
-) => {
-  await dynamoDbClient.send(
-    new UpdateCommand({
-      TableName: "BotTable",
-      Key: {
-        pk: basePost.guildId,
-        sk: `base-post#${basePost.messageId}`,
-      },
-      UpdateExpression: "SET downloads = downloads + :one",
-      ConditionExpression: "attribute_exists(pk) AND attribute_exists(sk)",
-      ExpressionAttributeValues: {
-        ":one": 1,
-      },
-    })
-  );
-
-  const updatedPost = await getBasePost(basePost.guildId, basePost.messageId);
-  if (!updatedPost) {
-    throw new Error("Base post disappeared after its download was recorded.");
-  }
-
-  let displayUpdated = true;
-  try {
-    await updateMessage(
-      updatedPost.channelId,
-      updatedPost.messageId,
-      buildBasePostPayload(updatedPost)
-    );
-  } catch (err) {
-    displayUpdated = false;
-    console.error("Failed to refresh base-post download count", err);
-  }
-
-  await respond(
-    interaction,
-    displayUpdated
-      ? `Copy this base link:\n${updatedPost.baseLink}`
-      : `Copy this base link:\n${updatedPost.baseLink}\n\nThe download was counted, but I couldn't refresh the displayed total.`
-  );
 };
 
 const saveVote = async (

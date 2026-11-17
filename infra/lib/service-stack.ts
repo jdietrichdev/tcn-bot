@@ -278,6 +278,7 @@ export class ServiceStack extends Stack {
       logRetention: RetentionDays.ONE_MONTH,
       environment: {
         REGION: props.env!.region!,
+        BOT_TOKEN: process.env.BOT_TOKEN!,
       },
       timeout: Duration.seconds(30),
     });
@@ -297,6 +298,11 @@ export class ServiceStack extends Stack {
         allowHeaders: ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token"],
       },
     });
+    const basePostRedirectUrl = `${taskApiGateway.url}base-post`;
+    this.handler.addEnvironment(
+      "BASE_POST_REDIRECT_URL",
+      basePostRedirectUrl
+    );
 
     // Output the Task API Gateway URL
     new CfnOutput(this, "TaskApiUrl", {

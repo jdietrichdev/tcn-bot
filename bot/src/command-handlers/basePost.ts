@@ -3,7 +3,7 @@ import {
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
 } from "discord-api-types/v10";
-import { DeleteCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { DeleteCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import {
   deleteMessage,
   sendMessage,
@@ -103,6 +103,29 @@ export const handleBasePost = async (
     if (!channelId) {
       throw new Error("No base-post channel is configured for this server.");
     }
+    const redirectBaseUrl = process.env.BASE_POST_REDIRECT_URL;
+    if (!redirectBaseUrl) {
+      throw new Error("No base-post redirect URL is configured.");
+    }
+
+    const counterResult = await dynamoDbClient.send(
+      new UpdateCommand({
+        TableName: "BotTable",
+        Key: {
+          pk: interaction.guild_id,
+          sk: "base-post-counter",
+        },
+        UpdateExpression: "ADD lastBaseId :increment",
+        ExpressionAttributeValues: {
+          ":increment": 1,
+        },
+        ReturnValues: "UPDATED_NEW",
+      })
+    );
+    const baseId: unknown = counterResult.Attributes?.lastBaseId;
+    if (typeof baseId !== "number") {
+      throw new Error("Failed to allocate a base post ID.");
+    }
 
     const builderName =
       interaction.member?.user.username ??
@@ -112,6 +135,7 @@ export const handleBasePost = async (
       guildId: interaction.guild_id,
       channelId,
       messageId: "",
+      baseId,
       baseLink: linkUrl.toString(),
       clanCastle,
       league,
@@ -145,7 +169,7 @@ export const handleBasePost = async (
     await updateMessage(
       channelId,
       messageId,
-      buildBasePostPayload(record)
+      buildBasePostPayload(record, redirectBaseUrl)
     );
   } catch (err) {
     console.error("Failed to post base layout", err);
