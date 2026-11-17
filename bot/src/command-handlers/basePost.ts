@@ -176,7 +176,9 @@ export const handleBasePost = async (
     formData.append(
       "payload_json",
       JSON.stringify({
-        embeds: buildBasePostEmbeds(basePostData),
+        embeds: buildBasePostEmbeds(basePostData, {
+          includeTroopImage: false,
+        }),
         attachments: [
           { id: "0", filename: CLAN_CASTLE_TROOP_IMAGE_FILENAME },
         ],
@@ -245,10 +247,15 @@ export const handleBasePost = async (
       }
     }
 
-    await updateResponse(interaction.application_id, interaction.token, {
-      content: "I couldn't post the base. Please try again or contact an admin.",
-      flags: 64,
-    });
+    try {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content:
+          "I couldn't post the base. Please try again or contact an admin.",
+        flags: 64,
+      });
+    } catch (responseError) {
+      console.error("Failed to send base-post failure response", responseError);
+    }
     return;
   }
 

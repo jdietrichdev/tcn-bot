@@ -43,6 +43,15 @@ describe("base-post Clan Castle embeds", () => {
     expect(payload.attachments).toEqual([basePost.clanCastleAttachment]);
   });
 
+  it("keeps the troop image out of the initial message until its attachment is returned", () => {
+    const initialEmbeds = buildBasePostEmbeds(basePost, {
+      includeTroopImage: false,
+    });
+
+    expect(initialEmbeds).toHaveLength(1);
+    expect(initialEmbeds[0].image?.url).toBe(basePost.imageUrl);
+  });
+
   it("keeps legacy base posts as a single embed", () => {
     const legacyPost: BasePostRecord = {
       ...basePost,

@@ -59,10 +59,12 @@ export const buildBasePostEmbed = (basePost: BasePostRecord): APIEmbed => ({
 });
 
 export const buildBasePostEmbeds = (
-  basePost: BasePostRecord
+  basePost: BasePostRecord,
+  options: { includeTroopImage?: boolean } = {}
 ): APIEmbed[] => [
   buildBasePostEmbed(basePost),
-  ...(basePost.clanCastleTroops?.length
+  ...(options.includeTroopImage !== false &&
+  basePost.clanCastleTroops?.length
     ? [
         {
           title: "Clan Castle Troops",
