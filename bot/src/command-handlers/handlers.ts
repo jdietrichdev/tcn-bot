@@ -14,6 +14,7 @@ export * from "./infoCwl";
 export * from "./closeTicket";
 export * from "./deleteTicket";
 export * from "./createEvent";
+export * from "./basePost";
 export * from "./questionCreate";
 export * from "./questionClose";
 export * from "./questionAnswer";
