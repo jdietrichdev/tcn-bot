@@ -79,6 +79,7 @@ const linkPlayer = async (
       content:
         'There was an issue checking for existing links, please try again',
     });
+    return;
   }
 
   try {
@@ -89,6 +90,7 @@ const linkPlayer = async (
       content:
         'There was an issue verifying your credentials, please try again',
     });
+    return;
   }
 
   try {
@@ -111,6 +113,7 @@ const linkPlayer = async (
     await updateResponse(interaction.application_id, interaction.token, {
       content: 'There was an issue linking your account, please try again',
     });
+    return;
   }
 };
 

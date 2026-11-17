@@ -3,10 +3,8 @@ import {
   ComponentType,
   InteractionResponseType,
   TextInputStyle,
-  ModalSubmitComponent,
   APIModalSubmitInteraction,
 } from 'discord-api-types/v10';
-import { getConfig } from '../util/serverConfig';
 import { dynamoDbClient } from '../clients/dynamodb-client';
 import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { updateResponse } from '../adapters/discord-adapter';
@@ -86,6 +84,7 @@ export const submitLinkAccountModal = async (
       content:
         'There was an issue checking for existing links, please try again',
     });
+    return;
   }
 
   try {
@@ -96,6 +95,7 @@ export const submitLinkAccountModal = async (
       content:
         'There was an issue verifying your credentials, please try again',
     });
+    return;
   }
 
   try {
@@ -118,6 +118,7 @@ export const submitLinkAccountModal = async (
     await updateResponse(interaction.application_id, interaction.token, {
       content: 'There was an issue linking your account, please try again',
     });
+    return;
   }
 };
 
