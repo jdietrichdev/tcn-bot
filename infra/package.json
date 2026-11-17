@@ -16,7 +16,7 @@
     "deploy": "cdk deploy --all"
   },
   "devDependencies": {
-    "aws-cdk": "2.1029.4",
+    "aws-cdk": "2.1148.1",
     "ts-node": "10.9.2",
     "typescript": "5.9.3"
   },
