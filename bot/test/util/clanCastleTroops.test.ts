@@ -5,6 +5,7 @@ import { PNG } from "pngjs";
 import {
   buildClanCastleTroopGraphic,
   ClanCastleTroopInputError,
+  groupClanCastleTroops,
   parseClanCastleTroops,
 } from "../../src/util/clanCastleTroops";
 
@@ -44,6 +45,18 @@ describe("parseClanCastleTroops", () => {
       parseClanCastleTroops("1x Unknown Troop", iconDirectory)
     ).toThrow(/couldn't find a troop icon/i);
   });
+
+  it("groups super troops separately", () => {
+    const troops = [
+      { slug: "baby_dragon", quantity: 1 },
+      { slug: "ice_hound", quantity: 2 },
+    ];
+
+    expect(groupClanCastleTroops(troops)).toEqual({
+      troops: [{ slug: "baby_dragon", quantity: 1 }],
+      superTroops: [{ slug: "ice_hound", quantity: 2 }],
+    });
+  });
 });
 
 describe("buildClanCastleTroopGraphic", () => {
@@ -56,8 +69,9 @@ describe("buildClanCastleTroopGraphic", () => {
     for (const [slug, color] of [
       ["ice_golem", { red: 220, green: 40, blue: 40 }],
       ["baby_dragon", { red: 40, green: 80, blue: 220 }],
+      ["ice_hound", { red: 40, green: 180, blue: 60 }],
     ] as const) {
-      const icon = new PNG({ width: 96, height: 96 });
+      const icon = new PNG({ width: 24, height: 24 });
       for (let index = 0; index < icon.data.length; index += 4) {
         icon.data[index] = color.red;
         icon.data[index + 1] = color.green;
@@ -81,12 +95,14 @@ describe("buildClanCastleTroopGraphic", () => {
       [
         { slug: "ice_golem", quantity: 2 },
         { slug: "baby_dragon", quantity: 1 },
+        { slug: "ice_hound", quantity: 1 },
       ],
       iconDirectory
     );
     const graphic = PNG.sync.read(result);
     let redPixels = 0;
     let bluePixels = 0;
+    let greenPixels = 0;
 
     for (let index = 0; index < graphic.data.length; index += 4) {
       if (graphic.data[index] > 180 && graphic.data[index + 1] < 80) {
@@ -95,11 +111,19 @@ describe("buildClanCastleTroopGraphic", () => {
       if (graphic.data[index + 2] > 180 && graphic.data[index] < 80) {
         bluePixels += 1;
       }
+      if (
+        graphic.data[index + 1] > 140 &&
+        graphic.data[index] < 80 &&
+        graphic.data[index + 2] < 100
+      ) {
+        greenPixels += 1;
+      }
     }
 
-    expect(graphic.width).toBeGreaterThan(96);
-    expect(graphic.height).toBe(128);
+    expect(graphic.width).toBe(300);
+    expect(graphic.height).toBe(158);
     expect(redPixels).toBeGreaterThan(0);
     expect(bluePixels).toBeGreaterThan(0);
+    expect(greenPixels).toBeGreaterThan(0);
   });
 });

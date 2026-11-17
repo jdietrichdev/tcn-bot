@@ -7,7 +7,7 @@ const sourceDirectory = path.resolve(
   "../../ui/public/clashking-assets/troops"
 );
 const outputDirectory = path.resolve(__dirname, "../dist/clashking-troops");
-const iconSize = 96;
+const iconSize = 24;
 
 const copyTroopIcons = async () => {
   const troopDirectories = await fs.readdir(sourceDirectory, {
