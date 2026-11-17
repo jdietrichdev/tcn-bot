@@ -1,0 +1,126 @@
+import {
+  APIMessageComponentInteraction,
+  ComponentType,
+  InteractionResponseType,
+  TextInputStyle,
+  ModalSubmitComponent,
+  APIModalSubmitInteraction,
+} from 'discord-api-types/v10';
+import { getConfig } from '../util/serverConfig';
+import { dynamoDbClient } from '../clients/dynamodb-client';
+import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { updateResponse } from '../adapters/discord-adapter';
+import { verify } from '../adapters/coc-api-adapter';
+
+export const createLinkAccountModal = (
+  _interaction: APIMessageComponentInteraction,
+) => {
+  return {
+    type: InteractionResponseType.Modal,
+    data: {
+      custom_id: 'linkAccountModal',
+      title: 'Link your account',
+      components: [
+        {
+          type: ComponentType.ActionRow,
+          components: [
+            {
+              type: ComponentType.TextInput,
+              custom_id: 'playerTag',
+              label: 'Player tag',
+              style: TextInputStyle.Short,
+              required: true,
+            },
+          ],
+        },
+        {
+          type: ComponentType.ActionRow,
+          components: [
+            {
+              type: ComponentType.TextInput,
+              custom_id: 'apiToken',
+              label: 'API Token (from settings)',
+              style: TextInputStyle.Short,
+              required: true,
+            },
+          ],
+        },
+      ],
+    },
+  };
+};
+
+export const submitLinkAccountModal = async (
+  interaction: APIModalSubmitInteraction,
+) => {
+  const { playerTag, apiToken } = getLinkAccountData(interaction);
+  try {
+    const existingLink = await dynamoDbClient.send(
+      new QueryCommand({
+        TableName: 'BotTable',
+        IndexName: 'sk-index',
+        KeyConditionExpression: 'sk = :sk',
+        ExpressionAttributeValues: {
+          ':sk': `player#${playerTag.substring(1)}`,
+        },
+      }),
+    );
+    if (existingLink.Items && existingLink.Items.length > 0) {
+      for (const item of existingLink.Items) {
+        if (item.pk === interaction.user?.id) {
+          await updateResponse(interaction.application_id, interaction.token, {
+            content:
+              'Your account is already linked, no further action is needed',
+          });
+          return;
+        }
+      }
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: 'This player tag is already linked to another discord account',
+      });
+      return;
+    }
+  } catch (err) {
+    console.error('Error checking for existing links:', err);
+    await updateResponse(interaction.application_id, interaction.token, {
+      content:
+        'There was an issue checking for existing links, please try again',
+    });
+  }
+
+  try {
+    await verify(playerTag, apiToken);
+  } catch (err) {
+    console.error('Error verifying credentials:', err);
+    await updateResponse(interaction.application_id, interaction.token, {
+      content:
+        'There was an issue verifying your credentials, please try again',
+    });
+  }
+
+  try {
+    await dynamoDbClient.send(
+      new PutCommand({
+        TableName: 'BotTable',
+        Item: {
+          pk: interaction.user?.id,
+          sk: `player#${playerTag.substring(1)}`,
+          id: interaction.user?.id,
+          tag: playerTag,
+        },
+      }),
+    );
+  } catch (err) {
+    console.error('Error linking account:', err);
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: 'There was an issue linking your account, please try again',
+    });
+  }
+};
+
+const getLinkAccountData = (interaction: APIModalSubmitInteraction) => {
+  return {
+    playerTag: interaction.data.components[0].components[0].value,
+    apiToken: interaction.data.components[1].components[0].value,
+  };
+};
