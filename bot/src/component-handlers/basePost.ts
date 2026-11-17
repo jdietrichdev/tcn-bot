@@ -1,6 +1,5 @@
 import { TransactionCanceledException } from "@aws-sdk/client-dynamodb";
 import {
-  DeleteCommand,
   GetCommand,
   TransactWriteCommand,
   UpdateCommand,
@@ -157,7 +156,7 @@ const saveVote = async (
         ConsistentRead: true,
       })
     );
-    const storedChoice = existingVote.Item?.vote;
+    const storedChoice: unknown = existingVote.Item?.vote;
     const previousChoice: VoteChoice | undefined =
       storedChoice === "positive" || storedChoice === "negative"
         ? storedChoice

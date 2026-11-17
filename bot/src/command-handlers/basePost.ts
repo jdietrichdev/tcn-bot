@@ -147,10 +147,6 @@ export const handleBasePost = async (
       messageId,
       buildBasePostPayload(record)
     );
-    await updateResponse(interaction.application_id, interaction.token, {
-      content: `Your base has been posted in <#${channelId}>.`,
-      flags: 64,
-    });
   } catch (err) {
     console.error("Failed to post base layout", err);
 
@@ -177,5 +173,11 @@ export const handleBasePost = async (
       content: "I couldn't post the base. Please try again or contact an admin.",
       flags: 64,
     });
+    return;
   }
+
+  await updateResponse(interaction.application_id, interaction.token, {
+    content: `Your base has been posted in <#${channelId}>.`,
+    flags: 64,
+  });
 };
