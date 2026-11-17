@@ -67,7 +67,7 @@ export const submitLinkAccountModal = async (
     );
     if (existingLink.Items && existingLink.Items.length > 0) {
       for (const item of existingLink.Items) {
-        if (item.pk === interaction.user?.id) {
+        if (item.pk === interaction.member!.user.id) {
           await updateResponse(interaction.application_id, interaction.token, {
             content:
               'Your account is already linked, no further action is needed',
@@ -103,9 +103,9 @@ export const submitLinkAccountModal = async (
       new PutCommand({
         TableName: 'BotTable',
         Item: {
-          pk: interaction.user?.id,
+          pk: interaction.member!.user.id,
           sk: `player#${playerTag.substring(1)}`,
-          id: interaction.user?.id,
+          id: interaction.member!.user.id,
           tag: playerTag,
         },
       }),
