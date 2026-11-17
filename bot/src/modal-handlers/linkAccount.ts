@@ -110,6 +110,9 @@ export const submitLinkAccountModal = async (
         },
       }),
     );
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: 'Your account has been linked successfully!',
+    });
   } catch (err) {
     console.error('Error linking account:', err);
     await updateResponse(interaction.application_id, interaction.token, {
