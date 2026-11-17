@@ -2,12 +2,21 @@ import {
   APIApplicationCommandInteractionDataAttachmentOption,
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
-  APIEmbed,
-  ButtonStyle,
-  ComponentType,
 } from "discord-api-types/v10";
-import { sendMessage, updateResponse } from "../adapters/discord-adapter";
+import { DeleteCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  deleteMessage,
+  sendMessage,
+  updateMessage,
+  updateResponse,
+} from "../adapters/discord-adapter";
+import { dynamoDbClient } from "../clients/dynamodb-client";
 import { getCommandOptionData } from "../util/interaction-util";
+import {
+  BasePostRecord,
+  buildBasePostEmbed,
+  buildBasePostPayload,
+} from "../util/basePost";
 import { getConfig } from "../util/serverConfig";
 
 export const handleBasePost = async (
@@ -38,6 +47,14 @@ export const handleBasePost = async (
       interaction,
       "notes"
     )?.value;
+
+  if (!interaction.guild_id) {
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: "Base posts can only be created in a server.",
+      flags: 64,
+    });
+    return;
+  }
 
   let linkUrl: URL;
   try {
@@ -74,53 +91,88 @@ export const handleBasePost = async (
     });
     return;
   }
-  const imageUrl = image.url;
 
-  const username =
-    interaction.member?.user.username ?? interaction.user?.username ?? "Builder";
-  const embed: APIEmbed = {
-    title: "Clash of Clans Base",
-    description: `Shared by **${username}**`,
-    color: 0x5865f2,
-    fields: [
-      { name: "Clan Castle", value: clanCastle, inline: true },
-      { name: "Recommended League", value: league, inline: true },
-      ...(notes ? [{ name: "Builder Notes", value: notes }] : []),
-    ],
-    image: { url: imageUrl },
-  };
+  let channelId: string | undefined;
+  let messageId: string | undefined;
+  let record: BasePostRecord | undefined;
+  let recordSaved = false;
 
   try {
-    const channelId = getConfig(interaction.guild_id!).BASE_POST_CHANNEL;
+    const config = getConfig(interaction.guild_id);
+    channelId = config.BASE_POST_CHANNEL;
     if (!channelId) {
       throw new Error("No base-post channel is configured for this server.");
     }
 
-    await sendMessage(
-      {
-        embeds: [embed],
-        components: [
-          {
-            type: ComponentType.ActionRow,
-            components: [
-              {
-                type: ComponentType.Button,
-                style: ButtonStyle.Link,
-                label: "Open Base Link",
-                url: linkUrl.toString(),
-              },
-            ],
-          },
-        ],
-      },
+    const builderName =
+      interaction.member?.user.username ??
+      interaction.user?.username ??
+      "Builder";
+    const basePostData: BasePostRecord = {
+      guildId: interaction.guild_id,
+      channelId,
+      messageId: "",
+      baseLink: linkUrl.toString(),
+      clanCastle,
+      league,
+      notes,
+      imageUrl: image.url,
+      builderName,
+      downloads: 0,
+      positiveVotes: 0,
+      negativeVotes: 0,
+    };
+
+    const postedMessage = await sendMessage(
+      { embeds: [buildBasePostEmbed(basePostData)] },
       channelId
     );
+    messageId = postedMessage.id;
+    record = { ...basePostData, messageId };
+
+    await dynamoDbClient.send(
+      new PutCommand({
+        TableName: "BotTable",
+        Item: {
+          pk: interaction.guild_id,
+          sk: `base-post#${messageId}`,
+          ...record,
+        },
+      })
+    );
+    recordSaved = true;
+
+    await updateMessage(
+      channelId,
+      messageId,
+      buildBasePostPayload(record)
+    );
     await updateResponse(interaction.application_id, interaction.token, {
-      content: "Your base has been posted.",
+      content: `Your base has been posted in <#${channelId}>.`,
       flags: 64,
     });
   } catch (err) {
     console.error("Failed to post base layout", err);
+
+    if (channelId && messageId) {
+      try {
+        await deleteMessage(channelId, messageId);
+        if (recordSaved) {
+          await dynamoDbClient.send(
+            new DeleteCommand({
+              TableName: "BotTable",
+              Key: {
+                pk: interaction.guild_id,
+                sk: `base-post#${messageId}`,
+              },
+            })
+          );
+        }
+      } catch (cleanupError) {
+        console.error("Failed to clean up incomplete base post", cleanupError);
+      }
+    }
+
     await updateResponse(interaction.application_id, interaction.token, {
       content: "I couldn't post the base. Please try again or contact an admin.",
       flags: 64,

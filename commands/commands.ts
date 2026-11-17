@@ -161,29 +161,12 @@ export const basePost = new SlashCommandBuilder()
       .setDescription('League where this base is most effective')
       .setRequired(true)
       .setChoices([
-        { name: 'Legend League', value: 'Legend League' },
-        { name: 'Titan League I', value: 'Titan League I' },
-        { name: 'Titan League II', value: 'Titan League II' },
-        { name: 'Titan League III', value: 'Titan League III' },
-        { name: 'Champion League I', value: 'Champion League I' },
-        { name: 'Champion League II', value: 'Champion League II' },
-        { name: 'Champion League III', value: 'Champion League III' },
-        { name: 'Master League I', value: 'Master League I' },
-        { name: 'Master League II', value: 'Master League II' },
-        { name: 'Master League III', value: 'Master League III' },
-        { name: 'Crystal League I', value: 'Crystal League I' },
-        { name: 'Crystal League II', value: 'Crystal League II' },
-        { name: 'Crystal League III', value: 'Crystal League III' },
-        { name: 'Gold League I', value: 'Gold League I' },
-        { name: 'Gold League II', value: 'Gold League II' },
-        { name: 'Gold League III', value: 'Gold League III' },
-        { name: 'Silver League I', value: 'Silver League I' },
-        { name: 'Silver League II', value: 'Silver League II' },
-        { name: 'Silver League III', value: 'Silver League III' },
-        { name: 'Bronze League I', value: 'Bronze League I' },
-        { name: 'Bronze League II', value: 'Bronze League II' },
-        { name: 'Bronze League III', value: 'Bronze League III' },
-        { name: 'Unranked', value: 'Unranked' },
+        { name: 'Legends 1', value: 'Legends 1' },
+        { name: 'Legends 2', value: 'Legends 2' },
+        { name: 'Legends 3', value: 'Legends 3' },
+        { name: 'Legends 2/3', value: 'Legends 2/3' },
+        { name: 'CWL', value: 'CWL' },
+        { name: 'Titans CWL', value: 'Titans CWL' },
       ]);
   })
   .addAttachmentOption((option) => {
