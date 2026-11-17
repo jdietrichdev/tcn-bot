@@ -36,7 +36,7 @@ export const buildBasePostEmbed = (basePost: BasePostRecord): APIEmbed => ({
   title: "Clash of Clans Base",
   description: [
     `Shared by **${basePost.builderName}**`,
-    `📥 **${basePost.downloads} download${basePost.downloads === 1 ? "" : "s"}**`,
+    `\u{1F4E5} **${basePost.downloads} download${basePost.downloads === 1 ? "" : "s"}**`,
   ].join("\n\n"),
   color: 0x5865f2,
   fields: [
@@ -61,20 +61,20 @@ export const buildBasePostPayload = (
           type: ComponentType.Button,
           style: ButtonStyle.Primary,
           label: "Link",
-          emoji: { name: "🔗" },
+          emoji: { name: "\u{1F517}" },
           custom_id: BASE_POST_BUTTONS.link,
         },
         {
           type: ComponentType.Button,
           style: ButtonStyle.Success,
-          emoji: { name: "✅" },
+          emoji: { name: "\u{2705}" },
           label: String(basePost.positiveVotes),
           custom_id: BASE_POST_BUTTONS.positiveVote,
         },
         {
           type: ComponentType.Button,
           style: ButtonStyle.Danger,
-          emoji: { name: "❌" },
+          emoji: { name: "\u{274C}" },
           label: String(basePost.negativeVotes),
           custom_id: BASE_POST_BUTTONS.negativeVote,
         },
@@ -85,7 +85,7 @@ export const buildBasePostPayload = (
 
 export const isBasePostRecord = (
   item: Record<string, unknown> | undefined
-): item is BasePostRecord =>
+): item is BasePostRecord & Record<string, unknown> =>
   !!item &&
   typeof item.guildId === "string" &&
   typeof item.channelId === "string" &&
