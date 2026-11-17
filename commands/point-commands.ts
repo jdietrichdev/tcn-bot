@@ -1,6 +1,3 @@
-import { apply, closeTicket, deleteTicket } from "./commands";
+import { apply, deleteTicket, link } from './commands';
 
-export const pointCommands = [
-    apply,
-    deleteTicket,
-]
+export const pointCommands = [apply, deleteTicket, link];

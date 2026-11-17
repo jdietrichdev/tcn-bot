@@ -125,24 +125,24 @@ configMap.set('1021786969077973022', {
     questions: [
       {
         custom_id: 'reason',
-        label: 'What brings you to our team?'
+        label: 'What brings you to our team?',
       },
       {
         custom_id: 'location',
-        label: 'Where are you from?'
+        label: 'Where are you from?',
       },
       {
         custom_id: 'experience',
-        label: 'What previous team experience do you have?'
+        label: 'What previous team experience do you have?',
       },
       {
         custom_id: 'goals',
-        label: 'What are your goals and expectations?'
+        label: 'What are your goals and expectations?',
       },
       {
         custom_id: 'achievement',
-        label: 'What is your biggest achievement in game?'
-      }
+        label: 'What is your biggest achievement in game?',
+      },
     ],
   },
   CAN_CLOSE_TICKET: false,
@@ -169,9 +169,9 @@ configMap.set('1111490767991615518', {
   CWL_SIGNUP_CHANNEL: '1155987285184106626',
   CWL_ROSTER_CHANNEL: '1377795905612152924',
   ELDER_PROPOSAL_CHANNEL: '1424861717011235010',
-  LEAD_PROPOSAL_CHANNEL: '1441524134428282910',  
+  LEAD_PROPOSAL_CHANNEL: '1441524134428282910',
   FAMILY_LEAD_CHANNEL: '1276364688288124949',
-  ADMIN_CHANNEL:'1155173881443799100',
+  ADMIN_CHANNEL: '1155173881443799100',
   ADMIN_ROLE: '1155171137500741722',
   RECRUITER_ROLE: '1162202780845482024',
   CLAN_ROLE: '1112857721910341703',
@@ -214,25 +214,25 @@ configMap.set('1111490767991615518', {
     questions: [
       {
         custom_id: 'tags',
-        label: 'Player tag(s)'
+        label: 'Player tag(s)',
       },
       {
         custom_id: 'source',
-        label: 'Where/Who did you learn about us from?'
+        label: 'Where/Who did you learn about us from?',
       },
       {
         custom_id: 'leaveClan',
-        label: "Why'd you leave your current/previous clan?"
+        label: "Why'd you leave your current/previous clan?",
       },
       {
         custom_id: 'clanWants',
-        label: 'What do you want in a clan?'
+        label: 'What do you want in a clan?',
       },
       {
         custom_id: 'competition',
-        label: 'Competition level/favorite strategies?'
-      }
-    ]
+        label: 'Competition level/favorite strategies?',
+      },
+    ],
   },
   CAN_CLOSE_TICKET: true,
   LINK_ACCOUNT_FROM_TICKET: false,
@@ -282,28 +282,29 @@ configMap.set('1310007885656363068', {
     questions: [
       {
         custom_id: 'tags',
-        label: 'Player tag(s)'
+        label: 'Player tag(s)',
       },
       {
         custom_id: 'source',
-        label: 'Where/Who did you learn about us from?'
+        label: 'Where/Who did you learn about us from?',
       },
       {
         custom_id: 'leaveClan',
-        label: "Why'd you leave your current/previous clan?"
+        label: "Why'd you leave your current/previous clan?",
       },
       {
         custom_id: 'clanWants',
-        label: 'What do you want in a clan?'
+        label: 'What do you want in a clan?',
       },
       {
         custom_id: 'competition',
-        label: 'Competition level/favorite strategies?'
-      }],
+        label: 'Competition level/favorite strategies?',
+      },
+    ],
   },
   CAN_CLOSE_TICKET: false,
-  LINK_ACCOUNT_FROM_TICKET: false,
-})
+  LINK_ACCOUNT_FROM_TICKET: true,
+});
 
 export const getConfig = (guidId: string): ServerConfig => {
   const config = configMap.get(guidId);
