@@ -37,7 +37,9 @@ export const createLinkAccountModal = (
             {
               type: ComponentType.TextInput,
               custom_id: 'apiToken',
-              label: 'API Token (from settings)',
+              label: 'API Token',
+              placeholder:
+                'Profile > Settings > More Settings > API Token > Show > Copy',
               style: TextInputStyle.Short,
               required: true,
             },

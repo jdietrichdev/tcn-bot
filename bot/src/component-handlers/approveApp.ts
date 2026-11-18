@@ -77,7 +77,7 @@ export const approveApp = async (
       await sendMessage(
         {
           content:
-            'If this is your first time in our server, please use the button below to link your account with our bot.',
+            'To find your Clash API token: Profile (top-left) > Settings > More Settings > API Token > Show > Copy. Run `/api-token-help` for screenshots. Click Link Account below and enter your player tag and token.',
           components: [
             {
               type: ComponentType.ActionRow,
