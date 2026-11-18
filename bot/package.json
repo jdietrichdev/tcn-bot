@@ -5,7 +5,7 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "build": "webpack && node scripts/copyTroopIcons.cjs",
+    "build": "webpack && node scripts/copyTroopIcons.cjs && node scripts/copy-api-token-help-assets.cjs",
     "sync:base-post-emojis": "node scripts/syncTroopEmojis.cjs",
     "test": "jest",
     "lint": "eslint src/ --ext .ts --max-warnings 2000",

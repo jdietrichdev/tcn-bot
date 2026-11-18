@@ -26,7 +26,9 @@ export const link = new SlashCommandBuilder()
       .addStringOption((option) => {
         return option
           .setName('token')
-          .setDescription('API token from settings')
+          .setDescription(
+            'In Clash: Profile (top-left) > Settings > More Settings > API Token > Show > Copy',
+          )
           .setRequired(true);
       });
   })
@@ -42,6 +44,10 @@ export const link = new SlashCommandBuilder()
           .setAutocomplete(true);
       });
   });
+
+export const apiTokenHelp = new SlashCommandBuilder()
+  .setName('api-token-help')
+  .setDescription('Shows where to find your Clash of Clans API token');
 
 export const player = new SlashCommandBuilder()
   .setName('player')

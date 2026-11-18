@@ -2,6 +2,7 @@ import { SlashCommandOptionsOnlyBuilder } from "discord.js";
 import {
   apply,
   basePost,
+  apiTokenHelp,
   cwlRoster,
   recruiterScore,
   recruiterLeaderboard,
@@ -48,6 +49,7 @@ import {
 export const tcnCommands: SlashCommandOptionsOnlyBuilder[] = [
   apply,
   basePost,
+  apiTokenHelp,
   cwlRoster,
   ro,
   recruiterScore,

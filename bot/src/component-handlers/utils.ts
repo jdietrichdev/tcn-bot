@@ -1,24 +1,25 @@
-import { getServerUser } from "../adapters/discord-adapter";
-import { ServerConfig } from "../util/serverConfig";
-import { BUTTONS } from "./buttons";
+import { getServerUser } from '../adapters/discord-adapter';
+import { ServerConfig } from '../util/serverConfig';
+import { BUTTONS } from './buttons';
 
 const BUTTON_MODAL_TRIGGERS = [
-  "apply",
-  "leadApply",
-  "denyApp",
-  "signupAccount",
-  "cwlQuestions",
-  "vouch",
-  "oppose",
-  "indifferent",
-  "base_post_settings",
+  'apply',
+  'leadApply',
+  'denyApp',
+  'signupAccount',
+  'cwlQuestions',
+  'vouch',
+  'oppose',
+  'indifferent',
+  'linkAccount',
+  'base_post_settings',
 ];
-const COMMAND_MODAL_TRIGGERS = ["apply", "lead-apply"];
+const COMMAND_MODAL_TRIGGERS = ['apply', 'lead-apply'];
 
 export const isActorAdmin = async (
   guildId: string,
   userId: string,
-  config: ServerConfig
+  config: ServerConfig,
 ) => {
   const actor = await getServerUser(guildId, userId);
   return actor.roles.includes(config.ADMIN_ROLE);
@@ -27,7 +28,7 @@ export const isActorAdmin = async (
 export const isActorRecruiter = async (
   guildId: string,
   userId: string,
-  config: ServerConfig
+  config: ServerConfig,
 ) => {
   const actor = await getServerUser(guildId, userId);
   return actor.roles.includes(config.RECRUITER_ROLE);
@@ -36,7 +37,7 @@ export const isActorRecruiter = async (
 export const determineRolesButton = async (
   guildId: string,
   userId: string,
-  config: ServerConfig
+  config: ServerConfig,
 ) => {
   const applicant = await getServerUser(guildId, userId);
   return applicant.roles.includes(config.CLAN_ROLE)

@@ -1,37 +1,43 @@
-import { Construct } from "constructs";
-import { Duration, RemovalPolicy, Stack, StackProps, CfnOutput } from "aws-cdk-lib";
+import { Construct } from 'constructs';
+import {
+  Duration,
+  RemovalPolicy,
+  Stack,
+  StackProps,
+  CfnOutput,
+} from 'aws-cdk-lib';
 import {
   Code,
   Function as Lambda,
   Runtime,
   StartingPosition,
-} from "aws-cdk-lib/aws-lambda";
+} from 'aws-cdk-lib/aws-lambda';
 import {
   AccessLogFormat,
   LambdaRestApi,
   LogGroupLogDestination,
-} from "aws-cdk-lib/aws-apigateway";
-import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
+} from 'aws-cdk-lib/aws-apigateway';
+import { LogGroup, RetentionDays } from 'aws-cdk-lib/aws-logs';
 import {
   EventBus,
   Rule,
   RuleTargetInput,
   Schedule,
-} from "aws-cdk-lib/aws-events";
+} from 'aws-cdk-lib/aws-events';
 import {
   CloudWatchLogGroup,
   LambdaFunction,
-} from "aws-cdk-lib/aws-events-targets";
-import { Table } from "aws-cdk-lib/aws-dynamodb";
+} from 'aws-cdk-lib/aws-events-targets';
+import { Table } from 'aws-cdk-lib/aws-dynamodb';
 import {
   BlockPublicAccess,
   Bucket,
   BucketEncryption,
   EventType,
-} from "aws-cdk-lib/aws-s3";
-import { LambdaDestination } from "aws-cdk-lib/aws-s3-notifications";
-import { PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { CfnPipe } from "aws-cdk-lib/aws-pipes";
+} from 'aws-cdk-lib/aws-s3';
+import { LambdaDestination } from 'aws-cdk-lib/aws-s3-notifications';
+import { PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+import { CfnPipe } from 'aws-cdk-lib/aws-pipes';
 
 interface ServiceStackProps extends StackProps {
   table: Table;
@@ -50,30 +56,30 @@ export class ServiceStack extends Stack {
   constructor(scope: Construct, id: string, props: ServiceStackProps) {
     super(scope, id, props);
 
-    this.rosterBucket = new Bucket(this, "roster-bucket", {
-      bucketName: "bot-roster-bucket",
+    this.rosterBucket = new Bucket(this, 'roster-bucket', {
+      bucketName: 'bot-roster-bucket',
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       encryption: BucketEncryption.S3_MANAGED,
       versioned: true,
     });
 
-    this.transcriptBucket = new Bucket(this, "transcript-bucket", {
-      bucketName: "bot-transcript-bucket",
+    this.transcriptBucket = new Bucket(this, 'transcript-bucket', {
+      bucketName: 'bot-transcript-bucket',
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       encryption: BucketEncryption.S3_MANAGED,
     });
 
-    const schedulerRole = new Role(this, "scheduler-role", {
-      roleName: "SchedulerRole",
-      assumedBy: new ServicePrincipal("scheduler.amazonaws.com"),
-      description: "Allows EventBridge Scheduler to invoke lambda functions",
+    const schedulerRole = new Role(this, 'scheduler-role', {
+      roleName: 'SchedulerRole',
+      assumedBy: new ServicePrincipal('scheduler.amazonaws.com'),
+      description: 'Allows EventBridge Scheduler to invoke lambda functions',
     });
 
-    this.scheduled = new Lambda(this, "bot-scheduled", {
-      functionName: "bot-scheduled",
+    this.scheduled = new Lambda(this, 'bot-scheduled', {
+      functionName: 'bot-scheduled',
       runtime: Runtime.NODEJS_22_X,
-      handler: "index.scheduled",
-      code: Code.fromAsset("../bot/dist"),
+      handler: 'index.scheduled',
+      code: Code.fromAsset('../bot/dist'),
       logRetention: RetentionDays.ONE_MONTH,
       environment: {
         REGION: props.env!.region!,
@@ -86,76 +92,76 @@ export class ServiceStack extends Stack {
     props.botTable.grantReadWriteData(this.scheduled);
     this.scheduled.addToRolePolicy(
       new PolicyStatement({
-        actions: ["scheduler:DeleteSchedule"],
+        actions: ['scheduler:DeleteSchedule'],
         resources: [
           `arn:aws:scheduler:${this.region}:${this.account}:schedule/*`,
         ],
-      })
+      }),
     );
     this.scheduled.addToRolePolicy(
       new PolicyStatement({
-        actions: ["iam:PassRole"],
+        actions: ['iam:PassRole'],
         resources: [schedulerRole.roleArn],
-      })
+      }),
     );
     schedulerRole.addToPolicy(
       new PolicyStatement({
-        actions: ["lambda:InvokeFunction"],
+        actions: ['lambda:InvokeFunction'],
         resources: [this.scheduled.functionArn],
-      })
+      }),
     );
 
-    this.eventBus = new EventBus(this, "bot-events", {
-      eventBusName: "tcn-bot-events",
+    this.eventBus = new EventBus(this, 'bot-events', {
+      eventBusName: 'tcn-bot-events',
     });
 
-    const eventLog = new LogGroup(this, "event-audit-log", {
-      logGroupName: "EventAuditLogs",
+    const eventLog = new LogGroup(this, 'event-audit-log', {
+      logGroupName: 'EventAuditLogs',
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
-    new Rule(this, "audit-log-rule", {
-      ruleName: "AuditLogRule",
-      description: "Audit log for events",
+    new Rule(this, 'audit-log-rule', {
+      ruleName: 'AuditLogRule',
+      description: 'Audit log for events',
       eventBus: this.eventBus,
       eventPattern: {
-        source: ["tcn-bot-event"],
+        source: ['tcn-bot-event'],
       },
       targets: [new CloudWatchLogGroup(eventLog)],
     });
 
-    new Rule(this, "bot-scheduled-recruiter-score", {
+    new Rule(this, 'bot-scheduled-recruiter-score', {
       schedule: Schedule.cron({
-        minute: "0",
-        hour: "12",
-        weekDay: "SUN",
+        minute: '0',
+        hour: '12',
+        weekDay: 'SUN',
       }),
       targets: [
         new LambdaFunction(this.scheduled, {
           event: RuleTargetInput.fromObject({
-            source: "tcn-bot-scheduled",
-            "detail-type": "Generate Recruiter Score",
+            source: 'tcn-bot-scheduled',
+            'detail-type': 'Generate Recruiter Score',
             detail: {
-              guildId: "1021786969077973022",
+              guildId: '1021786969077973022',
             },
           }),
         }),
       ],
     });
 
-    new Rule(this, "bot-scheduled-rank-proposal-reminder", {
+    new Rule(this, 'bot-scheduled-rank-proposal-reminder', {
       schedule: Schedule.cron({
-        minute: "0",
-        hour: "12",
-        weekDay: "TUE",
+        minute: '0',
+        hour: '12',
+        weekDay: 'TUE',
       }),
       targets: [
         new LambdaFunction(this.scheduled, {
           event: RuleTargetInput.fromObject({
-            source: "tcn-bot-scheduled",
-            "detail-type": "Rank Proposal Reminder",
+            source: 'tcn-bot-scheduled',
+            'detail-type': 'Rank Proposal Reminder',
             detail: {
-              guildId: "1021786969077973022",
+              guildId: '1021786969077973022',
             },
           }),
         }),
@@ -167,39 +173,39 @@ export class ServiceStack extends Stack {
       targets: [
         new LambdaFunction(this.scheduled, {
           event: RuleTargetInput.fromObject({
-            source: "tcn-bot-scheduled",
-            "detail-type": "Applicant Leave Check",
+            source: 'tcn-bot-scheduled',
+            'detail-type': 'Applicant Leave Check',
             detail: {
-              guildId: "1021786969077973022"
-            }
-          })
-        })
-      ]
-    })
+              guildId: '1021786969077973022',
+            },
+          }),
+        }),
+      ],
+    });
 
     new Rule(this, 'daily-task-reminders', {
       schedule: Schedule.cron({
-        minute: "0",
-        hour: "9", // 9 AM UTC (adjust as needed for your timezone)
+        minute: '0',
+        hour: '9', // 9 AM UTC (adjust as needed for your timezone)
       }),
       targets: [
         new LambdaFunction(this.scheduled, {
           event: RuleTargetInput.fromObject({
-            source: "tcn-bot-scheduled",
-            "detail-type": "Daily Task Reminders",
+            source: 'tcn-bot-scheduled',
+            'detail-type': 'Daily Task Reminders',
             detail: {
-              guildId: "1021786969077973022"
-            }
-          })
-        })
-      ]
-    })
+              guildId: '1021786969077973022',
+            },
+          }),
+        }),
+      ],
+    });
 
-    this.proxy = new Lambda(this, "bot-proxy", {
-      functionName: "bot-proxy",
+    this.proxy = new Lambda(this, 'bot-proxy', {
+      functionName: 'bot-proxy',
       runtime: Runtime.NODEJS_22_X,
-      handler: "index.proxy",
-      code: Code.fromAsset("../bot/dist"),
+      handler: 'index.proxy',
+      code: Code.fromAsset('../bot/dist'),
       logRetention: RetentionDays.ONE_MONTH,
       environment: {
         REGION: props.env!.region!,
@@ -210,11 +216,11 @@ export class ServiceStack extends Stack {
     this.rosterBucket.grantRead(this.proxy);
     props.botTable.grantReadData(this.proxy);
 
-    this.handler = new Lambda(this, "bot-handler", {
-      functionName: "bot-handler",
+    this.handler = new Lambda(this, 'bot-handler', {
+      functionName: 'bot-handler',
       runtime: Runtime.NODEJS_22_X,
-      handler: "index.handler",
-      code: Code.fromAsset("../bot/dist"),
+      handler: 'index.handler',
+      code: Code.fromAsset('../bot/dist'),
       logRetention: RetentionDays.ONE_MONTH,
       environment: {
         REGION: props.env!.region!,
@@ -228,53 +234,53 @@ export class ServiceStack extends Stack {
     });
     this.handler.addToRolePolicy(
       new PolicyStatement({
-        actions: ["scheduler:CreateSchedule", "scheduler:DeleteSchedule"],
+        actions: ['scheduler:CreateSchedule', 'scheduler:DeleteSchedule'],
         resources: [
           `arn:aws:scheduler:${this.region}:${this.account}:schedule/*`,
         ],
-      })
+      }),
     );
     this.handler.addToRolePolicy(
       new PolicyStatement({
-        actions: ["iam:PassRole"],
+        actions: ['iam:PassRole'],
         resources: [schedulerRole.roleArn],
-      })
+      }),
     );
     props.table.grantReadWriteData(this.handler);
     props.botTable.grantReadWriteData(this.handler);
     this.transcriptBucket.grantWrite(this.handler);
 
-    new Rule(this, "bot-event-handler", {
-      ruleName: "BotEventHandler",
-      description: "Handler for incoming bot events",
+    new Rule(this, 'bot-event-handler', {
+      ruleName: 'BotEventHandler',
+      description: 'Handler for incoming bot events',
       eventBus: this.eventBus,
       eventPattern: {
-        source: ["tcn-bot-event"],
-        detailType: ["Bot Event Received"],
+        source: ['tcn-bot-event'],
+        detailType: ['Bot Event Received'],
       },
       targets: [new LambdaFunction(this.handler)],
     });
 
-    const accessLogs = new LogGroup(this, "access-logs", {
-      logGroupName: "BotAccessLogs",
+    const accessLogs = new LogGroup(this, 'access-logs', {
+      logGroupName: 'BotAccessLogs',
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
-    new LambdaRestApi(this, "discord-bot-api", {
-      restApiName: "DiscordBotApi",
+    new LambdaRestApi(this, 'discord-bot-api', {
+      restApiName: 'DiscordBotApi',
       handler: this.proxy,
       deployOptions: {
-        stageName: "prod",
+        stageName: 'prod',
         accessLogDestination: new LogGroupLogDestination(accessLogs),
         accessLogFormat: AccessLogFormat.jsonWithStandardFields(),
       },
     });
 
-    this.taskApiLambda = new Lambda(this, "task-api", {
-      functionName: "task-api",
+    this.taskApiLambda = new Lambda(this, 'task-api', {
+      functionName: 'task-api',
       runtime: Runtime.NODEJS_22_X,
-      handler: "taskApi.taskApi",
-      code: Code.fromAsset("../bot/dist"),
+      handler: 'taskApi.taskApi',
+      code: Code.fromAsset('../bot/dist'),
       logRetention: RetentionDays.ONE_MONTH,
       environment: {
         REGION: props.env!.region!,
@@ -284,18 +290,24 @@ export class ServiceStack extends Stack {
     });
     props.botTable.grantReadWriteData(this.taskApiLambda);
 
-    const taskApiGateway = new LambdaRestApi(this, "task-api-gateway", {
-      restApiName: "TaskApi",
+    const taskApiGateway = new LambdaRestApi(this, 'task-api-gateway', {
+      restApiName: 'TaskApi',
       handler: this.taskApiLambda,
       deployOptions: {
-        stageName: "prod",
+        stageName: 'prod',
         accessLogDestination: new LogGroupLogDestination(accessLogs),
         accessLogFormat: AccessLogFormat.jsonWithStandardFields(),
       },
       defaultCorsPreflightOptions: {
-        allowOrigins: ["*"],
-        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allowHeaders: ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token"],
+        allowOrigins: ['*'],
+        allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowHeaders: [
+          'Content-Type',
+          'X-Amz-Date',
+          'Authorization',
+          'X-Api-Key',
+          'X-Amz-Security-Token',
+        ],
       },
     });
     const basePostRedirectUrl = `${taskApiGateway.url}base-post`;
@@ -305,17 +317,17 @@ export class ServiceStack extends Stack {
     );
 
     // Output the Task API Gateway URL
-    new CfnOutput(this, "TaskApiUrl", {
+    new CfnOutput(this, 'TaskApiUrl', {
       value: taskApiGateway.url,
-      description: "Task API Gateway URL",
-      exportName: "TaskApiUrl",
+      description: 'Task API Gateway URL',
+      exportName: 'TaskApiUrl',
     });
 
-    const botProcessor = new Lambda(this, "bot-processor", {
-      functionName: "bot-processor",
+    const botProcessor = new Lambda(this, 'bot-processor', {
+      functionName: 'bot-processor',
       runtime: Runtime.NODEJS_22_X,
-      handler: "index.processor",
-      code: Code.fromAsset("../bot/dist"),
+      handler: 'index.processor',
+      code: Code.fromAsset('../bot/dist'),
       logRetention: RetentionDays.ONE_MONTH,
       environment: {
         REGION: props.env!.region!,
@@ -327,18 +339,18 @@ export class ServiceStack extends Stack {
 
     this.rosterBucket.addEventNotification(
       EventType.OBJECT_CREATED,
-      new LambdaDestination(botProcessor)
+      new LambdaDestination(botProcessor),
     );
 
-    const pipeRole = new Role(this, "bot-pipe-role", {
-      roleName: "BotPipeRole",
-      assumedBy: new ServicePrincipal("pipes.amazonaws.com"),
+    const pipeRole = new Role(this, 'bot-pipe-role', {
+      roleName: 'BotPipeRole',
+      assumedBy: new ServicePrincipal('pipes.amazonaws.com'),
     });
 
     props.botTable.grantStreamRead(pipeRole);
     botProcessor.grantInvoke(pipeRole);
 
-    new CfnPipe(this, "user-data-pipe", {
+    new CfnPipe(this, 'user-data-pipe', {
       source: props.botTable.tableStreamArn!,
       target: botProcessor.functionArn,
       roleArn: pipeRole.roleArn,
@@ -351,11 +363,11 @@ export class ServiceStack extends Stack {
           filters: [
             {
               pattern: JSON.stringify({
-                eventName: ["INSERT"],
+                eventName: ['INSERT'],
                 dynamodb: {
                   Keys: {
                     sk: {
-                      S: [{ prefix: "player" }],
+                      S: [{ prefix: 'player' }],
                     },
                   },
                 },
@@ -366,11 +378,11 @@ export class ServiceStack extends Stack {
       },
       targetParameters: {
         lambdaFunctionParameters: {
-          invocationType: "FIRE_AND_FORGET",
+          invocationType: 'FIRE_AND_FORGET',
         },
         inputTemplate: JSON.stringify({
-          id: "<$.dynamodb.NewImage.id.S>",
-          tag: "<$.dynamodb.NewImage.tag.S>",
+          id: '<$.dynamodb.NewImage.id.S>',
+          tag: '<$.dynamodb.NewImage.tag.S>',
         }),
       },
     });

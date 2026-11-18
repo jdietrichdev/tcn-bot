@@ -1,38 +1,43 @@
-import { APIModalSubmitInteraction } from "discord-api-types/v10";
-import { submitApplyModal } from "./apply";
-import { submitDenyAppModal } from "./denyApp";
-import { submitLeadApplyModal } from "./leadApply";
-import { submitCwlAccountSignupModal } from "./signupAccount";
-import { submitCwlQuestionsModal } from "./cwlQuestions";
-import { submitVoteNominationModal } from "./nominationVote";
-import { submitBasePostEditModal } from "./basePost";
+import { APIModalSubmitInteraction } from 'discord-api-types/v10';
+import { submitApplyModal } from './apply';
+import { submitDenyAppModal } from './denyApp';
+import { submitLeadApplyModal } from './leadApply';
+import { submitCwlAccountSignupModal } from './signupAccount';
+import { submitCwlQuestionsModal } from './cwlQuestions';
+import { submitVoteNominationModal } from './nominationVote';
+import { submitLinkAccountModal } from './linkAccount';
+import { submitBasePostEditModal } from './basePost';
 
 export const submitModal = async (interaction: APIModalSubmitInteraction) => {
-  if (interaction.data.custom_id.startsWith("base_post_edit:")) {
+  if (interaction.data.custom_id.startsWith('base_post_edit:')) {
     await submitBasePostEditModal(interaction);
     return;
   }
 
-  const id = interaction.data.custom_id.split("_")[0];
+  const id = interaction.data.custom_id.split('_')[0];
   switch (id) {
-    case "applicationModal":
+    case 'applicationModal':
       await submitApplyModal(interaction);
       break;
-    case "leadApplicationModal":
+    case 'leadApplicationModal':
       await submitLeadApplyModal(interaction);
       break;
-    case "denyAppModal":
+    case 'denyAppModal':
       await submitDenyAppModal(interaction);
       break;
-    case "cwlSignupModal":
+    case 'cwlSignupModal':
       await submitCwlAccountSignupModal(interaction);
       break;
-    case "cwlQuestions":
+    case 'cwlQuestions':
       await submitCwlQuestionsModal(interaction);
       break;
-    case "vouchModal":
-    case "opposeModal":
-    case "indifferentModal":
+    case 'vouchModal':
+    case 'opposeModal':
+    case 'indifferentModal':
       await submitVoteNominationModal(interaction);
+      break;
+    case 'linkAccountModal':
+      await submitLinkAccountModal(interaction);
+      break;
   }
 };

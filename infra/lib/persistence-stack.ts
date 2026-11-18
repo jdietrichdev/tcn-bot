@@ -42,5 +42,13 @@ export class PersistenceStack extends Stack {
       timeToLiveAttribute: "expires",
       removalPolicy: RemovalPolicy.RETAIN,
     });
+
+    this.botTable.addGlobalSecondaryIndex({
+      indexName: "sk-index",
+      partitionKey: {
+        name: "sk",
+        type: AttributeType.STRING,
+      },
+    });
   }
 }

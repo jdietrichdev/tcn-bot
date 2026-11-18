@@ -18,6 +18,8 @@ export const handleCommand = async (
         return await commands.handleBasePost(event.detail);
       case "link":
         return await commands.handleLink(event.detail);
+      case "api-token-help":
+        return await commands.handleApiTokenHelp(event.detail);
       case "test":
         return await handleTest(event.detail);
       case "upgrade":
