@@ -137,4 +137,10 @@ export const BUTTONS = {
     label: "Detailed Results",
     custom_id: "nominationResults",
   } as APIButtonComponentWithCustomId,
+  LINK_ACCOUNT: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Primary,
+    label: "Link Account",
+    custom_id: "linkAccount",
+  } as APIButtonComponentWithCustomId,
 };

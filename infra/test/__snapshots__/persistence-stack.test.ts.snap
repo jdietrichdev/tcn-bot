@@ -52,6 +52,24 @@ exports[`Infrastructure created 1`] = `
             "AttributeType": "S"
           }
         ],
+        "GlobalSecondaryIndexes": [
+          {
+            "IndexName": "sk-index",
+            "KeySchema": [
+              {
+                "AttributeName": "sk",
+                "KeyType": "HASH"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            },
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": 5,
+              "WriteCapacityUnits": 5
+            }
+          }
+        ],
         "KeySchema": [
           {
             "AttributeName": "pk",

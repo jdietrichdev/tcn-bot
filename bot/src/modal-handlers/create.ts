@@ -1,39 +1,48 @@
 import {
   APIApplicationCommandInteraction,
   APIMessageComponentInteraction,
-} from "discord-api-types/v10";
-import { createApplyModal } from "./apply";
-import { createDenyAppModal } from "./denyApp";
-import { createLeadApplyModal } from "./leadApply";
-import { createCwlAccountSignupModal } from "./signupAccount";
-import { createCwlQuestionsModal } from "./cwlQuestions";
-import { createVoteNominationModal } from "./nominationVote";
+} from 'discord-api-types/v10';
+import { createApplyModal } from './apply';
+import { createDenyAppModal } from './denyApp';
+import { createLeadApplyModal } from './leadApply';
+import { createCwlAccountSignupModal } from './signupAccount';
+import { createCwlQuestionsModal } from './cwlQuestions';
+import { createVoteNominationModal } from './nominationVote';
+import { createLinkAccountModal } from './linkAccount';
 
 export const createModal = (
   interaction:
     | APIMessageComponentInteraction
     | APIApplicationCommandInteraction,
-  trigger: string
+  trigger: string,
 ) => {
   switch (trigger) {
-    case "apply":
+    case 'apply':
       return createApplyModal(interaction);
-    case "lead-apply":
-    case "applyLead":
+    case 'lead-apply':
+    case 'applyLead':
       return createLeadApplyModal(interaction);
-    case "denyApp":
+    case 'denyApp':
       return createDenyAppModal(interaction as APIMessageComponentInteraction);
-    case "signupAccount":
+    case 'signupAccount':
       return createCwlAccountSignupModal(
-        interaction as APIMessageComponentInteraction
+        interaction as APIMessageComponentInteraction,
       );
-    case "cwlQuestions":
-      return createCwlQuestionsModal(interaction as APIMessageComponentInteraction);
-    case "vouch":
-    case "oppose":
-    case "indifferent":
-      return createVoteNominationModal(interaction as APIMessageComponentInteraction);
+    case 'cwlQuestions':
+      return createCwlQuestionsModal(
+        interaction as APIMessageComponentInteraction,
+      );
+    case 'vouch':
+    case 'oppose':
+    case 'indifferent':
+      return createVoteNominationModal(
+        interaction as APIMessageComponentInteraction,
+      );
+    case 'linkAccount':
+      return createLinkAccountModal(
+        interaction as APIMessageComponentInteraction,
+      );
     default:
-      throw new Error("No handler defined for creating modal");
+      throw new Error('No handler defined for creating modal');
   }
 };

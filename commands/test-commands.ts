@@ -1,6 +1,7 @@
 import {
   apply,
   link,
+  apiTokenHelp,
   hello,
   player,
   event,
@@ -55,6 +56,7 @@ import {
 export const testCommands = [
   apply,
   link,
+  apiTokenHelp,
   hello,
   player,
   event,

@@ -1,12 +1,12 @@
-import axios from "axios";
+import axios from 'axios';
 
-const BASE_URL = "https://cocproxy.royaleapi.dev/v1";
+const BASE_URL = 'https://cocproxy.royaleapi.dev/v1';
 
 export const verify = async (playerTag: string, apiToken: string) => {
   try {
     const url = `${BASE_URL}/players/${playerTag.replace(
-      "#",
-      "%23"
+      '#',
+      '%23',
     )}/verifytoken`;
     const response = await axios.post(
       url,
@@ -14,35 +14,22 @@ export const verify = async (playerTag: string, apiToken: string) => {
       {
         headers: {
           Authorization: `Bearer ${process.env.CLASH_API_TOKEN}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-      }
+      },
     );
-    return response.data;
+    if (response.data.status === 'invalid') {
+      throw new Error('Unable to validate account');
+    }
   } catch (err) {
-    console.error("Failed to verify account with Clash API", err);
+    console.error('Failed to verify account with Clash API', err);
     throw err;
   }
 };
 
 export const getPlayer = async (playerTag: string) => {
   try {
-    const url = `${BASE_URL}/players/${playerTag.replace("#", "%23")}`;
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${process.env.CLASH_API_TOKEN}`,
-      }
-    });
-    return response.data;
-  } catch (err) {
-    console.error("Failed to retrieve player data", err);
-    throw err;
-  }
-}
-
-export const getClan = async (clanTag: string) => {
-  try {
-    const url = `${BASE_URL}/clans/${clanTag.replace("#", "%23")}`;
+    const url = `${BASE_URL}/players/${playerTag.replace('#', '%23')}`;
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${process.env.CLASH_API_TOKEN}`,
@@ -50,7 +37,22 @@ export const getClan = async (clanTag: string) => {
     });
     return response.data;
   } catch (err) {
-    console.error("Failed to retrieve clan data", err);
+    console.error('Failed to retrieve player data', err);
+    throw err;
+  }
+};
+
+export const getClan = async (clanTag: string) => {
+  try {
+    const url = `${BASE_URL}/clans/${clanTag.replace('#', '%23')}`;
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${process.env.CLASH_API_TOKEN}`,
+      },
+    });
+    return response.data;
+  } catch (err) {
+    console.error('Failed to retrieve clan data', err);
     throw err;
   }
 };
@@ -60,8 +62,8 @@ export const getCwl = async (clanTag: string) => {
   try {
     const response = await axios.get(url, {
       headers: {
-        Authorization: `Bearer ${process.env.CLASH_API_TOKEN}`
-      }
+        Authorization: `Bearer ${process.env.CLASH_API_TOKEN}`,
+      },
     });
     return response.data;
   } catch (err) {
@@ -69,11 +71,11 @@ export const getCwl = async (clanTag: string) => {
       console.log('Clan not in CWL');
       return {
         tag: clanTag,
-        state: 'not_spun'
+        state: 'not_spun',
       };
     } else {
-      console.error("Failed to retrieve CWL data for clan");
+      console.error('Failed to retrieve CWL data for clan');
       throw err;
     }
   }
-}
+};
