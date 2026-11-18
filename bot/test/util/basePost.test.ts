@@ -1,5 +1,6 @@
 import {
   buildBasePostEmbeds,
+  buildBasePostFeedbackThreadMessage,
   buildBasePostPayload,
   BASE_POST_IMAGE_JPEG_FILENAME,
   CLAN_CASTLE_TROOP_IMAGE_FILENAME,
@@ -150,6 +151,21 @@ describe("base-post Clan Castle embeds", () => {
       true
     );
     expect(canEditBasePost(basePost, "999", [], "admin-role")).toBe(false);
+  });
+
+  it("builds a feedback starter with the original-post link and one base-link button", () => {
+    const starter = buildBasePostFeedbackThreadMessage(basePost);
+
+    expect(starter.content).toContain(
+      "https://discord.com/channels/123/456/789"
+    );
+    expect(starter.embeds).toEqual(buildBasePostEmbeds(basePost));
+    expect(starter.components).toHaveLength(1);
+    expect(starter.components[0].components).toHaveLength(1);
+    expect(starter.components[0].components[0]).toMatchObject({
+      label: "Base Link",
+      url: basePost.baseLink,
+    });
   });
 
   it("maps all recommended leagues to their application emoji keys", () => {

@@ -69,6 +69,12 @@ export interface BasePostPayload {
   attachments?: BasePostAttachment[];
 }
 
+export interface BasePostFeedbackThreadMessage {
+  content: string;
+  embeds: APIEmbed[];
+  components: APIActionRowComponent<APIComponentInMessageActionRow>[];
+}
+
 export const getRecommendedLeagueEmojiKey = (league: string): string => {
   const emojiKey = LEAGUE_EMOJI_KEY_BY_NAME[league];
   if (!emojiKey) {
@@ -147,6 +153,27 @@ export const buildBasePostEmbed = (basePost: BasePostRecord): APIEmbed => {
 export const buildBasePostEmbeds = (basePost: BasePostRecord): APIEmbed[] => [
   buildBasePostEmbed(basePost),
 ];
+
+export const buildBasePostFeedbackThreadMessage = (
+  basePost: BasePostRecord
+): BasePostFeedbackThreadMessage => ({
+  content: `Feedback discussion for Base #${basePost.baseId}. [View original base post](https://discord.com/channels/${basePost.guildId}/${basePost.channelId}/${basePost.messageId}).`,
+  embeds: buildBasePostEmbeds(basePost),
+  components: [
+    {
+      type: ComponentType.ActionRow,
+      components: [
+        {
+          type: ComponentType.Button,
+          style: ButtonStyle.Link,
+          label: "Base Link",
+          emoji: { name: "\u{1F517}" },
+          url: basePost.baseLink,
+        },
+      ],
+    },
+  ],
+});
 
 export const buildBasePostPayload = (
   basePost: BasePostRecord,

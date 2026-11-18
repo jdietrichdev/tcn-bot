@@ -8,6 +8,8 @@ import {
   createForumThread,
   deleteChannel,
   deleteMessage,
+  getChannelMessages,
+  pinMessage,
   sendMessage,
   updateMessage,
   updateResponse,
@@ -17,6 +19,7 @@ import { getCommandOptionData } from "../util/interaction-util";
 import {
   BasePostRecord,
   buildBasePostEmbeds,
+  buildBasePostFeedbackThreadMessage,
   buildBasePostPayload,
   getRecommendedLeagueEmojiKey,
   loadBasePostLeagueEmojiMap,
@@ -122,6 +125,7 @@ export const handleBasePost = async (
   let feedbackThreadId: string | undefined;
   let record: BasePostRecord | undefined;
   let recordSaved = false;
+  let feedbackStarterPinned = false;
 
   try {
     const config = getConfig(interaction.guild_id);
@@ -208,16 +212,37 @@ export const handleBasePost = async (
       channelId
     );
     messageId = postedMessage.id;
+    const feedbackBasePost = {
+      ...basePostData,
+      messageId,
+    };
     const forumThread = await createForumThread(feedbackForumId, {
       name: `Base #${baseId} Feedback`,
       auto_archive_duration: 4320,
-      message: {
-        content: `Feedback discussion for [Base #${baseId}](https://discord.com/channels/${interaction.guild_id}/${channelId}/${messageId}).`,
-      },
+      message: buildBasePostFeedbackThreadMessage(feedbackBasePost),
     });
     feedbackThreadId = forumThread.id;
     if (!feedbackThreadId) {
       throw new Error("Discord did not return the feedback forum thread ID.");
+    }
+
+    try {
+      let starterMessageId =
+        "last_message_id" in forumThread &&
+        typeof forumThread.last_message_id === "string"
+          ? forumThread.last_message_id
+          : undefined;
+      if (!starterMessageId) {
+        const [starterMessage] = await getChannelMessages(feedbackThreadId);
+        starterMessageId = starterMessage?.id;
+      }
+      if (!starterMessageId) {
+        throw new Error("Discord did not return the feedback starter message ID.");
+      }
+      await pinMessage(feedbackThreadId, starterMessageId);
+      feedbackStarterPinned = true;
+    } catch (pinError) {
+      console.error("Failed to pin base-post feedback starter", pinError);
     }
 
     record = {
@@ -289,7 +314,9 @@ export const handleBasePost = async (
   }
 
   await updateResponse(interaction.application_id, interaction.token, {
-    content: `Your base has been posted in <#${channelId}>.`,
+    content: feedbackStarterPinned
+      ? `Your base has been posted in <#${channelId}>. Its embed is pinned in <#${feedbackThreadId}>.`
+      : `Your base has been posted in <#${channelId}>, but I couldn't pin the embed in <#${feedbackThreadId}>. Please check the bot's permissions in the feedback forum.`,
     flags: 64,
   });
 };
