@@ -15,6 +15,7 @@ import {
   RESTPostAPIChannelMessageResult,
   RESTPostAPIChannelMessagesThreadsJSONBody,
   RESTPostAPIChannelMessagesThreadsResult,
+  RESTPostAPIGuildForumThreadsJSONBody,
   RESTPostAPICurrentUserCreateDMChannelJSONBody,
   RESTPostAPICurrentUserCreateDMChannelResult,
   RESTPostAPIGuildScheduledEventJSONBody,
@@ -160,6 +161,36 @@ export const updateMessage = async (
   }
 };
 
+export const updateMessageWithAttachment = async (
+  message: FormData,
+  channelId: string,
+  messageId: string
+): Promise<RESTPostAPIChannelMessageResult> => {
+  const url = `${BASE_URL}/channels/${channelId}/messages/${messageId}`;
+  try {
+    const response = await axios.patch<RESTPostAPIChannelMessageResult>(
+      url,
+      message,
+      {
+        headers: {
+          Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to update message with attachment",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
 export const deleteResponse = async (
   applicationId: string,
   interactionToken: string
@@ -230,18 +261,23 @@ export const sendMessage = async (
 export const sendMessageWithAttachment = async (
   message: FormData,
   channelId: string
-) => {
+): Promise<RESTPostAPIChannelMessageResult> => {
   const url = `${BASE_URL}/channels/${channelId}/messages`;
   try {
-    await axios.post(url, message, {
-      headers: {
-        Authorization: `Bot ${process.env.BOT_TOKEN}`,
-      },
-    });
+    const response = await axios.post<RESTPostAPIChannelMessageResult>(
+      url,
+      message,
+      {
+        headers: {
+          Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        },
+      }
+    );
+    return response.data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
-        "Failed to update response",
+        "Failed to send message with attachment",
         err.response?.data.message,
         err.response?.status ?? 500
       );
@@ -294,6 +330,56 @@ export const createThread = async (
     if (axios.isAxiosError(err)) {
       throw new DiscordError(
         "Failed to create thread",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
+export const createForumThread = async (
+  forumChannelId: string,
+  thread: RESTPostAPIGuildForumThreadsJSONBody
+): Promise<APIChannel> => {
+  const url = `${BASE_URL}/channels/${forumChannelId}/threads`;
+  try {
+    const response = await axios.post<APIChannel>(url, thread, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to create forum thread",
+        err.response?.data.message,
+        err.response?.status ?? 500
+      );
+    } else {
+      throw new Error(`Unexpected error: ${err}`);
+    }
+  }
+};
+
+export const addThreadMember = async (
+  threadId: string,
+  userId: string
+): Promise<void> => {
+  const url = `${BASE_URL}/channels/${threadId}/thread-members/${userId}`;
+  try {
+    await axios.put(url, {}, {
+      headers: {
+        Authorization: `Bot ${process.env.BOT_TOKEN}`,
+      },
+    });
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      throw new DiscordError(
+        "Failed to add user to forum thread",
         err.response?.data.message,
         err.response?.status ?? 500
       );

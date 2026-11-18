@@ -4,7 +4,6 @@ import {
   APIMessageComponentInteraction,
   APIMessageSelectMenuInteractionData,
   APIModalSubmitInteraction,
-  APIStringSelectComponent,
   ComponentType,
   InteractionResponseType,
   TextInputStyle,
@@ -14,6 +13,7 @@ import { dynamoDbClient } from "../clients/dynamodb-client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { getConfig } from "../util/serverConfig";
 import { BUTTONS } from "../component-handlers/buttons";
+import { getModalTextInputs } from "../util/modalComponents";
 
 export const createCwlAccountSignupModal = (
   interaction: APIMessageComponentInteraction
@@ -81,17 +81,25 @@ export const submitCwlAccountSignupModal = async (
     console.log(JSON.stringify(interaction));
     const config = getConfig(interaction.guild_id!);
     const responses: { [key: string]: string } = {};
-    interaction.data.components.forEach((component) => {
-      responses[component.components[0].custom_id] =
-        component.components[0].value;
+    getModalTextInputs(interaction).forEach((component) => {
+      responses[component.custom_id] = component.value;
     });
+    const playerTagSelect = interaction.message?.components
+      ?.find((component) => component.type === ComponentType.ActionRow)
+      ?.components.find(
+        (component) => component.type === ComponentType.StringSelect
+      );
+    if (
+      !playerTagSelect ||
+      playerTagSelect.type !== ComponentType.StringSelect ||
+      !playerTagSelect.options[0]?.value
+    ) {
+      throw new Error("The signup message is missing the player tag.");
+    }
     const account = {
       id: interaction.member!.user.id,
       username: interaction.member!.user.global_name,
-      playerTag: (
-        interaction.message!.components![0]
-          .components[0] as APIStringSelectComponent
-      ).options[0].value,
+      playerTag: playerTagSelect.options[0].value,
       ...responses,
     };
     const signup = (

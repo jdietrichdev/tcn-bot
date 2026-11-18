@@ -144,6 +144,53 @@ export const event = new SlashCommandBuilder()
       });
   });
 
+export const basePost = new SlashCommandBuilder()
+  .setName('base-post')
+  .setDescription('Share a Clash of Clans base layout')
+  .addStringOption((option) => {
+    return option
+      .setName('base_link')
+      .setDescription('Clash of Clans base layout link')
+      .setRequired(true)
+      .setMaxLength(512);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName('clan_castle')
+      .setDescription('Troop counts, e.g. 2x Ice Golem, 1x Baby Dragon')
+      .setRequired(true)
+      .setMaxLength(100);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName('league')
+      .setDescription('League where this base is most effective')
+      .setRequired(true)
+      .setChoices([
+        { name: 'Legends 1', value: 'Legends 1' },
+        { name: 'Legends 2', value: 'Legends 2' },
+        { name: 'Legends 3', value: 'Legends 3' },
+        { name: 'Legends 2/3', value: 'Legends 2/3' },
+        { name: 'CWL', value: 'CWL' },
+        { name: 'Titan I CWL', value: 'Titan I CWL' },
+        { name: 'Titan II CWL', value: 'Titan II CWL' },
+        { name: 'Titan III CWL', value: 'Titan III CWL' },
+      ]);
+  })
+  .addAttachmentOption((option) => {
+    return option
+      .setName('image')
+      .setDescription('PNG screenshot of the base')
+      .setRequired(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName('notes')
+      .setDescription('Optional notes from the base builder')
+      .setRequired(false)
+      .setMaxLength(1024);
+  });
+
 export const test = new SlashCommandBuilder()
   .setName('test')
   .setDescription('Test commands')

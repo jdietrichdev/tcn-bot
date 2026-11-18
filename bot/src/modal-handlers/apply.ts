@@ -7,7 +7,6 @@ import {
   APIActionRowComponent,
   APIButtonComponentWithCustomId,
   APIEmbed,
-  ModalSubmitActionRowComponent,
   RESTPostAPIWebhookWithTokenJSONBody,
   APIMessageComponentInteraction,
   APIApplicationCommandInteraction,
@@ -18,6 +17,10 @@ import {
   updateResponse,
 } from "../adapters/discord-adapter";
 import { getConfig, ServerConfig } from "../util/serverConfig";
+import {
+  getModalTextInputValue,
+  getModalTextInputs,
+} from "../util/modalComponents";
 import { BUTTONS } from "../component-handlers/buttons";
 
 export const createApplyModal = (interaction: APIMessageComponentInteraction | APIApplicationCommandInteraction) => {
@@ -68,7 +71,7 @@ export const submitApplyModal = async (
     );
     await sendMessage(
       {
-        content: `\`${interaction.data.components[0].components[0].value}\``,
+        content: `\`${getModalTextInputValue(interaction)}\``,
       },
       thread.id
     );
@@ -89,17 +92,12 @@ const buildApplicationConfirmation = (
     title: `Application for ${interaction.member?.user.username}`,
     description: "Application responses",
     fields: [
-      ...interaction.data.components.map(
-        (item: ModalSubmitActionRowComponent) => {
-          const response = item.components[0];
-          return {
-            name: config.APPLICATION_QUESTIONS?.questions.find(
-              (question) => question.custom_id === response.custom_id
-            )?.label as string,
-            value: response.value,
-          };
-        }
-      ),
+      ...getModalTextInputs(interaction).map((response) => ({
+        name: config.APPLICATION_QUESTIONS?.questions.find(
+          (question) => question.custom_id === response.custom_id
+        )?.label as string,
+        value: response.value,
+      })),
       {
         name: "userId",
         value: interaction.member!.user.id,

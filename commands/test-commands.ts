@@ -1,6 +1,7 @@
 import {
   apply,
   link,
+  basePost,
   apiTokenHelp,
   hello,
   player,
@@ -56,6 +57,7 @@ import {
 export const testCommands = [
   apply,
   link,
+  basePost,
   apiTokenHelp,
   hello,
   player,

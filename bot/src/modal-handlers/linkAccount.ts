@@ -1,4 +1,5 @@
 import {
+  APIInteractionResponse,
   APIMessageComponentInteraction,
   ComponentType,
   InteractionResponseType,
@@ -9,10 +10,11 @@ import { dynamoDbClient } from '../clients/dynamodb-client';
 import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { updateResponse } from '../adapters/discord-adapter';
 import { verify } from '../adapters/coc-api-adapter';
+import { getModalTextInputValue } from '../util/modalComponents';
 
 export const createLinkAccountModal = (
   _interaction: APIMessageComponentInteraction,
-) => {
+): APIInteractionResponse => {
   return {
     type: InteractionResponseType.Modal,
     data: {
@@ -47,7 +49,7 @@ export const createLinkAccountModal = (
         },
       ],
     },
-  };
+  } as APIInteractionResponse;
 };
 
 export const submitLinkAccountModal = async (
@@ -126,7 +128,7 @@ export const submitLinkAccountModal = async (
 
 const getLinkAccountData = (interaction: APIModalSubmitInteraction) => {
   return {
-    playerTag: interaction.data.components[0].components[0].value,
-    apiToken: interaction.data.components[1].components[0].value,
+    playerTag: getModalTextInputValue(interaction, 0),
+    apiToken: getModalTextInputValue(interaction, 1),
   };
 };

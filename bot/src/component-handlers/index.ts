@@ -24,6 +24,7 @@ import { handleTaskListPagination } from "./taskListButton";
 import { handleSubsApproval } from "./subsApproval";
 import { handleRecruiterScorePagination } from "./recruiterScoreButton";
 import { handleRecruiterLeaderboardRefresh } from "./recruiterLeaderboard";
+import { handleBasePostComponent } from "./basePost";
 
 type Handler = (interaction: APIMessageComponentInteraction, config?: any) => Promise<any>;
 
@@ -45,6 +46,7 @@ const handlers: Record<string, Handler> = {
 };
 
 const prefixHandlers: Record<string, Handler> = {
+  base_post_: (interaction) => handleBasePostComponent(interaction),
   task_list: (interaction) => handleTaskListPagination(interaction, interaction.data.custom_id),
   task_: (interaction) => handleTaskButtonInteraction(interaction),
   claim: (interaction) => claimEvent(interaction),

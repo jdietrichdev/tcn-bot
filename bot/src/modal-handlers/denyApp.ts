@@ -12,6 +12,7 @@ import {
   updateMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
+import { getModalTextInputValue } from "../util/modalComponents";
 import { getConfig } from "../util/serverConfig";
 
 export const createDenyAppModal = (
@@ -51,14 +52,15 @@ export const submitDenyAppModal = async (
     const [channelId, messageId, userId] = interaction.data.custom_id
       .split("_")
       .splice(1);
+    const reason = getModalTextInputValue(interaction);
     await sendMessage(
       {
-        content: `<@${userId}> thank you for your application, but it was denied for the following reasons: ${interaction.data.components[0].components[0].value}`,
+        content: `<@${userId}> thank you for your application, but it was denied for the following reasons: ${reason}`,
       },
       config.GUEST_CHAT_CHANNEL
     );
     await updateMessage(channelId, messageId, {
-      content: `Denied by ${interaction.member?.user.username}\nReason: ${interaction.data.components[0].components[0].value}`,
+      content: `Denied by ${interaction.member?.user.username}\nReason: ${reason}`,
       components: [],
     });
     await deleteResponse(interaction.application_id, interaction.token);

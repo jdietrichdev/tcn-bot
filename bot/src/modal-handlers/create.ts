@@ -1,6 +1,7 @@
 import {
   APIApplicationCommandInteraction,
   APIMessageComponentInteraction,
+  InteractionType,
 } from 'discord-api-types/v10';
 import { createApplyModal } from './apply';
 import { createDenyAppModal } from './denyApp';
@@ -9,8 +10,9 @@ import { createCwlAccountSignupModal } from './signupAccount';
 import { createCwlQuestionsModal } from './cwlQuestions';
 import { createVoteNominationModal } from './nominationVote';
 import { createLinkAccountModal } from './linkAccount';
+import { createBasePostSettingsModal } from './basePost';
 
-export const createModal = (
+export const createModal = async (
   interaction:
     | APIMessageComponentInteraction
     | APIApplicationCommandInteraction,
@@ -42,6 +44,11 @@ export const createModal = (
       return createLinkAccountModal(
         interaction as APIMessageComponentInteraction,
       );
+    case 'base_post_settings':
+      if (interaction.type !== InteractionType.MessageComponent) {
+        throw new Error('Base-post settings must be opened from a message.');
+      }
+      return createBasePostSettingsModal(interaction);
     default:
       throw new Error('No handler defined for creating modal');
   }

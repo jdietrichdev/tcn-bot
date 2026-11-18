@@ -1,8 +1,7 @@
 import {
   APIActionRowComponent,
+  APIComponentInMessageActionRow,
   APIEmbed,
-  APIMessageActionRowComponent,
-  APIMessageComponent,
   ButtonStyle,
   ComponentType,
 } from "discord-api-types/v10";
@@ -107,7 +106,7 @@ export const createRecruiterScoreComponents = (
   sessionId: string,
   totalPages: number,
   currentPage: number
-): APIActionRowComponent<APIMessageActionRowComponent>[] => {
+): APIActionRowComponent<APIComponentInMessageActionRow>[] => {
   return [
     {
       type: ComponentType.ActionRow,
@@ -145,7 +144,7 @@ export const createRecruiterScoreComponents = (
   ];
 };
 
-export const createRecruiterLeaderboardComponents = (): APIActionRowComponent<APIMessageActionRowComponent>[] => {
+export const createRecruiterLeaderboardComponents = (): APIActionRowComponent<APIComponentInMessageActionRow>[] => {
   return [
     {
       type: ComponentType.ActionRow,
