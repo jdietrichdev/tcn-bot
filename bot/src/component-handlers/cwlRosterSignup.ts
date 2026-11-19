@@ -83,6 +83,7 @@ const findLinkedAccounts = async (
     .map((item) => ({
       tag: normalizePlayerTag(item.tag),
       name: item.tag,
+      heroes: {},
     }));
 };
 
@@ -92,6 +93,18 @@ const getPlayerSummary = async (
   const playerData: unknown = await getPlayer(playerTag);
   if (!isRecord(playerData)) {
     throw new Error(`Could not read player data for ${playerTag}.`);
+  }
+  const heroes: Record<string, number> = {};
+  if (Array.isArray(playerData.heroes)) {
+    for (const hero of playerData.heroes) {
+      if (
+        isRecord(hero) &&
+        typeof hero.name === "string" &&
+        typeof hero.level === "number"
+      ) {
+        heroes[hero.name] = hero.level;
+      }
+    }
   }
   const clanName =
     isRecord(playerData.clan) && typeof playerData.clan.name === "string"
@@ -105,6 +118,7 @@ const getPlayerSummary = async (
       typeof playerData.townHallLevel === "number"
         ? playerData.townHallLevel
         : undefined,
+    heroes,
     clanName,
   };
 };

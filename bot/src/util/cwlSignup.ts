@@ -33,6 +33,7 @@ export interface CwlLinkedAccountSummary {
   tag: string;
   name: string;
   townHallLevel?: number;
+  heroes: Record<string, number>;
 }
 
 export interface CwlSignupRecord {
@@ -134,6 +135,14 @@ export const CWL_KNOWN_CLANS = [
   { name: "ziminzi", tag: "2G0020YLY" },
 ];
 
+const NON_CWL_HERO_NAMES = new Set(["battle machine", "battle copter"]);
+
+const getHeroLevelSummary = (heroes: Record<string, number>) =>
+  Object.entries(heroes)
+    .filter(([name]) => !NON_CWL_HERO_NAMES.has(name.toLowerCase()))
+    .map(([name, level]) => `${name} ${level}`)
+    .join(" • ");
+
 export const buildCwlRosterEmbed = (
   signupName: string,
   clan: CwlSignupClan,
@@ -223,11 +232,18 @@ export const buildLinkedAccountsEmbed = (
   description: "Choose the linked account you want to add to this roster.",
   fields: accounts.map((account) => {
     const townHall = getTownHallEmoji(account.townHallLevel, townHallEmojiIds);
+    const heroSummary = getHeroLevelSummary(account.heroes);
     return {
       name: `${townHall.markup} ${account.name} (${account.tag})`,
-      value: account.townHallLevel
-        ? `Town Hall ${account.townHallLevel}`
-        : "Town Hall level unavailable",
+      value:
+        [
+          account.townHallLevel
+            ? `Town Hall ${account.townHallLevel}`
+            : undefined,
+          heroSummary || undefined,
+        ]
+          .filter(Boolean)
+          .join(" • ") || "No profile details available",
       inline: false,
     };
   }),

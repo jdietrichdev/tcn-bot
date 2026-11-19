@@ -114,6 +114,12 @@ describe("CWL signup embeds", () => {
           tag: "#PLAYER1",
           name: "Player One",
           townHallLevel: 16,
+          heroes: {
+            "Barbarian King": 90,
+            "Archer Queen": 90,
+            "Battle Machine": 35,
+            "Battle Copter": 35,
+          },
         },
       ],
       { "16": "123456789012345678" }
@@ -122,8 +128,12 @@ describe("CWL signup embeds", () => {
     expect(embed.fields?.[0]?.name).toBe(
       "<:town_hall_16:123456789012345678> Player One (#PLAYER1)"
     );
-    expect(embed.fields?.[0]?.value).toBe("Town Hall 16");
+    expect(embed.fields?.[0]?.value).toBe(
+      "Town Hall 16 • Barbarian King 90 • Archer Queen 90"
+    );
     expect(embed.fields?.[0]?.value).not.toContain("🦸");
+    expect(embed.fields?.[0]?.value).not.toContain("Battle Machine");
+    expect(embed.fields?.[0]?.value).not.toContain("Battle Copter");
   });
 
   it("builds dashboard clan choices and disables signup management without a selected clan", () => {

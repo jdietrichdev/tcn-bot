@@ -80,6 +80,8 @@ const playerProfile = (name: string) => ({
   townHallLevel: 16,
   clan: { name: "Current Clan" },
   heroes: [
+    { name: "Barbarian King", level: 90 },
+    { name: "Archer Queen", level: 90 },
     { name: "Battle Machine", level: 35 },
     { name: "Battle Copter", level: 35 },
   ],
@@ -126,8 +128,12 @@ describe("CWL roster signup button", () => {
     expect(response.embeds?.[0]?.fields?.[0]?.name).toContain(
       "<:town_hall_16:123456789012345678> Player One"
     );
+    expect(response.embeds?.[0]?.fields?.[0]?.value).toContain(
+      "Barbarian King 90"
+    );
     expect(JSON.stringify(response.embeds)).not.toContain("Battle Machine");
     expect(JSON.stringify(response.embeds)).not.toContain("Battle Copter");
+    expect(JSON.stringify(response.embeds)).not.toContain("🦸");
     const actionRow = response.components?.[0];
     if (!actionRow || !("components" in actionRow)) {
       throw new Error("Expected an account selection menu.");
