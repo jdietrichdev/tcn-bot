@@ -11,6 +11,7 @@ export * from "./recruiterScore";
 export * from "./cwlRoster";
 export * from "./initiateCwlSignup";
 export * from "./addCwlClan";
+export * from "./cwlDashboard";
 export * from "./cwlQuestions";
 export * from "./infoCwl";
 export * from "./closeTicket";

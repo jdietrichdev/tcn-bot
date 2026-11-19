@@ -1,10 +1,20 @@
 import {
+  buildCwlDashboardMessage,
   buildCwlRosterMessage,
   buildCwlSignupEmbed,
   CwlSignupClan,
+  CwlSignupRecord,
 } from "../../src/util/cwlSignup";
 
-describe("CWL signup embed", () => {
+const signup: CwlSignupRecord = {
+  pk: "guild",
+  sk: "signup#november",
+  signupName: "November CWL",
+  status: "draft",
+  clans: [],
+};
+
+describe("CWL signup embeds", () => {
   it("includes clickable clan links and leagues alongside signup accounts", () => {
     const embed = buildCwlSignupEmbed({
       signupName: "November CWL",
@@ -30,28 +40,72 @@ describe("CWL signup embed", () => {
     ]);
   });
 
-  it("builds a clan-specific roster embed and signup button", () => {
+  it("builds a clan roster with capacity, signup controls, and a stable signup ID", () => {
     const clan: CwlSignupClan = {
       name: "MiniPoint",
       tag: "2CYP9C9QG",
       league: "Master League I",
       link: "https://link.clashofclans.com/en/?action=OpenClanProfile&tag=2CYP9C9QG",
-      accounts: [{ userId: "123", playerTag: "#PLAYER1" }],
+      accounts: [
+        {
+          userId: "123",
+          playerTag: "#PLAYER1",
+          playerName: "Player One",
+          clanName: "Current Clan",
+        },
+      ],
+      capacity: 30,
+      minTownHall: 15,
     };
 
-    const message = buildCwlRosterMessage("November CWL", clan);
+    const message = buildCwlRosterMessage(
+      { ...signup, clans: [clan] },
+      clan
+    );
 
     const embed = message.embeds?.[0];
-    expect(embed?.title).toBe("MiniPoint CWL Roster");
+    expect(embed?.title).toBe("MiniPoint (#2CYP9C9QG)");
     expect(embed?.url).toBe(clan.link);
-    expect(embed?.description).toContain("<@123> | `#PLAYER1`");
+    expect(embed?.description).toContain("**Player One** | Current Clan");
+    expect(embed?.footer?.text).toContain("Total 1/30");
     const actionRow = message.components?.[0];
     if (!actionRow || !("components" in actionRow)) {
-      throw new Error("Expected an action row with a signup button.");
+      throw new Error("Expected an action row with roster controls.");
     }
-    expect(actionRow.components[0]).toMatchObject({
-      label: "Sign up for MiniPoint",
-      custom_id: "cwl_roster_signup:2CYP9C9QG:November CWL",
+    expect(actionRow.components[1]).toMatchObject({
+      label: "Signup",
+      custom_id: "cwl_roster_signup:november:2CYP9C9QG",
     });
+  });
+
+  it("builds dashboard clan choices and disables signup management without a selected clan", () => {
+    const clan: CwlSignupClan = {
+      name: "MiniPoint",
+      tag: "2CYP9C9QG",
+      league: "Master League I",
+      link: "https://link.clashofclans.com/en/?action=OpenClanProfile&tag=2CYP9C9QG",
+      accounts: [],
+    };
+    const message = buildCwlDashboardMessage({
+      ...signup,
+      clans: [clan],
+    });
+
+    expect(message.embeds?.[0]?.title).toBe("CWL Dashboard - November CWL");
+    const selectRow = message.components?.[1];
+    if (!selectRow || !("components" in selectRow)) {
+      throw new Error("Expected a clan selection menu.");
+    }
+    expect(selectRow.components[0]).toMatchObject({
+      type: 3,
+      custom_id: "cwl_dashboard_select:november",
+    });
+    const actionRow = message.components?.[3];
+    if (!actionRow || !("components" in actionRow)) {
+      throw new Error("Expected dashboard action buttons.");
+    }
+    expect(actionRow.components[1]).toMatchObject({ disabled: true });
+    expect(actionRow.components[2]).toMatchObject({ disabled: true });
+    expect(actionRow.components[3]).toMatchObject({ disabled: true });
   });
 });

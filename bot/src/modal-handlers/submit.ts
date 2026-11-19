@@ -7,8 +7,14 @@ import { submitCwlQuestionsModal } from './cwlQuestions';
 import { submitVoteNominationModal } from './nominationVote';
 import { submitLinkAccountModal } from './linkAccount';
 import { submitBasePostEditModal } from './basePost';
+import { submitCwlDashboardModal } from './cwlDashboard';
 
 export const submitModal = async (interaction: APIModalSubmitInteraction) => {
+  if (interaction.data.custom_id.startsWith('cwlDashboardModal:')) {
+    await submitCwlDashboardModal(interaction);
+    return;
+  }
+
   if (interaction.data.custom_id.startsWith('base_post_edit:')) {
     await submitBasePostEditModal(interaction);
     return;

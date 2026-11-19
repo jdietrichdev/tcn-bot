@@ -309,7 +309,8 @@ export const initiateCwlSignup = new SlashCommandBuilder()
       .setName('name')
       .setDescription('Signup name')
       .setRequired(true)
-      .setMaxLength(50);
+      .setMaxLength(50)
+      .setAutocomplete(true);
   });
 
 export const cwlAddClan = new SlashCommandBuilder()
@@ -321,13 +322,27 @@ export const cwlAddClan = new SlashCommandBuilder()
       .setName('signup-name')
       .setDescription('Name of the CWL signup')
       .setRequired(true)
-      .setMaxLength(50);
+      .setMaxLength(50)
+      .setAutocomplete(true);
   })
   .addStringOption((option) => {
     return option
       .setName('clan-tag')
       .setDescription('Clash of Clans clan tag (with or without #)')
-      .setRequired(true);
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const cwlDashboard = new SlashCommandBuilder()
+  .setName('cwl-dashboard')
+  .setDescription('Manage clans and settings for a CWL signup')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName('signup-name')
+      .setDescription('CWL signup to manage')
+      .setRequired(true)
+      .setAutocomplete(true);
   });
 
 export const cwlQuestions = new SlashCommandBuilder()

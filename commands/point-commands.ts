@@ -3,6 +3,7 @@ import {
   apply,
   basePost,
   cwlAddClan,
+  cwlDashboard,
   deleteTicket,
   initiateCwlSignup,
   link,
@@ -15,5 +16,6 @@ export const pointCommands = [
   deleteTicket,
   link,
   cwlAddClan,
+  cwlDashboard,
   initiateCwlSignup,
 ];

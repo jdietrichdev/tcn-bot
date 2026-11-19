@@ -3,16 +3,24 @@ import {
   APIMessageSelectMenuInteractionData,
   ComponentType,
 } from "discord-api-types/v10";
-import { GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoDbClient } from "../clients/dynamodb-client";
+import { getPlayer } from "../adapters/coc-api-adapter";
 import { updateMessage, updateResponse } from "../adapters/discord-adapter";
 import { getMessageSender } from "../util/interaction-util";
 import {
   buildCwlRosterMessage,
+  buildLinkedAccountsEmbed,
+  CwlLinkedAccountSummary,
   CwlRosterAccount,
+  CwlSignupClan,
   getCwlRosterCustomId,
-  isCwlSignupRecord,
 } from "../util/cwlSignup";
+import {
+  findCwlSignupByName,
+  getCwlSignupById,
+  saveCwlSignup,
+} from "../util/cwlSignupStore";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
@@ -20,9 +28,11 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const normalizePlayerTag = (tag: string) =>
   `#${tag.replace(/^#/, "").toUpperCase()}`;
 
+const isClanTag = (value: string) => /^[A-Z0-9]{3,15}$/.test(value);
+
 const parseCustomId = (
   customId: string,
-  action: "signup" | "account"
+  action: "signup" | "account" | "refresh" | "optout" | "optout_account"
 ) => {
   const prefix = `cwl_roster_${action}:`;
   if (!customId.startsWith(prefix)) {
@@ -33,15 +43,20 @@ const parseCustomId = (
   if (separator <= 0 || separator === details.length - 1) {
     throw new Error("CWL roster interaction is missing its signup details.");
   }
-  const clanTag = details.slice(0, separator);
-  const signupName = details.slice(separator + 1);
-  if (!/^[A-Z0-9]{3,15}$/.test(clanTag)) {
+  const first = details.slice(0, separator);
+  const second = details.slice(separator + 1);
+  if (isClanTag(first) && !isClanTag(second)) {
+    return { clanTag: first, signupId: undefined, legacySignupName: second };
+  }
+  if (!isClanTag(second)) {
     throw new Error("CWL roster interaction contains an invalid clan tag.");
   }
-  return { clanTag, signupName };
+  return { clanTag: second, signupId: first, legacySignupName: undefined };
 };
 
-const findLinkedAccounts = async (userId: string) => {
+const findLinkedAccounts = async (
+  userId: string
+): Promise<CwlLinkedAccountSummary[]> => {
   const response = await dynamoDbClient.send(
     new QueryCommand({
       TableName: "BotTable",
@@ -61,19 +76,89 @@ const findLinkedAccounts = async (userId: string) => {
       (item): item is Record<string, unknown> & { tag: string } =>
         isRecord(item) && typeof item.tag === "string"
     )
-    .map((item) => normalizePlayerTag(item.tag));
+    .map((item) => ({
+      tag: normalizePlayerTag(item.tag),
+      name: item.tag,
+      heroes: {},
+    }));
+};
+
+const getPlayerSummary = async (
+  playerTag: string
+): Promise<CwlLinkedAccountSummary & { clanName?: string }> => {
+  const playerData: unknown = await getPlayer(playerTag);
+  if (!isRecord(playerData)) {
+    throw new Error(`Could not read player data for ${playerTag}.`);
+  }
+  const heroes: Record<string, number> = {};
+  if (Array.isArray(playerData.heroes)) {
+    for (const hero of playerData.heroes) {
+      if (
+        isRecord(hero) &&
+        typeof hero.name === "string" &&
+        typeof hero.level === "number"
+      ) {
+        heroes[hero.name] = hero.level;
+      }
+    }
+  }
+  const clanName =
+    isRecord(playerData.clan) && typeof playerData.clan.name === "string"
+      ? playerData.clan.name
+      : undefined;
+
+  return {
+    tag: normalizePlayerTag(playerTag),
+    name: typeof playerData.name === "string" ? playerData.name : playerTag,
+    townHallLevel:
+      typeof playerData.townHallLevel === "number"
+        ? playerData.townHallLevel
+        : undefined,
+    heroes,
+    clanName,
+  };
+};
+
+const getSignup = async (
+  interaction: APIMessageComponentInteraction,
+  signupId: string | undefined,
+  legacySignupName: string | undefined
+) => {
+  if (!interaction.guild_id) {
+    throw new Error("CWL signup components can only be used in a server.");
+  }
+  return signupId
+    ? getCwlSignupById(interaction.guild_id, signupId)
+    : findCwlSignupByName(interaction.guild_id, legacySignupName ?? "");
+};
+
+const getClan = (signup: { clans: CwlSignupClan[] }, clanTag: string) =>
+  signup.clans.find((clan) => clan.tag.toUpperCase() === clanTag);
+
+const respondWithError = async (
+  interaction: APIMessageComponentInteraction,
+  context: string,
+  error: unknown,
+  message: string
+) => {
+  console.error(context, error);
+  await updateResponse(interaction.application_id, interaction.token, {
+    content: message,
+  });
+  throw error;
 };
 
 const addAccountToRoster = async (
   interaction: APIMessageComponentInteraction,
-  signupName: string,
+  signupId: string | undefined,
+  legacySignupName: string | undefined,
   clanTag: string,
   selectedTag: string
 ) => {
   const userId = getMessageSender(interaction).id;
   const canonicalPlayerTag = normalizePlayerTag(selectedTag);
   const linkedAccounts = await findLinkedAccounts(userId);
-  if (!linkedAccounts.includes(canonicalPlayerTag)) {
+  if (!linkedAccounts.some((account) => account.tag === canonicalPlayerTag)) {
     await updateResponse(interaction.application_id, interaction.token, {
       content:
         "That account is no longer linked. Use `/link create` to link it, then try signing up again.",
@@ -81,58 +166,75 @@ const addAccountToRoster = async (
     return;
   }
 
-  const signupResponse = await dynamoDbClient.send(
-    new GetCommand({
-      TableName: "BotTable",
-      Key: {
-        pk: interaction.guild_id!,
-        sk: `signup#${signupName}`,
-      },
-    })
-  );
-  const signup: unknown = signupResponse.Item;
-  if (!isCwlSignupRecord(signup)) {
+  const signup = await getSignup(interaction, signupId, legacySignupName);
+  if (!signup) {
     await updateResponse(interaction.application_id, interaction.token, {
       content: "This CWL roster is no longer available for signup.",
     });
     return;
   }
-  const clan = signup.clans.find(
-    (candidate) => candidate.tag.toUpperCase() === clanTag
-  );
-  if (!signup || !clan?.messageId || typeof signup.channelId !== "string") {
+  const clan = getClan(signup, clanTag);
+  if (!clan?.messageId || typeof signup.channelId !== "string") {
     await updateResponse(interaction.application_id, interaction.token, {
       content: "This CWL roster is no longer available for signup.",
+    });
+    return;
+  }
+  if (clan.signupOpen === false) {
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: `Signup for **${clan.name}** is closed.`,
     });
     return;
   }
 
-  const accounts: CwlRosterAccount[] = Array.isArray(clan.accounts)
-    ? clan.accounts
-    : [];
+  const accountSummary = await getPlayerSummary(canonicalPlayerTag);
+  const accounts: CwlRosterAccount[] = clan.accounts ?? [];
+  if (
+    accountSummary.townHallLevel !== undefined &&
+    accountSummary.townHallLevel < (clan.minTownHall ?? 15)
+  ) {
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: `${accountSummary.name} is below the minimum Town Hall ${clan.minTownHall ?? 15} for **${clan.name}**.`,
+    });
+    return;
+  }
+  if (
+    !accounts.some(
+      (account) => normalizePlayerTag(account.playerTag) === canonicalPlayerTag
+    ) &&
+    accounts.length >= (clan.capacity ?? 50)
+  ) {
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: `The **${clan.name}** roster is full.`,
+    });
+    return;
+  }
+
   const alreadySignedUp = accounts.some(
     (account) => normalizePlayerTag(account.playerTag) === canonicalPlayerTag
   );
   if (!alreadySignedUp) {
-    accounts.push({ userId, playerTag: canonicalPlayerTag });
+    accounts.push({
+      userId,
+      playerTag: canonicalPlayerTag,
+      playerName: accountSummary.name,
+      clanName: accountSummary.clanName,
+      townHallLevel: accountSummary.townHallLevel,
+      heroes: accountSummary.heroes,
+    });
     clan.accounts = accounts;
-    await dynamoDbClient.send(
-      new PutCommand({
-        TableName: "BotTable",
-        Item: signup,
-      })
-    );
+    await saveCwlSignup(signup);
   }
 
   await updateMessage(
     signup.channelId,
     clan.messageId,
-    buildCwlRosterMessage(signupName, clan)
+    buildCwlRosterMessage(signup, clan)
   );
   await updateResponse(interaction.application_id, interaction.token, {
     content: alreadySignedUp
       ? `${canonicalPlayerTag} is already on the **${clan.name}** roster.`
-      : `Added ${canonicalPlayerTag} to the **${clan.name}** roster.`,
+      : `Added ${accountSummary.name} (${canonicalPlayerTag}) to the **${clan.name}** roster.`,
   });
 };
 
@@ -140,7 +242,7 @@ export const handleCwlRosterSignup = async (
   interaction: APIMessageComponentInteraction
 ) => {
   try {
-    const { clanTag, signupName } = parseCustomId(
+    const { clanTag, signupId, legacySignupName } = parseCustomId(
       interaction.data.custom_id,
       "signup"
     );
@@ -156,9 +258,10 @@ export const handleCwlRosterSignup = async (
     if (linkedAccounts.length === 1) {
       await addAccountToRoster(
         interaction,
-        signupName,
+        signupId,
+        legacySignupName,
         clanTag,
-        linkedAccounts[0]
+        linkedAccounts[0].tag
       );
       return;
     }
@@ -170,21 +273,30 @@ export const handleCwlRosterSignup = async (
       return;
     }
 
+    const accountSummaries = await Promise.all(
+      linkedAccounts.map((account) => getPlayerSummary(account.tag))
+    );
     await updateResponse(interaction.application_id, interaction.token, {
-      content: `Choose an account for the **${signupName}** signup:`,
+      content: "Select one linked account to add to this clan roster:",
+      embeds: [buildLinkedAccountsEmbed(accountSummaries)],
       components: [
         {
           type: ComponentType.ActionRow,
           components: [
             {
               type: ComponentType.StringSelect,
-              custom_id: getCwlRosterCustomId("account", clanTag, signupName),
-              placeholder: "Select a linked account",
+              custom_id: getCwlRosterCustomId(
+                "account",
+                clanTag,
+                signupId ?? legacySignupName ?? ""
+              ),
+              placeholder: "Select accounts!",
               min_values: 1,
               max_values: 1,
-              options: linkedAccounts.map((tag) => ({
-                label: tag,
-                value: tag,
+              options: accountSummaries.map((account) => ({
+                label: `${account.name} (${account.tag})`.slice(0, 100),
+                value: account.tag,
+                description: `TH ${account.townHallLevel ?? "?"}`,
               })),
             },
           ],
@@ -192,11 +304,12 @@ export const handleCwlRosterSignup = async (
       ],
     });
   } catch (err) {
-    console.error("Failed to open CWL roster signup account picker", err);
-    await updateResponse(interaction.application_id, interaction.token, {
-      content: "Could not load linked accounts for this CWL signup. Please try again.",
-    });
-    throw err;
+    await respondWithError(
+      interaction,
+      "Failed to open CWL roster signup account picker",
+      err,
+      "Could not load linked accounts for this CWL signup. Please try again."
+    );
   }
 };
 
@@ -204,7 +317,7 @@ export const handleCwlRosterAccountSelect = async (
   interaction: APIMessageComponentInteraction
 ) => {
   try {
-    const { clanTag, signupName } = parseCustomId(
+    const { clanTag, signupId, legacySignupName } = parseCustomId(
       interaction.data.custom_id,
       "account"
     );
@@ -217,12 +330,210 @@ export const handleCwlRosterAccountSelect = async (
     if (!selectedTag) {
       throw new Error("No linked account was selected.");
     }
-    await addAccountToRoster(interaction, signupName, clanTag, selectedTag);
+    await addAccountToRoster(
+      interaction,
+      signupId,
+      legacySignupName,
+      clanTag,
+      selectedTag
+    );
   } catch (err) {
-    console.error("Failed to add selected account to CWL roster", err);
+    await respondWithError(
+      interaction,
+      "Failed to add selected account to CWL roster",
+      err,
+      "Could not add that account to the CWL roster. Please try again."
+    );
+  }
+};
+
+const updateRosterMessage = async (
+  interaction: APIMessageComponentInteraction,
+  signupId: string | undefined,
+  legacySignupName: string | undefined,
+  clanTag: string,
+  content: string
+) => {
+  const signup = await getSignup(interaction, signupId, legacySignupName);
+  const clan = signup && getClan(signup, clanTag);
+  if (!signup || !clan?.messageId || !signup.channelId) {
     await updateResponse(interaction.application_id, interaction.token, {
-      content: "Could not add that account to the CWL roster. Please try again.",
+      content: "This CWL roster is no longer available.",
     });
-    throw err;
+    return;
+  }
+  await updateMessage(
+    signup.channelId,
+    clan.messageId,
+    buildCwlRosterMessage(signup, clan)
+  );
+  await updateResponse(interaction.application_id, interaction.token, {
+    content,
+  });
+};
+
+export const handleCwlRosterRefresh = async (
+  interaction: APIMessageComponentInteraction
+) => {
+  try {
+    const { clanTag, signupId, legacySignupName } = parseCustomId(
+      interaction.data.custom_id,
+      "refresh"
+    );
+    await updateRosterMessage(
+      interaction,
+      signupId,
+      legacySignupName,
+      clanTag,
+      "Roster refreshed."
+    );
+  } catch (err) {
+    await respondWithError(
+      interaction,
+      "Failed to refresh CWL roster",
+      err,
+      "Could not refresh this CWL roster. Please try again."
+    );
+  }
+};
+
+export const handleCwlRosterOptOut = async (
+  interaction: APIMessageComponentInteraction
+) => {
+  try {
+    const { clanTag, signupId, legacySignupName } = parseCustomId(
+      interaction.data.custom_id,
+      "optout"
+    );
+    const signup = await getSignup(interaction, signupId, legacySignupName);
+    const clan = signup && getClan(signup, clanTag);
+    if (!signup || !clan) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: "This CWL roster is no longer available.",
+      });
+      return;
+    }
+    const userId = getMessageSender(interaction).id;
+    const ownAccounts = (clan.accounts ?? []).filter(
+      (account) => account.userId === userId
+    );
+    if (ownAccounts.length === 0) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: "You don't have an account on this roster.",
+      });
+      return;
+    }
+    if (ownAccounts.length === 1) {
+      await removeAccountFromRoster(interaction, signup, clan, ownAccounts[0]);
+      return;
+    }
+    const signupIdForMenu = signup.sk.slice("signup#".length);
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: `Select the **${clan.name}** roster account to remove:`,
+      components: [
+        {
+          type: ComponentType.ActionRow,
+          components: [
+            {
+              type: ComponentType.StringSelect,
+              custom_id: getCwlRosterCustomId(
+                "optout_account",
+                clanTag,
+                signupIdForMenu
+              ),
+              placeholder: "Select an account to opt out",
+              min_values: 1,
+              max_values: 1,
+              options: ownAccounts.map((account) => ({
+                label: `${account.playerName ?? account.playerTag} (${account.playerTag})`.slice(
+                  0,
+                  100
+                ),
+                value: account.playerTag,
+              })),
+            },
+          ],
+        },
+      ],
+    });
+  } catch (err) {
+    await respondWithError(
+      interaction,
+      "Failed to open CWL roster opt-out picker",
+      err,
+      "Could not load your roster accounts. Please try again."
+    );
+  }
+};
+
+const removeAccountFromRoster = async (
+  interaction: APIMessageComponentInteraction,
+  signup: NonNullable<Awaited<ReturnType<typeof getCwlSignupById>>>,
+  clan: CwlSignupClan,
+  account: CwlRosterAccount
+) => {
+  clan.accounts = (clan.accounts ?? []).filter(
+    (rosterAccount) =>
+      !(
+        rosterAccount.userId === account.userId &&
+        rosterAccount.playerTag === account.playerTag
+      )
+  );
+  await saveCwlSignup(signup);
+  if (clan.messageId && signup.channelId) {
+    await updateMessage(
+      signup.channelId,
+      clan.messageId,
+      buildCwlRosterMessage(signup, clan)
+    );
+  }
+  await updateResponse(interaction.application_id, interaction.token, {
+    content: `Removed ${account.playerTag} from the **${clan.name}** roster.`,
+  });
+};
+
+export const handleCwlRosterOptOutSelect = async (
+  interaction: APIMessageComponentInteraction
+) => {
+  try {
+    const { clanTag, signupId } = parseCustomId(
+      interaction.data.custom_id,
+      "optout_account"
+    );
+    if (interaction.data.component_type !== ComponentType.StringSelect) {
+      throw new Error("Expected an account selection for roster opt-out.");
+    }
+    const playerTag = (
+      interaction.data as APIMessageSelectMenuInteractionData
+    ).values[0];
+    if (!playerTag) {
+      throw new Error("No roster account was selected.");
+    }
+    if (!signupId || !interaction.guild_id) {
+      throw new Error("CWL signup is no longer available.");
+    }
+    const signup = await getCwlSignupById(interaction.guild_id, signupId);
+    const clan = signup && getClan(signup, clanTag);
+    const userId = getMessageSender(interaction).id;
+    const account = clan?.accounts?.find(
+      (rosterAccount) =>
+        rosterAccount.userId === userId &&
+        normalizePlayerTag(rosterAccount.playerTag) ===
+          normalizePlayerTag(playerTag)
+    );
+    if (!signup || !clan || !account) {
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: "That account is no longer on this roster.",
+      });
+      return;
+    }
+    await removeAccountFromRoster(interaction, signup, clan, account);
+  } catch (err) {
+    await respondWithError(
+      interaction,
+      "Failed to remove account from CWL roster",
+      err,
+      "Could not remove that account from the roster. Please try again."
+    );
   }
 };

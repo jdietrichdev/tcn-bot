@@ -2,15 +2,15 @@ import {
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
 } from "discord-api-types/v10";
-import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
-import { dynamoDbClient } from "../clients/dynamodb-client";
+import { v4 as uuid } from "uuid";
 import { getClan } from "../adapters/coc-api-adapter";
 import { updateResponse } from "../adapters/discord-adapter";
 import { getCommandOptionData } from "../util/interaction-util";
+import { CwlSignupRecord } from "../util/cwlSignup";
 import {
-  CwlSignupRecord,
-  isCwlSignupRecord,
-} from "../util/cwlSignup";
+  findCwlSignupByName,
+  saveCwlSignup,
+} from "../util/cwlSignupStore";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
@@ -33,30 +33,19 @@ export const handleAddCwlClan = async (
     throw new Error("Clan tag must contain 3 to 15 letters or numbers.");
   }
 
-  const response = await dynamoDbClient.send(
-    new GetCommand({
-      TableName: "BotTable",
-      Key: {
-        pk: interaction.guild_id!,
-        sk: `signup#${signupName}`,
-      },
-    })
-  );
-  const signupItem: unknown = response.Item;
-  let signup: CwlSignupRecord;
-  if (signupItem === undefined) {
-    signup = {
-      pk: interaction.guild_id!,
-      sk: `signup#${signupName}`,
+  if (!interaction.guild_id) {
+    throw new Error("CWL clans can only be added in a server.");
+  }
+  const signup =
+    (await findCwlSignupByName(interaction.guild_id, signupName)) ??
+    ({
+      pk: interaction.guild_id,
+      sk: `signup#${uuid()}`,
       signupName,
       status: "draft",
       clans: [],
-    };
-  } else if (isCwlSignupRecord(signupItem)) {
-    signup = signupItem;
-  } else {
-    throw new Error(`CWL signup "${signupName}" contains invalid data.`);
-  }
+    } satisfies CwlSignupRecord);
+
   if (
     signup.status === "open" ||
     signup.channelId ||
@@ -96,17 +85,15 @@ export const handleAddCwlClan = async (
     league,
     link: `https://link.clashofclans.com/en/?action=OpenClanProfile&tag=${normalizedTag}`,
     accounts: [],
+    capacity: 50,
+    minTownHall: 15,
+    signupOpen: true,
   });
   signup.signupName = signupName;
   signup.status = "draft";
   signup.clans = clans;
 
-  await dynamoDbClient.send(
-    new PutCommand({
-      TableName: "BotTable",
-      Item: signup,
-    })
-  );
+  await saveCwlSignup(signup);
   await updateResponse(interaction.application_id, interaction.token, {
     content: `Added [${name}](<https://link.clashofclans.com/en/?action=OpenClanProfile&tag=${normalizedTag}>) to **${signupName}** (${league}). Add any other clans, then run \`/initiate-cwl-signup\`.`,
   });

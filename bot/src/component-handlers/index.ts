@@ -26,9 +26,13 @@ import { handleRecruiterScorePagination } from "./recruiterScoreButton";
 import { handleRecruiterLeaderboardRefresh } from "./recruiterLeaderboard";
 import { handleBasePostComponent } from "./basePost";
 import {
+  handleCwlRosterOptOut,
+  handleCwlRosterOptOutSelect,
+  handleCwlRosterRefresh,
   handleCwlRosterAccountSelect,
   handleCwlRosterSignup,
 } from "./cwlRosterSignup";
+import { handleCwlSignupDashboard } from "./cwlSignupDashboard";
 
 type Handler = (interaction: APIMessageComponentInteraction, config?: any) => Promise<any>;
 
@@ -52,6 +56,13 @@ const handlers: Record<string, Handler> = {
 const prefixHandlers: Record<string, Handler> = {
   cwl_roster_signup: (interaction) => handleCwlRosterSignup(interaction),
   cwl_roster_account: (interaction) => handleCwlRosterAccountSelect(interaction),
+  cwl_roster_refresh: (interaction) => handleCwlRosterRefresh(interaction),
+  cwl_roster_optout_account: (interaction) =>
+    handleCwlRosterOptOutSelect(interaction),
+  cwl_roster_optout: (interaction) => handleCwlRosterOptOut(interaction),
+  cwl_roster_dashboard: (interaction) =>
+    handleCwlSignupDashboard(interaction),
+  cwl_dashboard_: (interaction) => handleCwlSignupDashboard(interaction),
   base_post_: (interaction) => handleBasePostComponent(interaction),
   task_list: (interaction) => handleTaskListPagination(interaction, interaction.data.custom_id),
   task_: (interaction) => handleTaskButtonInteraction(interaction),

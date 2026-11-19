@@ -6,6 +6,7 @@ import {
   updateMessage,
   updateResponse,
 } from "../../src/adapters/discord-adapter";
+import { getPlayer } from "../../src/adapters/coc-api-adapter";
 import { dynamoDbClient } from "../../src/clients/dynamodb-client";
 import {
   handleCwlRosterAccountSelect,
@@ -17,13 +18,16 @@ jest.mock("../../src/adapters/discord-adapter", () => ({
   updateMessage: jest.fn(),
   updateResponse: jest.fn(),
 }));
+jest.mock("../../src/adapters/coc-api-adapter", () => ({
+  getPlayer: jest.fn(),
+}));
 jest.mock("../../src/clients/dynamodb-client", () => ({
   dynamoDbClient: { send: jest.fn() },
 }));
 
-const signup: CwlSignupRecord = {
+const createSignup = (): CwlSignupRecord => ({
   pk: "guild",
-  sk: "signup#November CWL",
+  sk: "signup#november",
   signupName: "November CWL",
   channelId: "channel",
   status: "open",
@@ -37,10 +41,10 @@ const signup: CwlSignupRecord = {
       accounts: [],
     },
   ],
-};
+});
 
 const createInteraction = (
-  customId = "cwl_roster_signup:2CYP9C9QG:November CWL"
+  customId = "cwl_roster_signup:november:2CYP9C9QG"
 ) =>
   ({
     application_id: "application",
@@ -49,6 +53,13 @@ const createInteraction = (
     member: { user: { id: "discord-user" }, roles: [] },
     data: { custom_id: customId },
   }) as unknown as APIMessageComponentInteraction;
+
+const playerProfile = (name: string) => ({
+  name,
+  townHallLevel: 16,
+  clan: { name: "Current Clan" },
+  heroes: [{ name: "Barbarian King", level: 90 }],
+});
 
 describe("CWL roster signup button", () => {
   beforeEach(() => {
@@ -73,17 +84,22 @@ describe("CWL roster signup button", () => {
     expect(jest.mocked(updateMessage)).not.toHaveBeenCalled();
   });
 
-  it("lets users choose between multiple linked accounts", async () => {
+  it("lets users choose one of their linked accounts", async () => {
     jest.mocked(dynamoDbClient).send.mockResolvedValueOnce({
       Items: [{ tag: "#PLAYER1" }, { tag: "#PLAYER2" }],
     } as never);
+    jest
+      .mocked(getPlayer)
+      .mockResolvedValueOnce(playerProfile("Player One") as never)
+      .mockResolvedValueOnce(playerProfile("Player Two") as never);
 
     await handleCwlRosterSignup(createInteraction());
 
     const response = jest.mocked(updateResponse).mock.calls[0][2];
     expect(response.content).toBe(
-      "Choose an account for the **November CWL** signup:"
+      "Select one linked account to add to this clan roster:"
     );
+    expect(response.embeds?.[0]?.fields?.[0]?.name).toContain("Player One");
     const actionRow = response.components?.[0];
     if (!actionRow || !("components" in actionRow)) {
       throw new Error("Expected an account selection menu.");
@@ -93,11 +109,19 @@ describe("CWL roster signup button", () => {
       throw new Error("Expected a string selection component.");
     }
     expect(selector.custom_id).toBe(
-      "cwl_roster_account:2CYP9C9QG:November CWL"
+      "cwl_roster_account:november:2CYP9C9QG"
     );
     expect(selector.options).toEqual([
-      { label: "#PLAYER1", value: "#PLAYER1" },
-      { label: "#PLAYER2", value: "#PLAYER2" },
+      {
+        label: "Player One (#PLAYER1)",
+        value: "#PLAYER1",
+        description: "TH 16",
+      },
+      {
+        label: "Player Two (#PLAYER2)",
+        value: "#PLAYER2",
+        description: "TH 16",
+      },
     ]);
   });
 
@@ -111,16 +135,17 @@ describe("CWL roster signup button", () => {
         Items: [{ tag: "#PLAYER1" }],
       } as never)
       .mockResolvedValueOnce({
-        Item: signup,
+        Item: createSignup(),
       } as never)
       .mockResolvedValueOnce({} as never);
+    jest.mocked(getPlayer).mockResolvedValueOnce(playerProfile("Player One") as never);
 
     await handleCwlRosterSignup(createInteraction());
 
     expect(jest.mocked(updateMessage)).toHaveBeenCalledTimes(1);
     const rosterMessage = jest.mocked(updateMessage).mock.calls[0][2];
     expect(rosterMessage.embeds?.[0]?.description).toContain(
-      "<@discord-user> | `#PLAYER1`"
+      "<@discord-user> | TH16 | **Player One** | BK 90"
     );
     expect(jest.mocked(updateMessage).mock.calls[0].slice(0, 2)).toEqual([
       "channel",
@@ -129,7 +154,9 @@ describe("CWL roster signup button", () => {
     expect(jest.mocked(updateResponse)).toHaveBeenCalledWith(
       "application",
       "interaction-token",
-      { content: "Added #PLAYER1 to the **MiniPoint** roster." }
+      {
+        content: "Added Player One (#PLAYER1) to the **MiniPoint** roster.",
+      }
     );
   });
 
@@ -140,14 +167,15 @@ describe("CWL roster signup button", () => {
         Items: [{ tag: "#PLAYER2" }],
       } as never)
       .mockResolvedValueOnce({
-        Item: signup,
+        Item: createSignup(),
       } as never)
       .mockResolvedValueOnce({} as never);
+    jest.mocked(getPlayer).mockResolvedValueOnce(playerProfile("Player Two") as never);
 
     const interaction = {
-      ...createInteraction("cwl_roster_account:2CYP9C9QG:November CWL"),
+      ...createInteraction("cwl_roster_account:november:2CYP9C9QG"),
       data: {
-        custom_id: "cwl_roster_account:2CYP9C9QG:November CWL",
+        custom_id: "cwl_roster_account:november:2CYP9C9QG",
         component_type: ComponentType.StringSelect,
         values: ["#PLAYER2"],
       },
@@ -157,7 +185,9 @@ describe("CWL roster signup button", () => {
     expect(jest.mocked(updateResponse)).toHaveBeenCalledWith(
       "application",
       "interaction-token",
-      { content: "Added #PLAYER2 to the **MiniPoint** roster." }
+      {
+        content: "Added Player Two (#PLAYER2) to the **MiniPoint** roster.",
+      }
     );
   });
 });

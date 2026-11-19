@@ -10,6 +10,10 @@ export const handleAutocomplete = async (
         return await autocomplete.handleUpgrade(interaction);
       case "cwl-roster":
         return await autocomplete.handleCwlRoster(interaction);
+      case "cwl-add-clan":
+      case "cwl-dashboard":
+      case "initiate-cwl-signup":
+        return await autocomplete.handleCwlSignupAutocomplete(interaction);
       case "link":
         return await autocomplete.handleLink(interaction);
       case "nomination-result":

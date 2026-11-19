@@ -11,6 +11,7 @@ import { createCwlQuestionsModal } from './cwlQuestions';
 import { createVoteNominationModal } from './nominationVote';
 import { createLinkAccountModal } from './linkAccount';
 import { createBasePostSettingsModal } from './basePost';
+import { createCwlDashboardModal } from './cwlDashboard';
 
 export const createModal = async (
   interaction:
@@ -18,6 +19,15 @@ export const createModal = async (
     | APIApplicationCommandInteraction,
   trigger: string,
 ) => {
+  if (
+    interaction.type === InteractionType.MessageComponent &&
+    (trigger.startsWith('cwl_dashboard_edit:') ||
+      trigger.startsWith('cwl_dashboard_rename:') ||
+      trigger.startsWith('cwl_dashboard_add_tag:'))
+  ) {
+    return createCwlDashboardModal(interaction);
+  }
+
   switch (trigger) {
     case 'apply':
       return createApplyModal(interaction);
