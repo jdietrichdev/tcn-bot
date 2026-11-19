@@ -17,6 +17,10 @@ import {
   getCwlRosterCustomId,
 } from "../util/cwlSignup";
 import {
+  getTownHallEmoji,
+  loadTownHallEmojiMap,
+} from "../util/townHallEmoji";
+import {
   findCwlSignupByName,
   getCwlSignupById,
   saveCwlSignup,
@@ -79,7 +83,6 @@ const findLinkedAccounts = async (
     .map((item) => ({
       tag: normalizePlayerTag(item.tag),
       name: item.tag,
-      heroes: {},
     }));
 };
 
@@ -89,18 +92,6 @@ const getPlayerSummary = async (
   const playerData: unknown = await getPlayer(playerTag);
   if (!isRecord(playerData)) {
     throw new Error(`Could not read player data for ${playerTag}.`);
-  }
-  const heroes: Record<string, number> = {};
-  if (Array.isArray(playerData.heroes)) {
-    for (const hero of playerData.heroes) {
-      if (
-        isRecord(hero) &&
-        typeof hero.name === "string" &&
-        typeof hero.level === "number"
-      ) {
-        heroes[hero.name] = hero.level;
-      }
-    }
   }
   const clanName =
     isRecord(playerData.clan) && typeof playerData.clan.name === "string"
@@ -114,7 +105,6 @@ const getPlayerSummary = async (
       typeof playerData.townHallLevel === "number"
         ? playerData.townHallLevel
         : undefined,
-    heroes,
     clanName,
   };
 };
@@ -220,7 +210,6 @@ const addAccountToRoster = async (
       playerName: accountSummary.name,
       clanName: accountSummary.clanName,
       townHallLevel: accountSummary.townHallLevel,
-      heroes: accountSummary.heroes,
     });
     clan.accounts = accounts;
     await saveCwlSignup(signup);
@@ -229,7 +218,7 @@ const addAccountToRoster = async (
   await updateMessage(
     signup.channelId,
     clan.messageId,
-    buildCwlRosterMessage(signup, clan)
+    buildCwlRosterMessage(signup, clan, loadTownHallEmojiMap())
   );
   await updateResponse(interaction.application_id, interaction.token, {
     content: alreadySignedUp
@@ -276,9 +265,10 @@ export const handleCwlRosterSignup = async (
     const accountSummaries = await Promise.all(
       linkedAccounts.map((account) => getPlayerSummary(account.tag))
     );
+    const townHallEmojiIds = loadTownHallEmojiMap();
     await updateResponse(interaction.application_id, interaction.token, {
       content: "Select one linked account to add to this clan roster:",
-      embeds: [buildLinkedAccountsEmbed(accountSummaries)],
+      embeds: [buildLinkedAccountsEmbed(accountSummaries, townHallEmojiIds)],
       components: [
         {
           type: ComponentType.ActionRow,
@@ -296,7 +286,11 @@ export const handleCwlRosterSignup = async (
               options: accountSummaries.map((account) => ({
                 label: `${account.name} (${account.tag})`.slice(0, 100),
                 value: account.tag,
-                description: `TH ${account.townHallLevel ?? "?"}`,
+                description: `Town Hall ${account.townHallLevel ?? "?"}`,
+                emoji: getTownHallEmoji(
+                  account.townHallLevel,
+                  townHallEmojiIds
+                ).componentEmoji,
               })),
             },
           ],
@@ -365,7 +359,7 @@ const updateRosterMessage = async (
   await updateMessage(
     signup.channelId,
     clan.messageId,
-    buildCwlRosterMessage(signup, clan)
+    buildCwlRosterMessage(signup, clan, loadTownHallEmojiMap())
   );
   await updateResponse(interaction.application_id, interaction.token, {
     content,
@@ -484,7 +478,7 @@ const removeAccountFromRoster = async (
     await updateMessage(
       signup.channelId,
       clan.messageId,
-      buildCwlRosterMessage(signup, clan)
+      buildCwlRosterMessage(signup, clan, loadTownHallEmojiMap())
     );
   }
   await updateResponse(interaction.application_id, interaction.token, {

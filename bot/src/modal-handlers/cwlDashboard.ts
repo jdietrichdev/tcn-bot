@@ -7,13 +7,24 @@ import {
   MessageFlags,
   TextInputStyle,
 } from "discord-api-types/v10";
+import { QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { getPlayer } from "../adapters/coc-api-adapter";
 import { updateMessage, updateResponse } from "../adapters/discord-adapter";
+import { dynamoDbClient } from "../clients/dynamodb-client";
 import {
   addCwlClanToSignup,
   canManageCwlDashboard,
 } from "../component-handlers/cwlSignupDashboard";
-import { buildCwlDashboardMessage, buildCwlRosterMessage } from "../util/cwlSignup";
+import {
+  buildCwlDashboardMessage,
+  buildCwlRosterMessage,
+  CwlRosterAccount,
+} from "../util/cwlSignup";
+import { loadTownHallEmojiMap } from "../util/townHallEmoji";
 import { getCwlSignupById, saveCwlSignup, findCwlSignupByName } from "../util/cwlSignupStore";
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
 
 const ephemeralResponse = (content: string): APIInteractionResponse => ({
   type: InteractionResponseType.ChannelMessageWithSource,
@@ -88,6 +99,32 @@ export const createCwlDashboardModal = async (
     };
   }
 
+  if (
+    (action === "add_player" || action === "remove_player") &&
+    clanTag
+  ) {
+    const clan = signup.clans.find((item) => item.tag === clanTag);
+    if (!clan) {
+      return ephemeralResponse("The selected clan is no longer in this signup.");
+    }
+    return {
+      type: InteractionResponseType.Modal,
+      data: {
+        custom_id: `cwlDashboardModal:${action}:${signupId}:${clanTag}`,
+        title: action === "add_player" ? "Add linked player" : "Remove player",
+        components: [
+          modalField(
+            "player_tag",
+            "Clash of Clans player tag",
+            "",
+            true,
+            16
+          ),
+        ],
+      },
+    };
+  }
+
   if (action === "edit" && clanTag) {
     const clan = signup.clans.find((item) => item.tag === clanTag);
     if (!clan) {
@@ -102,7 +139,7 @@ export const createCwlDashboardModal = async (
           modalField("capacity", "Roster capacity (1-50)", String(clan.capacity ?? 50), true, 2),
           modalField(
             "minimum_th",
-            "Minimum Town Hall (1-18)",
+            "Minimum Town Hall (1-19)",
             String(clan.minTownHall ?? 15),
             true,
             2
@@ -163,7 +200,7 @@ const refreshSignupMessages = async (
         await updateMessage(
           signup.channelId,
           clan.messageId,
-          buildCwlRosterMessage(signup, clan)
+          buildCwlRosterMessage(signup, clan, loadTownHallEmojiMap())
         );
       }
     }
@@ -173,6 +210,65 @@ const refreshSignupMessages = async (
       signup.dashboardChannelId,
       signup.dashboardMessageId,
       buildCwlDashboardMessage(signup)
+    );
+  }
+};
+
+const normalizePlayerTag = (tag: string) =>
+  `#${tag.replace(/^#/, "").toUpperCase()}`;
+
+const getLinkedDiscordUser = async (playerTag: string) => {
+  const response = await dynamoDbClient.send(
+    new QueryCommand({
+      TableName: "BotTable",
+      IndexName: "sk-index",
+      KeyConditionExpression: "sk = :sk",
+      ExpressionAttributeValues: {
+        ":sk": `player#${playerTag.replace(/^#/, "")}`,
+      },
+    })
+  );
+  const items: unknown = response.Items ?? [];
+  if (!Array.isArray(items)) {
+    throw new Error("Could not check linked accounts for that player tag.");
+  }
+  const linkedItems = items.filter(
+    (
+      item
+    ): item is Record<string, unknown> & { pk: string; tag: string } =>
+      isRecord(item) &&
+      typeof item.pk === "string" &&
+      typeof item.tag === "string" &&
+      normalizePlayerTag(item.tag) === playerTag
+  );
+  if (linkedItems.length === 0) {
+    throw new Error(
+      `${playerTag} is not linked to the bot. Link it with \`/link create\` first.`
+    );
+  }
+  if (linkedItems.length > 1) {
+    throw new Error(`More than one Discord account is linked to ${playerTag}.`);
+  }
+  return linkedItems[0].pk;
+};
+
+const refreshRosterClanMessage = async (
+  signup: NonNullable<Awaited<ReturnType<typeof getCwlSignupById>>>,
+  clanTag: string
+) => {
+  const clan = signup.clans.find((item) => item.tag === clanTag);
+  if (clan?.messageId && signup.channelId) {
+    await updateMessage(
+      signup.channelId,
+      clan.messageId,
+      buildCwlRosterMessage(signup, clan, loadTownHallEmojiMap())
+    );
+  }
+  if (signup.dashboardChannelId && signup.dashboardMessageId) {
+    await updateMessage(
+      signup.dashboardChannelId,
+      signup.dashboardMessageId,
+      buildCwlDashboardMessage(signup, clanTag)
     );
   }
 };
@@ -205,6 +301,72 @@ export const submitCwlDashboardModal = async (
       );
       await updateResponse(interaction.application_id, interaction.token, {
         content: `Added **${clan.name}** to **${signup.signupName}**.`,
+      });
+      return;
+    }
+
+    if (
+      (action === "add_player" || action === "remove_player") &&
+      clanTag
+    ) {
+      const clan = signup.clans.find((item) => item.tag === clanTag);
+      if (!clan) {
+        throw new Error("The selected clan is no longer in this signup.");
+      }
+      const playerTag = normalizePlayerTag(
+        getTextInputValue(interaction, "player_tag").trim()
+      );
+      if (!/^[A-Z0-9]{3,15}$/.test(playerTag.slice(1))) {
+        throw new Error("Player tags must contain 3 to 15 letters or numbers.");
+      }
+
+      if (action === "add_player") {
+        const alreadyAdded = (clan.accounts ?? []).some(
+          (account) => normalizePlayerTag(account.playerTag) === playerTag
+        );
+        if (alreadyAdded) {
+          throw new Error(`${playerTag} is already on the **${clan.name}** roster.`);
+        }
+        const userId = await getLinkedDiscordUser(playerTag);
+        const playerData: unknown = await getPlayer(playerTag);
+        if (!isRecord(playerData)) {
+          throw new Error(`Could not read player data for ${playerTag}.`);
+        }
+        const account: CwlRosterAccount = {
+          userId,
+          playerTag,
+          playerName:
+            typeof playerData.name === "string" ? playerData.name : playerTag,
+          clanName:
+            isRecord(playerData.clan) &&
+            typeof playerData.clan.name === "string"
+              ? playerData.clan.name
+              : undefined,
+          townHallLevel:
+            typeof playerData.townHallLevel === "number"
+              ? playerData.townHallLevel
+              : undefined,
+        };
+        clan.accounts = [...(clan.accounts ?? []), account];
+      } else {
+        const accounts = clan.accounts ?? [];
+        const accountIndex = accounts.findIndex(
+          (account) => normalizePlayerTag(account.playerTag) === playerTag
+        );
+        if (accountIndex < 0) {
+          throw new Error(`${playerTag} is not on the **${clan.name}** roster.`);
+        }
+        accounts.splice(accountIndex, 1);
+        clan.accounts = accounts;
+      }
+
+      await saveCwlSignup(signup);
+      await refreshRosterClanMessage(signup, clanTag);
+      await updateResponse(interaction.application_id, interaction.token, {
+        content:
+          action === "add_player"
+            ? `Added ${playerTag} to the **${clan.name}** roster.`
+            : `Removed ${playerTag} from the **${clan.name}** roster.`,
       });
       return;
     }
@@ -245,7 +407,7 @@ export const submitCwlDashboardModal = async (
         getTextInputValue(interaction, "minimum_th"),
         "Minimum Town Hall",
         1,
-        18
+        19
       );
       const roleValue = getTextInputValue(interaction, "role_id")
         .trim()

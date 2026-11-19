@@ -50,7 +50,9 @@ export const buttonTriggersModal = (customId: string) => {
     BUTTON_MODAL_TRIGGERS.includes(customId) ||
     customId.startsWith('cwl_dashboard_edit:') ||
     customId.startsWith('cwl_dashboard_rename:') ||
-    customId.startsWith('cwl_dashboard_add_tag:')
+    customId.startsWith('cwl_dashboard_add_tag:') ||
+    customId.startsWith('cwl_dashboard_add_player:') ||
+    customId.startsWith('cwl_dashboard_remove_player:')
   );
 };
 

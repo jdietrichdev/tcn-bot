@@ -5,6 +5,7 @@ import {
   RESTPostAPIWebhookWithTokenJSONBody,
 } from "discord-api-types/v10";
 import { WAR_LEAGUE } from "../constants/emojis/coc/cwlLeague";
+import { getTownHallEmoji } from "./townHallEmoji";
 
 export interface CwlSignupClan {
   name: string;
@@ -32,7 +33,6 @@ export interface CwlLinkedAccountSummary {
   tag: string;
   name: string;
   townHallLevel?: number;
-  heroes: Record<string, number>;
 }
 
 export interface CwlSignupRecord {
@@ -69,9 +69,7 @@ const isCwlRosterAccount = (value: unknown): value is CwlRosterAccount =>
     typeof value.townHallLevel === "number") &&
   (value.heroes === undefined ||
     (isRecord(value.heroes) &&
-      Object.values(value.heroes).every(
-        (level) => typeof level === "number"
-      )));
+      Object.values(value.heroes).every((level) => typeof level === "number")));
 
 export const isCwlSignupClan = (value: unknown): value is CwlSignupClan =>
   isRecord(value) &&
@@ -136,38 +134,20 @@ export const CWL_KNOWN_CLANS = [
   { name: "ziminzi", tag: "2G0020YLY" },
 ];
 
-const shortHeroName = (name: string) => {
-  const aliases: Record<string, string> = {
-    "Barbarian King": "BK",
-    "Archer Queen": "AQ",
-    "Grand Warden": "GW",
-    "Royal Champion": "RC",
-    "Minion Prince": "MP",
-    "Dragon Duke": "DD",
-  };
-  return aliases[name] ?? name;
-};
-
 export const buildCwlRosterEmbed = (
   signupName: string,
-  clan: CwlSignupClan
+  clan: CwlSignupClan,
+  townHallEmojiIds: Record<string, string>
 ): APIEmbed => {
   const accounts = clan.accounts ?? [];
   const roster = accounts
     .slice(0, 35)
-    .map((account, index) => {
-      const heroes = Object.entries(account.heroes ?? {})
-        .map(([name, level]) => `${shortHeroName(name)} ${level}`)
-        .join(" ");
-      return [
-        `${index + 1}. <@${account.userId}>`,
-        `TH${account.townHallLevel ?? "?"}`,
-        `**${account.playerName ?? account.playerTag}**`,
-        heroes || undefined,
-        account.clanName ?? "Ungrouped",
-      ]
-        .filter(Boolean)
-        .join(" | ");
+    .map((account) => {
+      const townHall = getTownHallEmoji(
+        account.townHallLevel,
+        townHallEmojiIds
+      );
+      return `${townHall.markup} <@${account.userId}> | **${account.playerName ?? account.playerTag}** | ${account.clanName ?? "Ungrouped"}`;
     })
     .join("\n");
   const leagueEmoji =
@@ -179,8 +159,7 @@ export const buildCwlRosterEmbed = (
     url: clan.link,
     description: [
       `**${leagueEmoji} ${clan.league}**`,
-      `**#  🏠  DISCORD  PLAYER  CLAN**`,
-      `**Ungrouped - ${accounts.length}**`,
+      `**TOWN HALL  DISCORD  PLAYER  CLAN**`,
       roster || "_No accounts signed up yet._",
     ].join("\n"),
     footer: {
@@ -191,14 +170,15 @@ export const buildCwlRosterEmbed = (
 
 export const buildCwlRosterMessage = (
   signup: CwlSignupRecord,
-  clan: CwlSignupClan
+  clan: CwlSignupClan,
+  townHallEmojiIds: Record<string, string>
 ): RESTPostAPIWebhookWithTokenJSONBody => {
   const signupId = getCwlSignupId(signup);
   const capacity = clan.capacity ?? 50;
   const signupOpen = clan.signupOpen !== false;
 
   return {
-    embeds: [buildCwlRosterEmbed(signup.signupName, clan)],
+    embeds: [buildCwlRosterEmbed(signup.signupName, clan, townHallEmojiIds)],
     components: [
       {
         type: ComponentType.ActionRow,
@@ -236,24 +216,18 @@ export const buildCwlRosterMessage = (
 };
 
 export const buildLinkedAccountsEmbed = (
-  accounts: CwlLinkedAccountSummary[]
+  accounts: CwlLinkedAccountSummary[],
+  townHallEmojiIds: Record<string, string>
 ): APIEmbed => ({
   title: "Select an account",
   description: "Choose the linked account you want to add to this roster.",
   fields: accounts.map((account) => {
-    const heroSummary = Object.entries(account.heroes)
-      .map(([name, level]) => `${shortHeroName(name)} ${level}`)
-      .join(", ");
+    const townHall = getTownHallEmoji(account.townHallLevel, townHallEmojiIds);
     return {
-      name: `🏠 ${account.name} (${account.tag})`,
-      value: [
-        account.townHallLevel
-          ? `TH ${account.townHallLevel}`
-          : undefined,
-        heroSummary ? `🦸 ${heroSummary}` : undefined,
-      ]
-        .filter(Boolean)
-        .join(" • ") || "No profile details available",
+      name: `${townHall.markup} ${account.name} (${account.tag})`,
+      value: account.townHallLevel
+        ? `Town Hall ${account.townHallLevel}`
+        : "Town Hall level unavailable",
       inline: false,
     };
   }),
@@ -374,6 +348,25 @@ export const buildCwlDashboardMessage = (
         style: ButtonStyle.Secondary,
         label: "Refresh",
         custom_id: `cwl_dashboard_refresh:${signupId}:${selectedClanTag ?? ""}`,
+      },
+    ],
+  });
+  components.push({
+    type: ComponentType.ActionRow,
+    components: [
+      {
+        type: ComponentType.Button,
+        style: ButtonStyle.Success,
+        label: "Add linked player",
+        custom_id: `cwl_dashboard_add_player:${signupId}:${selectedClanTag ?? ""}`,
+        disabled: !selectedClan,
+      },
+      {
+        type: ComponentType.Button,
+        style: ButtonStyle.Danger,
+        label: "Remove player",
+        custom_id: `cwl_dashboard_remove_player:${signupId}:${selectedClanTag ?? ""}`,
+        disabled: !selectedClan || (selectedClan.accounts?.length ?? 0) === 0,
       },
     ],
   });

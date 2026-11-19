@@ -23,7 +23,9 @@ export const createModal = async (
     interaction.type === InteractionType.MessageComponent &&
     (trigger.startsWith('cwl_dashboard_edit:') ||
       trigger.startsWith('cwl_dashboard_rename:') ||
-      trigger.startsWith('cwl_dashboard_add_tag:'))
+      trigger.startsWith('cwl_dashboard_add_tag:') ||
+      trigger.startsWith('cwl_dashboard_add_player:') ||
+      trigger.startsWith('cwl_dashboard_remove_player:'))
   ) {
     return createCwlDashboardModal(interaction);
   }

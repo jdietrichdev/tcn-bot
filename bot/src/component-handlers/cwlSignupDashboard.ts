@@ -20,6 +20,7 @@ import {
   CwlSignupRecord,
   CWL_KNOWN_CLANS,
 } from "../util/cwlSignup";
+import { loadTownHallEmojiMap } from "../util/townHallEmoji";
 import {
   getCwlSignupById,
   saveCwlSignup,
@@ -146,7 +147,7 @@ export const addCwlClanToSignup = async (
 
   if (signup.status === "open" && signup.channelId && !clan.messageId) {
     const posted = await sendMessage(
-      buildCwlRosterMessage(signup, clan),
+      buildCwlRosterMessage(signup, clan, loadTownHallEmojiMap()),
       signup.channelId
     );
     clan.messageId = posted.id;
@@ -282,7 +283,7 @@ export const handleCwlSignupDashboard = async (
         await updateMessage(
           signup.channelId,
           clan.messageId,
-          buildCwlRosterMessage(signup, clan)
+          buildCwlRosterMessage(signup, clan, loadTownHallEmojiMap())
         );
       }
       await updateDashboard(signup, clanTag);

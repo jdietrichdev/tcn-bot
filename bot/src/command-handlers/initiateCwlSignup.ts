@@ -5,6 +5,7 @@ import {
 import { sendMessage, updateMessage, updateResponse } from "../adapters/discord-adapter";
 import { getCommandOptionData } from "../util/interaction-util";
 import { buildCwlRosterMessage } from "../util/cwlSignup";
+import { loadTownHallEmojiMap } from "../util/townHallEmoji";
 import {
   findCwlSignupByName,
   saveCwlSignup,
@@ -40,9 +41,10 @@ export const handleInitiateCwlSignup = async (
   await saveCwlSignup(signup);
 
   let createdCount = 0;
+  const townHallEmojiIds = loadTownHallEmojiMap();
   for (const clan of signup.clans) {
     clan.accounts = Array.isArray(clan.accounts) ? clan.accounts : [];
-    const message = buildCwlRosterMessage(signup, clan);
+    const message = buildCwlRosterMessage(signup, clan, townHallEmojiIds);
 
     if (clan.messageId) {
       await updateMessage(signup.channelId, clan.messageId, message);

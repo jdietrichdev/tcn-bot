@@ -24,6 +24,27 @@ jest.mock("../../src/adapters/coc-api-adapter", () => ({
 jest.mock("../../src/clients/dynamodb-client", () => ({
   dynamoDbClient: { send: jest.fn() },
 }));
+jest.mock("../../src/util/townHallEmoji", () => {
+  return {
+    getTownHallEmoji: (
+      level: number | undefined,
+      emojiIds: Record<string, string>
+    ) => {
+      if (level === undefined) {
+        return { markup: "🏠", componentEmoji: { name: "🏠" } };
+      }
+      const name = `town_hall_${level}`;
+      const id = emojiIds[String(level)];
+      return {
+        markup: `<:${name}:${id}>`,
+        componentEmoji: { id, name },
+      };
+    },
+    loadTownHallEmojiMap: jest.fn(() => ({
+      "16": "123456789012345678",
+    })),
+  };
+});
 
 const createSignup = (): CwlSignupRecord => ({
   pk: "guild",
@@ -58,7 +79,10 @@ const playerProfile = (name: string) => ({
   name,
   townHallLevel: 16,
   clan: { name: "Current Clan" },
-  heroes: [{ name: "Barbarian King", level: 90 }],
+  heroes: [
+    { name: "Battle Machine", level: 35 },
+    { name: "Battle Copter", level: 35 },
+  ],
 });
 
 describe("CWL roster signup button", () => {
@@ -99,7 +123,11 @@ describe("CWL roster signup button", () => {
     expect(response.content).toBe(
       "Select one linked account to add to this clan roster:"
     );
-    expect(response.embeds?.[0]?.fields?.[0]?.name).toContain("Player One");
+    expect(response.embeds?.[0]?.fields?.[0]?.name).toContain(
+      "<:town_hall_16:123456789012345678> Player One"
+    );
+    expect(JSON.stringify(response.embeds)).not.toContain("Battle Machine");
+    expect(JSON.stringify(response.embeds)).not.toContain("Battle Copter");
     const actionRow = response.components?.[0];
     if (!actionRow || !("components" in actionRow)) {
       throw new Error("Expected an account selection menu.");
@@ -115,12 +143,14 @@ describe("CWL roster signup button", () => {
       {
         label: "Player One (#PLAYER1)",
         value: "#PLAYER1",
-        description: "TH 16",
+        description: "Town Hall 16",
+        emoji: { id: "123456789012345678", name: "town_hall_16" },
       },
       {
         label: "Player Two (#PLAYER2)",
         value: "#PLAYER2",
-        description: "TH 16",
+        description: "Town Hall 16",
+        emoji: { id: "123456789012345678", name: "town_hall_16" },
       },
     ]);
   });
@@ -145,8 +175,9 @@ describe("CWL roster signup button", () => {
     expect(jest.mocked(updateMessage)).toHaveBeenCalledTimes(1);
     const rosterMessage = jest.mocked(updateMessage).mock.calls[0][2];
     expect(rosterMessage.embeds?.[0]?.description).toContain(
-      "<@discord-user> | TH16 | **Player One** | BK 90"
+      "<:town_hall_16:123456789012345678> <@discord-user> | **Player One** | Current Clan"
     );
+    expect(rosterMessage.embeds?.[0]?.description).not.toContain("Barbarian King");
     expect(jest.mocked(updateMessage).mock.calls[0].slice(0, 2)).toEqual([
       "channel",
       "roster-message",
