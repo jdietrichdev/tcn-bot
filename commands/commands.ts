@@ -302,12 +302,31 @@ export const cwlRoster = new SlashCommandBuilder()
 
 export const initiateCwlSignup = new SlashCommandBuilder()
   .setName('initiate-cwl-signup')
-  .setDescription('Create new signup for CWL')
+  .setDescription('Post the configured CWL clan roster signups in this channel')
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .addStringOption((option) => {
     return option
       .setName('name')
       .setDescription('Signup name')
+      .setRequired(true)
+      .setMaxLength(50);
+  });
+
+export const cwlAddClan = new SlashCommandBuilder()
+  .setName('cwl-add-clan')
+  .setDescription("Add a clan's current league and profile link to a CWL signup")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName('signup-name')
+      .setDescription('Name of the CWL signup')
+      .setRequired(true)
+      .setMaxLength(50);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName('clan-tag')
+      .setDescription('Clash of Clans clan tag (with or without #)')
       .setRequired(true);
   });
 

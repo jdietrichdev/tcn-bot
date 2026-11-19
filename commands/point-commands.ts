@@ -1,3 +1,19 @@
-import { apiTokenHelp, apply, basePost, deleteTicket, link } from './commands';
+import {
+  apiTokenHelp,
+  apply,
+  basePost,
+  cwlAddClan,
+  deleteTicket,
+  initiateCwlSignup,
+  link,
+} from './commands';
 
-export const pointCommands = [apply, basePost, apiTokenHelp, deleteTicket, link];
+export const pointCommands = [
+  apply,
+  basePost,
+  apiTokenHelp,
+  deleteTicket,
+  link,
+  cwlAddClan,
+  initiateCwlSignup,
+];

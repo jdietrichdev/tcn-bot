@@ -1,63 +1,83 @@
 import {
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
-  ComponentType,
 } from "discord-api-types/v10";
-import { getCommandOptionData } from "../util/interaction-util";
-import { sendMessage, updateResponse } from "../adapters/discord-adapter";
-import { BUTTONS } from "../component-handlers/buttons";
-import { getConfig } from "../util/serverConfig";
+import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoDbClient } from "../clients/dynamodb-client";
-import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import { sendMessage, updateMessage, updateResponse } from "../adapters/discord-adapter";
+import { getCommandOptionData } from "../util/interaction-util";
+import { buildCwlRosterMessage, isCwlSignupRecord } from "../util/cwlSignup";
 
 export const handleInitiateCwlSignup = async (
   interaction: APIChatInputApplicationCommandInteraction
 ) => {
-  try {
-    const config = getConfig(interaction.guild_id!);
-    const signupName =
-      getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
-        interaction,
-        "name"
-      ).value;
+  const signupName =
+    getCommandOptionData<APIApplicationCommandInteractionDataStringOption>(
+      interaction,
+      "name"
+    ).value;
+  const channelId = interaction.channel_id;
+  if (!interaction.guild_id || !channelId) {
+    throw new Error("CWL signups must be started in a server text channel.");
+  }
 
-    const signupMessage = await sendMessage(
-      {
-        embeds: [
-          {
-            title: signupName,
-            fields: [],
-            footer: {
-              text: "Total accounts: 0\nSignup is OPEN",
-            },
-          },
-        ],
-        components: [
-          {
-            type: ComponentType.ActionRow,
-            components: [BUTTONS.SIGNUP_CWL, BUTTONS.CLOSE_CWL_SIGNUP],
-          },
-        ],
+  const response = await dynamoDbClient.send(
+    new GetCommand({
+      TableName: "BotTable",
+      Key: {
+        pk: interaction.guild_id,
+        sk: `signup#${signupName}`,
       },
-      config.CWL_SIGNUP_CHANNEL
+    })
+  );
+  const signupItem: unknown = response.Item;
+  if (
+    !isCwlSignupRecord(signupItem) ||
+    signupItem.clans.length === 0
+  ) {
+    throw new Error(
+      `No clans are configured for "${signupName}". Add clans with /cwl-add-clan first.`
     );
+  }
+  const signup = signupItem;
+  if (signup["message"]) {
+    throw new Error(
+      `CWL signup "${signupName}" uses the previous single-message format. Create a new signup name for per-clan rosters.`
+    );
+  }
+
+  signup.channelId = signup.channelId ?? channelId;
+  signup.status = "open";
+  await dynamoDbClient.send(
+    new PutCommand({
+      TableName: "BotTable",
+      Item: signup,
+    })
+  );
+
+  let createdCount = 0;
+  for (const clan of signup.clans) {
+    clan.accounts = Array.isArray(clan.accounts) ? clan.accounts : [];
+    const message = buildCwlRosterMessage(signupName, clan);
+
+    if (clan.messageId) {
+      await updateMessage(signup.channelId, clan.messageId, message);
+      continue;
+    }
+
+    const postedMessage = await sendMessage(message, signup.channelId);
+    clan.messageId = postedMessage.id;
+    createdCount += 1;
     await dynamoDbClient.send(
       new PutCommand({
         TableName: "BotTable",
-        Item: {
-          pk: interaction.guild_id!,
-          sk: `signup#${signupName}`,
-          message: signupMessage.id,
-          signupName,
-          accounts: [],
-        },
+        Item: signup,
       })
     );
-    await updateResponse(interaction.application_id, interaction.token, {
-      content: "CWL signup has been started",
-    });
-  } catch (err) {
-    console.log(`Failed to initiate CWL signup: ${err}`);
-    throw err;
+    await new Promise((resolve) => setTimeout(resolve, 1200));
   }
+
+  await updateResponse(interaction.application_id, interaction.token, {
+    content: `CWL roster signups are posted in <#${signup.channelId}>. Created ${createdCount} new roster${createdCount === 1 ? "" : "s"}.`,
+  });
 };
