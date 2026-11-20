@@ -13,6 +13,7 @@ export const handleAutocomplete = async (
       case "cwl-add-clan":
       case "cwl-dashboard":
       case "initiate-cwl-signup":
+      case "cwl-announce-roster":
         return await autocomplete.handleCwlSignupAutocomplete(interaction);
       case "link":
         return await autocomplete.handleLink(interaction);

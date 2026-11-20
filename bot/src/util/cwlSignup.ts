@@ -166,6 +166,7 @@ export const buildCwlRosterEmbed = (
   return {
     title: `${clan.name} (#${clan.tag})`,
     url: clan.link,
+    color: 0x551a8b,
     description: [
       `**${leagueEmoji} ${clan.league}**`,
       `**TOWN HALL  DISCORD  PLAYER  CLAN**`,

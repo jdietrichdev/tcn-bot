@@ -163,7 +163,13 @@ export const createCwlTryoutTicket = async (
   if ([...addPlayerCustomId].length > 100) {
     throw new Error("The CWL signup details are too long for a ticket button.");
   }
-  const staffRoles = [...new Set([input.config.RECRUITER_ROLE, input.config.ADMIN_ROLE])]
+  const staffRoles = [
+    ...new Set([
+      ...(input.config.CWL_TRYOUT_STAFF_ROLES ?? []),
+      input.config.RECRUITER_ROLE,
+      input.config.ADMIN_ROLE,
+    ]),
+  ]
     .filter(Boolean)
     .map((roleId) => ({
       id: roleId,
@@ -171,7 +177,9 @@ export const createCwlTryoutTicket = async (
       allow: (
         PermissionFlagsBits.ViewChannel |
         PermissionFlagsBits.AddReactions |
-        PermissionFlagsBits.SendMessages
+        PermissionFlagsBits.SendMessages |
+        PermissionFlagsBits.ManageMessages |
+        PermissionFlagsBits.ManageChannels
       ).toString(),
       deny: "0",
     }));

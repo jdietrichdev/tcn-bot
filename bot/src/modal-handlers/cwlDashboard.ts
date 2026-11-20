@@ -9,7 +9,11 @@ import {
 } from "discord-api-types/v10";
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { getPlayer } from "../adapters/coc-api-adapter";
-import { updateMessage, updateResponse } from "../adapters/discord-adapter";
+import {
+  grantRole,
+  updateMessage,
+  updateResponse,
+} from "../adapters/discord-adapter";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import {
   addCwlClanToSignup,
@@ -21,6 +25,7 @@ import {
   CwlRosterAccount,
 } from "../util/cwlSignup";
 import { loadTownHallEmojiMap } from "../util/townHallEmoji";
+import { getConfig, getCwlClanRoleId } from "../util/serverConfig";
 import { getCwlSignupById, saveCwlSignup, findCwlSignupByName } from "../util/cwlSignupStore";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -320,6 +325,7 @@ export const submitCwlDashboardModal = async (
         throw new Error("Player tags must contain 3 to 15 letters or numbers.");
       }
 
+      let addedUserId: string | undefined;
       if (action === "add_player") {
         const alreadyAdded = (clan.accounts ?? []).some(
           (account) => normalizePlayerTag(account.playerTag) === playerTag
@@ -328,6 +334,7 @@ export const submitCwlDashboardModal = async (
           throw new Error(`${playerTag} is already on the **${clan.name}** roster.`);
         }
         const userId = await getLinkedDiscordUser(playerTag);
+        addedUserId = userId;
         const playerData: unknown = await getPlayer(playerTag);
         if (!isRecord(playerData)) {
           throw new Error(`Could not read player data for ${playerTag}.`);
@@ -361,6 +368,15 @@ export const submitCwlDashboardModal = async (
       }
 
       await saveCwlSignup(signup);
+      if (addedUserId) {
+        const cwlRoleId = getCwlClanRoleId(
+          getConfig(interaction.guild_id),
+          clan
+        );
+        if (cwlRoleId) {
+          await grantRole(interaction.guild_id, addedUserId, cwlRoleId);
+        }
+      }
       await refreshRosterClanMessage(signup, clanTag);
       await updateResponse(interaction.application_id, interaction.token, {
         content:

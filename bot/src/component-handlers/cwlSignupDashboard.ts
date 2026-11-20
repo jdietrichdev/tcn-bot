@@ -37,14 +37,16 @@ export const canManageCwlDashboard = (
     return false;
   }
   const roles = member.roles;
+  const config = getConfig(guildId);
   const permissions =
     "permissions" in member ? BigInt(member.permissions) : BigInt(0);
-  const hasAdminRole = roles.includes(
-    getConfig(guildId).ADMIN_ROLE
-  );
+  const hasAdminRole = roles.includes(config.ADMIN_ROLE);
+  const hasCwlTryoutStaffRole =
+    config.CWL_TRYOUT_STAFF_ROLES?.some((roleId) => roles.includes(roleId)) ??
+    false;
   const hasAdminPermission =
     (permissions & BigInt(PermissionFlagsBits.Administrator)) !== BigInt(0);
-  return hasAdminRole || hasAdminPermission;
+  return hasAdminRole || hasAdminPermission || hasCwlTryoutStaffRole;
 };
 
 const respond = async (

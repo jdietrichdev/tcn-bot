@@ -6,7 +6,11 @@ import {
   TextInputStyle,
 } from "discord-api-types/v10";
 import { getPlayer } from "../../src/adapters/coc-api-adapter";
-import { updateMessage, updateResponse } from "../../src/adapters/discord-adapter";
+import {
+  grantRole,
+  updateMessage,
+  updateResponse,
+} from "../../src/adapters/discord-adapter";
 import { dynamoDbClient } from "../../src/clients/dynamodb-client";
 import { canManageCwlDashboard } from "../../src/component-handlers/cwlSignupDashboard";
 import {
@@ -19,6 +23,7 @@ jest.mock("../../src/adapters/coc-api-adapter", () => ({
   getPlayer: jest.fn(),
 }));
 jest.mock("../../src/adapters/discord-adapter", () => ({
+  grantRole: jest.fn(),
   updateMessage: jest.fn(),
   updateResponse: jest.fn(),
 }));
@@ -28,6 +33,14 @@ jest.mock("../../src/clients/dynamodb-client", () => ({
 jest.mock("../../src/component-handlers/cwlSignupDashboard", () => ({
   addCwlClanToSignup: jest.fn(),
   canManageCwlDashboard: jest.fn(),
+}));
+jest.mock("../../src/util/serverConfig", () => ({
+  getCwlClanRoleId: jest.fn((config, clan) =>
+    config.CWL_CLAN_ROLES?.[clan.tag]
+  ),
+  getConfig: jest.fn(() => ({
+    CWL_CLAN_ROLES: { "2CYP9C9QG": "cwl-role" },
+  })),
 }));
 jest.mock("../../src/util/townHallEmoji", () => ({
   getTownHallEmoji: (
@@ -174,6 +187,11 @@ describe("CWL dashboard player management", () => {
       townHallLevel: 16,
     });
     expect(jest.mocked(updateMessage)).toHaveBeenCalledTimes(2);
+    expect(jest.mocked(grantRole)).toHaveBeenCalledWith(
+      "guild",
+      "linked-user",
+      "cwl-role"
+    );
     expect(jest.mocked(updateResponse)).toHaveBeenCalledWith(
       "application",
       "modal-token",

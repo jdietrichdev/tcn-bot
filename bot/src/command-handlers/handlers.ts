@@ -9,6 +9,7 @@ export * from "./upgrade";
 export * from "./recruit";
 export * from "./recruiterScore";
 export * from "./cwlRoster";
+export * from "./cwlAnnounceRoster";
 export * from "./initiateCwlSignup";
 export * from "./addCwlClan";
 export * from "./cwlDashboard";

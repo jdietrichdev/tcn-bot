@@ -48,11 +48,16 @@ describe("CWL tryout ticket close button", () => {
   });
 
   it("closes a Point CWL tryout ticket without requiring an archive category", async () => {
+    jest.mocked(isActorRecruiter).mockResolvedValue(false);
+    jest.mocked(isActorAdmin).mockResolvedValue(false);
     const interaction = {
       application_id: "application",
       token: "interaction-token",
       guild_id: "guild",
-      member: { user: { id: "staff", username: "Staff" }, roles: [] },
+      member: {
+        user: { id: "staff", username: "Staff" },
+        roles: ["cwl-ticket-staff"],
+      },
       channel: {
         id: "tryout-channel",
         topic: "CWL tryout for #PLAYER1:discord-user",
@@ -61,6 +66,7 @@ describe("CWL tryout ticket close button", () => {
     } as unknown as APIMessageComponentInteraction;
     const config = {
       ARCHIVE_CATEGORY: "",
+      CWL_TRYOUT_STAFF_ROLES: ["cwl-ticket-staff"],
       RECRUITER_ROLE: "recruiters",
       ADMIN_ROLE: "admins",
     } as never;

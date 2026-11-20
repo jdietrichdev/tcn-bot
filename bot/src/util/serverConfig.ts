@@ -25,6 +25,8 @@ export interface ServerConfig {
     champion?: string;
     legends?: string;
   };
+  CWL_CLAN_ROLES?: Record<string, string>;
+  CWL_TRYOUT_STAFF_ROLES?: string[];
   EVENTS_CATEGORY: string;
   GENERAL_CHANNEL: string;
   ANNOUNCEMENT_CHANNEL: string;
@@ -264,6 +266,21 @@ configMap.set('1310007885656363068', {
     champion: '1528995988159598602',
     legends: '1548870081285722183',
   },
+  CWL_CLAN_ROLES: {
+    '2G2RJQ2UG': '1495619211299651594',
+    '2J9QJ9YVJ': '1495619282699292773',
+    '2G0020YLY': '1495619399481167903',
+    '2RR0G9L2L': '1495619447870984273',
+    '2CLL8UJR2': '1495637816225300711',
+    TCN3: '1533216395246960791',
+    TCN3CWL: '1533216395246960791',
+    TCN2: '1561218812127223818',
+    TCN2CWL: '1561218812127223818',
+  },
+  CWL_TRYOUT_STAFF_ROLES: [
+    '1520202813911859251',
+    '1459375267255554130',
+  ],
   EVENTS_CATEGORY: '',
   GENERAL_CHANNEL: '',
   ANNOUNCEMENT_CHANNEL: '',
@@ -332,4 +349,20 @@ export const getConfig = (guidId: string): ServerConfig => {
   const config = configMap.get(guidId);
   if (config) return config;
   else throw new Error('No config defined for server');
+};
+
+export const getCwlClanRoleId = (
+  config: ServerConfig,
+  clan: { tag: string; name: string; roleId?: string }
+) => {
+  if (clan.roleId) {
+    return clan.roleId;
+  }
+  const normalize = (value: string) =>
+    value.replace(/[^A-Z0-9]/gi, "").toUpperCase();
+  const clanTag = normalize(clan.tag);
+  const clanName = normalize(clan.name);
+  return Object.entries(config.CWL_CLAN_ROLES ?? {}).find(
+    ([key]) => normalize(key) === clanTag || normalize(key) === clanName
+  )?.[1];
 };

@@ -91,6 +91,7 @@ describe("CWL signup embeds", () => {
     const embed = message.embeds?.[0];
     expect(embed?.title).toBe("MiniPoint (#2CYP9C9QG)");
     expect(embed?.url).toBe(clan.link);
+    expect(embed?.color).toBe(0x551a8b);
     expect(embed?.description).toContain(
       "<:town_hall_16:123456789012345678> <@123> | **Player One** | Current Clan"
     );

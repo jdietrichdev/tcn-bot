@@ -7,9 +7,13 @@ import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { getPlayer } from "../adapters/coc-api-adapter";
 import { getPlayerCwlHistoryStats } from "../adapters/clashking-adapter";
-import { updateMessage, updateResponse } from "../adapters/discord-adapter";
+import {
+  grantRole,
+  updateMessage,
+  updateResponse,
+} from "../adapters/discord-adapter";
 import { getMessageSender } from "../util/interaction-util";
-import { getConfig } from "../util/serverConfig";
+import { getConfig, getCwlClanRoleId } from "../util/serverConfig";
 import {
   getCwlLeagueRank,
   getCwlSignupReview,
@@ -200,6 +204,11 @@ const addAccountToRoster = async (
     return;
   }
 
+  const guildId = interaction.guild_id;
+  if (!guildId) {
+    throw new Error("CWL signup components can only be used in a server.");
+  }
+  const config = getConfig(guildId);
   const accountSummary = await getPlayerSummary(canonicalPlayerTag);
   const accounts: CwlRosterAccount[] = clan.accounts ?? [];
   if (
@@ -234,11 +243,6 @@ const addAccountToRoster = async (
         : undefined;
     const review = getCwlSignupReview(clan.league, previousCwlStats);
     if (review.requiresTicket) {
-      const guildId = interaction.guild_id;
-      if (!guildId) {
-        throw new Error("CWL tryout tickets can only be created in a server.");
-      }
-      const config = getConfig(guildId);
       const categoryKey = getCwlTryoutCategoryKey(clan.league);
       const categoryId =
         config.CWL_TRYOUT_CATEGORIES?.[categoryKey] ??
@@ -283,6 +287,11 @@ const addAccountToRoster = async (
     });
     clan.accounts = accounts;
     await saveCwlSignup(signup);
+  }
+
+  const cwlRoleId = getCwlClanRoleId(config, clan);
+  if (cwlRoleId) {
+    await grantRole(guildId, userId, cwlRoleId);
   }
 
   await updateMessage(

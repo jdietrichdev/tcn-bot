@@ -23,15 +23,28 @@ export const closeTicket = async (
   config: ServerConfig
 ) => {
   try {
+    const channelTopic = (interaction.channel as APITextChannel).topic;
+    const hasCwlTryoutStaffRole =
+      typeof channelTopic === "string" &&
+      channelTopic.startsWith("CWL tryout for ") &&
+      (config.CWL_TRYOUT_STAFF_ROLES?.some((roleId) =>
+        interaction.member?.roles.includes(roleId)
+      ) ??
+        false);
     if (
-      await isActorRecruiter(
+      hasCwlTryoutStaffRole ||
+      (await isActorRecruiter(
         interaction.guild_id!,
         interaction.member!.user.id,
         config
-      ) || await isActorAdmin(interaction.guild_id!, interaction.member!.user.id, config)
+      )) ||
+      (await isActorAdmin(
+        interaction.guild_id!,
+        interaction.member!.user.id,
+        config
+      ))
     ) {
       const channelId = interaction.message.channel_id;
-      const channelTopic = (interaction.channel as APITextChannel).topic;
       if (typeof channelTopic !== "string") {
         throw new Error("Could not identify the ticket owner.");
       }

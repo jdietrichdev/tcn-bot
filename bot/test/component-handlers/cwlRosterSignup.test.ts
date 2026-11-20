@@ -3,6 +3,7 @@ import {
   ComponentType,
 } from "discord-api-types/v10";
 import {
+  grantRole,
   updateMessage,
   updateResponse,
 } from "../../src/adapters/discord-adapter";
@@ -17,6 +18,7 @@ import {
 import { CwlSignupRecord } from "../../src/util/cwlSignup";
 
 jest.mock("../../src/adapters/discord-adapter", () => ({
+  grantRole: jest.fn(),
   updateMessage: jest.fn(),
   updateResponse: jest.fn(),
 }));
@@ -30,8 +32,12 @@ jest.mock("../../src/util/cwlTryoutTicket", () => ({
   createCwlTryoutTicket: jest.fn(),
 }));
 jest.mock("../../src/util/serverConfig", () => ({
+  getCwlClanRoleId: jest.fn((config, clan) =>
+    config.CWL_CLAN_ROLES?.[clan.tag]
+  ),
   getConfig: jest.fn(() => ({
     CWL_TRYOUT_CATEGORIES: { titan: "titan-category" },
+    CWL_CLAN_ROLES: { "2CYP9C9QG": "cwl-role" },
   })),
 }));
 jest.mock("../../src/clients/dynamodb-client", () => ({
@@ -201,6 +207,11 @@ describe("CWL roster signup button", () => {
       "channel",
       "roster-message",
     ]);
+    expect(jest.mocked(grantRole)).toHaveBeenCalledWith(
+      "guild",
+      "discord-user",
+      "cwl-role"
+    );
     expect(jest.mocked(updateResponse)).toHaveBeenCalledWith(
       "application",
       "interaction-token",

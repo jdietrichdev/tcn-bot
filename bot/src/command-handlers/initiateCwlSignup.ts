@@ -1,4 +1,5 @@
 import {
+  APIApplicationCommandInteractionDataChannelOption,
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
 } from "discord-api-types/v10";
@@ -19,12 +20,17 @@ export const handleInitiateCwlSignup = async (
       interaction,
       "name"
     ).value;
-  const channelId = interaction.channel_id;
-  if (!interaction.guild_id || !channelId) {
-    throw new Error("CWL signups must be started in a server text channel.");
+  const channelId =
+    getCommandOptionData<APIApplicationCommandInteractionDataChannelOption>(
+      interaction,
+      "channel"
+    ).value;
+  const guildId = interaction.guild_id;
+  if (!guildId) {
+    throw new Error("CWL signups must be started in a server.");
   }
 
-  const signup = await findCwlSignupByName(interaction.guild_id, signupName);
+  const signup = await findCwlSignupByName(guildId, signupName);
   if (!signup || signup.clans.length === 0) {
     throw new Error(
       `No clans are configured for "${signupName}". Add clans with /cwl-add-clan first.`
@@ -36,7 +42,21 @@ export const handleInitiateCwlSignup = async (
     );
   }
 
-  signup.channelId = signup.channelId ?? channelId;
+  if (signup.channelId && signup.channelId !== channelId) {
+    for (const clan of signup.clans) {
+      if (clan.messageId) {
+        await updateMessage(signup.channelId, clan.messageId, {
+          content: `This CWL signup has moved to <#${channelId}>.`,
+          embeds: [],
+          components: [],
+        });
+      }
+    }
+    for (const clan of signup.clans) {
+      delete clan.messageId;
+    }
+  }
+  signup.channelId = channelId;
   signup.status = "open";
   await saveCwlSignup(signup);
 
@@ -47,11 +67,11 @@ export const handleInitiateCwlSignup = async (
     const message = buildCwlRosterMessage(signup, clan, townHallEmojiIds);
 
     if (clan.messageId) {
-      await updateMessage(signup.channelId, clan.messageId, message);
+      await updateMessage(channelId, clan.messageId, message);
       continue;
     }
 
-    const postedMessage = await sendMessage(message, signup.channelId);
+    const postedMessage = await sendMessage(message, channelId);
     clan.messageId = postedMessage.id;
     createdCount += 1;
     await saveCwlSignup(signup);
@@ -59,6 +79,6 @@ export const handleInitiateCwlSignup = async (
   }
 
   await updateResponse(interaction.application_id, interaction.token, {
-    content: `CWL roster signups are posted in <#${signup.channelId}>. Created ${createdCount} new roster${createdCount === 1 ? "" : "s"}.`,
+    content: `CWL roster signups are posted in <#${channelId}>. Created ${createdCount} new roster${createdCount === 1 ? "" : "s"}.`,
   });
 };
