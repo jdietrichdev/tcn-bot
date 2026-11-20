@@ -7,6 +7,8 @@ import {
   updateResponse,
 } from "../../src/adapters/discord-adapter";
 import { getPlayer } from "../../src/adapters/coc-api-adapter";
+import { getPlayerCwlHistoryStats } from "../../src/adapters/clashking-adapter";
+import { createCwlTryoutTicket } from "../../src/util/cwlTryoutTicket";
 import { dynamoDbClient } from "../../src/clients/dynamodb-client";
 import {
   handleCwlRosterAccountSelect,
@@ -20,6 +22,17 @@ jest.mock("../../src/adapters/discord-adapter", () => ({
 }));
 jest.mock("../../src/adapters/coc-api-adapter", () => ({
   getPlayer: jest.fn(),
+}));
+jest.mock("../../src/adapters/clashking-adapter", () => ({
+  getPlayerCwlHistoryStats: jest.fn(),
+}));
+jest.mock("../../src/util/cwlTryoutTicket", () => ({
+  createCwlTryoutTicket: jest.fn(),
+}));
+jest.mock("../../src/util/serverConfig", () => ({
+  getConfig: jest.fn(() => ({
+    CWL_TRYOUT_CATEGORIES: { titan: "titan-category" },
+  })),
 }));
 jest.mock("../../src/clients/dynamodb-client", () => ({
   dynamoDbClient: { send: jest.fn() },
@@ -224,6 +237,62 @@ describe("CWL roster signup button", () => {
       "interaction-token",
       {
         content: "Added Player Two (#PLAYER2) to the **MiniPoint** roster.",
+      }
+    );
+  });
+
+  it("creates a tryout ticket and holds a first-time Titan signup", async () => {
+    jest
+      .mocked(dynamoDbClient)
+      .send.mockResolvedValueOnce({
+        Items: [{ tag: "#PLAYER1" }],
+      } as never)
+      .mockResolvedValueOnce({
+        Items: [{ tag: "#PLAYER1" }],
+      } as never)
+      .mockResolvedValueOnce({
+        Item: {
+          ...createSignup(),
+          clans: [
+            {
+              ...createSignup().clans[0],
+              league: "Titan I CWL",
+            },
+          ],
+        },
+      } as never);
+    jest.mocked(getPlayer).mockResolvedValueOnce(playerProfile("Player One") as never);
+    jest.mocked(getPlayerCwlHistoryStats).mockResolvedValueOnce({
+      season: "2026-10",
+      league: "Champion League I",
+      averageStars: 2.8,
+      attackCount: 7,
+    });
+    jest.mocked(createCwlTryoutTicket).mockResolvedValueOnce({
+      channelId: "tryout-ticket",
+      created: true,
+    });
+
+    await handleCwlRosterSignup(createInteraction());
+
+    expect(jest.mocked(createCwlTryoutTicket)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "discord-user",
+        playerTag: "#PLAYER1",
+        targetLeague: "Titan I CWL",
+        previousLeague: "Champion League I",
+        averageStars: 2.8,
+        categoryId: "titan-category",
+        reason: expect.stringContaining("first-time Titan"),
+      })
+    );
+    expect(jest.mocked(updateMessage)).not.toHaveBeenCalled();
+    expect(jest.mocked(updateResponse)).toHaveBeenLastCalledWith(
+      "application",
+      "interaction-token",
+      {
+        content:
+          "Staff review is required: A ticket is required for a first-time Titan CWL signup, even when the 2.8-star promotion requirement is met.\nCreated a private tryout ticket: <#tryout-ticket>. You have not been added to the roster.",
       }
     );
   });

@@ -6,8 +6,16 @@ import {
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import { getPlayer } from "../adapters/coc-api-adapter";
+import { getPlayerCwlHistoryStats } from "../adapters/clashking-adapter";
 import { updateMessage, updateResponse } from "../adapters/discord-adapter";
 import { getMessageSender } from "../util/interaction-util";
+import { getConfig } from "../util/serverConfig";
+import {
+  getCwlLeagueRank,
+  getCwlSignupReview,
+  getCwlTryoutCategoryKey,
+} from "../util/cwlSignupEligibility";
+import { createCwlTryoutTicket } from "../util/cwlTryoutTicket";
 import {
   buildCwlRosterMessage,
   buildLinkedAccountsEmbed,
@@ -218,6 +226,51 @@ const addAccountToRoster = async (
     (account) => normalizePlayerTag(account.playerTag) === canonicalPlayerTag
   );
   if (!alreadySignedUp) {
+    const targetLeagueRank = getCwlLeagueRank(clan.league);
+    const previousCwlStats =
+      targetLeagueRank === undefined || targetLeagueRank > 15
+        ? await getPlayerCwlHistoryStats(canonicalPlayerTag)
+        : undefined;
+    const review = getCwlSignupReview(clan.league, previousCwlStats);
+    if (review.requiresTicket) {
+      const guildId = interaction.guild_id;
+      if (!guildId) {
+        throw new Error("CWL tryout tickets can only be created in a server.");
+      }
+      const config = getConfig(guildId);
+      const categoryKey = getCwlTryoutCategoryKey(clan.league);
+      const categoryId =
+        config.CWL_TRYOUT_CATEGORIES?.[categoryKey] ??
+        config.CWL_TRYOUT_CATEGORIES?.default;
+      if (!categoryId) {
+        await updateResponse(interaction.application_id, interaction.token, {
+          content: `This server has no CWL tryout ticket category configured for **${clan.league}**. Please contact an administrator; you have not been added to the roster.`,
+        });
+        return;
+      }
+
+      const ticket = await createCwlTryoutTicket({
+        guildId,
+        userId,
+        username: getMessageSender(interaction).username,
+        playerTag: canonicalPlayerTag,
+        targetClan: clan.name,
+        targetLeague: clan.league,
+        previousSeason: previousCwlStats?.season,
+        previousLeague: previousCwlStats?.league,
+        averageStars: previousCwlStats?.averageStars,
+        reason: review.reason ?? "Staff review is required.",
+        categoryId,
+        config,
+      });
+      await updateResponse(interaction.application_id, interaction.token, {
+        content: ticket.created
+          ? `Staff review is required: ${review.reason}\nCreated a private tryout ticket: <#${ticket.channelId}>. You have not been added to the roster.`
+          : `You already have an open tryout ticket: <#${ticket.channelId}>. You have not been added to the roster.`,
+      });
+      return;
+    }
+
     accounts.push({
       userId,
       playerTag: canonicalPlayerTag,
