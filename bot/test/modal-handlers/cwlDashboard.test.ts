@@ -1,13 +1,18 @@
 import {
+  APIMessageComponentInteraction,
   APIModalSubmitInteraction,
   ComponentType,
+  InteractionResponseType,
   TextInputStyle,
 } from "discord-api-types/v10";
 import { getPlayer } from "../../src/adapters/coc-api-adapter";
 import { updateMessage, updateResponse } from "../../src/adapters/discord-adapter";
 import { dynamoDbClient } from "../../src/clients/dynamodb-client";
 import { canManageCwlDashboard } from "../../src/component-handlers/cwlSignupDashboard";
-import { submitCwlDashboardModal } from "../../src/modal-handlers/cwlDashboard";
+import {
+  createCwlDashboardModal,
+  submitCwlDashboardModal,
+} from "../../src/modal-handlers/cwlDashboard";
 import { CwlSignupRecord } from "../../src/util/cwlSignup";
 
 jest.mock("../../src/adapters/coc-api-adapter", () => ({
@@ -103,6 +108,38 @@ describe("CWL dashboard player management", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.mocked(canManageCwlDashboard).mockReturnValue(true);
+  });
+
+  it("prefills the linked player tag from a CWL tryout ticket button", async () => {
+    jest.mocked(dynamoDbClient).send.mockResolvedValueOnce({
+      Item: createSignup(),
+    } as never);
+    const interaction = {
+      guild_id: "guild",
+      member: { user: { id: "admin" }, roles: [] },
+      data: {
+        custom_id:
+          "cwl_dashboard_add_player:november:2CYP9C9QG:#PLAYER2",
+      },
+    } as unknown as APIMessageComponentInteraction;
+
+    const response = await createCwlDashboardModal(interaction);
+
+    if (response.type !== InteractionResponseType.Modal) {
+      throw new Error("Expected the add-player modal.");
+    }
+    expect(response.data.custom_id).toBe(
+      "cwlDashboardModal:add_player:november:2CYP9C9QG"
+    );
+    if (response.data.components?.[0]?.type !== ComponentType.ActionRow) {
+      throw new Error("Expected an account tag text input.");
+    }
+    const playerTagInput = response.data.components[0].components[0];
+    expect(playerTagInput.type).toBe(ComponentType.TextInput);
+    if (playerTagInput.type !== ComponentType.TextInput) {
+      throw new Error("Expected an account tag text input.");
+    }
+    expect(playerTagInput.value).toBe("#PLAYER2");
   });
 
   it("lets admins add a linked tag even when normal signup restrictions would block it", async () => {

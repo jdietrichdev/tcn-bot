@@ -22,6 +22,7 @@ import {
   CwlLinkedAccountSummary,
   CwlRosterAccount,
   CwlSignupClan,
+  getCwlSignupId,
   getCwlRosterCustomId,
 } from "../util/cwlSignup";
 import {
@@ -255,6 +256,8 @@ const addAccountToRoster = async (
         username: getMessageSender(interaction).username,
         playerTag: canonicalPlayerTag,
         targetClan: clan.name,
+        signupId: getCwlSignupId(signup),
+        clanTag: clan.tag,
         targetLeague: clan.league,
         previousSeason: previousCwlStats?.season,
         previousLeague: previousCwlStats?.league,

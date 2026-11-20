@@ -1,5 +1,7 @@
 import {
+  ButtonStyle,
   ChannelType,
+  ComponentType,
   OverwriteType,
   PermissionFlagsBits,
 } from "discord-api-types/v10";
@@ -7,9 +9,11 @@ import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoDbClient } from "../clients/dynamodb-client";
 import {
   createChannel,
+  getChannel,
   getGuildChannels,
   sendMessage,
 } from "../adapters/discord-adapter";
+import { BUTTONS } from "../component-handlers/buttons";
 import type { ServerConfig } from "./serverConfig";
 
 export interface CwlTryoutTicketInput {
@@ -18,6 +22,8 @@ export interface CwlTryoutTicketInput {
   username: string;
   playerTag: string;
   targetClan: string;
+  signupId: string;
+  clanTag: string;
   targetLeague: string;
   previousSeason?: string;
   previousLeague?: string;
@@ -27,7 +33,14 @@ export interface CwlTryoutTicketInput {
   config: ServerConfig;
 }
 
-const activeTicketKey = (userId: string, categoryId: string) =>
+const activeTicketKey = (
+  userId: string,
+  playerTag: string,
+  categoryId: string
+) =>
+  `cwlTryout#${userId}#${playerTag.replace(/[^A-Z0-9]/gi, "").toUpperCase()}#${categoryId}`;
+
+const legacyActiveTicketKey = (userId: string, categoryId: string) =>
   `cwlTryout#${userId}#${categoryId}`;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -36,34 +49,48 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const getActiveTicket = async (
   guildId: string,
   userId: string,
+  playerTag: string,
   categoryId: string
 ) => {
-  const response = await dynamoDbClient.send(
-    new GetCommand({
-      TableName: "BotTable",
-      Key: {
-        pk: guildId,
-        sk: activeTicketKey(userId, categoryId),
-      },
-    })
-  );
-  const responseItem: unknown = response.Item as unknown;
-  const channelId = isRecord(responseItem)
-    ? responseItem.channelId
-    : undefined;
+  const getChannelId = async (key: string) => {
+    const response = await dynamoDbClient.send(
+      new GetCommand({
+        TableName: "BotTable",
+        Key: { pk: guildId, sk: key },
+      })
+    );
+    const responseItem: unknown = response.Item as unknown;
+    return isRecord(responseItem) ? responseItem.channelId : undefined;
+  };
+  const channelId =
+    (await getChannelId(activeTicketKey(userId, playerTag, categoryId))) ??
+    (await getChannelId(legacyActiveTicketKey(userId, categoryId)));
   if (typeof channelId !== "string") {
     return undefined;
   }
-  const channels = await getGuildChannels(guildId);
-  return channels.find(
+  const guildChannels = await getGuildChannels(guildId);
+  const channelExists = guildChannels.some(
     (channel) => channel.id === channelId && channel.parent_id === categoryId
-  )?.id;
+  );
+  if (!channelExists) {
+    return undefined;
+  }
+  const channel = await getChannel(channelId);
+  if (
+    channel.type !== ChannelType.GuildText ||
+    channel.parent_id !== categoryId ||
+    channel.topic !== `CWL tryout for ${playerTag}:${userId}`
+  ) {
+    return undefined;
+  }
+  return channel.id;
 };
 
 const recordTicket = async (
   guildId: string,
   channelId: string,
   userId: string,
+  playerTag: string,
   categoryId: string
 ) => {
   const response = await dynamoDbClient.send(
@@ -87,7 +114,12 @@ const recordTicket = async (
         ...ticketData,
         tickets: [
           ...tickets,
-          { ticketChannel: channelId, userId, type: "cwl-tryout" },
+            {
+              ticketChannel: channelId,
+              userId,
+              playerTag,
+              type: "cwl-tryout",
+            },
         ],
       },
     })
@@ -97,7 +129,7 @@ const recordTicket = async (
       TableName: "BotTable",
       Item: {
         pk: guildId,
-        sk: activeTicketKey(userId, categoryId),
+        sk: activeTicketKey(userId, playerTag, categoryId),
         channelId,
       },
     })
@@ -110,6 +142,7 @@ export const createCwlTryoutTicket = async (
   const existingTicket = await getActiveTicket(
     input.guildId,
     input.userId,
+    input.playerTag,
     input.categoryId
   );
   if (existingTicket) {
@@ -122,6 +155,14 @@ export const createCwlTryoutTicket = async (
   const safeLeague =
     input.targetLeague.toLowerCase().replace(/[^a-z0-9-]/g, "-").slice(0, 24) ||
     "review";
+  const safePlayerTag =
+    input.playerTag.replace(/[^a-z0-9]/gi, "").slice(-5).toLowerCase() ||
+    "account";
+  const addPlayerCustomId =
+    `cwl_dashboard_add_player:${input.signupId}:${input.clanTag}:${input.playerTag}`;
+  if ([...addPlayerCustomId].length > 100) {
+    throw new Error("The CWL signup details are too long for a ticket button.");
+  }
   const staffRoles = [...new Set([input.config.RECRUITER_ROLE, input.config.ADMIN_ROLE])]
     .filter(Boolean)
     .map((roleId) => ({
@@ -136,7 +177,7 @@ export const createCwlTryoutTicket = async (
     }));
   const channel = await createChannel(
     {
-      name: `cwl-${safeLeague}-${safeUsername}-${input.userId.slice(-4)}`,
+      name: `cwl-${safeLeague}-${safeUsername}-${safePlayerTag}-${input.userId.slice(-4)}`,
       type: ChannelType.GuildText,
       topic: `CWL tryout for ${input.playerTag}:${input.userId}`,
       parent_id: input.categoryId,
@@ -178,18 +219,67 @@ export const createCwlTryoutTicket = async (
       content: [
         ...staffRoles.map((role) => `<@&${role.id}>`),
         `<@${input.userId}> requested a CWL tryout.`,
-        `**Player:** ${input.playerTag}`,
-        `**Signup clan:** ${input.targetClan} (${input.targetLeague})`,
-        `**Previous CWL season:** ${input.previousSeason ?? "Unavailable"}`,
-        `**Previous CWL league:** ${input.previousLeague ?? "Unavailable"}`,
-        `**Previous average stars:** ${
-          input.averageStars === undefined
-            ? "Unavailable"
-            : input.averageStars.toFixed(2)
-        }`,
-        `**Review reason:** ${input.reason}`,
-        "The player has not been added to the roster. Staff can add the linked tag from the CWL dashboard after review.",
-      ].join("\n"),
+      ].join(" "),
+      embeds: [
+        {
+          title: "CWL Tryout Request",
+          description:
+            "Staff review is required before this linked account can be added to the roster.",
+          color: 0xd4a017,
+          fields: [
+            {
+              name: "Player",
+              value: input.playerTag,
+              inline: true,
+            },
+            {
+              name: "Requested roster",
+              value: `${input.targetClan} (${input.targetLeague})`,
+              inline: true,
+            },
+            {
+              name: "Previous CWL season",
+              value: input.previousSeason ?? "Unavailable",
+              inline: true,
+            },
+            {
+              name: "Previous CWL league",
+              value: input.previousLeague ?? "Unavailable",
+              inline: true,
+            },
+            {
+              name: "Average stars",
+              value:
+                input.averageStars === undefined
+                  ? "Unavailable"
+                  : input.averageStars.toFixed(2),
+              inline: true,
+            },
+            {
+              name: "Review reason",
+              value: input.reason,
+              inline: false,
+            },
+          ],
+          footer: {
+            text: "The player is not on the roster unless staff add them after review.",
+          },
+        },
+      ],
+      components: [
+        {
+          type: ComponentType.ActionRow,
+          components: [
+            BUTTONS.CLOSE_TICKET,
+            {
+              type: ComponentType.Button,
+              style: ButtonStyle.Success,
+              label: "Signup Player for Roster",
+              custom_id: addPlayerCustomId,
+            },
+          ],
+        },
+      ],
     },
     channel.id
   );
@@ -197,6 +287,7 @@ export const createCwlTryoutTicket = async (
     input.guildId,
     channel.id,
     input.userId,
+    input.playerTag,
     input.categoryId
   );
 

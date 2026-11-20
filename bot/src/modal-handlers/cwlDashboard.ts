@@ -61,7 +61,7 @@ export const createCwlDashboardModal = async (
   if (!canManageCwlDashboard(interaction.guild_id, interaction.member)) {
     return ephemeralResponse("Only server admins can manage CWL signups.");
   }
-  const [action, signupId, clanTag] = interaction.data.custom_id
+  const [action, signupId, clanTag, prefilledPlayerTag] = interaction.data.custom_id
     .replace("cwl_dashboard_", "")
     .split(":");
   if (!signupId || !interaction.guild_id) {
@@ -116,7 +116,7 @@ export const createCwlDashboardModal = async (
           modalField(
             "player_tag",
             "Clash of Clans player tag",
-            "",
+            action === "add_player" ? prefilledPlayerTag ?? "" : "",
             true,
             16
           ),
