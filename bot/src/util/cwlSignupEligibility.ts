@@ -102,6 +102,31 @@ export const getCwlSignupReview = (
   }
 
   const averageStars = previousStats.averageStars;
+  const isTitanTwoOrThree = previousRank === 19 || previousRank === 20;
+  if (
+    isTitanTwoOrThree &&
+    targetRank === 22 &&
+    averageStars >= 2.8
+  ) {
+    return {
+      requiresTicket: true,
+      reason:
+        "Your average meets the Titan II/III promotion requirement, but Legends CWL requires a tryout.",
+    };
+  }
+  if (
+    isTitanTwoOrThree &&
+    (targetRank === 21 || targetRank === 22) &&
+    averageStars > 2.2 &&
+    averageStars < 2.8
+  ) {
+    return {
+      requiresTicket: true,
+      reason:
+        "Although your average meets the Titan II/III requirement to stay in your league, signing up for Titan I or Legends requires a ticket.",
+    };
+  }
+
   const isSameOrHigherLeague = targetRank >= previousRank;
   if (averageStars <= 2.2 && isSameOrHigherLeague) {
     return {
