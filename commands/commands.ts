@@ -45,6 +45,10 @@ export const link = new SlashCommandBuilder()
       });
   });
 
+export const linkList = new SlashCommandBuilder()
+  .setName('link-list')
+  .setDescription('Show linked and unlinked players in your clans');
+
 export const apiTokenHelp = new SlashCommandBuilder()
   .setName('api-token-help')
   .setDescription('Shows where to find your Clash of Clans API token');

@@ -25,10 +25,12 @@ import { handleSubsApproval } from "./subsApproval";
 import { handleRecruiterScorePagination } from "./recruiterScoreButton";
 import { handleRecruiterLeaderboardRefresh } from "./recruiterLeaderboard";
 import { handleBasePostComponent } from "./basePost";
+import { handleLinkListSelect } from "../command-handlers/linkList";
 
 type Handler = (interaction: APIMessageComponentInteraction, config?: any) => Promise<any>;
 
 const handlers: Record<string, Handler> = {
+  link_list_clan: (interaction) => handleLinkListSelect(interaction),
   approveApp: (interaction, config) => approveApp(interaction, config),
   messageRecruit: (interaction) => messageRecruit(interaction),
   closeRecruit: (interaction) => closeRecruit(interaction),

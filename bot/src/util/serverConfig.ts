@@ -2,6 +2,7 @@ export interface ClanConfig {
   name: string;
   leadChannel: string;
   clanChannel: string;
+  tag?: string;
 }
 
 export interface ApplicationQuestion {
@@ -284,7 +285,32 @@ configMap.set('1310007885656363068', {
   TCN5_ROLE: '',
   TCN6_ROLE: '',
   BOT_ID: '1257342457868451920',
-  CLANS: {},
+  CLANS: {
+    MiniPoint: {
+      name: 'MiniPoint',
+      tag: '#2CYP9C9QG',
+      leadChannel: '',
+      clanChannel: '',
+    },
+    AlphaPoint: {
+      name: 'AlphaPoint',
+      tag: '#2CLL8UJR2',
+      leadChannel: '',
+      clanChannel: '',
+    },
+    EcoPoint: {
+      name: 'EcoPoint',
+      tag: '#2G2RJQ2UG',
+      leadChannel: '',
+      clanChannel: '',
+    },
+    SierraPoint: {
+      name: 'SierraPoint',
+      tag: '#2J9QJ9YVJ',
+      leadChannel: '',
+      clanChannel: '',
+    },
+  },
   APPLICATION_QUESTIONS: {
     title: 'Point Alliance Application',
     questions: [

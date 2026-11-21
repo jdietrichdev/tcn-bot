@@ -134,10 +134,11 @@ export const proxy = async (
     response = (await handleRosterShowPagination(body)) as APIInteractionResponse;
   } else if (
     body.type === InteractionType.MessageComponent &&
-    (body.data.custom_id.startsWith("recruiter_score_") ||
+    (body.data.custom_id === "link_list_clan" ||
+      body.data.custom_id.startsWith("recruiter_score_") ||
       body.data.custom_id === "recruiter_leaderboard_refresh")
   ) {
-    console.log("Recruiter score/leaderboard button clicked (deferred)");
+    console.log("Message component clicked (deferred)");
     await eventClient.send(
       new PutEventsCommand({
         Entries: [
@@ -189,7 +190,8 @@ export const proxy = async (
       'task-reminders',
       'task-admin-unclaim',
       'task-overview',
-      'recruiter-leaderboard'
+      'recruiter-leaderboard',
+      'link-list'
     ];
     
     const publicTaskButtons = [

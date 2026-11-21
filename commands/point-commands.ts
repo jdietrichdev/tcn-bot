@@ -1,3 +1,3 @@
-import { apiTokenHelp, apply, basePost, deleteTicket, link } from './commands';
+import { apiTokenHelp, apply, basePost, deleteTicket, link, linkList } from './commands';
 
-export const pointCommands = [apply, basePost, apiTokenHelp, deleteTicket, link];
+export const pointCommands = [apply, basePost, apiTokenHelp, deleteTicket, link, linkList];
