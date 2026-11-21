@@ -14,6 +14,11 @@ import { ClanConfig, getConfig } from "../util/serverConfig";
 type TaggedClan = ClanConfig & { tag: string };
 type ClanMember = { name: string; tag: string };
 
+const SCAN_PAGE_SIZE = 5;
+const SCAN_READ_UNITS_PER_SECOND = 1;
+const SCAN_TIMEOUT_MS = 240_000;
+const SCAN_THROTTLE_RETRIES = 5;
+
 const configuredClans = (guildId: string): TaggedClan[] =>
   Object.values(getConfig(guildId).CLANS).filter(
     (clan): clan is TaggedClan => Boolean(clan.tag)
@@ -28,23 +33,48 @@ const isClanMember = (member: unknown): member is ClanMember =>
   "tag" in member && typeof member.tag === "string" &&
   /^#[A-Z0-9]{1,15}$/.test(member.tag);
 
+const waitForScan = async (ms: number, deadline: number) => {
+  if (Date.now() + ms >= deadline) {
+    throw new Error("Link list scan exceeded its time limit");
+  }
+  await new Promise<void>((resolve) => setTimeout(resolve, ms));
+};
+
 const findLinks = async (members: ClanMember[]): Promise<Map<string, string>> => {
   const memberTags = new Set(members.map((member) => member.tag.slice(1)));
   const links = new Map<string, string>();
   if (!memberTags.size) return links;
   // Existing link keys preserve user-entered casing, so exact index queries can miss links.
   let startKey: Record<string, unknown> | undefined;
+  const deadline = Date.now() + SCAN_TIMEOUT_MS;
   do {
-    const result = await dynamoDbClient.send(
-      new ScanCommand({
-        TableName: "BotTable",
-        ConsistentRead: true,
-        FilterExpression: "begins_with(sk, :prefix)",
-        ProjectionExpression: "pk, sk",
-        ExpressionAttributeValues: { ":prefix": "player#" },
-        ExclusiveStartKey: startKey,
-      })
-    );
+    if (Date.now() >= deadline) {
+      throw new Error("Link list scan exceeded its time limit");
+    }
+    const scan = new ScanCommand({
+      TableName: "BotTable",
+      ConsistentRead: false,
+      Limit: SCAN_PAGE_SIZE,
+      ReturnConsumedCapacity: "TOTAL",
+      FilterExpression: "begins_with(sk, :prefix)",
+      ProjectionExpression: "pk, sk",
+      ExpressionAttributeValues: { ":prefix": "player#" },
+      ExclusiveStartKey: startKey,
+    });
+    let result;
+    for (let retries = 0; ; retries++) {
+      try {
+        result = await dynamoDbClient.send(scan);
+        break;
+      } catch (error) {
+        if (!(error instanceof Error) ||
+            error.name !== "ProvisionedThroughputExceededException" ||
+            retries >= SCAN_THROTTLE_RETRIES) {
+          throw error;
+        }
+        await waitForScan(Math.min(1000 * 2 ** retries, 8000), deadline);
+      }
+    }
     for (const link of result.Items ?? []) {
       if (typeof link.sk !== "string") {
         throw new Error("Invalid player link sort key");
@@ -57,7 +87,14 @@ const findLinks = async (members: ClanMember[]): Promise<Map<string, string>> =>
       links.set(tag, link.pk);
     }
     startKey = result.LastEvaluatedKey;
-  } while (startKey);
+    if (startKey && links.size < memberTags.size) {
+      const units = result.ConsumedCapacity?.CapacityUnits;
+      if (typeof units !== "number" || !Number.isFinite(units) || units < 0) {
+        throw new Error("DynamoDB did not report scan read capacity");
+      }
+      await waitForScan(Math.ceil(units * 1000 / SCAN_READ_UNITS_PER_SECOND), deadline);
+    }
+  } while (startKey && links.size < memberTags.size);
   return links;
 };
 

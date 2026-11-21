@@ -54,18 +54,69 @@ describe("link list", () => {
   });
 
   it("loads the selected clan and follows scan pagination", async () => {
+    jest.useFakeTimers();
     jest.mocked(getClan).mockResolvedValue({ memberList: [{ name: "Player", tag: "#ABC" }] });
     jest.mocked(dynamoDbClient.send)
-      .mockResolvedValueOnce({ Items: [], LastEvaluatedKey: { pk: "1", sk: "player#ABC" } } as never)
+      .mockResolvedValueOnce({
+        Items: [],
+        LastEvaluatedKey: { pk: "1", sk: "player#ABC" },
+        ConsumedCapacity: { CapacityUnits: 1.5 },
+      } as never)
       .mockResolvedValueOnce({ Items: [{ pk: "222", sk: "player#ABC" }] } as never);
 
-    await handleLinkListSelect(select);
+    const pending = handleLinkListSelect(select);
+    await jest.advanceTimersByTimeAsync(1499);
+    expect(dynamoDbClient.send).toHaveBeenCalledTimes(1);
+    await jest.advanceTimersByTimeAsync(1);
+    await pending;
 
     expect(getClan).toHaveBeenCalledWith("#2J9QJ9YVJ");
+    expect(jest.mocked(dynamoDbClient.send).mock.calls[0][0].input)
+      .toEqual(expect.objectContaining({
+        Limit: 5,
+        ConsistentRead: false,
+        ReturnConsumedCapacity: "TOTAL",
+      }));
     expect(jest.mocked(dynamoDbClient.send).mock.calls[1][0].input)
       .toEqual(expect.objectContaining({ ExclusiveStartKey: { pk: "1", sk: "player#ABC" } }));
     expect(jest.mocked(updateResponse).mock.calls[0][2].embeds?.[0].description)
       .toContain("<@222>");
+    jest.useRealTimers();
+  });
+
+  it("backs off on throughput errors before retrying the same page", async () => {
+    jest.useFakeTimers();
+    jest.mocked(getClan).mockResolvedValue({ memberList: [{ name: "Player", tag: "#ABC" }] });
+    const throttled = new Error("Throttled");
+    throttled.name = "ProvisionedThroughputExceededException";
+    jest.mocked(dynamoDbClient.send)
+      .mockRejectedValueOnce(throttled as never)
+      .mockResolvedValueOnce({ Items: [{ pk: "222", sk: "player#abc" }] } as never);
+    const pending = handleLinkList(command);
+    await jest.advanceTimersByTimeAsync(999);
+    expect(dynamoDbClient.send).toHaveBeenCalledTimes(1);
+    await jest.advanceTimersByTimeAsync(1);
+    await pending;
+    expect(dynamoDbClient.send).toHaveBeenCalledTimes(2);
+    expect(jest.mocked(updateResponse).mock.calls[0][2].embeds?.[0].description)
+      .toContain("<@222>");
+    jest.useRealTimers();
+  });
+
+  it("reports an error instead of returning an incomplete scan", async () => {
+    jest.mocked(getClan).mockResolvedValue({ memberList: [{ name: "Player", tag: "#ABC" }] });
+    jest.mocked(dynamoDbClient.send).mockResolvedValue({
+      Items: [],
+      LastEvaluatedKey: { pk: "1", sk: "player#ABC" },
+      ConsumedCapacity: { CapacityUnits: 241 },
+    } as never);
+    const log = jest.spyOn(console, "error").mockImplementation(() => {});
+    await handleLinkListSelect(select);
+    expect(dynamoDbClient.send).toHaveBeenCalledTimes(1);
+    expect(updateResponse).toHaveBeenCalledWith("app", "token", {
+      content: "Could not update the link list. Please try again.",
+    });
+    log.mockRestore();
   });
 
   it("uses the Point clans in the test server", async () => {
