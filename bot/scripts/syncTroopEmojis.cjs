@@ -11,6 +11,10 @@ const LEAGUE_SOURCE_DIRECTORY = path.resolve(
   __dirname,
   "../../ui/public/clashking-assets/leagues"
 );
+const TOWN_HALL_SOURCE_DIRECTORY = path.resolve(
+  __dirname,
+  "../../ui/public/clashking-assets/buildings/home-village/town_hall"
+);
 const TROOP_OUTPUT_PATH = path.resolve(
   __dirname,
   "../dist/clashking-troop-emojis.json"
@@ -18,6 +22,10 @@ const TROOP_OUTPUT_PATH = path.resolve(
 const LEAGUE_OUTPUT_PATH = path.resolve(
   __dirname,
   "../dist/clashking-league-emojis.json"
+);
+const TOWN_HALL_OUTPUT_PATH = path.resolve(
+  __dirname,
+  "../dist/clashking-town-hall-emojis.json"
 );
 const LEAGUE_EMOJI_ASSETS = {
   legends_1: path.join(
@@ -197,6 +205,16 @@ const syncBasePostEmojis = async () => {
     );
   }
 
+  const townHallEmojiIds = {};
+  for (let level = 1; level <= 19; level += 1) {
+    townHallEmojiIds[level] = await syncEmoji(
+      emojiEndpoint,
+      `town_hall_${level}`,
+      path.join(TOWN_HALL_SOURCE_DIRECTORY, `level_${level}.webp`),
+      existingEmojis
+    );
+  }
+
   await fs.mkdir(path.dirname(TROOP_OUTPUT_PATH), { recursive: true });
   await Promise.all([
     fs.writeFile(
@@ -209,9 +227,14 @@ const syncBasePostEmojis = async () => {
       `${JSON.stringify(leagueEmojiIds, null, 2)}\n`,
       "utf8"
     ),
+    fs.writeFile(
+      TOWN_HALL_OUTPUT_PATH,
+      `${JSON.stringify(townHallEmojiIds, null, 2)}\n`,
+      "utf8"
+    ),
   ]);
   console.log(
-    `Synced ${Object.keys(emojiIds).length} troop and ${Object.keys(leagueEmojiIds).length} league application emojis.`
+    `Synced ${Object.keys(emojiIds).length} troop, ${Object.keys(leagueEmojiIds).length} league, and ${Object.keys(townHallEmojiIds).length} Town Hall application emojis.`
   );
 };
 

@@ -46,7 +46,15 @@ export const determineRolesButton = async (
 };
 
 export const buttonTriggersModal = (customId: string) => {
-  return BUTTON_MODAL_TRIGGERS.includes(customId);
+  return (
+    BUTTON_MODAL_TRIGGERS.includes(customId) ||
+    customId.startsWith('cwl_dashboard_edit:') ||
+    customId.startsWith('cwl_dashboard_rename:') ||
+    customId.startsWith('cwl_dashboard_add_tag:') ||
+    customId.startsWith('cwl_dashboard_add_player:') ||
+    customId.startsWith('cwl_dashboard_move_player:') ||
+    customId.startsWith('cwl_dashboard_remove_player:')
+  );
 };
 
 export const commandTriggersModal = (name: string) => {

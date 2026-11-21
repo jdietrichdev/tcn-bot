@@ -27,6 +27,33 @@ interface WarHitsResponse {
   items: WarHit[];
 }
 
+interface PlayerCwlHistoryItem {
+  season: string;
+  clan?: {
+    tag?: string;
+    warLeague?: {
+      name?: string;
+    } | null;
+  };
+  attacks?: Array<{
+    stars: number;
+    destructionPercentage?: number;
+  }>;
+}
+
+interface PlayerCwlHistoryResponse {
+  items: PlayerCwlHistoryItem[];
+}
+
+export interface PlayerCwlHistoryStats {
+  season: string;
+  league?: string;
+  averageStars?: number;
+  totalStars?: number;
+  totalDestruction?: number;
+  attackCount: number;
+}
+
 const CWL_LEAGUE_NAMES: Record<number, string> = {
   48000000: "Unranked",
   48000001: "Bronze League III",
@@ -47,6 +74,78 @@ const CWL_LEAGUE_NAMES: Record<number, string> = {
   48000016: "Champion League III",
   48000017: "Champion League II",
   48000018: "Champion League I",
+};
+
+export const getPlayerCwlHistoryStats = async (
+  playerTag: string
+): Promise<PlayerCwlHistoryStats | undefined> => {
+  const tag = encodeURIComponent(playerTag);
+  const response = await axios.get<PlayerCwlHistoryResponse>(
+    `${CLASHKING_BASE_URL}/v2/player/${tag}/cwl/history`,
+    {
+      params: { limit: 20 },
+      timeout: 10000,
+    }
+  );
+  const records = response.data.items.filter(
+    (item) => item && typeof item.season === "string"
+  );
+  if (records.length === 0) {
+    return undefined;
+  }
+
+  const latestSeason = records.reduce(
+    (latest, record) => (record.season > latest ? record.season : latest),
+    records[0].season
+  );
+  const seasonRecords = records.filter(
+    (record) => record.season === latestSeason
+  );
+  const attackRecords = seasonRecords.flatMap((record) =>
+    (record.attacks ?? []).filter(
+      (attack) =>
+        typeof attack.stars === "number" &&
+        Number.isFinite(attack.stars) &&
+        attack.stars >= 0 &&
+        attack.stars <= 3
+    )
+  );
+  const leagueRecord = seasonRecords
+    .map((record) => ({
+      league: record.clan?.warLeague?.name,
+      attackCount: (record.attacks ?? []).length,
+    }))
+    .filter(
+      (record): record is { league: string; attackCount: number } =>
+        typeof record.league === "string"
+    )
+    .sort((left, right) => right.attackCount - left.attackCount)[0];
+
+  const hasAllDestruction =
+    attackRecords.length > 0 &&
+    attackRecords.every(
+      (attack) =>
+        typeof attack.destructionPercentage === "number" &&
+        Number.isFinite(attack.destructionPercentage)
+    );
+
+  return {
+    season: latestSeason,
+    league: leagueRecord?.league,
+    averageStars:
+      attackRecords.length > 0
+        ? attackRecords.reduce((sum, attack) => sum + attack.stars, 0) /
+          attackRecords.length
+        : undefined,
+    totalStars: attackRecords.reduce((sum, attack) => sum + attack.stars, 0),
+    totalDestruction: hasAllDestruction
+      ? attackRecords.reduce(
+          (sum, attack) => sum + (attack.destructionPercentage ?? 0),
+          0
+        )
+      : undefined,
+    attackCount: attackRecords.length,
+  };
 };
 
 export const getPlayerCWLLeague = async (

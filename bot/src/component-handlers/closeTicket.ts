@@ -9,6 +9,7 @@ import {
   deleteResponse,
   moveChannel,
   sendMessage,
+  updateChannel,
   updateChannelPermissions,
   updateMessage,
   updateResponse,
@@ -22,21 +23,48 @@ export const closeTicket = async (
   config: ServerConfig
 ) => {
   try {
+    const channelTopic = (interaction.channel as APITextChannel).topic;
+    const hasCwlTryoutStaffRole =
+      typeof channelTopic === "string" &&
+      channelTopic.startsWith("CWL tryout for ") &&
+      (config.CWL_TRYOUT_STAFF_ROLES?.some((roleId) =>
+        interaction.member?.roles.includes(roleId)
+      ) ??
+        false);
     if (
-      await isActorRecruiter(
+      hasCwlTryoutStaffRole ||
+      (await isActorRecruiter(
         interaction.guild_id!,
         interaction.member!.user.id,
         config
-      ) || await isActorAdmin(interaction.guild_id!, interaction.member!.user.id, config)
+      )) ||
+      (await isActorAdmin(
+        interaction.guild_id!,
+        interaction.member!.user.id,
+        config
+      ))
     ) {
       const channelId = interaction.message.channel_id;
-      const userId = (interaction.channel as APITextChannel).topic!.split(
-        ":"
-      )[1];
-      await ensureArchiveCapacity(interaction.guild_id!, config, {
-        triggeredById: interaction.member?.user.id,
-      });
-      await moveChannel(channelId, config.ARCHIVE_CATEGORY);
+      if (typeof channelTopic !== "string") {
+        throw new Error("Could not identify the ticket owner.");
+      }
+      const userId = channelTopic.split(":")[1];
+      if (!userId) {
+        throw new Error("Could not identify the ticket owner.");
+      }
+      if (config.ARCHIVE_CATEGORY) {
+        await ensureArchiveCapacity(interaction.guild_id!, config, {
+          triggeredById: interaction.member?.user.id,
+        });
+        await moveChannel(channelId, config.ARCHIVE_CATEGORY);
+      } else if (channelTopic.startsWith("CWL tryout for ")) {
+        await updateChannel(
+          { topic: `Closed ${channelTopic}` },
+          channelId
+        );
+      } else {
+        throw new Error("No archive category is configured for this server.");
+      }
       await updateChannelPermissions(channelId, userId, {
         type: OverwriteType.Member,
         allow: "0",
@@ -64,9 +92,11 @@ export const closeTicket = async (
           },
         ],
       });
-      await ensureArchiveCapacity(interaction.guild_id!, config, {
-        triggeredById: interaction.member?.user.id,
-      });
+      if (config.ARCHIVE_CATEGORY) {
+        await ensureArchiveCapacity(interaction.guild_id!, config, {
+          triggeredById: interaction.member?.user.id,
+        });
+      }
     } else {
       await sendMessage(
         {
@@ -77,7 +107,7 @@ export const closeTicket = async (
     }
     await deleteResponse(interaction.application_id, interaction.token);
   } catch (err) {
-    console.error(`Failed to close ticket: ${err}`);
+    console.error("Failed to close ticket:", err);
     await updateResponse(interaction.application_id, interaction.token, {
       content:
         "There was an issue closing this ticket, please try again or reach out to admins",

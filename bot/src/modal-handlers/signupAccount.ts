@@ -1,5 +1,4 @@
 import {
-  APIEmbed,
   APIInteractionResponse,
   APIMessageComponentInteraction,
   APIMessageSelectMenuInteractionData,
@@ -14,6 +13,7 @@ import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { getConfig } from "../util/serverConfig";
 import { BUTTONS } from "../component-handlers/buttons";
 import { getModalTextInputs } from "../util/modalComponents";
+import { buildCwlSignupEmbed } from "../util/cwlSignup";
 
 export const createCwlAccountSignupModal = (
   interaction: APIMessageComponentInteraction
@@ -114,6 +114,13 @@ export const submitCwlAccountSignupModal = async (
       )
     ).Item!;
     console.log(JSON.stringify(signup));
+    if (
+      !signup ||
+      typeof signup.signupName !== "string" ||
+      !Array.isArray(signup.accounts)
+    ) {
+      throw new Error("The CWL signup is missing required data.");
+    }
 
     signup.accounts.push(account);
 
@@ -124,7 +131,13 @@ export const submitCwlAccountSignupModal = async (
       })
     );
     await updateMessage(config.CWL_SIGNUP_CHANNEL, signup.message, {
-      embeds: [buildEmbed(signup)],
+      embeds: [
+        buildCwlSignupEmbed({
+          signupName: signup.signupName,
+          accounts: signup.accounts,
+          clans: signup.clans,
+        }),
+      ],
       components: [
         {
           type: ComponentType.ActionRow,
@@ -139,20 +152,4 @@ export const submitCwlAccountSignupModal = async (
     console.log(`Failed to finalize account signup: ${err}`);
     throw err;
   }
-};
-
-const buildEmbed = (signup: Record<string, any>) => {
-  return {
-    title: signup.signupName,
-    description: signup.accounts
-      .slice(-40)
-      .map(
-        (account: Record<string, string>) =>
-          `\`emoji\` \`${account.username}\` \`${account.playerTag}\``
-      )
-      .join("\n"),
-    footer: {
-      text: `Total accounts: ${signup.accounts.length}\nSignup is OPEN`,
-    },
-  } as APIEmbed;
 };

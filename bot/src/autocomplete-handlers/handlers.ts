@@ -7,3 +7,4 @@ export * from "./questionAnswer";
 export * from "./rosterCommands";
 export * from "./cwlResponse";
 export * from "./taskCommands";
+export * from "./cwlSignup";

@@ -34,6 +34,12 @@ export const handleCommand = async (
         return await commands.handleCwlRoster(event.detail);
       case "initiate-cwl-signup":
         return await commands.handleInitiateCwlSignup(event.detail);
+      case "cwl-announce-roster":
+        return await commands.handleCwlAnnounceRoster(event.detail);
+      case "cwl-add-clan":
+        return await commands.handleAddCwlClan(event.detail);
+      case "cwl-dashboard":
+        return await commands.handleCwlDashboard(event.detail);
       case "cwl-questions":
         return await commands.handleCwlQuestions(event.detail);
       case "info-cwl":

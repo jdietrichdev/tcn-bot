@@ -1,4 +1,8 @@
-import { PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
+import {
+  ChannelType,
+  PermissionFlagsBits,
+  SlashCommandBuilder,
+} from 'discord.js';
 
 export const hello = new SlashCommandBuilder()
   .setName('hello')
@@ -302,13 +306,74 @@ export const cwlRoster = new SlashCommandBuilder()
 
 export const initiateCwlSignup = new SlashCommandBuilder()
   .setName('initiate-cwl-signup')
-  .setDescription('Create new signup for CWL')
+  .setDescription('Post the configured CWL clan rosters in a selected channel')
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .addStringOption((option) => {
     return option
       .setName('name')
       .setDescription('Signup name')
+      .setRequired(true)
+      .setMaxLength(50)
+      .setAutocomplete(true);
+  })
+  .addChannelOption((option) => {
+    return option
+      .setName('channel')
+      .setDescription('Channel where the CWL rosters should be posted')
+      .addChannelTypes(ChannelType.GuildText)
       .setRequired(true);
+  });
+
+export const cwlAnnounceRoster = new SlashCommandBuilder()
+  .setName('cwl-announce-roster')
+  .setDescription('Post the final rosters for a CWL signup')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName('signup-name')
+      .setDescription('Name of the CWL signup')
+      .setRequired(true)
+      .setMaxLength(50)
+      .setAutocomplete(true);
+  })
+  .addChannelOption((option) => {
+    return option
+      .setName('channel')
+      .setDescription('Channel where the rosters should be posted')
+      .addChannelTypes(ChannelType.GuildText)
+      .setRequired(true);
+  });
+
+export const cwlAddClan = new SlashCommandBuilder()
+  .setName('cwl-add-clan')
+  .setDescription("Add a clan's current league and profile link to a CWL signup")
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName('signup-name')
+      .setDescription('Name of the CWL signup')
+      .setRequired(true)
+      .setMaxLength(50)
+      .setAutocomplete(true);
+  })
+  .addStringOption((option) => {
+    return option
+      .setName('clan-tag')
+      .setDescription('Clash of Clans clan tag (with or without #)')
+      .setRequired(true)
+      .setAutocomplete(true);
+  });
+
+export const cwlDashboard = new SlashCommandBuilder()
+  .setName('cwl-dashboard')
+  .setDescription('Manage clans and settings for a CWL signup')
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  .addStringOption((option) => {
+    return option
+      .setName('signup-name')
+      .setDescription('CWL signup to manage')
+      .setRequired(true)
+      .setAutocomplete(true);
   });
 
 export const cwlQuestions = new SlashCommandBuilder()
