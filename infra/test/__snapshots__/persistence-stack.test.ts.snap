@@ -50,6 +50,10 @@ exports[`Infrastructure created 1`] = `
           {
             "AttributeName": "sk",
             "AttributeType": "S"
+          },
+          {
+            "AttributeName": "normalizedPlayerTag",
+            "AttributeType": "S"
           }
         ],
         "GlobalSecondaryIndexes": [
@@ -58,6 +62,22 @@ exports[`Infrastructure created 1`] = `
             "KeySchema": [
               {
                 "AttributeName": "sk",
+                "KeyType": "HASH"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            },
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": 5,
+              "WriteCapacityUnits": 5
+            }
+          },
+          {
+            "IndexName": "normalized-player-tag-index",
+            "KeySchema": [
+              {
+                "AttributeName": "normalizedPlayerTag",
                 "KeyType": "HASH"
               }
             ],

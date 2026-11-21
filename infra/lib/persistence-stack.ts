@@ -50,5 +50,12 @@ export class PersistenceStack extends Stack {
         type: AttributeType.STRING,
       },
     });
+    this.botTable.addGlobalSecondaryIndex({
+      indexName: "normalized-player-tag-index",
+      partitionKey: {
+        name: "normalizedPlayerTag",
+        type: AttributeType.STRING,
+      },
+    });
   }
 }

@@ -33,15 +33,23 @@ describe("link list", () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
 
   it("shows linked and unlinked clan members and configured clans", async () => {
+    jest.useFakeTimers();
     jest.mocked(getClan).mockResolvedValue({
       memberList: [{ name: "Linked", tag: "#AAA" }, { name: "Unlinked", tag: "#BBB" }],
     });
     jest.mocked(dynamoDbClient.send)
-      .mockResolvedValueOnce({ Items: [{ pk: "12345", sk: "player#aaa" }] } as never);
+      .mockResolvedValueOnce({ Item: { status: "complete" } } as never)
+      .mockResolvedValueOnce({ Items: [{ pk: "12345", sk: "player#aaa" }] } as never)
+      .mockResolvedValueOnce({ Items: [] } as never);
 
-    await handleLinkList(command);
+    const pending = handleLinkList(command);
+    await jest.advanceTimersByTimeAsync(250);
+    await pending;
 
     expect(getClan).toHaveBeenCalledWith("#2CYP9C9QG");
     const payload = jest.mocked(updateResponse).mock.calls[0][2];
@@ -53,70 +61,32 @@ describe("link list", () => {
     expect(JSON.stringify(payload.components)).toContain("#2J9QJ9YVJ");
   });
 
-  it("loads the selected clan and follows scan pagination", async () => {
-    jest.useFakeTimers();
+  it("loads the selected clan using its normalized index key", async () => {
     jest.mocked(getClan).mockResolvedValue({ memberList: [{ name: "Player", tag: "#ABC" }] });
     jest.mocked(dynamoDbClient.send)
-      .mockResolvedValueOnce({
-        Items: [],
-        LastEvaluatedKey: { pk: "1", sk: "player#ABC" },
-        ConsumedCapacity: { CapacityUnits: 1.5 },
-      } as never)
-      .mockResolvedValueOnce({ Items: [{ pk: "222", sk: "player#ABC" }] } as never);
+      .mockResolvedValueOnce({ Item: { status: "complete" } } as never)
+      .mockResolvedValueOnce({ Items: [{ pk: "222", sk: "player#aBc" }] } as never);
 
-    const pending = handleLinkListSelect(select);
-    await jest.advanceTimersByTimeAsync(1499);
-    expect(dynamoDbClient.send).toHaveBeenCalledTimes(1);
-    await jest.advanceTimersByTimeAsync(1);
-    await pending;
+    await handleLinkListSelect(select);
 
     expect(getClan).toHaveBeenCalledWith("#2J9QJ9YVJ");
-    expect(jest.mocked(dynamoDbClient.send).mock.calls[0][0].input)
-      .toEqual(expect.objectContaining({
-        Limit: 5,
-        ConsistentRead: false,
-        ReturnConsumedCapacity: "TOTAL",
-      }));
     expect(jest.mocked(dynamoDbClient.send).mock.calls[1][0].input)
-      .toEqual(expect.objectContaining({ ExclusiveStartKey: { pk: "1", sk: "player#ABC" } }));
+      .toEqual(expect.objectContaining({
+        IndexName: "normalized-player-tag-index",
+        ExpressionAttributeValues: { ":tag": "player#ABC" },
+      }));
     expect(jest.mocked(updateResponse).mock.calls[0][2].embeds?.[0].description)
       .toContain("<@222>");
-    jest.useRealTimers();
   });
 
-  it("backs off on throughput errors before retrying the same page", async () => {
-    jest.useFakeTimers();
+  it("refuses to report unlinked players before migration completes", async () => {
     jest.mocked(getClan).mockResolvedValue({ memberList: [{ name: "Player", tag: "#ABC" }] });
-    const throttled = new Error("Throttled");
-    throttled.name = "ProvisionedThroughputExceededException";
-    jest.mocked(dynamoDbClient.send)
-      .mockRejectedValueOnce(throttled as never)
-      .mockResolvedValueOnce({ Items: [{ pk: "222", sk: "player#abc" }] } as never);
-    const pending = handleLinkList(command);
-    await jest.advanceTimersByTimeAsync(999);
-    expect(dynamoDbClient.send).toHaveBeenCalledTimes(1);
-    await jest.advanceTimersByTimeAsync(1);
-    await pending;
-    expect(dynamoDbClient.send).toHaveBeenCalledTimes(2);
-    expect(jest.mocked(updateResponse).mock.calls[0][2].embeds?.[0].description)
-      .toContain("<@222>");
-    jest.useRealTimers();
-  });
-
-  it("reports an error instead of returning an incomplete scan", async () => {
-    jest.mocked(getClan).mockResolvedValue({ memberList: [{ name: "Player", tag: "#ABC" }] });
-    jest.mocked(dynamoDbClient.send).mockResolvedValue({
-      Items: [],
-      LastEvaluatedKey: { pk: "1", sk: "player#ABC" },
-      ConsumedCapacity: { CapacityUnits: 241 },
-    } as never);
-    const log = jest.spyOn(console, "error").mockImplementation(() => {});
-    await handleLinkListSelect(select);
+    jest.mocked(dynamoDbClient.send).mockResolvedValue({ Item: { status: "in-progress" } } as never);
+    await handleLinkList(command);
     expect(dynamoDbClient.send).toHaveBeenCalledTimes(1);
     expect(updateResponse).toHaveBeenCalledWith("app", "token", {
-      content: "Could not update the link list. Please try again.",
+      content: "The player link index is not ready. An administrator must complete the link index migration.",
     });
-    log.mockRestore();
   });
 
   it("uses the Point clans in the test server", async () => {
@@ -133,20 +103,21 @@ describe("link list", () => {
   });
 
   it("keeps a full clan within Discord embed limits", async () => {
+    jest.useFakeTimers();
     jest.mocked(getClan).mockResolvedValue({
       memberList: Array.from({ length: 50 }, (_, index) => ({
         name: "*".repeat(24),
         tag: `#${index.toString().padStart(15, "0")}`,
       })),
     });
-    jest.mocked(dynamoDbClient.send).mockResolvedValue({
-      Items: Array.from({ length: 50 }, (_, index) => ({
-        pk: "12345678901234567890",
-        sk: `player#${index.toString().padStart(15, "0")}`,
-      })),
-    } as never);
+    jest.mocked(dynamoDbClient.send)
+      .mockResolvedValueOnce({ Item: { status: "complete" } } as never)
+      .mockResolvedValue({ Items: [{ pk: "12345678901234567890" }] } as never);
 
-    await handleLinkList(command);
+    const pending = handleLinkList(command);
+    await jest.advanceTimersByTimeAsync(49 * 250);
+    await pending;
+    expect(dynamoDbClient.send).toHaveBeenCalledTimes(51);
     const embeds = jest.mocked(updateResponse).mock.calls[0][2].embeds!;
     expect(embeds.every((embed) => (embed.description?.length ?? 0) <= 4096)).toBe(true);
     expect(embeds.reduce((sum, embed) => sum + (embed.description?.length ?? 0) + (embed.title?.length ?? 0), 0)).toBeLessThanOrEqual(6000);

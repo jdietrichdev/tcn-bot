@@ -1,4 +1,4 @@
-import { ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import {
   APIChatInputApplicationCommandInteraction,
   APIEmbed,
@@ -13,11 +13,7 @@ import { ClanConfig, getConfig } from "../util/serverConfig";
 
 type TaggedClan = ClanConfig & { tag: string };
 type ClanMember = { name: string; tag: string };
-
-const SCAN_PAGE_SIZE = 5;
-const SCAN_READ_UNITS_PER_SECOND = 1;
-const SCAN_TIMEOUT_MS = 240_000;
-const SCAN_THROTTLE_RETRIES = 5;
+class LinkIndexNotReadyError extends Error {}
 
 const configuredClans = (guildId: string): TaggedClan[] =>
   Object.values(getConfig(guildId).CLANS).filter(
@@ -33,68 +29,40 @@ const isClanMember = (member: unknown): member is ClanMember =>
   "tag" in member && typeof member.tag === "string" &&
   /^#[A-Z0-9]{1,15}$/.test(member.tag);
 
-const waitForScan = async (ms: number, deadline: number) => {
-  if (Date.now() + ms >= deadline) {
-    throw new Error("Link list scan exceeded its time limit");
-  }
-  await new Promise<void>((resolve) => setTimeout(resolve, ms));
-};
-
 const findLinks = async (members: ClanMember[]): Promise<Map<string, string>> => {
   const memberTags = new Set(members.map((member) => member.tag.slice(1)));
   const links = new Map<string, string>();
   if (!memberTags.size) return links;
-  // Existing link keys preserve user-entered casing, so exact index queries can miss links.
-  let startKey: Record<string, unknown> | undefined;
-  const deadline = Date.now() + SCAN_TIMEOUT_MS;
-  do {
-    if (Date.now() >= deadline) {
-      throw new Error("Link list scan exceeded its time limit");
-    }
-    const scan = new ScanCommand({
+  const migration = await dynamoDbClient.send(new GetCommand({
+    TableName: "BotTable",
+    Key: { pk: "system#link-index", sk: "migration" },
+    ConsistentRead: true,
+  }));
+  if (migration.Item?.status !== "complete") {
+    throw new LinkIndexNotReadyError("Player link index migration has not completed");
+  }
+  const tags = [...memberTags];
+  for (let index = 0; index < tags.length; index++) {
+    const tag = tags[index];
+    const result = await dynamoDbClient.send(new QueryCommand({
       TableName: "BotTable",
-      ConsistentRead: false,
-      Limit: SCAN_PAGE_SIZE,
-      ReturnConsumedCapacity: "TOTAL",
-      FilterExpression: "begins_with(sk, :prefix)",
-      ProjectionExpression: "pk, sk",
-      ExpressionAttributeValues: { ":prefix": "player#" },
-      ExclusiveStartKey: startKey,
-    });
-    let result;
-    for (let retries = 0; ; retries++) {
-      try {
-        result = await dynamoDbClient.send(scan);
-        break;
-      } catch (error) {
-        if (!(error instanceof Error) ||
-            error.name !== "ProvisionedThroughputExceededException" ||
-            retries >= SCAN_THROTTLE_RETRIES) {
-          throw error;
-        }
-        await waitForScan(Math.min(1000 * 2 ** retries, 8000), deadline);
-      }
-    }
-    for (const link of result.Items ?? []) {
-      if (typeof link.sk !== "string") {
-        throw new Error("Invalid player link sort key");
-      }
-      const tag = link.sk.slice("player#".length).toUpperCase();
-      if (!memberTags.has(tag)) continue;
+      IndexName: "normalized-player-tag-index",
+      KeyConditionExpression: "normalizedPlayerTag = :tag",
+      ExpressionAttributeValues: { ":tag": `player#${tag}` },
+      Limit: 1,
+    }));
+    const link = result.Items?.[0];
+    if (link) {
       if (typeof link.pk !== "string" || !/^\d{1,20}$/.test(link.pk)) {
         throw new Error(`Invalid link record for player #${tag}`);
       }
       links.set(tag, link.pk);
     }
-    startKey = result.LastEvaluatedKey;
-    if (startKey && links.size < memberTags.size) {
-      const units = result.ConsumedCapacity?.CapacityUnits;
-      if (typeof units !== "number" || !Number.isFinite(units) || units < 0) {
-        throw new Error("DynamoDB did not report scan read capacity");
-      }
-      await waitForScan(Math.ceil(units * 1000 / SCAN_READ_UNITS_PER_SECOND), deadline);
+    // Keep individual index reads below the default provisioned capacity.
+    if (index < tags.length - 1) {
+      await new Promise<void>((resolve) => setTimeout(resolve, 250));
     }
-  } while (startKey && links.size < memberTags.size);
+  }
   return links;
 };
 
@@ -180,11 +148,18 @@ export const handleLinkList = async (
     });
     return;
   }
-  await updateResponse(
-    interaction.application_id,
-    interaction.token,
-    await buildLinkList(clans, clans[0])
-  );
+  try {
+    await updateResponse(
+      interaction.application_id,
+      interaction.token,
+      await buildLinkList(clans, clans[0])
+    );
+  } catch (error) {
+    if (!(error instanceof LinkIndexNotReadyError)) throw error;
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: "The player link index is not ready. An administrator must complete the link index migration.",
+    });
+  }
 };
 
 export const handleLinkListSelect = async (
@@ -208,7 +183,9 @@ export const handleLinkListSelect = async (
   } catch (error) {
     console.error("Failed to update link list", error);
     await updateResponse(interaction.application_id, interaction.token, {
-      content: "Could not update the link list. Please try again.",
+      content: error instanceof LinkIndexNotReadyError
+        ? "The player link index is not ready. An administrator must complete the link index migration."
+        : "Could not update the link list. Please try again.",
     });
   }
 };

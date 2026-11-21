@@ -1,9 +1,11 @@
 import { App } from "aws-cdk-lib";
-import { PersistenceStack } from "../lib/persistence-stack";
+import type { PersistenceStack as PersistenceStackType } from "../lib/persistence-stack";
 import { Template } from "aws-cdk-lib/assertions";
 
+const { PersistenceStack }: typeof import("../lib/persistence-stack") =
+  require("../lib/persistence-stack.ts");
 let app: App;
-let stack: PersistenceStack;
+let stack: PersistenceStackType;
 let template: string;
 
 test("Infrastructure created", () => {

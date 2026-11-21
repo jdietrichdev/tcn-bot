@@ -100,6 +100,7 @@ const linkPlayer = async (
         Item: {
           pk: user,
           sk: `player#${playerTag.substring(1)}`,
+          normalizedPlayerTag: `player#${playerTag.substring(1).toUpperCase()}`,
           id: user,
           tag: playerTag,
         },

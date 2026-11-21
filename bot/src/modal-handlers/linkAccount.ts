@@ -109,6 +109,7 @@ export const submitLinkAccountModal = async (
         Item: {
           pk: interaction.member!.user.id,
           sk: `player#${playerTag.substring(1)}`,
+          normalizedPlayerTag: `player#${playerTag.substring(1).toUpperCase()}`,
           id: interaction.member!.user.id,
           tag: playerTag,
         },
