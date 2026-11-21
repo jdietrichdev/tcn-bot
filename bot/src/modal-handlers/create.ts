@@ -25,6 +25,7 @@ export const createModal = async (
       trigger.startsWith('cwl_dashboard_rename:') ||
       trigger.startsWith('cwl_dashboard_add_tag:') ||
       trigger.startsWith('cwl_dashboard_add_player:') ||
+      trigger.startsWith('cwl_dashboard_move_player:') ||
       trigger.startsWith('cwl_dashboard_remove_player:'))
   ) {
     return createCwlDashboardModal(interaction);

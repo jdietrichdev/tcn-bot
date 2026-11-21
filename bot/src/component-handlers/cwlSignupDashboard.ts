@@ -88,19 +88,16 @@ const getSignup = async (
   return signup;
 };
 
-const updateDashboard = async (
+const showDashboard = async (
+  interaction: APIMessageComponentInteraction,
   signup: CwlSignupRecord,
-  selectedClanTag?: string
-) => {
-  if (!signup.dashboardChannelId || !signup.dashboardMessageId) {
-    throw new Error("The CWL dashboard message is no longer available.");
-  }
-  await updateMessage(
-    signup.dashboardChannelId,
-    signup.dashboardMessageId,
-    buildCwlDashboardMessage(signup, selectedClanTag)
-  );
-};
+  selectedClanTag?: string,
+  notice?: string
+) =>
+  updateResponse(interaction.application_id, interaction.token, {
+    content: notice ?? "",
+    ...buildCwlDashboardMessage(signup, selectedClanTag),
+  });
 
 const readClan = async (tag: string): Promise<CwlSignupClan> => {
   const clanData: unknown = await getClan(`#${tag}`);
@@ -155,7 +152,6 @@ export const addCwlClanToSignup = async (
     clan.messageId = posted.id;
     await saveCwlSignup(signup);
   }
-  await updateDashboard(signup, tag);
   return { signup, clan };
 };
 
@@ -167,13 +163,15 @@ const addClan = async (
   if (!interaction.guild_id) {
     throw new Error("CWL dashboards can only be used in a server.");
   }
-  const { clan } = await addCwlClanToSignup(
+  const { signup, clan } = await addCwlClanToSignup(
     interaction.guild_id,
     signupId,
     rawTag
   );
-  await respond(
+  await showDashboard(
     interaction,
+    signup,
+    clan.tag,
     `${clan.name} is ${clan.messageId ? "available on the roster" : "added to the signup"}.`
   );
 };
@@ -195,27 +193,7 @@ export const handleCwlSignupDashboard = async (
     );
     if (action === "roster_dashboard") {
       const signup = await getSignup(interaction, signupId);
-      if (!interaction.channel_id) {
-        throw new Error("Could not identify the dashboard channel.");
-      }
-      if (
-        signup.dashboardMessageId &&
-        signup.dashboardChannelId === interaction.channel_id
-      ) {
-        await updateDashboard(signup);
-      } else {
-        const posted = await sendMessage(
-          buildCwlDashboardMessage(signup),
-          interaction.channel_id
-        );
-        signup.dashboardChannelId = interaction.channel_id;
-        signup.dashboardMessageId = posted.id;
-        await saveCwlSignup(signup);
-      }
-      await respond(
-        interaction,
-        `CWL dashboard for **${signup.signupName}** is available in <#${interaction.channel_id}>.`
-      );
+      await showDashboard(interaction, signup);
       return;
     }
 
@@ -232,8 +210,7 @@ export const handleCwlSignupDashboard = async (
         throw new Error("No clan was selected.");
       }
       const signup = await getSignup(interaction, signupId);
-      await updateDashboard(signup, selectedTag);
-      await respond(interaction, `Selected **${selectedTag}** for editing.`);
+      await showDashboard(interaction, signup, selectedTag, `Selected **${selectedTag}** for editing.`);
       return;
     }
 
@@ -255,8 +232,7 @@ export const handleCwlSignupDashboard = async (
 
     const signup = await getSignup(interaction, signupId);
     if (action === "refresh") {
-      await updateDashboard(signup, clanTag);
-      await respond(interaction, "CWL dashboard refreshed.");
+      await showDashboard(interaction, signup, clanTag, "CWL dashboard refreshed.");
       return;
     }
     if (!clanTag) {
@@ -274,8 +250,7 @@ export const handleCwlSignupDashboard = async (
       }
       signup.clans.splice(clanIndex, 1);
       await saveCwlSignup(signup);
-      await updateDashboard(signup);
-      await respond(interaction, `Removed **${clan.name}** from this signup.`);
+      await showDashboard(interaction, signup, undefined, `Removed **${clan.name}** from this signup.`);
       return;
     }
     if (action === "toggle") {
@@ -288,9 +263,10 @@ export const handleCwlSignupDashboard = async (
           buildCwlRosterMessage(signup, clan, loadTownHallEmojiMap())
         );
       }
-      await updateDashboard(signup, clanTag);
-      await respond(
+      await showDashboard(
         interaction,
+        signup,
+        clanTag,
         `Signup for **${clan.name}** is ${clan.signupOpen ? "open" : "closed"}.`
       );
       return;

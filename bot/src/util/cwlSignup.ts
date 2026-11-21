@@ -137,10 +137,26 @@ export const CWL_KNOWN_CLANS = [
 
 const NON_CWL_HERO_NAMES = new Set(["battle machine", "battle copter"]);
 
+const HERO_ABBREVIATIONS: Record<string, string> = {
+  "barbarian king": "BK",
+  "archer queen": "AQ",
+  "grand warden": "GW",
+  "royal champion": "RC",
+  "minion prince": "MP",
+  "dragon duke": "DD",
+};
+
+const abbreviateHero = (name: string) =>
+  HERO_ABBREVIATIONS[name.toLowerCase()] ??
+  name
+    .split(/\s+/)
+    .map((word) => word[0]?.toUpperCase() ?? "")
+    .join("");
+
 const getHeroLevelSummary = (heroes: Record<string, number>) =>
   Object.entries(heroes)
     .filter(([name]) => !NON_CWL_HERO_NAMES.has(name.toLowerCase()))
-    .map(([name, level]) => `${name} ${level}`)
+    .map(([name, level]) => `${abbreviateHero(name)} ${level}`)
     .join(" • ");
 
 export const buildCwlRosterEmbed = (

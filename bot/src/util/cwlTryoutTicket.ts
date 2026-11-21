@@ -11,6 +11,7 @@ import {
   createChannel,
   getChannel,
   getGuildChannels,
+  grantRole,
   sendMessage,
 } from "../adapters/discord-adapter";
 import { BUTTONS } from "../component-handlers/buttons";
@@ -160,7 +161,9 @@ export const createCwlTryoutTicket = async (
     "account";
   const addPlayerCustomId =
     `cwl_dashboard_add_player:${input.signupId}:${input.clanTag}:${input.playerTag}`;
-  if ([...addPlayerCustomId].length > 100) {
+  const movePlayerCustomId =
+    `cwl_dashboard_move_player:${input.signupId}:${input.clanTag}:${input.playerTag}`;
+  if ([...movePlayerCustomId].length > 100) {
     throw new Error("The CWL signup details are too long for a ticket button.");
   }
   const staffRoles = [
@@ -285,6 +288,12 @@ export const createCwlTryoutTicket = async (
               label: "Signup Player for Roster",
               custom_id: addPlayerCustomId,
             },
+            {
+              type: ComponentType.Button,
+              style: ButtonStyle.Danger,
+              label: "Deny & Move to Another Clan",
+              custom_id: movePlayerCustomId,
+            },
           ],
         },
       ],
@@ -298,6 +307,17 @@ export const createCwlTryoutTicket = async (
     input.playerTag,
     input.categoryId
   );
+  if (input.config.CWL_TRYOUT_PENDING_ROLE) {
+    try {
+      await grantRole(
+        input.guildId,
+        input.userId,
+        input.config.CWL_TRYOUT_PENDING_ROLE
+      );
+    } catch (error) {
+      console.error("Failed to grant CWL Tryout Pending role", error);
+    }
+  }
 
   return { channelId: channel.id, created: true };
 };

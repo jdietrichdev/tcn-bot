@@ -154,6 +154,27 @@ export const proxy = async (
     response = {
       type: InteractionResponseType.DeferredMessageUpdate,
     };
+  } else if (
+    (body.type === InteractionType.MessageComponent &&
+      body.data.custom_id.startsWith("cwl_dashboard_")) ||
+    (body.type === InteractionType.ModalSubmit &&
+      body.data.custom_id.startsWith("cwlDashboardModal:") &&
+      ((body.message?.flags ?? 0) & MessageFlags.Ephemeral) !== 0)
+  ) {
+    // Edits the ephemeral dashboard in place so several can be open at once.
+    await eventClient.send(
+      new PutEventsCommand({
+        Entries: [
+          {
+            Detail: event.body!,
+            DetailType: "Bot Event Received",
+            Source: "tcn-bot-event",
+            EventBusName: "tcn-bot-events",
+          },
+        ],
+      })
+    );
+    response = { type: InteractionResponseType.DeferredMessageUpdate };
   } else {
     await eventClient.send(
       new PutEventsCommand({
@@ -167,7 +188,7 @@ export const proxy = async (
         ],
       })
     );
-    
+
     const publicCommands = [
       'unrostered', 
       'announceRoster', 

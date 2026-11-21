@@ -10,7 +10,10 @@ import {
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { getPlayer } from "../adapters/coc-api-adapter";
 import {
+  getChannel,
   grantRole,
+  removeRole,
+  sendMessage,
   updateMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
@@ -105,7 +108,9 @@ export const createCwlDashboardModal = async (
   }
 
   if (
-    (action === "add_player" || action === "remove_player") &&
+    (action === "add_player" ||
+      action === "remove_player" ||
+      action === "move_player") &&
     clanTag
   ) {
     const clan = signup.clans.find((item) => item.tag === clanTag);
@@ -116,15 +121,23 @@ export const createCwlDashboardModal = async (
       type: InteractionResponseType.Modal,
       data: {
         custom_id: `cwlDashboardModal:${action}:${signupId}:${clanTag}`,
-        title: action === "add_player" ? "Add linked player" : "Remove player",
+        title:
+          action === "add_player"
+            ? "Add linked player"
+            : action === "move_player"
+              ? "Deny & move player"
+              : "Remove player",
         components: [
           modalField(
             "player_tag",
             "Clash of Clans player tag",
-            action === "add_player" ? prefilledPlayerTag ?? "" : "",
+            action === "remove_player" ? "" : prefilledPlayerTag ?? "",
             true,
             16
           ),
+          ...(action === "move_player"
+            ? [modalField("target_clan_tag", "Destination clan tag", "", true, 16)]
+            : []),
         ],
       },
     };
@@ -210,13 +223,6 @@ const refreshSignupMessages = async (
       }
     }
   }
-  if (signup.dashboardChannelId && signup.dashboardMessageId) {
-    await updateMessage(
-      signup.dashboardChannelId,
-      signup.dashboardMessageId,
-      buildCwlDashboardMessage(signup)
-    );
-  }
 };
 
 const normalizePlayerTag = (tag: string) =>
@@ -269,13 +275,85 @@ const refreshRosterClanMessage = async (
       buildCwlRosterMessage(signup, clan, loadTownHallEmojiMap())
     );
   }
-  if (signup.dashboardChannelId && signup.dashboardMessageId) {
-    await updateMessage(
-      signup.dashboardChannelId,
-      signup.dashboardMessageId,
-      buildCwlDashboardMessage(signup, clanTag)
-    );
+};
+
+const buildRosterAccount = async (
+  clan: { name: string; accounts?: CwlRosterAccount[] },
+  playerTag: string
+): Promise<CwlRosterAccount> => {
+  const alreadyAdded = (clan.accounts ?? []).some(
+    (account) => normalizePlayerTag(account.playerTag) === playerTag
+  );
+  if (alreadyAdded) {
+    throw new Error(`${playerTag} is already on the **${clan.name}** roster.`);
   }
+  const userId = await getLinkedDiscordUser(playerTag);
+  const playerData: unknown = await getPlayer(playerTag);
+  if (!isRecord(playerData)) {
+    throw new Error(`Could not read player data for ${playerTag}.`);
+  }
+  return {
+    userId,
+    playerTag,
+    playerName:
+      typeof playerData.name === "string" ? playerData.name : playerTag,
+    clanName:
+      isRecord(playerData.clan) && typeof playerData.clan.name === "string"
+        ? playerData.clan.name
+        : undefined,
+    townHallLevel:
+      typeof playerData.townHallLevel === "number"
+        ? playerData.townHallLevel
+        : undefined,
+  };
+};
+
+const finalizeTryout = async (
+  interaction: APIModalSubmitInteraction,
+  userId: string,
+  playerTag: string,
+  content: string
+) => {
+  const guildId = interaction.guild_id;
+  const channelId = interaction.channel?.id ?? interaction.channel_id;
+  if (!guildId || !channelId) {
+    return;
+  }
+  const channel = await getChannel(channelId);
+  if (
+    !("topic" in channel) ||
+    channel.topic !== `CWL tryout for ${playerTag}:${userId}`
+  ) {
+    return;
+  }
+  const pendingRole = getConfig(guildId).CWL_TRYOUT_PENDING_ROLE;
+  if (pendingRole) {
+    await removeRole(guildId, userId, pendingRole);
+  }
+  await sendMessage(
+    {
+      content: `<@${userId}> ${content}`,
+      allowed_mentions: { users: [userId] },
+    },
+    channelId
+  );
+};
+
+// Dashboards are ephemeral; ticket buttons reuse these modals on public messages.
+const finishSubmission = async (
+  interaction: APIModalSubmitInteraction,
+  signup: NonNullable<Awaited<ReturnType<typeof getCwlSignupById>>>,
+  selectedClanTag: string | undefined,
+  content: string
+) => {
+  const fromDashboard =
+    ((interaction.message?.flags ?? 0) & MessageFlags.Ephemeral) !== 0;
+  await updateResponse(interaction.application_id, interaction.token, {
+    content,
+    ...(fromDashboard
+      ? buildCwlDashboardMessage(signup, selectedClanTag)
+      : {}),
+  });
 };
 
 export const submitCwlDashboardModal = async (
@@ -298,15 +376,68 @@ export const submitCwlDashboardModal = async (
       throw new Error("This CWL signup no longer exists.");
     }
 
+    if (action === "move_player" && clanTag) {
+      const fromClan = signup.clans.find((item) => item.tag === clanTag);
+      if (!fromClan) {
+        throw new Error("The selected clan is no longer in this signup.");
+      }
+      const targetTag = getTextInputValue(interaction, "target_clan_tag")
+        .trim()
+        .replace(/^#/, "")
+        .toUpperCase();
+      const targetClan = signup.clans.find((item) => item.tag === targetTag);
+      if (!targetClan) {
+        throw new Error(
+          `#${targetTag} is not part of this signup. Add it to the signup first.`
+        );
+      }
+      if (targetClan.tag === fromClan.tag) {
+        throw new Error("Choose a different clan than the one they tried out for.");
+      }
+      const playerTag = normalizePlayerTag(
+        getTextInputValue(interaction, "player_tag").trim()
+      );
+      if (!/^[A-Z0-9]{3,15}$/.test(playerTag.slice(1))) {
+        throw new Error("Player tags must contain 3 to 15 letters or numbers.");
+      }
+      const account = await buildRosterAccount(targetClan, playerTag);
+      targetClan.accounts = [...(targetClan.accounts ?? []), account];
+      fromClan.accounts = (fromClan.accounts ?? []).filter(
+        (item) => normalizePlayerTag(item.playerTag) !== playerTag
+      );
+      await saveCwlSignup(signup);
+      const roleId = getCwlClanRoleId(getConfig(interaction.guild_id), targetClan);
+      if (roleId) {
+        await grantRole(interaction.guild_id, account.userId, roleId);
+      }
+      await refreshRosterClanMessage(signup, fromClan.tag);
+      await refreshRosterClanMessage(signup, targetClan.tag);
+      await finalizeTryout(
+        interaction,
+        account.userId,
+        playerTag,
+        `Unfortunately you were **denied** for **${fromClan.name}** (${fromClan.league}). You have been placed on the **${targetClan.name}** (${targetClan.league}) roster instead.`
+      );
+      await finishSubmission(
+        interaction,
+        signup,
+        fromClan.tag,
+        `Denied ${playerTag} for **${fromClan.name}** and added them to the **${targetClan.name}** roster.`
+      );
+      return;
+    }
     if (action === "add_tag") {
       const { clan } = await addCwlClanToSignup(
         interaction.guild_id,
         signupId,
         getTextInputValue(interaction, "clan_tag")
       );
-      await updateResponse(interaction.application_id, interaction.token, {
-        content: `Added **${clan.name}** to **${signup.signupName}**.`,
-      });
+      await finishSubmission(
+        interaction,
+        signup,
+        clan.tag,
+        `Added **${clan.name}** to **${signup.signupName}**.`
+      );
       return;
     }
 
@@ -327,33 +458,8 @@ export const submitCwlDashboardModal = async (
 
       let addedUserId: string | undefined;
       if (action === "add_player") {
-        const alreadyAdded = (clan.accounts ?? []).some(
-          (account) => normalizePlayerTag(account.playerTag) === playerTag
-        );
-        if (alreadyAdded) {
-          throw new Error(`${playerTag} is already on the **${clan.name}** roster.`);
-        }
-        const userId = await getLinkedDiscordUser(playerTag);
-        addedUserId = userId;
-        const playerData: unknown = await getPlayer(playerTag);
-        if (!isRecord(playerData)) {
-          throw new Error(`Could not read player data for ${playerTag}.`);
-        }
-        const account: CwlRosterAccount = {
-          userId,
-          playerTag,
-          playerName:
-            typeof playerData.name === "string" ? playerData.name : playerTag,
-          clanName:
-            isRecord(playerData.clan) &&
-            typeof playerData.clan.name === "string"
-              ? playerData.clan.name
-              : undefined,
-          townHallLevel:
-            typeof playerData.townHallLevel === "number"
-              ? playerData.townHallLevel
-              : undefined,
-        };
+        const account = await buildRosterAccount(clan, playerTag);
+        addedUserId = account.userId;
         clan.accounts = [...(clan.accounts ?? []), account];
       } else {
         const accounts = clan.accounts ?? [];
@@ -378,12 +484,22 @@ export const submitCwlDashboardModal = async (
         }
       }
       await refreshRosterClanMessage(signup, clanTag);
-      await updateResponse(interaction.application_id, interaction.token, {
-        content:
-          action === "add_player"
-            ? `Added ${playerTag} to the **${clan.name}** roster.`
-            : `Removed ${playerTag} from the **${clan.name}** roster.`,
-      });
+      if (addedUserId) {
+        await finalizeTryout(
+          interaction,
+          addedUserId,
+          playerTag,
+          `Congratulations, you have been **approved** for **${clan.name}** (${clan.league}) and added to the roster!`
+        );
+      }
+      await finishSubmission(
+        interaction,
+        signup,
+        clanTag,
+        action === "add_player"
+          ? `Added ${playerTag} to the **${clan.name}** roster.`
+          : `Removed ${playerTag} from the **${clan.name}** roster.`
+      );
       return;
     }
 
@@ -402,9 +518,12 @@ export const submitCwlDashboardModal = async (
       signup.signupName = signupName;
       await saveCwlSignup(signup);
       await refreshSignupMessages(signup);
-      await updateResponse(interaction.application_id, interaction.token, {
-        content: `Renamed the CWL signup to **${signupName}**.`,
-      });
+      await finishSubmission(
+        interaction,
+        signup,
+        clanTag || undefined,
+        `Renamed the CWL signup to **${signupName}**.`
+      );
       return;
     }
 
@@ -434,9 +553,12 @@ export const submitCwlDashboardModal = async (
       clan.roleId = roleValue || undefined;
       await saveCwlSignup(signup);
       await refreshSignupMessages(signup);
-      await updateResponse(interaction.application_id, interaction.token, {
-        content: `Updated settings for **${clan.name}**.`,
-      });
+      await finishSubmission(
+        interaction,
+        signup,
+        clanTag,
+        `Updated settings for **${clan.name}**.`
+      );
       return;
     }
     throw new Error("Unsupported CWL dashboard form.");

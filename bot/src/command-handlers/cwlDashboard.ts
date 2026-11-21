@@ -2,14 +2,11 @@ import {
   APIApplicationCommandInteractionDataStringOption,
   APIChatInputApplicationCommandInteraction,
 } from "discord-api-types/v10";
-import { sendMessage, updateMessage, updateResponse } from "../adapters/discord-adapter";
+import { updateResponse } from "../adapters/discord-adapter";
 import { canManageCwlDashboard } from "../component-handlers/cwlSignupDashboard";
 import { getCommandOptionData } from "../util/interaction-util";
 import { buildCwlDashboardMessage } from "../util/cwlSignup";
-import {
-  findCwlSignupByName,
-  saveCwlSignup,
-} from "../util/cwlSignupStore";
+import { findCwlSignupByName } from "../util/cwlSignupStore";
 
 export const handleCwlDashboard = async (
   interaction: APIChatInputApplicationCommandInteraction
@@ -36,27 +33,9 @@ export const handleCwlDashboard = async (
     throw new Error(`CWL signup "${signupName}" was not found.`);
   }
 
-  const dashboardMessage = buildCwlDashboardMessage(signup);
-  if (
-    signup.dashboardMessageId &&
-    signup.dashboardChannelId === interaction.channel_id
-  ) {
-    await updateMessage(
-      interaction.channel_id,
-      signup.dashboardMessageId,
-      dashboardMessage
-    );
-  } else {
-    const posted = await sendMessage(
-      dashboardMessage,
-      interaction.channel_id
-    );
-    signup.dashboardChannelId = interaction.channel_id;
-    signup.dashboardMessageId = posted.id;
-    await saveCwlSignup(signup);
-  }
-
-  await updateResponse(interaction.application_id, interaction.token, {
-    content: `CWL dashboard for **${signupName}** is available in <#${interaction.channel_id}>.`,
-  });
+  await updateResponse(
+    interaction.application_id,
+    interaction.token,
+    buildCwlDashboardMessage(signup)
+  );
 };
