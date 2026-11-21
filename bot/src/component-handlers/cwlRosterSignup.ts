@@ -501,8 +501,13 @@ export const handleCwlRosterOptOut = async (
       return;
     }
     const signupIdForMenu = signup.sk.slice("signup#".length);
+    const accountSummaries = await Promise.all(
+      ownAccounts.map((account) => getPlayerSummary(account.playerTag))
+    );
+    const townHallEmojiIds = loadTownHallEmojiMap();
     await updateResponse(interaction.application_id, interaction.token, {
       content: `Select the **${clan.name}** roster account to remove:`,
+      embeds: [buildLinkedAccountsEmbed(accountSummaries, townHallEmojiIds)],
       components: [
         {
           type: ComponentType.ActionRow,
@@ -517,12 +522,14 @@ export const handleCwlRosterOptOut = async (
               placeholder: "Select an account to opt out",
               min_values: 1,
               max_values: 1,
-              options: ownAccounts.map((account) => ({
-                label: `${account.playerName ?? account.playerTag} (${account.playerTag})`.slice(
-                  0,
-                  100
-                ),
-                value: account.playerTag,
+              options: accountSummaries.map((account) => ({
+                label: `${account.name} (${account.tag})`.slice(0, 100),
+                value: account.tag,
+                description: `Town Hall ${account.townHallLevel ?? "?"}`,
+                emoji: getTownHallEmoji(
+                  account.townHallLevel,
+                  townHallEmojiIds
+                ).componentEmoji,
               })),
             },
           ],

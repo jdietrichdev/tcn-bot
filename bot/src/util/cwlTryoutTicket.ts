@@ -228,7 +228,10 @@ export const createCwlTryoutTicket = async (
   await sendMessage(
     {
       content: [
-        ...staffRoles.map((role) => `<@&${role.id}>`),
+        ...(input.config.CWL_TRYOUT_STAFF_ROLES?.length
+          ? input.config.CWL_TRYOUT_STAFF_ROLES
+          : staffRoles.map((role) => role.id)
+        ).map((roleId) => `<@&${roleId}>`),
         `<@${input.userId}> requested a CWL tryout.`,
       ].join(" "),
       embeds: [
