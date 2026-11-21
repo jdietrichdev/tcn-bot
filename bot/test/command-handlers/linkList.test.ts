@@ -43,50 +43,60 @@ describe("link list", () => {
       memberList: [{ name: "Linked", tag: "#AAA" }, { name: "Unlinked", tag: "#BBB" }],
     });
     jest.mocked(dynamoDbClient.send)
-      .mockResolvedValueOnce({ Item: { status: "complete" } } as never)
-      .mockResolvedValueOnce({ Items: [{ pk: "12345", sk: "player#aaa" }] } as never)
+      .mockResolvedValueOnce({ Items: [{ pk: "12345", sk: "player#AAA" }] } as never)
+      .mockResolvedValueOnce({ Items: [] } as never)
       .mockResolvedValueOnce({ Items: [] } as never);
 
     const pending = handleLinkList(command);
-    await jest.advanceTimersByTimeAsync(250);
+    await jest.advanceTimersByTimeAsync(500);
     await pending;
 
     expect(getClan).toHaveBeenCalledWith("#2CYP9C9QG");
     const payload = jest.mocked(updateResponse).mock.calls[0][2];
     expect(payload.embeds?.[0].description).toContain("**Linked to the bot: 1**");
     expect(payload.embeds?.[0].description).toContain("Linked (`#AAA`) — <@12345>");
-    expect(payload.embeds?.[0].description).toContain("**Not linked: 1**");
+    expect(payload.embeds?.[0].description).toContain("**No matching link found: 1**");
     expect(payload.embeds?.[0].description).toContain("Unlinked (`#BBB`)");
+    expect(payload.embeds?.[0].description).toContain("mixed-case links may not be found");
     expect(payload.allowed_mentions).toEqual({ parse: [] });
     expect(JSON.stringify(payload.components)).toContain("#2J9QJ9YVJ");
   });
 
-  it("loads the selected clan using its normalized index key", async () => {
+  it("checks lowercase when the uppercase tag is not linked", async () => {
+    jest.useFakeTimers();
     jest.mocked(getClan).mockResolvedValue({ memberList: [{ name: "Player", tag: "#ABC" }] });
     jest.mocked(dynamoDbClient.send)
-      .mockResolvedValueOnce({ Item: { status: "complete" } } as never)
-      .mockResolvedValueOnce({ Items: [{ pk: "222", sk: "player#aBc" }] } as never);
+      .mockResolvedValueOnce({ Items: [] } as never)
+      .mockResolvedValueOnce({ Items: [{ pk: "222", sk: "player#abc" }] } as never);
 
-    await handleLinkListSelect(select);
+    const pending = handleLinkListSelect(select);
+    await jest.advanceTimersByTimeAsync(249);
+    expect(dynamoDbClient.send).toHaveBeenCalledTimes(1);
+    await jest.advanceTimersByTimeAsync(1);
+    await pending;
 
     expect(getClan).toHaveBeenCalledWith("#2J9QJ9YVJ");
+    expect(jest.mocked(dynamoDbClient.send).mock.calls[0][0].input)
+      .toEqual(expect.objectContaining({
+        IndexName: "sk-index",
+        ExpressionAttributeValues: { ":tag": "player#ABC" },
+      }));
     expect(jest.mocked(dynamoDbClient.send).mock.calls[1][0].input)
       .toEqual(expect.objectContaining({
-        IndexName: "normalized-player-tag-index",
-        ExpressionAttributeValues: { ":tag": "player#ABC" },
+        IndexName: "sk-index",
+        ExpressionAttributeValues: { ":tag": "player#abc" },
       }));
     expect(jest.mocked(updateResponse).mock.calls[0][2].embeds?.[0].description)
       .toContain("<@222>");
   });
 
-  it("refuses to report unlinked players before migration completes", async () => {
-    jest.mocked(getClan).mockResolvedValue({ memberList: [{ name: "Player", tag: "#ABC" }] });
-    jest.mocked(dynamoDbClient.send).mockResolvedValue({ Item: { status: "in-progress" } } as never);
+  it("does not query the same all-numeric tag twice", async () => {
+    jest.mocked(getClan).mockResolvedValue({ memberList: [{ name: "Player", tag: "#123" }] });
+    jest.mocked(dynamoDbClient.send).mockResolvedValue({ Items: [] } as never);
     await handleLinkList(command);
     expect(dynamoDbClient.send).toHaveBeenCalledTimes(1);
-    expect(updateResponse).toHaveBeenCalledWith("app", "token", {
-      content: "The player link index is not ready. An administrator must complete the link index migration.",
-    });
+    expect(jest.mocked(updateResponse).mock.calls[0][2].embeds?.[0].description)
+      .toContain("**No matching link found: 1**");
   });
 
   it("uses the Point clans in the test server", async () => {
@@ -111,17 +121,33 @@ describe("link list", () => {
       })),
     });
     jest.mocked(dynamoDbClient.send)
-      .mockResolvedValueOnce({ Item: { status: "complete" } } as never)
       .mockResolvedValue({ Items: [{ pk: "12345678901234567890" }] } as never);
 
     const pending = handleLinkList(command);
     await jest.advanceTimersByTimeAsync(49 * 250);
     await pending;
-    expect(dynamoDbClient.send).toHaveBeenCalledTimes(51);
+    expect(dynamoDbClient.send).toHaveBeenCalledTimes(50);
     const embeds = jest.mocked(updateResponse).mock.calls[0][2].embeds!;
     expect(embeds.every((embed) => (embed.description?.length ?? 0) <= 4096)).toBe(true);
     expect(embeds.reduce((sum, embed) => sum + (embed.description?.length ?? 0) + (embed.title?.length ?? 0), 0)).toBeLessThanOrEqual(6000);
     expect(embeds.map((embed) => embed.description).join("\n").match(/✅/g)).toHaveLength(50);
+  });
+
+  it("bounds and paces lookups for a full clan with no matching links", async () => {
+    jest.useFakeTimers();
+    jest.mocked(getClan).mockResolvedValue({
+      memberList: Array.from({ length: 50 }, (_, index) => ({
+        name: `Player ${index}`,
+        tag: `#A${index}`,
+      })),
+    });
+    jest.mocked(dynamoDbClient.send).mockResolvedValue({ Items: [] } as never);
+    const pending = handleLinkList(command);
+    await jest.advanceTimersByTimeAsync(99 * 250);
+    await pending;
+    expect(dynamoDbClient.send).toHaveBeenCalledTimes(100);
+    expect(jest.mocked(updateResponse).mock.calls[0][2].embeds?.[0].description)
+      .toContain("**No matching link found: 50**");
   });
 
   it("reports failed selections rather than presenting incomplete results", async () => {

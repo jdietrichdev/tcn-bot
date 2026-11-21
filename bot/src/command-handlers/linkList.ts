@@ -1,4 +1,4 @@
-import { GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import {
   APIChatInputApplicationCommandInteraction,
   APIEmbed,
@@ -13,7 +13,6 @@ import { ClanConfig, getConfig } from "../util/serverConfig";
 
 type TaggedClan = ClanConfig & { tag: string };
 type ClanMember = { name: string; tag: string };
-class LinkIndexNotReadyError extends Error {}
 
 const configuredClans = (guildId: string): TaggedClan[] =>
   Object.values(getConfig(guildId).CLANS).filter(
@@ -32,35 +31,30 @@ const isClanMember = (member: unknown): member is ClanMember =>
 const findLinks = async (members: ClanMember[]): Promise<Map<string, string>> => {
   const memberTags = new Set(members.map((member) => member.tag.slice(1)));
   const links = new Map<string, string>();
-  if (!memberTags.size) return links;
-  const migration = await dynamoDbClient.send(new GetCommand({
-    TableName: "BotTable",
-    Key: { pk: "system#link-index", sk: "migration" },
-    ConsistentRead: true,
-  }));
-  if (migration.Item?.status !== "complete") {
-    throw new LinkIndexNotReadyError("Player link index migration has not completed");
-  }
-  const tags = [...memberTags];
-  for (let index = 0; index < tags.length; index++) {
-    const tag = tags[index];
-    const result = await dynamoDbClient.send(new QueryCommand({
-      TableName: "BotTable",
-      IndexName: "normalized-player-tag-index",
-      KeyConditionExpression: "normalizedPlayerTag = :tag",
-      ExpressionAttributeValues: { ":tag": `player#${tag}` },
-      Limit: 1,
-    }));
-    const link = result.Items?.[0];
-    if (link) {
-      if (typeof link.pk !== "string" || !/^\d{1,20}$/.test(link.pk)) {
-        throw new Error(`Invalid link record for player #${tag}`);
+  let queried = false;
+  for (const tag of memberTags) {
+    const variants = new Set([tag, tag.toLowerCase()]);
+    for (const variant of variants) {
+      // Keep individual index reads below the default provisioned capacity.
+      if (queried) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 250));
       }
-      links.set(tag, link.pk);
-    }
-    // Keep individual index reads below the default provisioned capacity.
-    if (index < tags.length - 1) {
-      await new Promise<void>((resolve) => setTimeout(resolve, 250));
+      queried = true;
+      const result = await dynamoDbClient.send(new QueryCommand({
+        TableName: "BotTable",
+        IndexName: "sk-index",
+        KeyConditionExpression: "sk = :tag",
+        ExpressionAttributeValues: { ":tag": `player#${variant}` },
+        Limit: 1,
+      }));
+      const link = result.Items?.[0];
+      if (link) {
+        if (typeof link.pk !== "string" || !/^\d{1,20}$/.test(link.pk)) {
+          throw new Error(`Invalid link record for player #${tag}`);
+        }
+        links.set(tag, link.pk);
+        break;
+      }
     }
   }
   return links;
@@ -95,8 +89,10 @@ const buildLinkList = async (
     `**Linked to the bot: ${linked.length}**`,
     ...(linked.length ? linked : ["None"]),
     "",
-    `**Not linked: ${unlinked.length}**`,
+    `**No matching link found: ${unlinked.length}**`,
     ...(unlinked.length ? unlinked : ["None"]),
+    "",
+    "Only uppercase and lowercase tags are checked; mixed-case links may not be found.",
   ];
   const descriptions = [""];
   for (const line of lines) {
@@ -148,18 +144,11 @@ export const handleLinkList = async (
     });
     return;
   }
-  try {
-    await updateResponse(
-      interaction.application_id,
-      interaction.token,
-      await buildLinkList(clans, clans[0])
-    );
-  } catch (error) {
-    if (!(error instanceof LinkIndexNotReadyError)) throw error;
-    await updateResponse(interaction.application_id, interaction.token, {
-      content: "The player link index is not ready. An administrator must complete the link index migration.",
-    });
-  }
+  await updateResponse(
+    interaction.application_id,
+    interaction.token,
+    await buildLinkList(clans, clans[0])
+  );
 };
 
 export const handleLinkListSelect = async (
@@ -183,9 +172,7 @@ export const handleLinkListSelect = async (
   } catch (error) {
     console.error("Failed to update link list", error);
     await updateResponse(interaction.application_id, interaction.token, {
-      content: error instanceof LinkIndexNotReadyError
-        ? "The player link index is not ready. An administrator must complete the link index migration."
-        : "Could not update the link list. Please try again.",
+      content: "Could not update the link list. Please try again.",
     });
   }
 };

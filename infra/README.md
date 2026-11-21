@@ -15,14 +15,10 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
 ## Player link index
 
-After deploying the updated bot and infrastructure, wait for the
-`normalized-player-tag-index` on `BotTable` to become ACTIVE. Then, from the
-repository root, run `node bot\scripts\backfill-link-index.cjs` with AWS
-credentials and region configured. The credentials need permission to describe,
-scan, update and put items in `BotTable`.
+`/link-list` uses the existing `sk-index` and does not require a backfill.
+It checks uppercase and lowercase player tags; older mixed-case links may not
+be found. The index is eventually consistent, so recent changes may take a
+short time to appear.
 
-The one-time backfill scans the table and updates existing player links at a
-limited rate, so it may take a while and consume provisioned capacity. If it
-fails or is interrupted, rerun it; already updated records are skipped.
-`/link-list` remains unavailable until the backfill finishes. The index is
-eventually consistent, so recent updates may take a short time to appear.
+The previously introduced `normalized-player-tag-index` remains configured to
+avoid removing an existing deployed index; `/link-list` does not use it.
