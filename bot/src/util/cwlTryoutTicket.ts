@@ -29,6 +29,9 @@ export interface CwlTryoutTicketInput {
   previousSeason?: string;
   previousLeague?: string;
   averageStars?: number;
+  totalStars?: number;
+  attackCount?: number;
+  totalDestruction?: number;
   reason: string;
   categoryId: string;
   config: ServerConfig;
@@ -266,7 +269,19 @@ export const createCwlTryoutTicket = async (
               value:
                 input.averageStars === undefined
                   ? "Unavailable"
-                  : input.averageStars.toFixed(2),
+                  : `${input.averageStars.toFixed(2)} (${input.totalStars ?? "?"}/${input.attackCount === undefined ? "?" : input.attackCount * 3} stars)`,
+              inline: true,
+            },
+            {
+              name: "Total destruction",
+              value:
+                input.totalDestruction === undefined
+                  ? "Unavailable"
+                  : `${input.totalDestruction.toFixed(0)}%${
+                      input.attackCount
+                        ? ` (${(input.totalDestruction / input.attackCount).toFixed(1)}% avg per attack)`
+                        : ""
+                    }`,
               inline: true,
             },
             {

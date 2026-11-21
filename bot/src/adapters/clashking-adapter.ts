@@ -37,6 +37,7 @@ interface PlayerCwlHistoryItem {
   };
   attacks?: Array<{
     stars: number;
+    destructionPercentage?: number;
   }>;
 }
 
@@ -48,6 +49,8 @@ export interface PlayerCwlHistoryStats {
   season: string;
   league?: string;
   averageStars?: number;
+  totalStars?: number;
+  totalDestruction?: number;
   attackCount: number;
 }
 
@@ -118,6 +121,14 @@ export const getPlayerCwlHistoryStats = async (
     )
     .sort((left, right) => right.attackCount - left.attackCount)[0];
 
+  const hasAllDestruction =
+    attackRecords.length > 0 &&
+    attackRecords.every(
+      (attack) =>
+        typeof attack.destructionPercentage === "number" &&
+        Number.isFinite(attack.destructionPercentage)
+    );
+
   return {
     season: latestSeason,
     league: leagueRecord?.league,
@@ -126,6 +137,13 @@ export const getPlayerCwlHistoryStats = async (
         ? attackRecords.reduce((sum, attack) => sum + attack.stars, 0) /
           attackRecords.length
         : undefined,
+    totalStars: attackRecords.reduce((sum, attack) => sum + attack.stars, 0),
+    totalDestruction: hasAllDestruction
+      ? attackRecords.reduce(
+          (sum, attack) => sum + (attack.destructionPercentage ?? 0),
+          0
+        )
+      : undefined,
     attackCount: attackRecords.length,
   };
 };

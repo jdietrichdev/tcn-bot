@@ -148,7 +148,7 @@ describe("CWL roster signup button", () => {
       "<:town_hall_16:123456789012345678> Player One"
     );
     expect(response.embeds?.[0]?.fields?.[0]?.value).toContain(
-      "Barbarian King 90"
+      "BK 90"
     );
     expect(JSON.stringify(response.embeds)).not.toContain("Battle Machine");
     expect(JSON.stringify(response.embeds)).not.toContain("Battle Copter");

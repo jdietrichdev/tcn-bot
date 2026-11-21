@@ -26,7 +26,11 @@ describe("ClashKing CWL history adapter", () => {
           {
             season: "2026-10",
             clan: { warLeague: { name: "Champion League II" } },
-            attacks: [{ stars: 2 }, { stars: 3 }, { stars: 1 }],
+            attacks: [
+              { stars: 2, destructionPercentage: 80 },
+              { stars: 3, destructionPercentage: 100 },
+              { stars: 1, destructionPercentage: 50 },
+            ],
           },
         ],
       },
@@ -36,6 +40,8 @@ describe("ClashKing CWL history adapter", () => {
       season: "2026-10",
       league: "Champion League II",
       averageStars: 2,
+      totalStars: 6,
+      totalDestruction: 230,
       attackCount: 3,
     });
     expect(jest.mocked(axios.get)).toHaveBeenCalledWith(

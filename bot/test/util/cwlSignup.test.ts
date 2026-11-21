@@ -130,7 +130,7 @@ describe("CWL signup embeds", () => {
       "<:town_hall_16:123456789012345678> Player One (#PLAYER1)"
     );
     expect(embed.fields?.[0]?.value).toBe(
-      "Town Hall 16 • Barbarian King 90 • Archer Queen 90"
+      "Town Hall 16 • BK 90 • AQ 90"
     );
     expect(embed.fields?.[0]?.value).not.toContain("🦸");
     expect(embed.fields?.[0]?.value).not.toContain("Battle Machine");

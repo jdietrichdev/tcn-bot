@@ -186,7 +186,7 @@ describe("CWL dashboard player management", () => {
       clanName: "Current Clan",
       townHallLevel: 16,
     });
-    expect(jest.mocked(updateMessage)).toHaveBeenCalledTimes(2);
+    expect(jest.mocked(updateMessage)).toHaveBeenCalledTimes(1);
     expect(jest.mocked(grantRole)).toHaveBeenCalledWith(
       "guild",
       "linked-user",
