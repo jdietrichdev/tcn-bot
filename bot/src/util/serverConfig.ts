@@ -61,6 +61,32 @@ export interface ServerConfig {
 }
 
 const configMap = new Map<string, ServerConfig>();
+const pointClans: Record<string, ClanConfig> = {
+  MiniPoint: {
+    name: 'MiniPoint',
+    tag: '#2CYP9C9QG',
+    leadChannel: '',
+    clanChannel: '',
+  },
+  AlphaPoint: {
+    name: 'AlphaPoint',
+    tag: '#2CLL8UJR2',
+    leadChannel: '',
+    clanChannel: '',
+  },
+  EcoPoint: {
+    name: 'EcoPoint',
+    tag: '#2G2RJQ2UG',
+    leadChannel: '',
+    clanChannel: '',
+  },
+  SierraPoint: {
+    name: 'SierraPoint',
+    tag: '#2J9QJ9YVJ',
+    leadChannel: '',
+    clanChannel: '',
+  },
+};
 
 // Test Server
 configMap.set('1021786969077973022', {
@@ -104,6 +130,7 @@ configMap.set('1021786969077973022', {
   BOT_ID: '1257342457868451920',
 
   CLANS: {
+    ...pointClans,
     TCN1: {
       name: 'TCN1',
       leadChannel: '1348703240744734802',
@@ -285,32 +312,7 @@ configMap.set('1310007885656363068', {
   TCN5_ROLE: '',
   TCN6_ROLE: '',
   BOT_ID: '1257342457868451920',
-  CLANS: {
-    MiniPoint: {
-      name: 'MiniPoint',
-      tag: '#2CYP9C9QG',
-      leadChannel: '',
-      clanChannel: '',
-    },
-    AlphaPoint: {
-      name: 'AlphaPoint',
-      tag: '#2CLL8UJR2',
-      leadChannel: '',
-      clanChannel: '',
-    },
-    EcoPoint: {
-      name: 'EcoPoint',
-      tag: '#2G2RJQ2UG',
-      leadChannel: '',
-      clanChannel: '',
-    },
-    SierraPoint: {
-      name: 'SierraPoint',
-      tag: '#2J9QJ9YVJ',
-      leadChannel: '',
-      clanChannel: '',
-    },
-  },
+  CLANS: pointClans,
   APPLICATION_QUESTIONS: {
     title: 'Point Alliance Application',
     questions: [

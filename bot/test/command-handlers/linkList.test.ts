@@ -68,6 +68,19 @@ describe("link list", () => {
       .toContain("<@222>");
   });
 
+  it("uses the Point clans in the test server", async () => {
+    jest.mocked(getClan).mockResolvedValue({ memberList: [] });
+    await handleLinkList({ ...command, guild_id: "1021786969077973022" });
+    expect(getClan).toHaveBeenCalledWith("#2CYP9C9QG");
+    const components = JSON.stringify(jest.mocked(updateResponse).mock.calls[0][2].components);
+    for (const tag of ["#2CYP9C9QG", "#2CLL8UJR2", "#2G2RJQ2UG", "#2J9QJ9YVJ"]) {
+      expect(components).toContain(tag);
+    }
+
+    await handleLinkListSelect({ ...select, guild_id: "1021786969077973022" });
+    expect(getClan).toHaveBeenLastCalledWith("#2J9QJ9YVJ");
+  });
+
   it("keeps a full clan within Discord embed limits", async () => {
     jest.mocked(getClan).mockResolvedValue({
       memberList: Array.from({ length: 50 }, (_, index) => ({
