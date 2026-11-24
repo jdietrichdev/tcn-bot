@@ -7,10 +7,11 @@ import {
   APIModalSubmitInteraction,
 } from 'discord-api-types/v10';
 import { dynamoDbClient } from '../clients/dynamodb-client';
-import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { PutCommand } from '@aws-sdk/lib-dynamodb';
 import { updateResponse } from '../adapters/discord-adapter';
 import { verify } from '../adapters/coc-api-adapter';
 import { getModalTextInputValue } from '../util/modalComponents';
+import { findPlayerLinks, normalizePlayerTag } from '../util/playerLink';
 
 export const createLinkAccountModal = (
   _interaction: APIMessageComponentInteraction,
@@ -55,24 +56,25 @@ export const createLinkAccountModal = (
 export const submitLinkAccountModal = async (
   interaction: APIModalSubmitInteraction,
 ) => {
-  const { playerTag, apiToken } = getLinkAccountData(interaction);
+  const { playerTag: inputTag, apiToken } = getLinkAccountData(interaction);
+  let playerTag: string;
   try {
-    const existingLink = await dynamoDbClient.send(
-      new QueryCommand({
-        TableName: 'BotTable',
-        IndexName: 'sk-index',
-        KeyConditionExpression: 'sk = :sk',
-        ExpressionAttributeValues: {
-          ':sk': `player#${playerTag.substring(1)}`,
-        },
-      }),
-    );
-    if (existingLink.Items && existingLink.Items.length > 0) {
-      for (const item of existingLink.Items) {
+    playerTag = normalizePlayerTag(inputTag);
+  } catch {
+    await updateResponse(interaction.application_id, interaction.token, {
+      content: 'Please provide a valid player tag.',
+    });
+    return;
+  }
+  try {
+    const existingLinks = await findPlayerLinks(playerTag);
+    if (existingLinks.length > 0) {
+      for (const item of existingLinks) {
         if (item.pk === interaction.member!.user.id) {
           await updateResponse(interaction.application_id, interaction.token, {
-            content:
-              'Your account is already linked, no further action is needed',
+            content: item.verified === false
+              ? 'Your account is already linked but not verified. Use /link verify.'
+              : 'Your account is already linked, no further action is needed',
           });
           return;
         }
@@ -93,8 +95,7 @@ export const submitLinkAccountModal = async (
 
   try {
     await verify(playerTag, apiToken);
-  } catch (err) {
-    console.error('Error verifying credentials:', err);
+  } catch {
     await updateResponse(interaction.application_id, interaction.token, {
       content:
         'There was an issue verifying your credentials, please try again',
@@ -111,7 +112,9 @@ export const submitLinkAccountModal = async (
           sk: `player#${playerTag.substring(1)}`,
           id: interaction.member!.user.id,
           tag: playerTag,
+          verified: true,
         },
+        ConditionExpression: 'attribute_not_exists(pk)',
       }),
     );
     await updateResponse(interaction.application_id, interaction.token, {

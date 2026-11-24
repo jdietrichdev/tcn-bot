@@ -8,7 +8,7 @@ export const verify = async (playerTag: string, apiToken: string) => {
       '#',
       '%23',
     )}/verifytoken`;
-    const response = await axios.post(
+    const response = await axios.post<{ status?: string }>(
       url,
       JSON.stringify({ token: apiToken }),
       {
@@ -18,11 +18,14 @@ export const verify = async (playerTag: string, apiToken: string) => {
         },
       },
     );
-    if (response.data.status === 'invalid') {
+    if (response.data.status !== 'ok') {
       throw new Error('Unable to validate account');
     }
   } catch (err) {
-    console.error('Failed to verify account with Clash API', err);
+    console.error(
+      'Failed to verify account with Clash API',
+      axios.isAxiosError(err) ? `HTTP ${err.response?.status ?? 'unknown'}` : 'invalid response',
+    );
     throw err;
   }
 };
