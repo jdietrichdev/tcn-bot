@@ -23,7 +23,7 @@ import {
   recordTicketRecruiterStats,
   TicketRecruiterMessage,
 } from "../util/recruitmentTracker";
-import { ensureArchiveCapacity } from "../util/ticketDeletion";
+import { deleteTicketChannel, ensureArchiveCapacity } from "../util/ticketDeletion";
 
 export const closeTicket = async (
   interaction: APIApplicationCommandInteraction
@@ -31,14 +31,32 @@ export const closeTicket = async (
   try {
     const config = getConfig(interaction.guild_id!);
     if (await isTicketChannel(interaction)) {
+      const channelTopic = (interaction.channel as APITextChannel).topic;
+      const isCwlTryout = typeof channelTopic === "string" &&
+        channelTopic.startsWith("CWL tryout for ");
+      const hasCwlTryoutStaffRole = isCwlTryout &&
+        (config.CWL_TRYOUT_STAFF_ROLES?.some((roleId) =>
+          interaction.member?.roles.includes(roleId)
+        ) ?? false);
       if (
-        await isActorRecruiter(
+        hasCwlTryoutStaffRole || await isActorRecruiter(
           interaction.guild_id!,
           interaction.member!.user.id,
           config
         ) || await isActorAdmin(interaction.guild_id!, interaction.member!.user.id, config)
       ) {
         const channelId = interaction.channel.id;
+        if (isCwlTryout) {
+          await deleteTicketChannel({
+            guildId: interaction.guild_id!,
+            channelId,
+            config,
+            deletedById: interaction.member!.user.id,
+            deletedByUsername: interaction.member!.user.username,
+            deletionReason: "CWL tryout ticket closed.",
+          });
+          return;
+        }
         await recordTicketStatsIfNeeded(interaction, config);
         const userId = (interaction.channel as APITextChannel).topic!.split(
           ":"

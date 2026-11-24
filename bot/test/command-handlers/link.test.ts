@@ -71,6 +71,21 @@ test('only Point staff can start the spreadsheet import', async () => {
   });
 });
 
+test('allows only the configured admin role in the test server to import', async () => {
+  const testInteraction = interaction('import', ['1021837760648183910']);
+  testInteraction.guild_id = '1021786969077973022';
+  jest.mocked(importPointPlayerLinks).mockResolvedValueOnce({
+    created: 0, existing: 0, conflicts: 0, invalid: 0, failed: 0,
+  });
+  await handleLink(testInteraction);
+  expect(importPointPlayerLinks).toHaveBeenCalledTimes(1);
+
+  const nonAdmin = interaction('import', ['1459375267255554130']);
+  nonAdmin.guild_id = '1021786969077973022';
+  await handleLink(nonAdmin);
+  expect(importPointPlayerLinks).toHaveBeenCalledTimes(1);
+});
+
 test('does not replace a player linked to another user', async () => {
   send.mockResolvedValueOnce({ Items: [{ pk: 'other' }] });
   await handleLink(interaction('add', ['1459377224699482379']));

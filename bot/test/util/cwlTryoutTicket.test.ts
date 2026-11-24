@@ -115,6 +115,7 @@ describe("CWL tryout tickets", () => {
           expect.objectContaining({
             components: expect.arrayContaining([
               expect.objectContaining({ custom_id: "closeTicket" }),
+              expect.objectContaining({ custom_id: "cwlTryoutReady" }),
               expect.objectContaining({
                 label: "Signup Player for Roster",
                 custom_id:
@@ -144,6 +145,16 @@ describe("CWL tryout tickets", () => {
       expect(BigInt(allow) & PermissionFlagsBits.ManageMessages)
         .toBe(PermissionFlagsBits.ManageMessages);
     }
+    const botOverwrite = channelPermissionOverwrites.find(
+      (permission) => permission.id === input.config.BOT_ID
+    );
+    if (typeof botOverwrite?.allow !== "string") {
+      throw new Error("Missing bot ticket permissions.");
+    }
+    expect(BigInt(botOverwrite.allow) & PermissionFlagsBits.ReadMessageHistory)
+      .toBe(PermissionFlagsBits.ReadMessageHistory);
+    expect(BigInt(botOverwrite.allow) & PermissionFlagsBits.ManageChannels)
+      .toBe(PermissionFlagsBits.ManageChannels);
     expect(jest.mocked(sendMessage).mock.calls[0][0].content).toContain(
       "<@&titans-admin>"
     );

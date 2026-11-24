@@ -254,9 +254,13 @@ const hasLinkStaffRole = (interaction: APIChatInputApplicationCommandInteraction
 const importPlayerLinks = async (
   interaction: APIChatInputApplicationCommandInteraction,
 ) => {
-  if (interaction.guild_id !== '1310007885656363068' || !hasLinkStaffRole(interaction)) {
+  const isPointStaff = interaction.guild_id === '1310007885656363068' &&
+    hasLinkStaffRole(interaction);
+  const isTestAdmin = interaction.guild_id === '1021786969077973022' &&
+    (interaction.member?.roles.includes(getConfig(interaction.guild_id).ADMIN_ROLE) ?? false);
+  if (!isPointStaff && !isTestAdmin) {
     await updateResponse(interaction.application_id, interaction.token, {
-      content: 'Only Point admins and co-leaders can import these links.',
+      content: 'Only Point admins and co-leaders or test server admins can import these links.',
     });
     return;
   }
