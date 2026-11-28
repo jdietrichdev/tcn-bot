@@ -38,6 +38,36 @@ export const link = new SlashCommandBuilder()
   })
   .addSubcommand((subcommand) => {
     return subcommand
+      .setName('verify')
+      .setDescription('Verify an account already linked to you')
+      .addStringOption((option) =>
+        option.setName('tag').setDescription('Player tag').setRequired(true),
+      )
+      .addStringOption((option) =>
+        option
+          .setName('token')
+          .setDescription('Your Clash of Clans API token')
+          .setRequired(true),
+      );
+  })
+  .addSubcommand((subcommand) => {
+    return subcommand
+      .setName('add')
+      .setDescription('Link a player to a Discord user without verifying (staff)')
+      .addUserOption((option) =>
+        option.setName('user').setDescription('Discord user').setRequired(true),
+      )
+      .addStringOption((option) =>
+        option.setName('tag').setDescription('Player tag').setRequired(true),
+      );
+  })
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName('import')
+      .setDescription('Import unverified links from the Point spreadsheet (staff)'),
+  )
+  .addSubcommand((subcommand) => {
+    return subcommand
       .setName('remove')
       .setDescription('Remove link to Clash of Clans account')
       .addStringOption((option) => {

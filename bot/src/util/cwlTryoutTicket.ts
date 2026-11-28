@@ -209,7 +209,9 @@ export const createCwlTryoutTicket = async (
           allow: (
             PermissionFlagsBits.ViewChannel |
             PermissionFlagsBits.AddReactions |
-            PermissionFlagsBits.SendMessages
+            PermissionFlagsBits.SendMessages |
+            PermissionFlagsBits.ReadMessageHistory |
+            PermissionFlagsBits.ManageChannels
           ).toString(),
           deny: "0",
         },
@@ -300,6 +302,7 @@ export const createCwlTryoutTicket = async (
           type: ComponentType.ActionRow,
           components: [
             BUTTONS.CLOSE_TICKET,
+            BUTTONS.CWL_TRYOUT_READY,
             {
               type: ComponentType.Button,
               style: ButtonStyle.Success,

@@ -9,14 +9,13 @@ import {
   deleteResponse,
   moveChannel,
   sendMessage,
-  updateChannel,
   updateChannelPermissions,
   updateMessage,
   updateResponse,
 } from "../adapters/discord-adapter";
 import { determineRolesButton, isActorAdmin, isActorRecruiter } from "./utils";
 import { BUTTONS } from "./buttons";
-import { ensureArchiveCapacity } from "../util/ticketDeletion";
+import { deleteTicketChannel, ensureArchiveCapacity } from "../util/ticketDeletion";
 
 export const closeTicket = async (
   interaction: APIMessageComponentInteraction,
@@ -52,16 +51,22 @@ export const closeTicket = async (
       if (!userId) {
         throw new Error("Could not identify the ticket owner.");
       }
+      if (channelTopic.startsWith("CWL tryout for ")) {
+        await deleteTicketChannel({
+          guildId: interaction.guild_id!,
+          channelId,
+          config,
+          deletedById: interaction.member!.user.id,
+          deletedByUsername: interaction.member!.user.username,
+          deletionReason: "CWL tryout ticket closed.",
+        });
+        return;
+      }
       if (config.ARCHIVE_CATEGORY) {
         await ensureArchiveCapacity(interaction.guild_id!, config, {
           triggeredById: interaction.member?.user.id,
         });
         await moveChannel(channelId, config.ARCHIVE_CATEGORY);
-      } else if (channelTopic.startsWith("CWL tryout for ")) {
-        await updateChannel(
-          { topic: `Closed ${channelTopic}` },
-          channelId
-        );
       } else {
         throw new Error("No archive category is configured for this server.");
       }

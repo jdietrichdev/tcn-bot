@@ -74,6 +74,9 @@ export const deleteTicketChannel = async (
 
   const transcriptId = uuidv4();
   const messages = await getChannelMessages(channelId);
+  if (messages.length === 0) {
+    throw new Error(`Cannot create a transcript for empty ticket ${channelId}.`);
+  }
   messages.reverse();
 
   await s3Client.send(
@@ -312,7 +315,9 @@ const createTranscript = async ({
     : undefined;
 
   const embed: APIEmbed = {
-    title: `Clan application for ${applicant.username}`,
+    title: channel.topic?.startsWith("CWL tryout for ")
+      ? `CWL tryout for ${applicant.username}`
+      : `Clan application for ${applicant.username}`,
     fields: [
       {
         name: "Created by",
@@ -321,7 +326,7 @@ const createTranscript = async ({
         )}:R>`,
         inline: false,
       },
-      ...eventMessages.map((message) => {
+      ...eventMessages.flatMap((message) => {
         const update = message.content;
         let name = "";
         let user = "";
@@ -341,12 +346,13 @@ const createTranscript = async ({
           user = update.split(" ")[0];
         }
 
-        return {
+        if (!name) return [];
+        return [{
           name,
           value: `${user} <t:${createDiscordTimestamp(time)}:R>`,
           inline: false,
-        };
-      }),
+        }];
+      }).slice(-22),
       {
         name: "Deleted by",
         value: `<@${deletedById}> <t:${createDiscordTimestamp(
@@ -358,7 +364,7 @@ const createTranscript = async ({
         name: "Participants",
         value: Array.from(participantMap, ([key, value]) => {
           return `${value.count} messages from <@${key}>`;
-        }).join("\n"),
+        }).join("\n").slice(0, 1024) || "No non-bot participants.",
         inline: false,
       },
     ],

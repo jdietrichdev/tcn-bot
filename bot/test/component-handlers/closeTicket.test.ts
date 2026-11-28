@@ -3,7 +3,6 @@ import {
   deleteResponse,
   moveChannel,
   sendMessage,
-  updateChannel,
   updateChannelPermissions,
   updateMessage,
   updateResponse,
@@ -14,13 +13,12 @@ import {
   isActorAdmin,
   isActorRecruiter,
 } from "../../src/component-handlers/utils";
-import { ensureArchiveCapacity } from "../../src/util/ticketDeletion";
+import { deleteTicketChannel, ensureArchiveCapacity } from "../../src/util/ticketDeletion";
 
 jest.mock("../../src/adapters/discord-adapter", () => ({
   deleteResponse: jest.fn(),
   moveChannel: jest.fn(),
   sendMessage: jest.fn(),
-  updateChannel: jest.fn(),
   updateChannelPermissions: jest.fn(),
   updateMessage: jest.fn(),
   updateResponse: jest.fn(),
@@ -31,6 +29,7 @@ jest.mock("../../src/component-handlers/utils", () => ({
   isActorRecruiter: jest.fn(),
 }));
 jest.mock("../../src/util/ticketDeletion", () => ({
+  deleteTicketChannel: jest.fn(),
   ensureArchiveCapacity: jest.fn(),
 }));
 
@@ -47,7 +46,7 @@ describe("CWL tryout ticket close button", () => {
     } as never);
   });
 
-  it("closes a Point CWL tryout ticket without requiring an archive category", async () => {
+  it("saves the transcript and deletes a CWL tryout ticket on close", async () => {
     jest.mocked(isActorRecruiter).mockResolvedValue(false);
     jest.mocked(isActorAdmin).mockResolvedValue(false);
     const interaction = {
@@ -73,23 +72,73 @@ describe("CWL tryout ticket close button", () => {
 
     await closeTicket(interaction, config);
 
-    expect(jest.mocked(updateChannel)).toHaveBeenCalledWith(
-      { topic: "Closed CWL tryout for #PLAYER1:discord-user" },
-      "tryout-channel"
+    expect(jest.mocked(deleteTicketChannel)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        guildId: "guild",
+        channelId: "tryout-channel",
+        deletedById: "staff",
+        deletionReason: "CWL tryout ticket closed.",
+      })
     );
-    expect(jest.mocked(updateChannelPermissions)).toHaveBeenCalledWith(
-      "tryout-channel",
-      "discord-user",
-      expect.objectContaining({ type: 1 })
-    );
+    expect(jest.mocked(updateChannelPermissions)).not.toHaveBeenCalled();
     expect(jest.mocked(moveChannel)).not.toHaveBeenCalled();
     expect(jest.mocked(ensureArchiveCapacity)).not.toHaveBeenCalled();
-    expect(jest.mocked(deleteResponse)).toHaveBeenCalledWith(
-      "application",
-      "interaction-token"
-    );
-    expect(jest.mocked(sendMessage)).toHaveBeenCalled();
-    expect(jest.mocked(updateMessage)).toHaveBeenCalled();
+    expect(jest.mocked(deleteResponse)).not.toHaveBeenCalled();
+    expect(jest.mocked(sendMessage)).not.toHaveBeenCalled();
+    expect(jest.mocked(updateMessage)).not.toHaveBeenCalled();
     expect(jest.mocked(updateResponse)).not.toHaveBeenCalled();
+  });
+
+  it("continues to archive non-CWL application tickets", async () => {
+    const interaction = {
+      application_id: "application",
+      token: "interaction-token",
+      guild_id: "guild",
+      member: { user: { id: "staff", username: "Staff" }, roles: [] },
+      channel: { id: "ticket", topic: "Application channel for:applicant" },
+      message: { id: "message", channel_id: "ticket" },
+    } as unknown as APIMessageComponentInteraction;
+    await closeTicket(interaction, { ARCHIVE_CATEGORY: "archive" } as never);
+    expect(deleteTicketChannel).not.toHaveBeenCalled();
+    expect(moveChannel).toHaveBeenCalledWith("ticket", "archive");
+    expect(updateMessage).toHaveBeenCalled();
+  });
+
+  it("does not delete a tryout ticket for an unauthorized user", async () => {
+    jest.mocked(isActorRecruiter).mockResolvedValue(false);
+    jest.mocked(isActorAdmin).mockResolvedValue(false);
+    const interaction = {
+      application_id: "application",
+      token: "interaction-token",
+      guild_id: "guild",
+      member: { user: { id: "visitor", username: "Visitor" }, roles: [] },
+      channel: { id: "ticket", topic: "CWL tryout for #PLAYER1:applicant" },
+      message: { id: "message", channel_id: "ticket" },
+    } as unknown as APIMessageComponentInteraction;
+    await closeTicket(interaction, { CWL_TRYOUT_STAFF_ROLES: ["staff"] } as never);
+    expect(deleteTicketChannel).not.toHaveBeenCalled();
+    expect(sendMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.stringContaining("do not have permission") }),
+      "ticket"
+    );
+  });
+
+  it("reports deletion failures without archiving the tryout ticket", async () => {
+    jest.mocked(deleteTicketChannel).mockRejectedValueOnce(new Error("transcript failed"));
+    const consoleError = jest.spyOn(console, "error").mockImplementation();
+    const interaction = {
+      application_id: "application",
+      token: "interaction-token",
+      guild_id: "guild",
+      member: { user: { id: "staff", username: "Staff" }, roles: [] },
+      channel: { id: "ticket", topic: "CWL tryout for #PLAYER1:applicant" },
+      message: { id: "message", channel_id: "ticket" },
+    } as unknown as APIMessageComponentInteraction;
+    await closeTicket(interaction, { ARCHIVE_CATEGORY: "archive" } as never);
+    expect(updateResponse).toHaveBeenCalledWith("application", "interaction-token", {
+      content: expect.stringContaining("issue closing"),
+    });
+    expect(moveChannel).not.toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 });

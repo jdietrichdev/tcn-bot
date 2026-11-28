@@ -33,6 +33,7 @@ import {
   handleCwlRosterSignup,
 } from "./cwlRosterSignup";
 import { handleCwlSignupDashboard } from "./cwlSignupDashboard";
+import { notifyCwlTryoutStaff } from "./cwlTryoutReady";
 
 type Handler = (interaction: APIMessageComponentInteraction, config?: any) => Promise<any>;
 
@@ -41,6 +42,7 @@ const handlers: Record<string, Handler> = {
   messageRecruit: (interaction) => messageRecruit(interaction),
   closeRecruit: (interaction) => closeRecruit(interaction),
   closeTicket: (interaction, config) => closeTicket(interaction, config),
+  cwlTryoutReady: (interaction) => notifyCwlTryoutStaff(interaction),
   deleteTicket: (interaction, config) => deleteTicket(interaction, config),
   reopenTicket: (interaction, config) => reopenTicket(interaction, config),
   grantRoles: (interaction, config) => grantRoles(interaction, config),

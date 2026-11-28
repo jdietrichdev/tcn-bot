@@ -11,6 +11,12 @@ export const BUTTONS = {
     label: "Close",
     custom_id: "closeTicket",
   } as APIButtonComponentWithCustomId,
+  CWL_TRYOUT_READY: {
+    type: ComponentType.Button,
+    style: ButtonStyle.Success,
+    label: "Ready to Try Out",
+    custom_id: "cwlTryoutReady",
+  } as APIButtonComponentWithCustomId,
   CLOSE_LEAD_TICKET: {
     type: ComponentType.Button,
     style: ButtonStyle.Primary,
